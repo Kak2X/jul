@@ -108,7 +108,7 @@
 		<tr><td class='tdbgc center' colspan=2>Appareance</td></tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Force scheme</b></td>
-			<td class='tdbg2'><?=doschemeList(true, $misc['scheme'], 'customscheme')?></td>
+			<td class='tdbg2'><?=doschemeList(true, $misc['scheme'], 'scheme')?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Custom header</b></td>

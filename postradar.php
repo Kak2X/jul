@@ -1,86 +1,85 @@
 <?php
-  require 'lib/function.php';
-  
-  $windowtitle = "Editing Post Radar";
+	require 'lib/function.php';
 
-  if (!$log) {
-		require 'lib/layout.php';
+	if (!$loguser['id']) {
+		errorpage("You must be logged in to edit your post radar.",'index.php','return to the board',0);
+	}
 
-		print "$header
-		<br>$tblstart$tccell1>You must be logged in to edit your post radar.<br>
-		".redirect('index.php','return to the board',0).$tblend.$footer;
-
-		printtimedif($startingtime);
-		die();
-  }
-
-  // Login confirmed from here on out
+	// Login confirmed from here on out
 	// Changes above form to save a redirect
-	if ($_POST['action'] == 'dochanges') {
-		$user = $sql->resultq("SELECT name FROM users WHERE id=$loguserid");
-		if ($rem) $sql->query("DELETE FROM postradar WHERE user=$loguserid and comp=". intval($rem) ."");
-		if ($add) $sql->query("INSERT INTO postradar (user,comp) VALUES ($loguserid,". intval($add) .")");
-		if ($submit2) {
-			require 'lib/layout.php';
-
-			print "$header
-			<br>$tblstart$tccell1>Thank you, $user, for editing your post radar.<br>
-			".redirect('index.php','return to the board',0).$tblend.$footer;
-
-			printtimedif($startingtime);
-			die();
+	if (isset($_POST['submit1']) || isset($_POST['submit2'])) {
+		check_token($_POST['auth']);
+		$rem = filter_int($_POST['rem']);
+		$add = filter_int($_POST['add']);
+		
+		//$user = $sql->resultq("SELECT name FROM users WHERE id = {$loguser['id']}");
+		if ($rem) $sql->query("DELETE FROM postradar WHERE user = {$loguser['id']} and comp = $rem");
+		if ($add) $sql->query("INSERT INTO postradar (user, comp) VALUES ({$loguser['id']}, $add)");
+		
+		if (isset($_POST['submit2'])) { // Save and finish
+			errorpage("Thank you, {$loguser['name']}, for editing your post radar.",'index.php','return to the board',0);
 		}
 	}
 
 	// Form
 	// Include layout now so post radar on top of page is properly updated
-	require 'lib/layout.php';
+	//require 'lib/layout.php';
+	pageheader("Editing Post Radar");
 
 	// Deletions before additions
-	$users1 = $sql->query("SELECT p.comp, u.name, u.posts FROM postradar p, users u WHERE u.id=p.comp AND user=$loguserid");
+	$users1 = $sql->query("SELECT p.comp, u.name, u.posts FROM postradar p LEFT JOIN users u ON u.id = p.comp AND user = {$loguser['id']}");
 
-	while($user = $sql->fetch($users1)){
-		$remlist.="<option value=$user[comp]>$user[name] -- $user[posts] posts";
+	$remlist = "";
+	while ($user = $sql->fetch($users1)) {
+		$remlist .= "<option value='{$user['comp']}'>{$user['name']} -- {$user['posts']} posts</option>";
 		$idlist[] = $user['comp'];
 	}
-	$remlist="
-		<select name=rem>
-		<option value=0 selected>Do not remove anyone
-		$remlist
-		</select>";
 
 	// Remove those already added
-	if (count($idlist))
-		$qwhere = "AND id NOT IN (". implode(",", $idlist).")";
-	else $qwhere = '';
+	$qwhere = isset($idlist) ? "AND id NOT IN (". implode(",", $idlist).")" : "";
 
-  // Additions
+	// Additions
 	$users1 = $sql->query("SELECT id,name,posts FROM users WHERE posts > 0 {$qwhere} ORDER BY name");
 
-	while($user = $sql->fetch($users1)){
-		$addlist.="<option value=$user[id]>$user[name] -- $user[posts] posts";
+	$addlist = "";
+	while ($user = $sql->fetch($users1)){
+		$addlist .= "<option value={$user['id']}>{$user['name']} -- {$user['posts']} posts</option>";
 	}
 
-	$addlist="
-	<select name=add>
-	<option value=0 selected>Do not add anyone
-	$addlist
-	</select>";
+?>
+<FORM ACTION=postradar.php NAME=REPLIER METHOD=POST>
+<table class='table'>
+	<tr><td class='tdbgh center'>&nbsp;</td><td class='tdbgh center'>&nbsp;</td></tr>
+	<tr>
+		<td class='tdbg1 center'><b>Add an user</td>
+		<td class='tdbg2'>
+			<select name=add>
+				<option value=0 selected>Do not add anyone</option>
+				<?=$addlist?>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'><b>Remove an user</td>
+		<td class='tdbg2'>
+			<select name=rem>
+				<option value=0 selected>Do not remove anyone</option>
+				<?=$remlist?>
+			</select>
+		</td>
+	</tr>
+	<tr><td class='tdbgh center'>&nbsp;</td><td class='tdbgh center'>&nbsp;</td></tr>
+	<tr>
+		<td class='tdbg1 center'>&nbsp;</td>
+		<td class='tdbg2'>
+			<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+			<input type='submit' class=submit name=submit1 VALUE="Submit and continue">
+			<input type='submit' class=submit name=submit2 VALUE="Submit and finish">
+		</td>
+	</tr>
+</table>
+</FORM>
+<?php
 
-	$prtable="
-		$tccellh>&nbsp</td>$tccellh>&nbsp<tr>
-		$tccell1><b>Add an user</td>$tccell2l>$addlist<tr>
-		$tccell1><b>Remove an user</td>$tccell2l>$remlist<tr>
-		$tccellh>&nbsp</td>$tccellh>&nbsp<tr>
-		$tccell1>&nbsp</td>$tccell2l>
-		$inph=action VALUE=dochanges>
-		$inph=userpass VALUE=\"$user[password]\">
-		$inps=submit1 VALUE=\"Submit and continue\">
-		$inps=submit2 VALUE=\"Submit and finish\"></td></FORM>
-    ";
-
-	print "$header<br>
-	<FORM ACTION=postradar.php NAME=REPLIER METHOD=POST>
-	$tblstart$prtable$tblend$footer";
-	printtimedif($startingtime);
+	pagefooter();
 ?>

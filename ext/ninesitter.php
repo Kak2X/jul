@@ -6,11 +6,12 @@
 //	require 'lib/config.php';
 	header("Content-type: text/plain");
 
+	/*
 	@mysql_connect($sqlhost, $sqluser, $sqlpass) or 
 		die('Database error.');
 	@mysql_select_db($dbname) or
 		die('Database error.');
-
+*/
 	$threads	= explode(",", $_GET['data']);
 	$ta			= array();
 	foreach($threads as $thread) {
@@ -23,15 +24,15 @@
 
 	if ($ta) {
 
-		$query	= "SELECT `id`, `forum`, `title` FROM `threads` WHERE `id` IN (". implode(", ", $ta) .")";
-		$sql	= mysql_query($query);
-		while ($thread = mysql_fetch_array($sql, MYSQL_ASSOC)) {
-			$minpower	= mysql_result(mysql_query("SELECT `minpower` FROM `forums` WHERE `id` = '". $thread['forum'] ."'"), 0);
+		$query		= "SELECT `id`, `forum`, `title` FROM `threads` WHERE `id` IN (". implode(", ", $ta) .")";
+		$threads	= $sql->query($query);
+		while ($thread = $sql->fetch($threads)) {
+			$minpower	= $sql->resultq("SELECT `minpower` FROM `forums` WHERE `id` = '". $thread['forum'] ."'");
 			if ($minpower <= 0) {
 
-				$dat	= mysql_query("SELECT `p`.`id`, `p`.`date`, `u`.`name` FROM `posts` `p` LEFT JOIN `users` `u` ON `u`.`id` = `p`.`user` WHERE `p`.`thread` = '". $thread['id'] ."' ORDER BY `p`.`date` DESC LIMIT 5") or print mysql_error();
+				$dat	= $sql->query("SELECT `p`.`id`, `p`.`date`, `u`.`name` FROM `posts` `p` LEFT JOIN `users` `u` ON `u`.`id` = `p`.`user` WHERE `p`.`thread` = '". $thread['id'] ."' ORDER BY `p`.`date` DESC LIMIT 5");// or print mysql_error();
 
-				while($info = mysql_fetch_array($dat, MYSQL_ASSOC)) {
+				while($info = $sql->fetch($dat)) {
 					$out	.= "$info[id]|$thread[id]|$info[name]|$thread[title]|". date("m-d-y H:i:s", $info['date']) ."\r\n";
 				}
 			}

@@ -26,15 +26,15 @@
 
  $img=ImageCreateTrueColor($xs,$m);
 
- $c[bg]= ImageColorAllocate($img,  0,  0,  0);
- $c[bg1]=ImageColorAllocate($img,  0,  0, 60);
- $c[bg2]=ImageColorAllocate($img,  0,  0, 80);
- $c[bg3]=ImageColorAllocate($img, 40, 40,100);
- $c[bg4]=ImageColorAllocate($img,100, 40, 40);
- $c[mk1]=ImageColorAllocate($img, 60, 60,130);
- $c[mk2]=ImageColorAllocate($img, 80, 80,150);
- $c[bar]=ImageColorAllocate($img,250,190, 40);
- $c[pt] =ImageColorAllocate($img,250,250,250);
+ $c['bg'] =ImageColorAllocate($img,  0,  0,  0);
+ $c['bg1']=ImageColorAllocate($img,  0,  0, 60);
+ $c['bg2']=ImageColorAllocate($img,  0,  0, 80);
+ $c['bg3']=ImageColorAllocate($img, 40, 40,100);
+ $c['bg4']=ImageColorAllocate($img,100, 40, 40);
+ $c['mk1']=ImageColorAllocate($img, 60, 60,130);
+ $c['mk2']=ImageColorAllocate($img, 80, 80,150);
+ $c['bar']=ImageColorAllocate($img,250,190, 40);
+ $c['pt'] =ImageColorAllocate($img,250,250,250);
  for($i=0;$i<$days;$i++){
    $num=date('m',$dd+$i*86400)%2+1;
    if(date('m-d',$dd+$i*86400)=='01-01') $num=3;
@@ -113,13 +113,13 @@
 		$xdata2[$k - 13697]	= ($v * 5);
 	}
 
-	if (0) {
-		print "<pre>days = $days \n\n\n";
-		print_r($data);
-		print "\n\n------------------------\n\n";
-		print_r($xdata2);
-		die();
-	}
+	/*
+	print "<pre>days = $days \n\n\n";
+	print_r($data);
+	print "\n\n------------------------\n\n";
+	print_r($xdata2);
+	die();
+	*/
 	drawdata($xdata2, $users[-1]['color'], true, $users[-1]['color'] + 0x40000000);
  
 	Header('Content-type:image/png');

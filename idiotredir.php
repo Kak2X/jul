@@ -1,6 +1,6 @@
 <?php
-
-	if (!$_POST['go']) {
+	
+	if (!isset($_POST['go'])) {
 
 		?>
 <html>

@@ -34,9 +34,9 @@
 							"AVG( `rendertime` ) AS average, ".
 							"MAX( `rendertime` ) AS max ".
 							"FROM `rendertimes` ".
-							"WHERE `page` = '/index.php' ".
+							"WHERE `page` = '/index.php'".
 							($_GET['all'] ? "" : "AND `time` > $mintime ").
-							"GROUP BY FLOOR(`time` / 3600)") or die(mysql_error());
+							"GROUP BY FLOOR(`time` / 3600)");
 
 	$d	= floor($rangemin / 24) * 24 - 16;
 	for ($i	= $d; $i <= ($rangemin + $num); $i+=24) {
@@ -57,6 +57,7 @@
 	}
 
 
+	$linedata = array();
 	while ($data = $sql -> fetch($alldata)) {
 
 		$x	= $data['time'] - $rangemin;
@@ -160,7 +161,6 @@
 
 	imagefilledpolygon($image, $averages, (count($averages) / 2), $col['avgf']);
 	imagepolygon($image, $averages, (count($averages) / 2), $col['avgt']);
-
 
 
 	header("Content-type: image/png");

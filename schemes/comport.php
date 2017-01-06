@@ -4,11 +4,15 @@
  $nmcol[1]=array('-1'=>'404040','F185C9','FFB3F3','D880F5','B03088');
  $nmcol[2]=array('-1'=>'404040','B09CC7','EEB9BA','70D060','F0C413');
 
- $hotpic='<img src="images/comport/hot.gif">';
- $newpic='<img src="images/comport/new.gif">';
- $newhotpic='<img src="images/comport/new.gif">';
- $offpic='<img src="images/comport/off.gif">';
- $offhotpic='<img src="images/comport/off.gif">';
+ 
+ $statusicons['hot'] 		= '<img src="images/comport/hot.gif">';
+ $statusicons['new'] 		= '<img src="images/comport/new.gif">';
+ $statusicons['newhot'] 	= '<img src="images/comport/new.gif">';
+ $statusicons['newoff'] 	= '<img src="images/comport/new.gif">';
+ $statusicons['newhotoff'] 	= '<img src="images/comport/new.gif">';
+ $statusicons['off'] 		= '<img src="images/comport/off.gif">';
+ $statusicons['hotoff'] 	= '<img src="images/comport/off.gif">';
+
 
 // $formcss=1;  
 // $inputborder='663399';  

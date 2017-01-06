@@ -1,5 +1,6 @@
 <?php
-
+	error_reporting(0);
+	
 	if (!$_GET['notice']) {
 		
 		header("Pragma: no-cache;");

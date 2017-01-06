@@ -1,286 +1,492 @@
 <?php
-  require 'lib/function.php';
-  require 'lib/layout.php';
-  if(!$log) errorpage('You must be logged in to edit your profile.');
-  if($_GET['lol'] || ($loguserid == 1420)) errorpage('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;"><object width="100%" height="100%"><param name="movie" value="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="100%" height="100%"></embed></object></div>');
-  if($banned) errorpage('Sorry, but banned users aren\'t allowed to edit their profile.');
-	if($loguser['profile_locked'] == 1) {
-		errorpage("You are not allowed to edit your profile.");
+
+	require 'lib/function.php';
+	pageheader();
+	
+	$id = filter_int($_GET['id']);
+	
+	if ($id) {
+		admincheck();
+		$edituser 	= true;
+		$titleopt	= 1;
+		$id_q		= "?id=$id";
+		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+	} else {
+		
+		if(!$loguser['id'])
+			errorpage('You must be logged in to edit your profile.');
+		if($banned)
+			errorpage("Sorry, but banned users aren't allowed to edit their profile.");
+		if($loguser['profile_locked'] == 1)
+			errorpage("You are not allowed to edit your profile.");
+		
+		// Custom title requirements
+		if		($loguser['titleoption']==0) $titleopt=0;
+		else if ($loguser['titleoption']==1) $titleopt=($loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
+		else if ($loguser['titleoption']==2) $titleopt=1;
+		else 								 $titleopt=0;
+		
+		$id 		= $loguser['id'];
+		$id_q		= "";
+		$userdata 	= $loguser;
+		$edituser 	= false;
 	}
-  if($loguser['posts']>=500 or ($loguser[posts]>=250 && (ctime()-$loguser[regdate])>=100*86400)) $postreq=1;
-  if($loguser['titleoption']==0 || $banned) $titleopt=0;
-  if($loguser['titleoption']==1 && ($postreq or $power>0 or $loguser[title])) $titleopt=1;
-  if($loguser['titleoption']==2) $titleopt=1;
-  if(!$action){
-    $birthday=getdate($loguser['birthday']);
-    if($loguser['birthday']){
-			$month=$birthday['mon'];
-			$day=$birthday['mday'];
-			$year=$birthday['year'];
-    }
+	
+	//if($_GET['lol'] || ($loguserid == 1420)) errorpage('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;"><object width="100%" height="100%"><param name="movie" value="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="100%" height="100%"></embed></object></div>');
+	
 
-		if ($loguser['sex'] == 255)
-			$loguser['sex'] = $loguser['oldsex'];
+	
+	
+	if (isset($_POST['submit'])) {
+		check_token($_POST['auth']);
+		
+		// Reinforce "Force male / female" gender item effects
+		$itemdb = getuseritems($id);
+		foreach ($itemdb as $item){
+			if 		($item['effect'] == 1) $_POST['sex'] = 1;	// Force female
+			else if ($item['effect'] == 2) $_POST['sex'] = 0;	// Force male
+		}
 
-    $descbr="</b>$smallfont<br></center>&nbsp;";
-    $checked1[$loguser['sex']]='checked=1';
-    $checked2[$loguser['viewsig']]='checked=1';
-//    $checked3[$loguser['posttool']]='checked=1';
-    $checked4[$loguser['useranks']]='checked=1';
-    $checked5[$loguser['pagestyle']]='checked=1';
-    $checked6[$loguser['pollstyle']]='checked=1';
-    $sexlist="
-	$radio=sex value=0 $checked1[0]> Male &nbsp;&nbsp;
-	$radio=sex value=1 $checked1[1]> Female &nbsp;&nbsp;
-	$radio=sex value=2 $checked1[2]> N/A";
-	if ($loguser['sex'] > 2)
-		$sexlist .= "$radio=sex value=$loguser[sex] checked style=\"display:none;\">";
+		// Reset the date settings in case they match with the default
+		$eddateformat 	= filter_string($_POST['dateformat'], true);
+		$eddateshort 	= filter_string($_POST['dateshort'], true);
+		if ($eddateformat == $config['default-dateformat']) $eddateformat = '';
+		if ($eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
+		
+		
+		// \n -> <br> conversion
+		$postheader = filter_string($_POST['postheader'], true);
+		$signature 	= filter_string($_POST['signature'], true);
+		$bio 		= filter_string($_POST['bio'], true);
+		sbr(0,$postheader);
+		sbr(0,$signature);
+		sbr(0,$bio);
+		
+		// Make sure the thread layout does exist to prevent "funny" shit
+		$tlayout = filter_int($_POST['tlayout']);
+		$valid = $sql->resultq("SELECT id FROM tlayouts WHERE id = $tlayout");
+		if (!$valid) $tlayout = 1;	// Regular (no numgfx)
+			
+		
+		/*
+			$oldtitle	= "";
+			$title		= filter_string($_POST['title'], true);
+		while ($oldtitle != $title) {
+			$oldtitle = $title;
+			$title=preg_replace("'<(b|i|u|s|small|br)>'si", '[\\1]', $title);
+			$title=preg_replace("'</(b|i|u|s|small|font)>'si", '[/\\1]', $title);
+			$title=preg_replace("'<img ([^>].*?)>'si", '[img \\1]', $title);
+			$title=preg_replace("'<font ([^>].*?)>'si", '[font \\1]', $title);
+		//   $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); 
+			$title=strip_tags($title);
+		//    $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); 
+			$title=preg_replace("'\[font ([^>].*?)\]'si", '<font \\1>', $title);
+			$title=preg_replace("'\[img ([^>].*?)\]'si", '<img \\1>', $title);
+			$title=preg_replace("'\[(b|i|u|s|small|br)\]'si", '<\\1>', $title);
+			$title=preg_replace("'\[/(b|i|u|s|small|font)\]'si", '</\\1>', $title);
+			$title=preg_replace("'(face|style|class|size|id)=\"([^ ].*?)\"'si", '', $title);
+			$title=preg_replace("'(face|style|class|size|id)=\'([^ ].*?)\''si", '', $title);
+			$title=preg_replace("'(face|style|class|size|id)=([^ ].*?)'si", '', $title);
+		}*/
 
-    $vsig="
-	$radio=viewsig value=0 $checked2[0]> Disabled &nbsp;&nbsp;
-	$radio=viewsig value=1 $checked2[1]> Enabled &nbsp;&nbsp;
-	$radio=viewsig value=2 $checked2[2]> Auto-updating";
-//    $vtool="
-//	$radio=posttool value=0 $checked3[0]> Disabled &nbsp;&nbsp;
-//	$radio=posttool value=1 $checked3[1]> Enabled";
-    $pagestyle="
-	$radio=pagestyle value=0 $checked5[0]> Inline &nbsp;&nbsp;
-	$radio=pagestyle value=1 $checked5[1]> Seperate line";
-    $pollstyle="
-	$radio=pollstyle value=0 $checked6[0]> Normal &nbsp;&nbsp;
-	$radio=pollstyle value=1 $checked6[1]> Influence";
-    if($titleopt){
-		// this went after this block, which makes it COMPLETELY USELESS
-	    squot(0,$loguser[title]);
-		$titleoption="
-	    $tccell1><b>Custom title:$descbr This title will be shown below your rank.</td>
-	    $tccell2l>$inpt=title VALUE=\"$loguser[title]\" SIZE=60 MAXLENGTH=255><tr>
-		";
-    }
-    $loguser['minipic'] = htmlspecialchars($loguser['minipic'], ENT_QUOTES);
-    $loguser['picture'] = htmlspecialchars($loguser['picture'], ENT_QUOTES);
-    $loguser['moodurl'] = htmlspecialchars($loguser['moodurl'], ENT_QUOTES);
-    squot(0,$loguser['realname']);
-//    squot(0,$loguser['aka']);
-    squot(0,$loguser['location']);
-//    squot(1,$loguser['aim']);
-//    squot(1,$loguser['imood']);
-    squot(0,$loguser['email']);
-//    squot(1,$loguser['homepageurl']);
-    squot(0,$loguser['homepagename']);
-    sbr(1,$loguser['postheader']);
-    sbr(1,$loguser['signature']);
-    sbr(1,$loguser['bio']);
-
-    $schemes=$sql->query('SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE ord > 0 GROUP BY u.scheme ORDER BY s.ord');
-    while($sch=$sql->fetch($schemes)){
-			$sel=($sch['id']==$loguser['scheme']?' selected':'');
-			$schlist.="<option value=$sch[id]$sel>$sch[name] ($sch[used])";
-    }
-    $schlist="<select name=sscheme>$schlist</select>";
-
-    $tlayouts=$sql->query('SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY u.layout ORDER BY tl.ord');
-    while($lay=$sql->fetch($tlayouts)){
-			$sel=($lay['id']==$loguser['layout']?' selected':'');
-			$laylist.="<option value=$lay[id]$sel>$lay[name] ($lay[used])";
-    }
-    $laylist="<select name=tlayout>$laylist</select>";
-
-    $used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep', 'signsep', 'cnt');
-    for($i=0;$sepn[$i];$i++){
-			$sel=($i==$loguser['signsep']?' selected':'');
-			$seplist.="<option value=$i$sel>$sepn[$i] ($used[$i])";
-    }
-    $seplist="<select name=signsep>$seplist</select>";
-
-    $rsets = $sql->query('SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY u.useranks ORDER BY rs.id');
-    while($set=$sql->fetch($rsets)){
-			$sel=($set['id']==$loguser['useranks']?' selected':'');
-			$rsetlist.="<option value=$set[id]$sel>$set[name] ($set[used])";
-    }
-    $rsetlist="<select name=useranks>$rsetlist</select>";
-
-    print "
-	$header<br>$tblstart
-	 <FORM ACTION=editprofile.php NAME=REPLIER METHOD=POST autocomplete=off>
-	 $tccellh>Login information</td>$tccellh>&nbsp<tr>
-	 $tccell1><b>User name:</td>$tccell2l>$loguser[name]<tr>
-	 $tccell1><b>Password:</b>$descbr You can change your password by entering a new one here.</td>
-	 $tccell2l>$inpp=password SIZE=13 MAXLENGTH=64 autocomplete=off><tr>
-
-	 $tccellh> Appearance</td>$tccellh>&nbsp<tr>
-	 $titleoption
-	 $tccell1><b>User rank:</b>$descbr You can hide your rank, or choose from different sets.</td>
-	 $tccell2l>$rsetlist<tr>
-	 $tccell1><b>User picture:$descbr The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.</td>
-	 $tccell2l>$inpt=picture VALUE=\"$loguser[picture]\" SIZE=60 MAXLENGTH=100><tr>
-	 $tccell1><b>Mood avatar:$descbr The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!</td>
-	 $tccell2l>$inpt=moodurl VALUE=\"$loguser[moodurl]\" SIZE=60 MAXLENGTH=100><tr>
-	 $tccell1><b>Minipic:$descbr The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.</td>
-	 $tccell2l>$inpt=minipic VALUE=\"$loguser[minipic]\" SIZE=60 MAXLENGTH=100><tr>
-	 $tccell1><b>Post background:$descbr The full URL of a picture showing up in the background of your posts. Leave it blank for no background. Please make sure your text is readable on the background!</td>
-	 $tccell2l>$inpt=postbg VALUE=\"$loguser[postbg]\" SIZE=60 MAXLENGTH=250><tr>
-	 $tccell1><b>Post header:$descbr This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a <<z>font> tag). This should preferably be kept small, and not contain too much text or images.</td>
-	 $tccell2l>$txta=postheader ROWS=8 COLS=60>". htmlspecialchars($loguser[postheader]) ."</TEXTAREA><tr>
-	 $tccell1><b>Signature:$descbr This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size.</td>
-	 $tccell2l>$txta=signature ROWS=8 COLS=60>". htmlspecialchars($loguser[signature]) ."</TEXTAREA><tr>
-
-	 $tccellh>Personal information</td>$tccellh>&nbsp<tr>
-	 $tccell1><b>Sex:$descbr Male or female. (or N/A if you don't want to tell it)</td>
-	 $tccell2l>$sexlist<tr>
-<!--	 $tccell1><b>Also known as:$descbr If you go by an alternate alias (or are constantly subjected to name changes), enter it here.  It will be displayed in your profile if it doesn't match your current username.</td>
-	 $tccell2l>$inpt=aka VALUE=\"$loguser[aka]\" SIZE=25 MAXLENGTH=25><tr> -->
-	 $tccell1><b>Real name:$descbr Your real name (you can leave this blank).</td>
-	 $tccell2l>$inpt=realname VALUE=\"$loguser[realname]\" SIZE=40 MAXLENGTH=60><tr>
-	 $tccell1><b>Location:$descbr Where you live (city, country, etc.).</td>
-	 $tccell2l>$inpt=location VALUE=\"$loguser[location]\" SIZE=40 MAXLENGTH=60><tr>
-	 $tccell1><b>Birthday:$descbr Your date of birth.</td>
-	 $tccell2l>Month: $inpt=bmonth SIZE=2 MAXLENGTH=2 VALUE=$month> Day: $inpt=bday SIZE=2 MAXLENGTH=2 VALUE=$day> Year: $inpt=byear SIZE=4 MAXLENGTH=4 VALUE=$year><tr>
-	 $tccell1><b>Bio:$descbr Some information about yourself, showing up in your profile.</td>
-	 $tccell2l>$txta=bio ROWS=8 COLS=60>". htmlspecialchars($loguser[bio]) ."</TEXTAREA><tr>
-
-	 $tccellh>Online services</td>$tccellh>&nbsp<tr>
-	 $tccell1><b>Email address:$descbr This is only shown in your profile; you don't have to enter it if you don't want to.</td>
-	 $tccell2l>$inpt=email VALUE=\"$loguser[email]\" SIZE=60 MAXLENGTH=60><tr>
-	 $tccell1><b>AIM screen name:$descbr Your AIM screen name, if you have one.</td>
-	 $tccell2l>$inpt=aim VALUE=\"$loguser[aim]\" SIZE=30 MAXLENGTH=30><tr>
-	 $tccell1><b>ICQ number:$descbr Your ICQ number, if you have one.</td>
-	 $tccell2l>$inpt=icq VALUE=$loguser[icq] SIZE=10 MAXLENGTH=10><tr>
-	 $tccell1><b>imood:$descbr If you have a imood account, you can enter the account name (email) for it here.</td>
-	 $tccell2l>$inpt=imood VALUE=\"$loguser[imood]\" SIZE=60 MAXLENGTH=100><tr>
-	 $tccell1><b>Homepage URL:$descbr Your homepage URL (must start with the \"http://\"), if you have one.</td>
-	 $tccell2l>$inpt=homepage VALUE=\"$loguser[homepageurl]\" SIZE=60 MAXLENGTH=80><tr>
-	 $tccell1><b>Homepage name:$descbr Your homepage name, if you have a homepage.</td>
-	 $tccell2l>$inpt=pagename VALUE=\"$loguser[homepagename]\" SIZE=60 MAXLENGTH=100><tr>
-
-	 $tccellh> Options</td>$tccellh>&nbsp<tr>
-	 $tccell1><b>Custom date format:$descbr Edit the date format here to affect how dates are displayed.  Leave it blank to return to the default format (<b>$defaultdateformat</b>)<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information.</td>
-	 $tccell2l>$inpt=eddateformat value=\"$dateformat\" size=16 maxlength=32><tr>
-	 $tccell1><b>Custom short date format:$descbr A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>$defaultdateshort</b>).</td>
-	 $tccell2l>$inpt=eddateshort value=\"$dateshort\" size=8 maxlength=16><tr>
-	 $tccell1><b>Timezone offset:$descbr How many hours you're offset from the time on the board (".date($dateformat,ctime()).").</td>
-	 $tccell2l>$inpt=timezone VALUE=$loguser[timezone] SIZE=5 MAXLENGTH=5><tr>
-	 $tccell1><b>Posts per page:$descbr The maximum number of posts you want to be shown in a page in threads.</td>
-	 $tccell2l>$inpt=postsperpage SIZE=4 MAXLENGTH=4 VALUE=$loguser[postsperpage]><tr>
-	 $tccell1><b>Threads per page:$descbr The maximum number of threads you want to be shown in a page in forums.</td>
-	 $tccell2l>$inpt=threadsperpage SIZE=4 MAXLENGTH=4 VALUE=$loguser[threadsperpage]><tr>".
-//	 $tccell1><b>Use textbox toolbar when posting:$descbr You can disable it here, preventing potential slowdowns or other minor problems when posting.</td>
-//	 $tccell2l>$vtool<tr>
-	"$tccell1><b>Signatures and post headers:$descbr You can disable them here, which can make thread pages smaller and load faster.</td>
-	 $tccell2l>$vsig<tr>
-
-	 $tccell1><b>Forum page list style:$descbr Inline (Title - Pages ...) or Seperate Line (shows more pages)</td>
-	 $tccell2l>$pagestyle<tr>
-	 $tccell1><b>Poll vote system:$descbr Normal (based on users) or Influence (based on levels)</td>
-	 $tccell2l>$pollstyle<tr>
-	 
-	 $tccell1><b>Thread layout:$descbr You can choose from a few thread layouts here.</td>
-	 $tccell2l>$laylist<tr>
-	 $tccell1><b>Signature separator:$descbr You can choose from a few signature separators here.</td>
-	 $tccell2l>$seplist<tr>
-	 $tccell1><b>Color scheme / layout:$descbr You can select from a few color schemes here.</td>
-	 $tccell2l>$schlist<tr>
-
-	 $tccellh>&nbsp</td>$tccellh>&nbsp<tr>
-	 $tccell1>&nbsp</td>$tccell2l>
-	 $inph=action VALUE=saveprofile>
-	 $inph=userid VALUE=$userid>
-	 $inps=submit VALUE=\"Edit profile\"></td></FORM>
-	$tblend
-    ";
-  }
-  if($action=='saveprofile'){
-    if ($eddateformat == $defaultdateformat) $eddateformat = '';
-    if ($eddateshort  == $defaultdateshort)  $eddateshort  = '';
-
-    sbr(0,$postheader);
-    sbr(0,$signature);
-    sbr(0,$bio);
-    if(!isset($title) or !$titleopt) $title=$loguser[title];
-    if($sex>2 && $sex != $loguser['sex'] && $sex != $loguser['oldsex'])
-      $sex=2;
-
-	$oldtitle	= "";
-	while ($oldtitle != $title) {
-		$oldtitle = $title;
-		$title=preg_replace("'<(b|i|u|s|small|br)>'si", '[\\1]', $title);
-		$title=preg_replace("'</(b|i|u|s|small|font)>'si", '[/\\1]', $title);
-		$title=preg_replace("'<img ([^>].*?)>'si", '[img \\1]', $title);
-		$title=preg_replace("'<font ([^>].*?)>'si", '[font \\1]', $title);
-	/*    $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); */
-		$title=strip_tags($title);
-	/*    $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); */
-		$title=preg_replace("'\[font ([^>].*?)\]'si", '<font \\1>', $title);
-		$title=preg_replace("'\[img ([^>].*?)\]'si", '<img \\1>', $title);
-		$title=preg_replace("'\[(b|i|u|s|small|br)\]'si", '<\\1>', $title);
-		$title=preg_replace("'\[/(b|i|u|s|small|font)\]'si", '</\\1>', $title);
-		$title=preg_replace("'(face|style|class|size|id)=\"([^ ].*?)\"'si", '', $title);
-		$title=preg_replace("'(face|style|class|size|id)=\'([^ ].*?)\''si", '', $title);
-		$title=preg_replace("'(face|style|class|size|id)=([^ ].*?)'si", '', $title);
-	}
-	$bio=preg_replace("'<iframe'si", '&lt;iframe', $bio);
-    $bio=preg_replace("'<script'si", '&lt;script', $bio);
-    $bio=preg_replace("'onload'si", 'o<z>nload', $bio);
-    $bio=preg_replace("'onfail'si", 'o<z>nfail', $bio);
-    $bio=preg_replace("'onhover'si", 'o<z>nhover', $bio);
-    $bio=preg_replace("'javascript'si", 'java<z>script', $bio);
-    $birthday=@mktime(12,0,0,$bmonth,$bday,$byear);
-    if(!$bmonth && !$bday && !$byear) $birthday=0;
-    if(!$icq) $icq=0;
-    if(!isset($useranks)) $useranks=$loguser[useranks];
-
-		if ($_POST['password']) {
-			$hash = getpwhash($_POST['password'], $loguserid);
-			$passwordenc = "`password` = '$hash', ";
-
-			if ($loguser['id'] == $loguserid) {
+		// Changing the password?
+		$password 	= filter_string($_POST['pass1']);
+		$passchk 	= filter_string($_POST['pass2']);
+		if ($password && ($edituser || $password == $passchk)) {	// Make sure we enter the correct password
+			$passwordenc = getpwhash($password, $id);
+			if ($loguser['id'] == $id) {
 				$verifyid = intval(substr($_COOKIE['logverify'], 0, 1));
 				$verify = create_verification_hash($verifyid, $hash);
 				setcookie('logverify',$verify,2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
 			}
+		} else { // Sneaky!  But no.
+			$passwordenc = $userdata['password'];
 		}
-		else // Sneaky!  But no.
-			$passwordenc = '';
+		
+		if ($issuper) {
+			$namecolor = $_POST['colorspec'] ? $_POST['colorspec'] : $_POST['namecolor'];
+		} else {
+			$namecolor = $userdata['namecolor'];
+		}
+		
+		
+		$sql->beginTransaction();
+		$querycheck = array();
+		
+		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
+		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
+		
+		// Editprofile fields
+		$mainval = array(
+			// Login info
+			'password'			=> $passwordenc,	
+			// Appareance
+			'title'				=> $titleopt ? xssfilters(filter_string($_POST['title'], true)) : $userdata['title'],
+			'namecolor'			=> htmlspecialchars($namecolor, ENT_QUOTES),
+			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
+			'picture' 			=> filter_string($_POST['picture'], true),
+			'minipic' 			=> filter_string($_POST['minipic'], true),
+			'moodurl' 			=> filter_string($_POST['moodurl'], true),
+			'postheader' 		=> xssfilters($postheader),
+			'signature' 		=> xssfilters($signature),
+			// Personal information
+			'sex' 				=> forcerange($_POST['sex'], 0, 2, 0),	// x >= 0 && x <= 2, default to 0 otherwise 
+			'aka' 				=> filter_string($_POST['aka'], true),
+			'realname' 			=> filter_string($_POST['realname'], true),
+			'location' 			=> xssfilters(filter_string($_POST['location'], true)),
+			'birthday'			=> fieldstotimestamp('birth', '_POST'),
+			'bio' 				=> xssfilters($bio),
+			// Online services
+			'email' 			=> filter_string($_POST['email'], true),
+			'privateemail' 		=> filter_int($_POST['privateemail']),
+			'icq' 				=> filter_int($_POST['icq']),
+			'aim' 				=> filter_string($_POST['aim'], true),
+			'imood' 			=> filter_string($_POST['imood'], true),
+			'homepageurl' 		=> filter_string($_POST['homepageurl'], true),
+			'homepagename'	 	=> filter_string($_POST['homepagename'], true),
+			// Options
+			'dateformat' 		=> $eddateformat,
+			'dateshort' 		=> $eddateshort,
+			'timezone' 			=> filter_int($_POST['timezone']),
+			'postsperpage' 		=> filter_int($_POST['postsperpage']),
+			'threadsperpage'	=> filter_int($_POST['threadsperpage']),
+			'viewsig'			=> forcerange($_POST['viewsig'], 0, 2, 0),
+			'pagestyle' 		=> forcerange($_POST['pagestyle'], 0, 1, 0),
+			'pollstyle' 		=> forcerange($_POST['pollstyle'], 0, 1, 0),
+			'layout' 			=> $tlayout,
+			'signsep' 			=> forcerange($_POST['signsep'], 0, 3, 0),
+			'scheme' 			=> filter_int($_POST['scheme']),
+			'hideactivity' 		=> filter_int($_POST['hideactivity']),
+			// What user?
+			'id'				=> $id,
+		);
+		
+		
+		if ($edituser) {
+			/*
+			if ($sex == -378) {
+			$sex = $sexn;
+			}
+*/
+			if ($id == 1 && $loguser['id'] != 1) {
+				xk_ircsend("1|". xk(7) ."Someone (*cough* {$loguser['id']} *cough*) is trying to be funny...");
+			}
+		
+			 //$sql->query("INSERT logs SET useraction ='Edit User ".$user[nick]."(".$user[id]."'");
+			 
+			 // Do the double name check here
+			$users = $sql->query('SELECT name FROM users');
+			
+			$username  = substr(xssfilters(filter_string($_POST['name'], true)),0,25);
+			$username2 = str_replace(' ','',$username);
+			$username2 = preg_replace("'&nbsp;?'si",'',$username2);
+			
+			$samename = NULL;
+			while ($user = $sql->fetch($users)) {
+				$user['name'] = str_replace(' ','',$user['name']);
+				if (strcasecmp($user['name'], $username2) == 0) $samename = $user['name'];
+			}
+			 
+			// Extra edituser fields
+			$adminval = array(
+				
+				'name'				=> ($samename || !$username) ? $username : $userdata['name'],
+				// No "Imma become a root admin" bullshit
+				'powerlevel' 		=> $sysadmin ? filter_int($_POST['powerlevel']) : min(3, filter_int($_POST['powerlevel'])),
+				'regdate'			=> fieldstotimestamp('reg', '_POST'),
+				'posts'				=> filter_int($_POST['posts']),
+				'profile_locked'	=> filter_int($_POST['profile_locked']),
+				'editing_locked'	=> filter_int($_POST['editing_locked']),
+				'titleoption'		=> filter_int($_POST['titleoption']),
+				
+			);
+	
+			$adminset = "powerlevel=:powerlevel,name=:name,regdate=:regdate,posts=:posts,profile_locked=:profile_locked,editing_locked=:editing_locked,titleoption=:titleoption,";
+			
+			$gcoins = filter_int($_POST['gcoins']);
+			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id", false, $querycheck);
+		} else {
+			$adminval = array();
+			$adminset = "";
+		}
+		
+		
+		// You are not supposed to look at this.
+		// No, really. These are the same placeholder from the arrays above. It's a lot prettier to look at.
+		$sql->queryp("
+			UPDATE users SET {$adminset}password=:password,namecolor=:namecolor,picture=:picture,minipic=:minipic,signature=:signature,bio=:bio,email=:email,
+			icq=:icq,title=:title,useranks=:useranks,aim=:aim,sex=:sex,homepageurl=:homepageurl,homepagename=:homepagename,privateemail=:privateemail,
+			timezone=:timezone,dateformat=:dateformat,dateshort=:dateshort,postsperpage=:postsperpage,aka=:aka,realname=:realname,
+			location=:location,postheader=:postheader,scheme=:scheme,threadsperpage=:threadsperpage,birthday=:birthday,viewsig=:viewsig,
+			layout=:layout,moodurl=:moodurl,imood=:imood,signsep=:signsep,pagestyle=:pagestyle,pollstyle=:pollstyle,hideactivity=:hideactivity
+			WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
+		
+		if ($sql->checkTransaction($querycheck)) {
+			if (!$edituser)	errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
+			else errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
+		} else {
+			errorpage("Could not edit the profile due to an error.");
+		}
+		
+	}
+	else {
+		
+			
+		//squot(0,$userdata['title']);
+		//squot(0,$userdata['realname']);
+		//squot(0,$userdata['aka']);
+		//squot(0,$userdata['location']);
+		//    squot(1,$userdata['aim']);
+		//    squot(1,$userdata['imood']);
+		//squot(0,$userdata['email']);
+		//    squot(1,$userdata['homepageurl']);
+		//squot(0,$userdata['homepagename']);
+		sbr(1,$userdata['postheader']);
+		sbr(1,$userdata['signature']);
+		sbr(1,$userdata['bio']);
+		
+		/*
+			A ""slightly updated"" version of the table system from boardc
+			(You can now set a maxlength for input fields)
+		*/
 
-    $sql->query("UPDATE users
-      SET		$passwordenc
-      `picture` = '$picture',
-      `minipic` = '$minipic',
-      `signature` = '$signature',
-      `bio` = '$bio',
-      `email` = '$email',
-      `icq` = '$icq',
-      `title` = '$title',
-      `useranks` = '$useranks',
-      `aim` = '$aim',
-      `sex` = '$sex',
-      `homepageurl` = '$homepage',
-      `homepagename` = '$pagename',
-      `timezone` = '$timezone',
-      `dateformat` = '$eddateformat',
-      `dateshort` = '$eddateshort',
-      `postsperpage` = '$postsperpage',".
-//      `aka` = '$aka',
-     "`realname` = '$realname',
-      `location` = '$location',
-      `postbg` = '$postbg',
-      `postheader` = '$postheader',
-      `birthday` = '$birthday',
-      `scheme` = '$sscheme',
-      `threadsperpage` = '$threadsperpage',
-      `viewsig` = '$viewsig',
-      `layout` = '$tlayout',
-      `moodurl` = '". $_POST['moodurl'] ."',".
-//      `posttool` = '$posttool',
-     "`imood` = '$imood',
-      `signsep` = '$signsep',
-      `pagestyle` = '$pagestyle',
-      `pollstyle` = '$pollstyle'
-    WHERE `id` = '$loguserid'") OR print mysql_error();
+		table_format("Login information", array(
+			"User name" 	=> [4, "name", "", 25, 25], // static
+			"Password"		=> [4, "password", "You can change your password by entering a new one here."], // password field
+		));
+		
+		if ($edituser) {
+			// Set type from static to input, as an admin should be able to do that.
+			$fields["Login information"]["User name"][0] = 0;
+			
+			// ... and also gets the extra "Administrative bells and whistles"
+			table_format("Administrative bells and whistles", array(
+				"Power level" 				=> [4, "powerlevel", ""], // Custom listbox with negative values.
+				//"Ban duration"			=> [4, "ban_hours", ""],
+				"Number of posts"			=> [0, "posts", "", 6, 10],
+				"Registration time"			=> [4, "regdate", ""],
+				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
+				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked"],
+				"Custom Title Privileges" 	=> [2, "titleoption", "", "Revoked|Determine by rank/posts|Enabled"],
+			));
+		}
+		
+		if ($titleopt) {
+			table_format("Appareance", array(
+				"Custom title" => [0, "title", "This title will be shown below your rank.", 60, 255],
+			));
+		}
+		if ($issuper) {
+			table_format("Appareance", array(
+				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color (leave this blank to return to the default color). This is an hexadecimal number.<br>You can use the <a href='hex.php' target='_blank'>Color Chart</a> to select a color to enter here."],
+			));
+		}
+		table_format("Appareance", array(
+			"User rank"		=> [4, "useranks", "You can hide your rank, or choose from different sets."],
+			"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 60, 100],
+			"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
+			"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 60, 100],
+			"Post header" 	=> [1, "postheader", "This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a &lt;font&gt; tag). This should preferably be kept small, and not contain too much text or images."],
+			"Signature" 	=> [1, "signature", "This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size."],
+		));		
+		
+		table_format("Personal information", array(
+			"Sex" 		=> [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
+			"Also known as" => [0, "aka", "If you go by an alternate alias (or are constantly subjected to name changes), enter it here.  It will be displayed in your profile if it doesn't match your current username.", 25, 25],
+			"Real name" => [0, "realname", "Your real name (you can leave this blank).", 40],
+			"Location" 	=> [0, "location", "Where you live (city, country, etc.).", 40],
+			"Birthday"	=> [4, "birthday", "Your date of birth."],
+			"Bio"		=> [1, "bio", " Some information about yourself, showing up in your profile."],
+		));
 
-    print "$header<br>$tblstart$tccell1>Thank you, $loguser[name], for editing your profile.<br>".redirect("profile.php?id=$loguserid",'view your profile',0).$tblend;
-  }
+		table_format("Online services", array(
+			"Email address" 	=> [0, "email", "This is only shown in your profile; you don't have to enter it if you don't want to.", 60, 60],
+			"Email privacy" 	=> [2, "privateemail", "You can select a few privacy options for the email field.", "Public|Hide to guests|Private"],
+			"AIM screen name" 	=> [0, "aim", "Your AIM screen name, if you have one.", 30, 30],
+			"ICQ number" 		=> [0, "icq", "Your ICQ number, if you have one.", 10, 10],
+			"imood" 			=> [0, "imood", "If you have a imood account, you can enter the account name (email) for it here.", 60, 100],
+			"Homepage URL" 		=> [0, "homepageurl", "Your homepage URL (must start with the \"http://\") if you have one.", 60, 80],
+			"Homepage Name" 	=> [0, "homepagename", "Your homepage name, if you have a homepage.", 60, 100],
+		));
+		
+		table_format("Options", array(
+			"Custom date format" 			=> [0, "dateformat", "Edit the date format here to affect how dates are displayed. Leave it blank to return to the default format ({$config['default-dateformat']})<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information.", 16, 32],
+			"Custom short date format" 		=> [0, "dateshort", "A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>{$config['default-dateshort']}</b>).", 8, 16],
+			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
+			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
+			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
+			"Signatures and post headers"	=> [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.", "Disabled|Enabled|Auto-updating"],
+			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Seperate Line (shows more pages)", "Inline|Seperate line"],
+			"Poll vote system"				=> [2, "pollstyle", "Normal (based on users) or Influence (based on levels)", "Normal|Influence"],
+			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here."],
+			"Signature separator"			=> [4, "signsep", "You can choose from a few signature separators here."],
+			"Color scheme / layout"	 		=> [4, "scheme", "You can select from a few color schemes here."],
+			"Hide activity"			 		=> [2, "hideactivity", "You can choose to hide your online status.", "Show|Hide"],
+		));
+		if ($edituser){
+			table_format("Options", array(
+				"Green coins" 	=> [0, "gcoins", "", 10, 10],
+			));
+		}		
+		
+		/*
+			Custom values (used when first value in array is set to 4)
+		*/
+		
+		// Static text for the username (shown when editing your own profile)
+		$name = $userdata['name'];
+		
+		// Password field + confirmation (unless you're editing another user)
+		$password = "<input type='password' name='pass1'>";
+		if (!$edituser)	$password .= " Retype: <input type='password' name='pass2'>";
+	
+	
+		$birthday = datetofields($userdata['birthday'], 'birth');
+		
+		// The namecolor field is special
+		// Usually it contains an hexadecimal number, but it can take extra text values for special effects
+		// When a special effect is defined, we make sure to blank the main textbox
+		// otherwise we select the "Defined" option
+		if ($userdata['namecolor'] && !ctype_xdigit($userdata['namecolor'])) {	// Special effect?
+			$userdata['namecolor'] = "";
+			$sel_color[$userdata['namecolor']] = 'checked=1';
+		} else {
+			$sel_color[0] = 'checked=1';
+		}
 
-  print $footer;
-  printtimedif($startingtime);
+		$colorspec="
+		<input type=radio class='radio' name=colorspec value='' ".filter_string($sel_color[0]).">Defined 
+		<input type=radio class='radio' name=colorspec value='random' ".filter_string($sel_color[1]).">Random 
+		<input type=radio class='radio' name=colorspec value='time' ".filter_string($sel_color[2]).">Time-dependent 
+		<input type=radio class='radio' name=colorspec value='rnbow' ".filter_string($sel_color[3]).">Rainbow";
+	
+		$namecolor = "<input type='text' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=6 MAXLENGTH=6> $colorspec";
+		
+		if ($edituser) {
+			// Powerelevel selection
+			$powerlevel = "";
+			$check1[$userdata['powerlevel']] = 'selected';
+			if (!$sysadmin) unset($pwlnames[4]);
+			foreach ($pwlnames as $pwl => $pwlname) {
+				$powerlevel .= "<option value={$pwl} ".filter_string($check1[$pwl]).">{$pwlname}</option>";
+			}
+			$powerlevel = "<select name=powerlevel>{$powerlevel}</select>";
+			// Registration time
+			$regdate = datetofields($userdata['regdate'], 'reg', true, true);
+		}
+
+		
+		// listbox with <name> <used>
+		if (!$edituser && !$isadmin)
+			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.ord");
+		else
+			$scheme = doschemelist(true, $userdata['scheme'], 'scheme');
+		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY u.layout ORDER BY tl.ord');
+		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
+		
+		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
+		$signsep = "";
+		for($i = 0; isset($sepn[$i]); ++$i){
+				$sel = ($i==$userdata['signsep'] ? ' selected' : '');
+				$signsep .= "<option value={$i}{$sel}>{$sepn[$i]} (".filter_int($used[$i]).")";
+		}
+		$signsep="<select name='signsep'>$signsep</select>";
+		
+		/*
+			Table field generator
+		*/
+		$t = "";
+		foreach($fields as $i => $field){
+			$t .= "<tr><td class='tdbgh center'>$i</td><td class='tdbgh center'>&nbsp;</td></tr>";
+			foreach($field as $j => $data){
+				$desc = $edituser ? "" : "<br><small>$data[2]</small>";
+				if (!$data[0]) { // text box
+					if (!isset($data[3])) $data[3] = 60;
+					if (!isset($data[4])) $data[4] = 100;
+					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".htmlspecialchars($userdata[$data[1]])."\">";
+				}
+				else if ($data[0] == 1) // large
+					$input = "<textarea name='$data[1]' rows=8 cols=60 style='resize:vertical;' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+				else if ($data[0] == 2){ // radio
+					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]
+					$choices = explode("|", $data[3]);
+					$input = "";
+					foreach($choices as $i => $x)
+						$input .= "<input name='$data[1]' type='radio' value=$i ".filter_string($ch[$i]).">&nbsp;$x&nbsp;&nbsp;&nbsp; ";
+					unset($ch);
+				}
+				else if ($data[0] == 3){ // listbox
+					$ch[$userdata[$data[1]]] = "selected";
+					$choices = explode("|", $data[3]);
+					$input = "";
+					//for ($i = 0; isset($choices[$i]); $i+=2)
+					//	$input .= "<option value=".$choices[$i]." ".filter_string($ch[$i]).">".$choices[$i+1]."</option>";
+					foreach($choices as $i => $x)
+						$input .= "<option value=$i ".filter_string($ch[$i]).">$x</option>";
+					$input = "<select name='$data[1]'>$input</select>";
+					unset($ch);
+				}
+				else
+					$input = $$data[1];
+					
+				$t .= "<tr><td class='tdbg1 center'><b>$j:</b>$desc</td><td class='tdbg2'>$input</td></tr>";
+			}
+		}
+	}
+	
+	
+	// Hack around autocomplete, fake inputs (don't use these in the file) 
+	// Web browsers think they're smarter than the web designer, so they ignore demands to not use autocomplete.
+	// This is STUPID AS FUCK when you're working on another user, and not YOURSELF.
+	
+	$finput = $edituser ? '<input style="display:none" type="text" name="__f__usernm__"><input style="display:none" type="password" name="__f__passwd__">' : "";
+	
+	?>
+	<br>
+	<FORM ACTION="editprofile.php<?=$id_q?>" NAME=REPLIER METHOD=POST autocomplete=off>
+	<table class='table'>
+		<?=$finput?>
+		<?=$t?>
+		<tr>
+			<td class='tdbgh center'>&nbsp;</td>
+			<td class='tdbgh center'>&nbsp;</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'>&nbsp;</td>
+			<td class='tdbg2'>
+		<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
+		</td>
+	</table>
+	</FORM>
+	<?php
+	
+	pagefooter();
+	
+	function forcerange(&$var, $low, $high, $default) {
+		$var = (int) $var;
+		return ($var < $low || $var > $high) ? $default: $var;
+	}
+	
+	function table_format($name, $array){
+		global $fields;
+		
+		if (isset($fields[$name])){ // Already exists: merge arrays
+			$fields[$name] = array_merge($fields[$name], $array);
+		} else { // It doesn't: Create a new one.
+			$fields[$name] = $array;
+		}
+	}
+	
+	// When it comes to copy / pasted code...
+	function queryselectbox($val, $query) {
+		global $sql, $userdata;
+		$txt = "";
+		$q = $sql->query($query);
+		while ($x = $sql->fetch($q, PDO::FETCH_ASSOC)) {
+			$sel = ($x['id'] == $userdata[$val] ? ' selected' : '');
+			$txt .=" <option value={$x['id']}{$sel}>{$x['name']} ({$x['used']})</option>\n\r";			
+		}
+		return "<select name='$val'>$txt</select>";
+	}
 ?>

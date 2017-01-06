@@ -23,15 +23,15 @@
 
  $img=ImageCreateTrueColor($xs,$m);
 
- $c[bg]= ImageColorAllocate($img,  0,  0,  0);
- $c[bg1]=ImageColorAllocate($img,  0,  0, 60);
- $c[bg2]=ImageColorAllocate($img,  0,  0, 80);
- $c[bg3]=ImageColorAllocate($img, 40, 40,100);
- $c[bg4]=ImageColorAllocate($img,100, 40, 40);
- $c[mk1]=ImageColorAllocate($img, 60, 60,130);
- $c[mk2]=ImageColorAllocate($img, 80, 80,150);
- $c[bar]=ImageColorAllocate($img,250,190, 40);
- $c[pt] =ImageColorAllocate($img,250,250,250);
+ $c['bg'] =ImageColorAllocate($img,  0,  0,  0);
+ $c['bg1']=ImageColorAllocate($img,  0,  0, 60);
+ $c['bg2']=ImageColorAllocate($img,  0,  0, 80);
+ $c['bg3']=ImageColorAllocate($img, 40, 40,100);
+ $c['bg4']=ImageColorAllocate($img,100, 40, 40);
+ $c['mk1']=ImageColorAllocate($img, 60, 60,130);
+ $c['mk2']=ImageColorAllocate($img, 80, 80,150);
+ $c['bar']=ImageColorAllocate($img,250,190, 40);
+ $c['pt'] =ImageColorAllocate($img,250,250,250);
  for($i=0;$i<$days;$i++){
    $num=date('m',$dd+$i*86400)%2+1;
     if(date('m-d',$dd+$i*86400)=='01-01') $num=3;
@@ -41,17 +41,17 @@
 
  }
  for($i=0;$i<=($m / 50);$i++){
-   ImageLine($img,0,$m-$i*100+50,($days + 1) * $scalex - 1,$m-$i*100+50,$c[mk1]);
-   ImageLine($img,0,$m-$i*100,($days + 1) * $scalex - 1,$m-$i*100,$c[mk2]);
-   imagestring($img, 3, 3, $m-$i*100+1, ($i * 100) * $scaley, $c[bg]);
-   imagestring($img, 3, 3, $m-$i*100+51, ($i * 100 - 50) * $scaley, $c[bg]);
-   imagestring($img, 3, 2, $m-$i*100, ($i * 100) * $scaley, $c[mk2]);
-   imagestring($img, 3, 2, $m-$i*100+50, ($i * 100 - 50) * $scaley, $c[mk1]);
+   ImageLine($img,0,$m-$i*100+50,($days + 1) * $scalex - 1,$m-$i*100+50,$c['mk1']);
+   ImageLine($img,0,$m-$i*100,($days + 1) * $scalex - 1,$m-$i*100,$c['mk2']);
+   imagestring($img, 3, 3, $m-$i*100+1, ($i * 100) * $scaley, $c['bg']);
+   imagestring($img, 3, 3, $m-$i*100+51, ($i * 100 - 50) * $scaley, $c['bg']);
+   imagestring($img, 3, 2, $m-$i*100, ($i * 100) * $scaley, $c['mk2']);
+   imagestring($img, 3, 2, $m-$i*100+50, ($i * 100 - 50) * $scaley, $c['mk1']);
 
-   imagestring($img, 3, $xs - 71, $m-$i*100+1, sprintf("%10d", ($i * 100) * $scaley), $c[bg]);
-   imagestring($img, 3, $xs - 71, $m-$i*100+51, sprintf("%10d", ($i * 100 - 50) * $scaley), $c[bg]);
-   imagestring($img, 3, $xs - 72, $m-$i*100, sprintf("%10d", ($i * 100) * $scaley), $c[mk2]);
-   imagestring($img, 3, $xs - 72, $m-$i*100+50, sprintf("%10d", ($i * 100 - 50) * $scaley), $c[mk1]);
+   imagestring($img, 3, $xs - 71, $m-$i*100+1, sprintf("%10d", ($i * 100) * $scaley), $c['bg']);
+   imagestring($img, 3, $xs - 71, $m-$i*100+51, sprintf("%10d", ($i * 100 - 50) * $scaley), $c['bg']);
+   imagestring($img, 3, $xs - 72, $m-$i*100, sprintf("%10d", ($i * 100) * $scaley), $c['mk2']);
+   imagestring($img, 3, $xs - 72, $m-$i*100+50, sprintf("%10d", ($i * 100 - 50) * $scaley), $c['mk1']);
  }
 
 
@@ -111,14 +111,13 @@
 	foreach($xdata as $k => $v) {
 		$xdata2[$k - 13697]	= ($v / 1);
 	}
-
-	if (false) {
-		print "<pre>days = $days \n\n\n";
-		print_r($data);
-		print "\n\n------------------------\n\n";
-		print_r($xdata2);
-		die();
-	}
+/*
+	print "<pre>days = $days \n\n\n";
+	print_r($data);
+	print "\n\n------------------------\n\n";
+	print_r($xdata2);
+	die();
+	*/
 	drawdata($xdata2, $users[-1]['color']);
  
  Header('Content-type:image/png');

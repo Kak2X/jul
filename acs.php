@@ -1,33 +1,45 @@
 <?php
 	require 'lib/function.php';
-	require 'lib/layout.php';
-	$userid = htmlspecialchars(stripslashes($_GET['userid']));
-
-	$vd=date('m-d-y', ctime());
-	if (!$m && !$d && !$y) {
-		$m	= date("m", ctime() - 86400);
-		$d	= date("d", ctime() - 86400);
-		$y	= date("y", ctime() - 86400);
-	}
-	if(!$v){
-		$v=0;
-		$dd		= mktime(0,0,0,substr($vd,0,2),substr($vd,3,2),substr($vd,6,2));// + (3*3600);
-		$dd2	= mktime(0,0,0,substr($vd,0,2),substr($vd,3,2)+1,substr($vd,6,2));// + (3*3600);
-	}else{
+	
+	$username 	= htmlspecialchars(filter_string($_GET['username']));
+	$u			= filter_int($_GET['u']);
+	$view		= filter_int($_GET['view']);
+	//$vd = date('m-d-y', ctime());
+	
+	$timestamp = fieldstotimestamp('other', '_GET');
+	if (!$timestamp) $timestamp = ctime() - 86400;
+	
+	$m	= date("m", $timestamp);
+	$d	= date("d", $timestamp);
+	$y	= date("y", $timestamp);
+	
+	$v = filter_int($_GET['v']);
+	if (!$v) {
+		$dd		= mktime(0,0,0,$m,$d-1,$y);// + (3*3600);
+		$dd2	= mktime(0,0,0,$m,$d,$y);// + (3*3600);
+		//$dd		= mktime(0,0,0,substr($vd,0,2),substr($vd,3,2),substr($vd,6,2));// + (3*3600);
+		//$dd2	= mktime(0,0,0,substr($vd,0,2),substr($vd,3,2)+1,substr($vd,6,2));// + (3*3600);
+	} else {
 		$dd		= mktime(0,0,0,$m,$d,$y);// + (3*3600);
 		$dd2	= mktime(0,0,0,$m,$d+1,$y);// + (3*3600);
 	}
 
+	$users = $sql->query("
+		SELECT $userfields, COUNT(*) cnt 
+		FROM users AS u
+		INNER JOIN posts p ON u.id = p.user
+		WHERE p.date >= $dd AND p.date < $dd2 AND u.powerlevel >= 0
+		GROUP BY u.id 
+		ORDER BY cnt DESC
+	");
 
-	$users = $sql->query("SELECT u.id,u.name,u.aka,u.sex,u.powerlevel,COUNT(*) AS cnt FROM users AS u,posts AS p WHERE p.user=u.id AND p.date>=$dd AND p.date<$dd2 AND u.powerlevel >= 0 GROUP BY u.id ORDER BY cnt DESC");
-	$i=0;
-
-	if (!$u) {
-		$u = 0;
+	if (!$u) {				// Yourself
 		$n = $loguser['name'];
 	}
-	elseif ($u==2)
-		$n = $userid;
+	else if ($u == 2)		// Other user
+		$n = $username;
+	else					// None
+		$n = '';
 
 	if(!$view || $view <= 0 || $view > 2) $view=0;
 
@@ -35,66 +47,102 @@
 	$ch2[$u]	= 'checked';
 	$ch3[$view]	= 'checked';
 
-	$tposts		= $sql->resultq("SELECT COUNT(*) AS cnt FROM posts WHERE posts.date>$dd AND posts.date<$dd2",0,'cnt');
+	$tposts		= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > $dd AND date < $dd2");
 	$rcount		= ($tposts >= 400 ? 10 : 5);
 	$spoints	= ($tposts >= 400 ? 11 : 8);
-	$desc="</b><br>$smallfont";
-	print "
-		$header
-		<br><form action=acs.php>
-		$tblstart
-		$tccellh colspan=2>Currently viewing ".date('m-d-y',$dd)."<tr>
-		$tccell1><b>Day:$desc Select the day to view rankings from. (mm-dd-yy format)</td>
-		$tccell2l>$radio=v value=0 $ch1[0]> Today &nbsp; $radio=v value=1 $ch1[1]> Other: $inpt=m VALUE=\"$m\" SIZE=2 MAXLENGTH=2>-$inpt=d VALUE=\"$d\" SIZE=2 MAXLENGTH=2>-$inpt=y VALUE=\"$y\" SIZE=2 MAXLENGTH=2><tr>
-		$tccell1><b>User:$desc This user will be highlighted.</td>
-		$tccell2l>$radio=u value=1 $ch2[1]> None &nbsp; $radio=u value=0 $ch2[0]> You &nbsp; $radio=u value=2 $ch2[2]> Other: $inpt=userid VALUE=\"$userid\" SIZE=25 MAXLENGTH=25><tr>
-		$tccell1><b>View format:</b></td>
-		$tccell2l>$radio=view value=0 $ch3[0]> Full rankings &nbsp; $radio=view value=1 $ch3[1]> Rankers &nbsp; $radio=view value=2 $ch3[2]> JCS form<tr>
-		$tccell1>&nbsp;</td>
-		$tccell2l><input type=submit value=Submit>
-		$tblend
-		</form>
-		$tblstart
-		";
-	$max=1;
-	if($view<2){
-		print "
-			$tccellh width=30>#</td>
-			$tccellh width=60%>Name</td>
-			$tccellh width=50>Posts
-			$tccellh width=*>Total: $tposts
-			";
-		while($user=$sql->fetch($users)){
-			if($user['cnt']>$max) $max=$user['cnt'];
-			$i++;
-			if($rp!=$user['cnt']) $r=$i;
-			$rp=$user['cnt'];
+	
+	pageheader();
+	?>
+	<form action=acs.php>
+	<table class='table'>
+		<tr><td class='tdbgh center' colspan=2>Currently viewing <?=date('m-d-y',$dd)?></td></tr>
+		
+		<tr>
+			<td class='tdbg1 center'>
+				<b>Day:</b><br>
+				<span class='fonts'> Select the day to view rankings from. (mm-dd-yy format)</span>
+			</td>
+			<td class='tdbg2'>
+				<input type=radio class='radio' name=v value=0 <?=filter_string($ch1[0])?>> Today &nbsp;&nbsp;
+				<input type=radio class='radio' name=v value=1 <?=filter_string($ch1[1])?>> Other: <?=datetofields($timestamp, 'other', true, false, true)?>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class='tdbg1 center'>
+				<b>User:</b><br>
+				<span class='fonts'> This user will be highlighted.</span>
+			</td>
+			<td class='tdbg2'>
+				<input type=radio class='radio' name=u value=1 <?=filter_string($ch2[1])?>> None &nbsp;&nbsp;
+				<input type=radio class='radio' name=u value=0 <?=filter_string($ch2[0])?>> You &nbsp;&nbsp;
+				<input type=radio class='radio' name=u value=2 <?=filter_string($ch2[2])?>> Other: <input type='text' name=username VALUE="<?=$username?>" SIZE=25 MAXLENGTH=25>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class='tdbg1 center'><b>View format:</b></td>
+			<td class='tdbg2'>
+				<input type=radio class='radio' name=view value=0 <?=filter_string($ch3[0])?>> Full rankings &nbsp;&nbsp;
+				<input type=radio class='radio' name=view value=1 <?=filter_string($ch3[1])?>> Rankers &nbsp;&nbsp;
+				<input type=radio class='radio' name=view value=2 <?=filter_string($ch3[2])?>> JCS form
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'>&nbsp;</td>
+			<td class='tdbg2'><input type=submit value=Submit></td>
+		</tr>
+	</table>
+	</form>
+	<!-- ACS results -->
+	<table class='table'>
+		<tr>
+	<?php
+	$max = 1;
+	if ($view < 2) {
+		// Full rankings
+		?>
+			<td class='tdbgh center' width=30>#</td>
+			<td class='tdbgh center' width=60%>Name</td>
+			<td class='tdbgh center' width=50>Posts</td>
+			<td class='tdbgh center' width=*>Total: <?=$tposts?></td>
+		</tr>
+		<?php
+		$rp = $rr = NULL;
+		for ($i = 1; $user = $sql->fetch($users); ++$i) {
+			
+			if ($user['cnt'] > $max)
+				$max = $user['cnt'];
+			
+			if ($rp != $user['cnt']) $r = $i;
+			$rp = $user['cnt'];
 
 			// Don't rank with 1 post
 			if ($user['cnt'] <= 1 && $rcount >= $r)
 				$rcount = $r-1;
-
-			if($rr<=$rcount && $r>$rcount && $view==0) print "<tr>$tccellc colspan=4><img src='images/_.gif' height='4' width='1'></td></tr>";
-			$rr=$r;
-			$b = $slashb = '';
-			$td=$tccell1;
-
-			if($r>$rcount) $td=$tccell2;
+			if($rr <= $rcount && $r > $rcount && !$view) 
+				print "<tr><td class='tdbgc center' colspan=4><img src='images/_.gif' height='4' width='1'></td></tr>";
+			
+			$rr 	= $r;
+			$b 		= $slashb = '';
+			
+			$col 	= '1';	// Ranked
+			if($r > $rcount) $col = '2'; // Not ranked
 			if(!strcasecmp($user['name'], $n)){
-				$td=$tccellc;
-				$b='<b>';
-				$slashb='</b>';
+				$col 	= 'c'; // You (or whoever's selected)
+				$b 		= '<b>';
+				$slashb = '</b>';
 			}
-
-			$tdl=str_replace(' center','',$td);
-			if($view==0 or ($view==1 and ($r<=$rcount or !strcasecmp($user['name'], $n)))) {
+			
+			if(!$view  || ($view == 1 && ($r<=$rcount || !strcasecmp($user['name'], $n)))) {
+				if (isset($_GET['dur'])) $user['name'] = "DU". str_repeat("R", mt_rand(1,25));
 				print "
-					<tr>
-					$td>$b$r$slashb</td>
-					$tdl><a href=profile.php?id=$user[id]><font ".getnamecolor($user['sex'],$user['powerlevel']).">". (!$_GET['dur'] ? $user['name'] : "DU". str_repeat("R", mt_rand(1,25))) ."</font></a></td>
-					$td>$b$user[cnt]$slashb</td>
-					$tdl><img src=images/$numdir"."bar-on.gif width=".($user[cnt]*100/$max)."% height=8></td>
-					</tr>";
+				<tr>
+					<td class='tdbg{$col} center'>$b$r$slashb</td>
+					<td class='tdbg{$col}'>".getuserlink($user)."</td>
+					<td class='tdbg{$col} center'>$b{$user['cnt']}$slashb</td>
+					<td class='tdbg{$col}'><img src='images/{$numdir}bar-on.gif' width=".($user['cnt']*100/$max)."% height=8></td>
+				</tr>";
 			}
 		}
 	} else {
@@ -108,33 +156,36 @@
 //			if($r<=5) $ranky[$user['id']]=$r;
 //		}
 
-		$i=0;
-		$rp=0;
-		$r=0;
-		while($user = $sql->fetch($users) and $r <= $rcount){
-			$i++;
+		// JCS Form
+		$rp = 0;
+		$r  = 0;
+		$i  = 0;
+		$tie = $tend = NULL;
+		$dailyposts = $dailypoints = $ndailyposts = $ndailypoints = "";
+		for ($i = 1; $user = $sql->fetch($users) and $r <= $rcount; ++$i){
 			// Don't rank with 1 post
 			if ($user['cnt'] <= 1 && $rcount >= $r) {
 				$rcount = $r-1;
 			}
-			if($rp!=$user['cnt']){
-				$r=$i;
-				if($tend) $tie='';
-				if($tie) $tend=1;
-			}else{
-				$tie='T';
-				$tend=0;
+			if ($rp != $user['cnt']) {
+				$r = $i;
+				if ($tend) $tie = '';
+				if ($tie) $tend = 1;
+			} else {
+				$tie  = 'T';
+				$tend = 0;
 			}
-			$posts[$user['id']]=$user['cnt'];
-
+			$posts[$user['id']] = $user['cnt'];
 			// Ranked yesterday:
 //			$ry=$ranky[$user['id']];
 //			if(!$ry) $ry='NR';
 
-			$rp=$user['cnt'];
+			$rp = $user['cnt'];
 			//$myfakename = (($user['aka'] && $user['aka'] != $user['name']) ? "$user[aka] ($user[name])" : $user['name']);
 			//$myrealname = (($user['aka']) ? $user['aka'] : $user['name']);
 			$myfakename = $myrealname = $user['name'];
+			
+			
 			$dailyposts		.= $tie . $ndailyposts;
 			$dailypoints	.= $tie . $ndailypoints;
 			$ndailyposts	= "$r) ". $myfakename ." - ". $user['cnt'] ."<br>";
@@ -144,8 +195,15 @@
 //			$ndailyposts	= "$tie$r) ". $user['name'] ." - ". $user['cnt'] ." - ". ($spoints - $r) ."<br>";
 
 		}
+		// "Fix" to last line being cut off
+		if ($i > 1) {
+			$dailyposts		.= $tie . $ndailyposts;
+			$dailypoints	.= $tie . $ndailypoints;
+			$ndailyposts	= "$r) ". $myfakename ." - ". $user['cnt'] ."<br>";
+			$ndailypoints	= "$r) ". $myrealname ." - ". ($spoints - $r) ."<br>";
+		}
 		if($r <= $rcount) {
-			if($tend) $tie='';
+			if ($tend) $tie='';
 	//			$dailyposts.=$tie.$ndailyposts;
 	//			$dailypoints.=$tie.$ndailypoints;
 		}
@@ -163,9 +221,9 @@
 //			if($posts[$user[id]]<=$lose && $r<=$rcount) $offcharts.=($offcharts?', ':'OFF THE CHARTS: ')."$user[name] ($r)";
 //		}
 
-		print "
-			$tccell1l>
-			". strtoupper(date('F j',$dd)) ."<br>".
+		print 
+			"<td class='tdbg1'>".
+			 strtoupper(date('F j',$dd)) ."<br>".
 			"---------<br><br>".
 			"TOTAL NUMBER OF POSTS: $tposts<br><br>".
 			"$dailyposts<br><br>".
@@ -173,5 +231,9 @@
 			"--------------------<br>".
 			"$dailypoints";
 	}
-	print $tblend.$footer;
-	printtimedif($startingtime);
+	
+?>
+	</table>
+<?php
+
+	pagefooter();

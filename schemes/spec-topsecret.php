@@ -1,5 +1,5 @@
 <?php
-/*	$bgimage='';
+	$bgimage='';
 	$bgcolor='441808';   
 	$textcolor='ffdddd';   
 	$linkcolor='DEDAFE';   
@@ -19,7 +19,7 @@
 	$scr5='312d7d';
 	$scr6='210456';
 	$scr7='000020';
-*/
-	$boardtitle='<img src=images/reject.png>';
+
+	$config['board-title']='<img src=images/reject.png>';
 
 ?>

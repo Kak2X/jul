@@ -1,5 +1,6 @@
 <?php
-	$bgimage='http://xkeeper.shacknet.nu:5/img/fragment2.png';
+	//$bgimage='http://xkeeper.shacknet.nu:5/img/fragment2.png';
+	$bgimage='images/f2/bg_2.png';
 	$bgcolor='070722';   
 	$textcolor='cccccc';   
 	$linkcolor='80ff80';   
@@ -19,15 +20,15 @@
 	$scr5='312d7d';
 	$scr6='210456';
 	$scr7='000020';
-
+/*
 	$accesslist	= array(49, 18);
 
-		if (in_array($loguserid, $accesslist)) {
+		if (in_array($loguser['id'], $accesslist)) {
 		$power		= 3;
 		$isadmin	= true;
 		$loguser['powerlevel'] = 3;
 	}
-
-//	$boardtitle='<img src="images/attitudebarn.png">';
+*/
+//	$config['board-title']='<img src="images/attitudebarn.png">';
 
 ?>

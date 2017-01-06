@@ -1,7 +1,7 @@
 <?php
 
 	header("Content-type: text/plain");
-	$userid	= intval($_GET['u']);
+	$userid	= isset($_GET['u']) ? (int) $_GET['u'] : 0;
 
 	if (!$userid) die("No userid specified.");
 	chdir("..");

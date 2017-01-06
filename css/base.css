@@ -20,10 +20,12 @@ table { padding: 0.5em; }
 span.lastpost { font-size: 90%; padding: 0; margin: 0; }
 div.lastpost { font-size: 90%; text-align: right !important; }
 
-.table { width: 100%; empty-cells: show;}
+.table { width: 100%; empty-cells: show; border-spacing: 0px;}
 .sparkline { display: none; }
 .center, center { text-align: center; }
 .right { text-align: right; }
+.w  { width: 100%; }
+.nobr { white-space: nowrap; }
 
 code { overflow: auto; width: 100%; white-space: pre; display: block; }
 code br { display: none; }

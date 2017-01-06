@@ -1,9 +1,8 @@
 <?php
+	// What was this supposed to do?
 	require 'lib/function.php';
-	require 'lib/layout.php';
-	if (!$isadmin) { die(); }
-	print "$header<br>";
-	
+	admincheck();
+	pageheader();
 	print adminlinkbar("perfdata.php");
 	
 	

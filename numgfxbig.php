@@ -1,10 +1,11 @@
 <?php
-
-	$n	= intval($_GET['n']) ."";
-	$l	= intval($_GET['l']);
+	error_reporting(0);
+	
+	$n	= (int) $_GET['n'] ."";
+	$l	= (int) $_GET['l'];
 	$p	= 0;
 
-	if ($_GET['z']) {
+	if (isset($_GET['z'])) {
 		$n	= str_pad($n, $l, "0", STR_PAD_LEFT);
 	}
 

@@ -1,8 +1,7 @@
 <?php
 	require 'lib/function.php';
 
-	$u = intval($_GET['u']);
-	if (!$u) die();
+	$u = filter_string($_GET['u']);
 	$user['regdate'] = $sql->resultq("SELECT regdate FROM users WHERE id='$u'") or die();
 
 	$vd=date('m-d-y', $user['regdate']);
@@ -11,22 +10,21 @@
 	$days = floor((ctime()-$dd)/86400);
 	$pq = $sql->getresultsbykey(
 		"SELECT FROM_UNIXTIME(date, '%Y-%m-%d') day, count(*) c ".
-		"FROM posts WHERE user={$u} GROUP BY day ORDER BY day",
-		'day', 'c');
-	for($i=0; $i < $days; ++$i) {
+		"FROM posts WHERE user={$u} GROUP BY day ORDER BY day");
+	for($i=0; $i <= $days; ++$i) {
         $dk = date('Y-m-d',$dd+$i*86400);
 		if (!array_key_exists($dk, $pq)) continue;
 		$p[$i] = $pq[$dk];
 	}
+	
+	if (!isset($p)) die();
+	
 
-/*
-	if($_GET['debugsql']) {
-		require 'lib/layout.php';
-		print $header.$footer;
-		printtimedif(time());
-		die(1);
-	}
-*/
+	/*	
+	if(isset($_GET['debugsql'])) {
+		errorpage("");
+	}*/
+
 
 	$m=max($p);
 	$img=ImageCreate($days,$m);
@@ -41,7 +39,7 @@
 	$c['pt1']  = ImageColorAllocate($img,250,250,250); // Average
 	$c['pt2']  = ImageColorAllocate($img,240,230,220); // Average (over top of post bar)
 
-	for($i=0;$i<$days; ++$i){
+	for($i=0;$i<$days;++$i){
 		$num=date('m',$dd+$i*86400)%2+1;
 		if(date('m-d',$dd+$i*86400)=='01-01') $num=3;
 		ImageLine($img,$i,$m,$i,0,$c["bg$num"]);
@@ -50,10 +48,12 @@
 		ImageLine($img,0,$m-$i,$days,$m-$i,(($ct&1) ? $c['mk2'] : $c['mk1']));
 
 	$pt=0;
-	for($i=0;$i<$days;$i++) {
+	for($i=0;$i<$days;++$i) {
 		if (isset($p[$i])) {
 			ImageLine($img,$i,$m,$i,$m-$p[$i],$c['bar']);
 			$pt += $p[$i];
+		} else {
+			$p[$i] = 0;
 		}
 		$avg = $pt/($i+1);
 		ImageSetPixel($img,$i,$m-$avg,(($p[$i] >= $avg) ? $c['pt2'] : $c['pt1']));

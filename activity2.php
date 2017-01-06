@@ -21,13 +21,13 @@
 	$c['bar'] = ImageColorAllocate($img,250,190, 40);
 	$c['pt']  = ImageColorAllocate($img,250,250,250);
 
-	for($i=0;$i<$days;$i++){
+	for($i=0;$i<$days;++$i){
 		$num=date('m',$dd+$i*86400)%2+1;
 		if(date('m-d',$dd+$i*86400)=='01-01') $num=3;
 		ImageFilledRectangle($img,$i * $scalex,$m,($i + 1) * $scalex - 2,0,$c["bg$num"]);
 	}
 
-	for($i=0;$i<=($m / 50);$i++){
+	for($i=0;$i<=($m / 50);++$i){
 		ImageLine($img,0,$m-$i*100+50,($days + 1) * $scalex - 1, $m-$i*100+50, $c['mk1']);
 		ImageLine($img,0,$m-$i*100,   ($days + 1) * $scalex - 1, $m-$i*100,    $c['mk2']);
 		imagestring($img, 3, 3, $m-$i*100+1,  ($i * 100)      * $scaley, $c['bg']);

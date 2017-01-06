@@ -1,19 +1,17 @@
 <?php
-
+	
 	require 'lib/function.php';
-	$windowtitle	= "FAQ / Rules -- $boardname";
-	require 'lib/layout.php';
-
+	
+	pageheader("FAQ / Rules -- {$config['board-name']}");
 
 	$topiclist	= "";
 	$faq		= "";
   	if ($x_hacks['host']) {
-		print "$header<br>
-			$tblstart
-				<tr>$tccellh>FAQ and Rules</td></tr>
-				<tr>$tccell1l>Generally, this forum is for a small group of people that know each other well. You should probably think twice about registering if you don't know who the regulars are already.				
+		print "<table class='table'>
+				<tr><td class='tdbgh center'>FAQ and Rules</td></tr>
+				<tr><td class='tdbg1'>Generally, this forum is for a small group of people that know each other well. You should probably think twice about registering if you don't know who the regulars are already.				
 				</td></tr>
-			$tblend";
+			</table>";
 			
 	} else {
 
@@ -62,7 +60,7 @@
 	");
 
 /*
-	$faq	.= faqformat("n00b", "I have this <img src='http://xkeeper.net/img/noobsticker2-4.png' alt='n00b' title='TKEP regulars know this one' align='absmiddle' style='margin-top: -4px; margin-bottom: -4px;'> sticker on my post. What's up with that?", "
+	$faq	.= faqformat("n00b", "I have this <img src='images/noob/noobsticker2-4.png' alt='n00b' title='TKEP regulars know this one' align='absmiddle' style='margin-top: -4px; margin-bottom: -4px;'> sticker on my post. What's up with that?", "
 		The n00b sticker is our way of telling you that your post was pretty awful. Usually it's for one of the following reasons:
 		<ol>
 			<li>Complete disregard for our rules. If you show that you really can't even be bothered to read the small number of rules we have here, you're going to wear your welcome out <em>very</em> fast.</li>
@@ -114,25 +112,24 @@
 	");
 
 
-	print "$header<br>
+?>
+	<table class='table'>
+		<tr><td class='tdbgh center'>FAQ and Rules</td></tr>
+		<tr><td class='tdbg1'><b>Table of Contents</b>:
+		<ul>
+			<?=$topiclist?>
+		</ul></td></tr>
+	</table>
 
-		$tblstart
-			<tr>$tccellh>FAQ and Rules</td></tr>
-			<tr>$tccell1l><b>Table of Contents</b>:
-			<ul>
-				$topiclist
-			</ul></td></tr>
-		$tblend
-		
-		$faq
-		";
+	<?=$faq?>
+<?php
 
 
 
 /*
 	print "<br>
-	$tblstart
-	<tr>$tccell1l>
+	<table class='table'>
+	<tr><td class='tdbg1'>
 			<b>What is this forum all about?</b>
 			<br>Gaming, the internet in general, emulation, and rarely, ROM hacking. Though SM64 hacking is rather popular, considering.
 			<br>
@@ -189,33 +186,24 @@
 			<br>The site does not own and cannot be held responsible for statements made by members on the forum. This site is offered as-is to the user. Any statements made on the board may be altered or removed at the discretion of the staff.
 			<br>We do not sell member information like e-mail addresses or passwords to any third party. Data entered into user profiles is completely optional and may be left out at the user's discretion; however, doing so may complicate matters such as account recovery.
 		</td></tr>
-	$tblend
+	</table>
 			";
 */
 	}
 
-		print "
-	<br><br>
-
-	$footer
-  ";
-  printtimedif($startingtime);
-
-
-
-
+	pagefooter();
 
 	function faqformat($a, $title, $content) {
-		global $tblstart, $tccellh, $tccell1l, $tblend, $topiclist;
+		global $topiclist;
 	
 		$topiclist	.= "\n\t\t<li><a href='#$a'>$title</a></li>";
 
 		return "<br><br><a name='$a'></a>
-		$tblstart
-			<tr>$tccellh><div style='float: right;'>[<a href='#top'>^</a>]</div><b>$title</b></td></tr>
-			<tr>$tccell1l style='padding: 4px;'>$content	
+		<table class='table'>
+			<tr><td class='tdbgh center'><div style='float: right;'>[<a href='#top'>^</a>]</div><b>$title</b></td></tr>
+			<tr><td class='tdbg1' style='padding: 4px;'>$content	
 			</td></tr>
-		$tblend
+		</table>
 		";
 	}
 

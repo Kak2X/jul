@@ -1,359 +1,607 @@
 <?php
 	require 'lib/function.php';
-	$forum = $sql->fetchq("SELECT * FROM forums WHERE id=$id");
-	$windowtitle = "$boardname -- $forum[title] -- New Thread";
-	$specialscheme	= $forum['specialscheme'];
-
+	
+	
+	$id 		= filter_int($_GET['id']);
+	$poll 		= filter_int($_GET['poll']);
+	
+	
 	// Stop this insanity.  Never index newthread.
-	$meta['noindex'] = true;
+	$meta['noindex'] = true;	
 
-	require 'lib/layout.php';
-
-	$forumid=$id;
-	$fonline=fonlineusers($forumid);
-	$header=makeheader($header1,$headlinks,$header2 ."	$tblstart$tccell1s>$fonline$tblend");
-
-	$smilies=readsmilies();
+	// Detect all three (invalid forum, banned user, restricted forum) in one query
+	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = $id AND {$loguser['powerlevel']} >= minpowerthread");
+	if (!$forum) { // Stop right there
+		if ($banned)
+			errorpage("Sorry, but you are not allowed to post, because you are banned from this board.", "forum.php?id=$id",'return to the forum', 0);
+		else 
+			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
+	}
+	
+	
+	$windowtitle = "{$config['board-name']} -- {$forum['title']} -- New Thread";
+	
+	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	
+	$smilies = readsmilies();
+	
 	replytoolbar(1);
 
-/*
-	if (false && $id == 27) { //trash forum
-		print "$header
-			<br>
-			$tblstart
-				$tccell1>
-					No. Stop that, you idiot.
-				</td>
-			$tblend
-		$footer";
-		die();
-	}
-	if ($forum['nopolls'] && $poll) {
-		print "$header
-			<br>
-			$tblstart 
-				$tccell1>
-					A for effort, but F for still failing.
-				</td>
-			$tblend
-		$footer";
-		die();
-	}
-*/
 
-	print $header;
-	if($poll) {
-		$c=1;
-		$d=0;
-		while($chtext[$c+$d] || $c < $_POST['count']) {
-			if($remove[$c+$d]) $d++;
-			else {
-				$choices.="Choice $c: $inpt=chtext[$c] SIZE=30 MAXLENGTH=255 VALUE=\"".stripslashes(htmlspecialchars($chtext[$c+$d]))."\"> &nbsp Color: $inpt=chcolor[$c] SIZE=7 MAXLENGTH=25 VALUE=\"".stripslashes(htmlspecialchars($chcolor[$c+$d]))."\"> &nbsp <INPUT type=checkbox class=radio name=remove[$c] value=1> Remove<br>";
-				$c++;
-			}
-		}
-		$choices.="Choice $c: $inpt=chtext[$c] SIZE=30 MAXLENGTH=255> &nbsp Color: $inpt=chcolor[$c] SIZE=7 MAXLENGTH=25><br>$inps=paction VALUE=\"Submit changes\"> and show $inpt=count size=4 maxlength=2 VALUE=\"".stripslashes(htmlspecialchars(($_POST['count']) ? $_POST['count'] : $c))."\"> options";
-		if($mltvote) $checked1='checked';
-		else $checked0='checked';
+	if ($id == $config['trash-forum']) {
+		errorpage("No. Stop that, you idiot.");
 	}
-	$posticons=file('posticons.dat');
-	for($i=0;$posticons[$i];$i++) {
-		if($iconid==$i) $checked='checked';
-		$posticonlist.="$radio=iconid value=$i $checked>&nbsp<IMG SRC=$posticons[$i] HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
-		$checked='';
-		if(($i+1)%10==0) $posticonlist.='<br>';
+
+	if ($forum['pollstyle'] == '-2' && $poll) {
+		errorpage("A for effort, but F for still failing.");
 	}
-	if(!$iconid or $iconid==-1) $checked='checked';
-	$posticonlist.="
-		<br>$radio=iconid value=-1 $checked>&nbsp;None&nbsp; &nbsp; &nbsp;
-		Custom: $inpt=custposticon SIZE=40 MAXLENGTH=100 VALUE=\"". stripslashes($custposticon) ."\">
-	";
 	
-	$subject		= htmlspecialchars($_POST['subject']);
-	$question		= htmlspecialchars($_POST['question']);
-	$description 	= htmlspecialchars($_POST['description']);
-	
-	if ($nosmilies)	$nosmilieschk	= " checked";
-	if ($nohtml)	$nohtmlchk	= " checked";
-	if ($nolayout)	$nolayoutchk	= " checked";
 
-	$form=(!$poll?"
-		<tr>$tccell1><b>Thread icon:</td>	$tccell2l colspan=2>$posticonlist</td></tr>
-		<tr>$tccell1><b>Thread title:</td>$tccell2l colspan=2>$inpt=subject SIZE=40 MAXLENGTH=100 VALUE=\"". stripslashes($subject) ."\"></td></tr>
-		<tr>$tccell1><b>Thread description:</td>$tccell2l colspan=2>$inpt=description SIZE=100 MAXLENGTH=120 VALUE=\"". stripslashes($description) ."\"></td></tr>
-		<tr>$tccell1><b>Post:</td>$tccell2l width=800px valign=top>".replytoolbar(2)."
-		$txta=message ROWS=21 COLS=$numcols style=\"width: 100%; max-width: 800px; resize:vertical;\">". stripslashes(htmlspecialchars($message)) ."</TEXTAREA></td>
-		$tccell2l width=*>".moodlist($moodid)."</td></tr>
-		<tr>$tccell1>&nbsp</td>$tccell2l colspan=2>
-		$inph=action VALUE=postthread>
-		$inph=id VALUE=$id>
-		$inps=submit VALUE=\"Submit thread\">
-		$inps=preview VALUE=\"Preview thread\"></td></tr>
-		<tr>
-		  $tccell1><b>Options:</b></td>$tccell2l colspan=2>
-			$inpc=\"nosmilies\" id=\"nosmilies\" value=\"1\"$nosmilieschk><label for=\"nosmilies\">Disable Smilies</label> -
-			$inpc=\"nolayout\" id=\"nolayout\" value=\"1\"$nolayoutchk><label for=\"nolayout\">Disable Layout</label> -
-			$inpc=\"nohtml\" id=\"nohtml\" value=\"1\"$nohtmlchk><label for=\"nohtml\">Disable HTML</label></td></tr><tr>
-		<!-- </FORM> -->
-	":"
-		<tr>$tccell1><b>Poll icon:</td>	$tccell2l colspan=2>$posticonlist</td></tr>
-		<tr>$tccell1><b>Poll title:</td>	$tccell2l colspan=2>$inpt=subject SIZE=40 MAXLENGTH=100 VALUE=\"". stripslashes($subject) ."\"></td></tr>
-		<tr>$tccell1><b>Poll description:</td>$tccell2l colspan=2>$inpt=description SIZE=100 MAXLENGTH=120 VALUE=\"". stripslashes($description) ."\"></td></tr>
-		<tr>$tccell1><b>Question:</td>	$tccell2l colspan=2>$inpt=question SIZE=60 MAXLENGTH=255 VALUE=\"". stripslashes($question) ."\"></td></tr>
-		<tr>$tccell1><b>Briefing:</td>	$tccell2l colspan=2>$txta=briefing ROWS=2 COLS=$numcols style=\"resize:vertical;\">". stripslashes($briefing) ."</TEXTAREA></td></tr>
-		<tr>$tccell1><b>Multi-voting:</td>$tccell2l colspan=2>$radio=mltvote value=0 $checked0> Disabled &nbsp $radio=mltvote value=1 $checked1> Enabled</td></tr>
-		<tr>$tccell1><b>Choices:</td>	$tccell2l colspan=2>$choices</td></tr>
-		<tr>$tccell1><b>Post:</td>$tccell2l width=800px valign=top>".replytoolbar(2)."
-		$txta=message ROWS=21 COLS=$numcols style=\"width: 100%; max-width: 800px; resize:vertical;\">". stripslashes(htmlspecialchars($message)) ."</TEXTAREA></td>
-		$tccell2l width=*>".moodlist($moodid)."</td></tr>
-
-		<tr>
-		$tccell1>&nbsp</td>$tccell2l colspan=2>
-		$inph=action VALUE=postthread>
-		$inph=id VALUE=$id>
-		$inph=poll VALUE=1>
-		$inps=submit VALUE=\"Submit poll\">
-		$inps=preview VALUE=\"Preview poll\"></td>
-		<tr>
-		  $tccell1><b>Options:</b></td>$tccell2l colspan=2>
-			$inpc=\"nosmilies\" id=\"nosmilies\" value=\"1\"$nosmilieschk><label for=\"nosmilies\">Disable Smilies</label> -
-			$inpc=\"nolayout\" id=\"nolayout\" value=\"1\"$nolayoutchk><label for=\"nolayout\">Disable Layout</label> -
-			$inpc=\"nohtml\" id=\"nohtml\" value=\"1\"$nohtmlchk><label for=\"nohtml\">Disable HTML</label></td></tr><tr>
-		<!-- </FORM> -->
-	");
-	if(!$_POST[action] or $_POST[paction]) {
-		print "
-			$fonttag<a href=index.php>$boardname</a> - <a href=forum.php?id=$forumid>".$forum[title]."</a>
-			<form action=newthread.php name=replier method=post autocomplete=\"off\">
-			$tblstart
-		";
-		if($log and $forums[$id][minpowerthread]>$power) {
-			print "$tccell1>Sorry, but you are not allowed to post";
-			if($banned) print ", because you are banned from this board.<br>".redirect("forum.php?id=$id",'return to the forum',0); 
-			else print ' in this restricted forum.<br>'.redirect('index.php','return to the board',0);
-		}
-		else {
-			if ($log) {
-				$username=$loguser['name'];
-				$passhint = 'Alternate Login:';
-				$altloginjs = "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
-					<span id=\"altlogin\" style=\"display:none\">";
-			}
-			else {
-				$username = '';
-				$passhint = 'Login Info:';
-				$altloginjs = "<span>";
-			}
-
-			print "
-				<body onload=window.document.REPLIER.subject.focus()>
-				$tccellh width=150>&nbsp</td>$tccellh colspan=2>&nbsp<tr>
-				$tccell1><b>{$passhint}</td> $tccell2l colspan=2>
-					{$altloginjs}
-					<b>Username:</b> $inpt=username VALUE=\"".htmlspecialchars($username)."\" SIZE=25 MAXLENGTH=25 autocomplete=\"off\">
-
-					<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
-					<input style=\"display:none;\" type=\"text\"     name=\"__f__usernm__\">
-					<input style=\"display:none;\" type=\"password\" name=\"__f__passwd__\">
-
-					<b>Password:</b> $inpp=password SIZE=13 MAXLENGTH=64 autocomplete=\"off\">
-				</span><tr>";
-			print $form;
-		}
-		print "
-			</table>
-			</table>
-			</form>
-			$fonttag<a href=index.php>$boardname</a> - <a href=forum.php?id=$forumid>".$forum[title]."</a>
-			".replytoolbar(4);
+	/*
+		Variable initialization (global)
+	*/
+	if ($poll) {
+		
+		// register_globals!
+		$chtext 	= filter_array($_POST['chtext']);	// Text for the choices
+		$chcolor 	= filter_array($_POST['chcolor']);	// Choice color
+		$remove 	= filter_array($_POST['remove']);	// Choices to remove from the list
+		$count 		= filter_int($_POST['count']);		// Number of choices to show
+		$mltvote 	= filter_int($_POST['mltvote']);	// Multivote flag (default: 0)
+		
+		$question	= filter_string($_POST['question'], true);
+		$briefing	= filter_string($_POST['briefing'], true);
+		
 	}
-	if($_POST[action]=='postthread' and !$_POST[paction]) {
-		print "<br>$tblstart";
-		if ($log && !$password)
-			$userid = $loguserid;
-		else
-			$userid = checkuser($username,$password);
+	
+	$posticons		= file('posticons.dat');
+	$iconid 		= filter_int($_POST['iconid']);
+	$custposticon 	= filter_string($_POST['custposticon']);
 
-		$user=$sql->fetchq("SELECT * FROM users WHERE id=$userid");
-		if($user[powerlevel]<0) $userid=-1;
+
+	// Determine the correct icon URL
+
+	
+	// register_globals!!
+	$subject		= filter_string($_POST['subject'], true);
+	$description 	= filter_string($_POST['description'], true);
+	$message 		= filter_string($_POST['message'], true);
+	
+	$moodid			= filter_int($_POST['moodid']);
+	
+	$nosmilies		= filter_int($_POST['nosmilies']);
+	$nohtml			= filter_int($_POST['nohtml']);
+	$nolayout		= filter_int($_POST['nolayout']);
+	
+	
+	if (isset($_POST['preview']) || isset($_POST['submit'])) {
+		
+		// common threadpost / query requirements
+		
+		$username = filter_string($_POST['username'], true);
+		$password = filter_string($_POST['password'], true);
+		
+		//print "<br><table class='table'>";
+		if ($loguser['id'] && !$password) {
+			$userid = $loguser['id'];
+			$user	= $loguser;
+		} else {
+			$userid 	= checkuser($username,$password);
+			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
+		}
+		
+		if(!$user || $user['powerlevel'] < 0) $userid = -1;
 
 		// can't be posting too fast now
-		$limithit = $user[lastposttime] < (ctime()-30);
+		$limithit 		= $user['lastposttime'] < (ctime()-30);
 		// can they post in this forum?
-		$authorized = $user[powerlevel] >= $forum[minpowerthread];
+		$authorized 	= $user['powerlevel'] >= $forum['minpowerthread'];
 		// does the forum exist?
-		$forumexists = $forum[title];
+		$forumexists 	= $forum['id'];
 
 		// ---
 		// lol i'm eminem
 		if (strpos($message , '[Verse ') !== FALSE) {
 			$authorized = false;
-			@$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
-			if ($_COOKIE['loguserid'] > 0)
-				@$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$_COOKIE['loguserid']}");
+			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
+			if ($loguser['id']) //if ($_COOKIE['loguserid'] > 0)
+				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$loguser['id']}");
 			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 		}
 		// ---
-
-		if($userid!=-1 && $subject && $message && $forumexists && $authorized && $limithit) {
-			$msg=$message;
+		
+		if($userid != -1 && $subject && $message && $forumexists && $authorized && $limithit) {
+			
+			// The thread preview also needs this for threadpost()
+			
+			$msg 			= $message;
 			// squot(0,$msg);
-			$sign=$user['signature'];
-			$head=$user['postheader'];
-
-			// improved post backgrounds
-			if($user['postbg']) {
-				$head = "<table width=100% height=100% border=0 cellpadding=0 cellspacing=0><td valign=top background=\"$user[postbg]\">$head";
-				$sign = "$sign</td></table>";
+			$sign			= $user['signature'];
+			$head 			= $user['postheader'];
+			
+			$numposts 		= $user['posts'] + 1;
+			$numdays 		= (ctime()-$user['regdate']) / 86400;
+			
+			$tags			= array();
+			
+			$msg 			= doreplace($msg, $numposts, $numdays, $user['id'], $tags);
+			$rsign 			= doreplace($sign, $numposts, $numdays, $user['id']);
+			$rhead 			= doreplace($head, $numposts, $numdays, $user['id']);
+			
+			
+			$tagval			= json_encode($tags);
+			
+			if ($iconid != '-1' && isset($posticons[$iconid])) {
+				$posticon = $posticons[$iconid];
+			} else {
+				$posticon = $custposticon;
 			}
+			
+			$currenttime 	= ctime();
+			//$postnum 		= $numposts;
+			
 
-			$numposts = $user[posts] + 1;
-			$numdays = (ctime()-$user[regdate])/86400;
-			$tags	= array();
-			$msg = doreplace($msg, $numposts, $numdays, $username, $tags);
-			$rsign = doreplace($sign, $numposts, $numdays, $username);
-			$rhead = doreplace($head, $numposts, $numdays, $username);
-			$tagval	= $sql->escape(json_encode($tags));
-			$posticons = file('posticons.dat');
-			$posticon = $posticons[$iconid];
-			$currenttime = ctime();
-			$postnum = $numposts;
-			if($iconid == -1) $posticon='';
-			if($custposticon) $posticon = $custposticon;
-
-			if($submit) {
-				mysql_query("UPDATE `users` SET `posts` = $numposts, `lastposttime` = '$currenttime' WHERE `id` = '$userid'");
-				if (filter_bool($nolayout)) {
+			if (isset($_POST['submit'])) {
+				check_token($_POST['auth']);
+				
+				$sql->beginTransaction();
+				
+				$querycheck = array();
+				
+				// Process the poll data right away
+				if ($poll) {
+					$sql->queryp("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES (:question, :briefing, :closed, :doublevote)",
+						 [
+							'question'			=> xssfilters($question),
+							'briefing'			=> xssfilters($briefing),
+							'closed'			=> 0,
+							'doublevote'		=> $mltvote,
+						 ], $querycheck);
+					
+					$pollid = $sql->insert_id();
+					
+					$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
+					
+					for($c = 1; isset($chtext[$c]); ++$c) {
+						
+						if (!$chtext[$c] || !isset($chcolor[$c]))
+							continue; // Just in case
+						$querycheck[] = $sql->execute($addchoice, array($pollid, $chtext[$c], $chcolor[$c]));
+					}
+						
+				} else {
+					$pollid = 0;
+				}
+				
+				
+				$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'", false, $querycheck);
+				
+				if ($nolayout) {
 					$headid = 0;
 					$signid = 0;
 				} else {
-					$headid=getpostlayoutid($head);
-					$signid=getpostlayoutid($sign);
+					$headid = getpostlayoutid($head);
+					$signid = getpostlayoutid($sign);
 				}
+				
+				$sql->queryp("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `sticky`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`, `poll`) ".
+							 "VALUES                (:forum,  :user,  :views,  :closed,  :sticky,  :title,  :description,  :icon,  :replies,  :firstpostdate,  :lastpostdate,  :lastposter,  :poll)",
+						 [
+							'forum'			=> $id,
+							'user'				=> $user['id'],
+							
+							'closed'			=> 0,
+							'sticky'			=> 0,
+							
+							'poll'				=> $pollid,
+							
+							'title'			=> xssfilters($subject),
+							'description'		=> xssfilters($description),
+							'icon'				=> $posticon,
+							
+							'views'			=> 0,
+							'replies'			=> 0,
+							'firstpostdate'	=> $currenttime,
+							'lastpostdate'		=> $currenttime,
+							'lastposter'		=> $user['id'],
+							
+						 ], $querycheck);
+				
+				$tid = $sql->insert_id();
+				
+				$sql->queryp("INSERT INTO `posts` (`thread`, `user`, `date`, `ip`, `num`, `headid`, `signid`, `moodid`, `text`, `tagval`, `options`) ".
+							 "VALUES              (:thread,  :user,  :date,  :ip,  :num,  :headid,  :signid,  :moodid,  :text,  :tagval,  :options)",
+						 [
+							'thread'			=> $tid,
+							'user'				=> $user['id'],
+							'date'				=> $currenttime,
+							'ip'				=> $_SERVER['REMOTE_ADDR'],
+							'num'				=> $numposts,
+							
+							'headid'			=> $headid,
+							'signid'			=> $signid,
+							'moodid'			=> $moodid,
+							
+							'text'				=> xssfilters($msg),
+							'tagval'			=> $tagval,
+							'options'			=> $nosmilies . "|" . $nohtml,
+							
+						 ], $querycheck);
+						 
+				$pid = $sql->insert_id();
+				
+				$sql->query("
+					UPDATE `forums` SET
+						`numthreads`   = `numthreads` + 1,
+						`numposts`     = `numposts` + 1,
+						`lastpostdate` = '$currenttime',
+						`lastpostuser` = '$userid',
+						`lastpostid`   = '$pid'
+					WHERE id = $id", false, $querycheck);
 
-				mysql_query("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`) ".
-							"VALUES ('$id', '$userid', '0', '0', '$subject', '$description', '$posticon', '0', '$currenttime', '$currenttime', '$userid')");
-				$t = mysql_insert_id();
-				mysql_query("INSERT INTO `posts` (`thread`, `user`, `date`, `ip`, `num`, `headid`, `signid`, `moodid`) VALUES ('$t', '$userid', '$currenttime', '$userip', '$postnum', '$headid', '$signid','". $_POST['moodid'] ."')");
-				$pid=mysql_insert_id();
-				$options = intval($nosmilies) . "|" . intval($nohtml);
-				if($pid) mysql_query("INSERT INTO `posts_text` (`pid`, `text`, `tagval`, `options`) VALUES ('$pid', '$msg', '$tagval', '$options')");
-				mysql_query("UPDATE `forums` SET `numthreads` = `numthreads` + 1, `numposts` = `numposts` + 1, `lastpostdate` = '$currenttime', `lastpostuser` = '$userid', `lastpostid` = '$pid' WHERE id=$id");
-
-				if(!$poll) {
-					print "
-						$tccell1>Thread posted successfully!
-						<br>".redirect("thread.php?id=$t", stripslashes($subject), 0).$tblend;
-
-					xk_ircout("thread", $user['name'], array(
+				
+				
+				$whatisthis = $poll ? "Poll" : "Thread";
+				
+				if ($sql->checkTransaction($querycheck)) {
+					
+					xk_ircout(strtolower($whatisthis), $user['name'], array(
 						'forum'		=> $forum['title'],
 						'fid'		=> $forum['id'],
 						'thread'	=> str_replace("&lt;", "<", $subject),
 						'pid'		=> $pid,
 						'pow'		=> $forum['minpower'],
 					));
+					
+					errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
+					
+				} else {
+					errorpage("An error occurred while creating the ".strtolower($whatisthis).".");
 				}
-				else {
-					mysql_query("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES ('$question', '$briefing', '0', '$mltvote')");
-					$p=mysql_insert_id();
-					mysql_query("UPDATE `threads` SET `poll` = '$p' where `id` = '$t'");
-					$c=1;
-					while($chtext[$c]){
-						mysql_query("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES ('$p', '$chtext[$c]', '$chcolor[$c]')");
-						$c++;
-					}
-					print "
-						$tccell1>Poll created successfully!
-						<br>".redirect("thread.php?id=$t", stripslashes($subject), 0).$tblend;
-
-					xk_ircout("poll", $user['name'], array(
-						'forum'		=> $forum['title'],
-						'fid'		=> $forum['id'],
-						'thread'	=> str_replace("&lt;", "<", $subject),
-						'pid'		=> $pid,
-						'pow'		=> $forum['minpower'],
-					));
-				}
-			}
-			else {
-				if($posticon) $posticon1="<img src='". stripslashes($posticon) ."' height=15 align=absmiddle>";
-		
-				if($poll) {
-					for($c=1;$chtext[$c];$c++) {
-						$chtext[$c]=stripslashes($chtext[$c]);
-						$chcolor[$c]=stripslashes($chcolor[$c]);
-						$hchoices.="$inph=chtext[$c] VALUE=\"".htmlspecialchars($chtext[$c])."\">$inph=chcolor[$c] VALUE=\"".htmlspecialchars($chcolor[$c]).'">';
-						$pchoices.="
-							$tccell1l width=20%>$chtext[$c]</td>
-							$tccell2l width=60%><table cellpadding=0 cellspacing=0 width=50% bgcolor='$chcolor[$c]'><td>&nbsp</table></td>
-							$tccell1 width=20%>$fonttag ? votes, ??.?%<tr>
-						";
-					}
-					$mlt=($mltvote?'enabled':'disabled');
-					$pollpreview="
-						<td colspan=3 class='tbl tdbgc center font'><b>$question<tr>
-						$tccell2ls colspan=3>$briefing<tr>
-						$pchoices
-						$tccell2ls colspan=3>Multi-voting is $mlt.
-						$tblend<br>$tblstart
-					";
-					$subject = htmlspecialchars(stripslashes($subject));
-					$question = htmlspecialchars(stripslashes($question));
-					$briefing = htmlspecialchars(stripslashes($briefing));
-				}
-				loadtlayout();
-				$ppost=$user;
-				$ppost['uid']=$userid;
-				$ppost['num']=$postnum;
-				$ppost['posts']++;
-				$ppost['lastposttime']=$currenttime;
-				$ppost['date']=$currenttime;
-				//$ppost['headtext']=$rhead;
-				//$ppost['signtext']=$rsign;
-				if ($nolayout) {
-					$ppost['headtext'] = "";
-					$ppost['signtext'] = "";
-				}
-				else {
-					$ppost['headtext']=$rhead;
-					$ppost['signtext']=$rsign;
-				}
-				$ppost['moodid']=$_POST['moodid'];
-				$ppost['text']=stripslashes($message);
-				$ppost['options'] = $_POST['nosmilies'] . "|" . $_POST['nohtml'];
-				if($isadmin) $ip=$userip;
-				$threadtype=($poll?'poll':'thread');
-				print "
-					<body onload=window.document.REPLIER.message.focus()>
-					$tccellh>".($poll?'Poll':'Thread')." preview
-					$tblend$tblstart
-					$pollpreview
-					$tccell2l>$posticon1 <b>". stripslashes($subject) ."</b>
-					$tblend$tblstart
-					".threadpost($ppost,1)."
-					$tblend<br>$tblstart
-					<FORM ACTION=newthread.php NAME=REPLIER METHOD=POST>
-					$tccellh width=150>&nbsp</td>$tccellh colspan=2>&nbsp<tr>
-					$inph=username VALUE=\"".htmlspecialchars($username)."\">
-					$inph=password VALUE=\"".htmlspecialchars($password)."\">
-					$form
-					</td></FORM>
-					$tblend
-				";
+				
 			}
 		}
 		else {
+			
 			$reason = "You haven't entered your username and password correctly.";
-			if (!$limithit) $reason = "You are trying to post too rapidly.";
-			if (!$message) $reason = "You haven't entered a message.";
-			if (!$subject) $reason = "You haven't entered a subject.";
-			if (!$authorized) $reason = "You aren't allowed to post in this forum.";
-	
-			print "
-				$tccell1>Couldn't post the thread. $reason
-				<br>".redirect("forum.php?id=$id", $forum[title], 2).$tblend;
-		}
+			if (!$limithit) 	$reason = "You are trying to post too rapidly.";
+			if (!$message) 		$reason = "You haven't entered a message.";
+			if (!$subject) 		$reason = "You haven't entered a subject.";
+			if (!$authorized) 	$reason = "You aren't allowed to post in this forum.";
+			errorpage("Couldn't post the thread. $reason", "forum.php?id=$id", $forum['title'], 2);
+		}		
+		
 	}
+	
+	/*
+		Main page below
+	*/
+	
+	if ($poll) {
+		$c = 1;	// Choice (appareance)
+		$d = 0; // Choice ID in array
+		$choices = "";
+		// Don't bother if the array is empty (ie: poll not previewed yet)
+		if ($chtext) {
+			
+			while (filter_string($chtext[$c+$d]) || $c < $count) {	// Allow a lower choice count to cut off the remainder of the choices
+				
+				if (isset($remove[$c+$d])) // Count the choices and skip what's removed
+					$d++;
+				else {
+					$choices .= "Choice $c: <input type='text' name=chtext[$c] SIZE=30 MAXLENGTH=255 VALUE=\"".htmlspecialchars($chtext[$c+$d])."\"> &nbsp; ".
+								"Color: <input type='text' name=chcolor[$c] SIZE=7 MAXLENGTH=25 VALUE=\"".htmlspecialchars(filter_string($chcolor[$c+$d]))."\"> &nbsp; ".
+								"<input type=checkbox class=radio name=remove[$c] value=1> Remove<br>";
+					$c++;
+				}
+			}
+		}
+		
+		$choices .= "Choice $c: <input type='text' name=chtext[$c] SIZE=30 MAXLENGTH=255> &nbsp ".
+					"Color: <input type='text' name=chcolor[$c] SIZE=7 MAXLENGTH=25><br>".
+					"<input type='submit' class=submit name=paction VALUE=\"Submit changes\"> and show ".
+					"<input type='text' name=count size=4 maxlength=2 VALUE=\"".htmlspecialchars($count ? $count : $c)."\"> options";
+		
+		// Multivote selection
+		$mltsel[$mltvote] = 'checked';
+	}
+	
+	$nosmilieschk 	= $nosmilies 	? " checked" : "";
+	$nohtmlchk	 	= $nohtml 		? " checked" : "";
+	$nolayoutchk 	= $nolayout 	? " checked" : "";
 
-	print $footer;
-	printtimedif($startingtime);
+	$forumlink = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id=$id'>".htmlspecialchars($forum['title'])."</a></span>";
+
+	if ($loguser['id']) {
+		$username = $loguser['name'];
+		$passhint = 'Alternate Login:';
+		$altloginjs = "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
+			<span id=\"altlogin\" style=\"display:none\">";
+	} else {
+		$username = '';
+		$passhint = 'Login Info:';
+		$altloginjs = "<span>";
+	}
+	
+	// Mixing _GET and _POST is bad. Put all _GET arguments here rather than sending them as hidden form values.
+	$formlink = "newthread.php?id=$id";
+	if ($poll) $formlink .= "&poll=1";
+	
+	
+	
+
+	if (isset($_POST['preview'])) {
+		
+		if ($posticon)
+			$iconpreview = "<img src = \"".htmlspecialchars($posticon)."\" height=15 align=absmiddle>";
+	
+		$pollpreview = "";
+		
+		if($poll) {
+			// Print out poll options
+			$pchoices = "";
+			for($c = 1; ($chtext[$c]); ++$c) {
+				
+				if (!$chtext[$c]) continue;
+				// Just in case
+				if (!isset($chtext[$c])) $chtext[$c] = "red";
+				
+				$pchoices .= 
+					"<tr><td class='tdbg1' width=20%>".htmlspecialchars($chtext[$c])."</td>".
+					"<td class='tdbg2' width=60%><table cellpadding=0 cellspacing=0 width=50% bgcolor='{$chcolor[$c]}'><td>&nbsp</table></td>".
+					"<td class='tdbg1 center' width=20%><font> ? votes, ??.?%</tr>";
+			}
+			
+			$mlt = ($mltvote ? 'enabled' : 'disabled');
+			
+			$pollpreview = 
+				"<table class='table'>
+				<tr>
+					<td colspan=3 class='tbl tdbgc center'>
+						<b>".htmlspecialchars($question)."</b>
+					</td>
+				<tr>
+					<td class='tdbg2 fonts' colspan=3>
+						".xssfilters($briefing)."
+					</td>
+				</tr>
+				$pchoices
+				<tr>
+					<td class='tdbg2 fonts' colspan=3>
+						Multi-voting is $mlt.
+					</td>
+				</tr>						
+				</table>
+				<br>";
+			
+		}
+		
+		// Threadpost
+		
+		loadtlayout();
+		
+		$ppost = $user;
+		$ppost['uid']			= $userid;
+		$ppost['num']			= $numposts;
+		$ppost['posts']++;
+		$ppost['lastposttime']	= $currenttime;
+		$ppost['date']			= $currenttime;
+		$ppost['tagval']		= $tagval;
+		$ppost['noob']			= 0;
+		if ($nolayout) {
+			$ppost['headtext'] = "";
+			$ppost['signtext'] = "";
+		}
+		else {
+			$ppost['headtext']	= $rhead;
+			$ppost['signtext']	= $rsign;
+		}
+		
+		$ppost['moodid']		= $moodid;
+		$ppost['text']			= $message;
+		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
+		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		
+		if ($isadmin)
+			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+		$threadtype = ($poll ? 'poll' : 'thread');
+			
+			?>
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center'>
+				<?=($poll ? 'Poll' : 'Thread')." preview"?>
+			</td>
+		</tr>
+	</table>
+	<?=$pollpreview?>
+	<table class='table'>
+		<tr>
+			<td class='tdbg2 center' style='width: 4%'>
+				<?=$iconpreview?>
+			</td>
+			<td class='tdbg1'>
+				<b><?=htmlspecialchars($subject)?></b>
+				<span class='fonts'><br><?=htmlspecialchars($description)?></span>
+			</td>
+		</tr>
+	</table>
+	<table class='table'>
+		<?=threadpost($ppost,1)?>
+	</table>
+			<?php
+			$focuson = 'message';
+		} else {
+			$focuson = 'subject';
+		}
+		
+		?>
+		
+	<?=$forumlink?>
+	<form action="<?=$formlink?>" name=replier method=post autocomplete=off>
+	<table class='table'>
+		<body onload='window.document.REPLIER.<?=$focuson?>.focus()'>
+			<tr>
+				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
+				<td class='tdbgh center' colspan=2>&nbsp;</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center'>
+					<b><?=$passhint?></b>
+				</td>
+				<td class='tdbg2' colspan=2>
+					<?=$altloginjs?>
+						<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($username)?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
+
+						<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
+						<input style="display:none;" type="text"     name="__f__usernm__">
+						<input style="display:none;" type="password" name="__f__passwd__">
+
+						<b>Password:</b> <input type='password' name=password SIZE=13 MAXLENGTH=64 autocomplete=off>
+					</span>
+				</td>
+			</tr>
+			
+		<?php
+			
+	/*
+		New thread
+	*/
+	if (!$poll) {
+			
+		?>
+			<tr>
+				<td class='tdbg1 center'><b>Thread icon:</b></td>
+				<td class='tdbg2' colspan=2>
+					<?=dothreadiconlist($iconid, $custposticon)?>
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Thread title:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>">
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center'><b>Thread description:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($description)?>">
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Post:</b></td>
+				<td class='tdbg2' style='width: 800px' valign=top>
+					<?=replytoolbar(2)?>
+					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
+				</td>
+				<td class='tdbg2' width=*>
+					<?=moodlist($moodid)?>
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'>&nbsp;</td>
+				<td class='tdbg2' colspan=2>
+					<input type='hidden' name=action VALUE=postthread>
+					<input type='hidden' name=auth   VALUE="<?=generate_token()?>">
+					<input type='submit' class=submit name=submit VALUE="Submit thread">
+					<input type='submit' class=submit name=preview VALUE="Preview thread">
+				</td>
+			</tr>
+		<?php
+	}
+		
+	/*
+		New poll
+	*/
+	else {
+			
+		?>
+			<tr>
+				<td class='tdbg1 center'><b>Poll icon:</b></td>
+				<td class='tdbg2' colspan=2>
+					<?=dothreadiconlist($iconid, $custposticon)?>
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Poll title:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>">
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center'><b>Poll description:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($description)?>">
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Question:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=question SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($question)?>">
+				</td>
+			</tr>			
+			<tr>
+				<td class='tdbg1 center'><b>Briefing:</b></td>
+				<td class='tdbg2' colspan=2>
+					<textarea wrap=virtual name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($briefing)?></TEXTAREA>
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Multi-voting:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type=radio class='radio' name=mltvote value=0 <?=filter_string($mltsel[0])?>> Disabled &nbsp;&nbsp;
+					<input type=radio class='radio' name=mltvote value=1 <?=filter_string($mltsel[1])?>> Enabled
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center'><b>Choices:</b></td>
+				<td class='tdbg2' colspan=2>
+					<?=$choices?>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center'><b>Post:</b></td>
+				<td class='tdbg2' style='width: 800px' valign=top>
+					<?=replytoolbar(2)?>
+					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
+				</td>
+				<td class='tdbg2' width=*>
+					<?=moodlist($moodid)?>
+				</td>
+			</tr>
+
+			<tr>
+				<td class='tdbg1 center'>&nbsp;</td><td class='tdbg2' colspan=2>
+					<input type='hidden' name=action VALUE=postthread>
+					<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+					<input type='submit' class=submit name=submit VALUE="Submit poll">
+					<input type='submit' class=submit name=preview VALUE="Preview poll">
+				</td>
+			</tr>
+		<?php
+	}
+		
+		
+		?>
+			<tr>
+				<td class='tdbg1 center'><b>Options:</b></td>
+				<td class='tdbg2' colspan=2>
+					<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
+					<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk?> ><label for="nolayout" >Disable Layout</label> -
+					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label>
+				</td>
+			</tr>
+		</table>
+		</form>
+		<?=$forumlink?>
+		<?=replytoolbar(4)?>
+		<?php
+
+	pagefooter();

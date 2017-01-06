@@ -26,169 +26,313 @@
 			$_COOKIE['snowglobe'] = 0;
 		}
 
-		header("Location: /index.php");
+		header("Location: index.php");
 	}
 */
 
 	require 'lib/function.php';
-	require 'lib/layout.php';
 
+	/* 
 	$sql->query("UPDATE `users` SET `name` = 'Xkeeper' WHERE `id` = 1"); # I'm hiding it here too as a 'last resort'. Remove this and I'll make that Z-line a month instead.
 	// You know me, I find it more fun to hide code to replace your name everywhere instead of altering the DB <3
 //	$sql->query("UPDATE `users` SET `sex` = '1' WHERE `id` = 2100");  // Me too <3 ~Ras
+*/
 
+/* heavily unfinished mobile index page
 	if ($x_hacks['smallbrowse'] == 1 and false) {
-		require 'mobile/index.php'; // alternate markup for mobile clients.
+		require 'mobile/index.php';
+		die;
+	} */
+	
+	pageheader();
+		
+	
+	if ($loguser['id'] && isset($_GET['action'])) {
+		
+		switch ($_GET['action']) {
+			case 'markforumread':
+				$id = filter_int($_GET['forumid']);
+				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']} AND forum = $id");
+				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']} AND tid IN (SELECT `id` FROM `threads` WHERE `forum` = $id)");
+				$sql->query("INSERT INTO forumread (user, forum, readdate) VALUES ({$loguser['id']}, $id, ".ctime().')');
+				break;
+			case 'markallforumsread':
+				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']}");
+				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']}");
+				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$loguser['id']}, id, ".ctime()." FROM forums");
+				break;
+		}
+		
+		header("Location: index.php");
+		die;
+	}
+
+	$postread = readpostread($loguser['id']);
+	
+	/*
+		Birthday calculation
+	*/
+
+	$users1 = $sql->query("
+		SELECT $userfields FROM users u
+		WHERE birthday AND FROM_UNIXTIME(birthday, '%m-%d') = '".date('m-d',ctime() + $loguser['tzoff'])."'
+		ORDER BY name
+	");
+	
+	$blist	= "";
+	
+	for ($numbd = 0; $user = $sql->fetch($users1); ++$numbd) {
+		$blist = $numbd ? ", " : "<tr><td class='tdbg2 center's colspan=5>Birthdays for ".date('F j', ctime() + $loguser['tzoff']).': ';
+		
+		$y = date('Y', ctime()) - date('Y', $user['birthday']);
+		$userurl = getuserlink($user);
+		$blist .= "$userurl ($y)"; 
+	}
+	
+	/*
+		Online users
+	*/
+	$onlinetime = ctime() - 300;	// 5 Minutes
+	$onusers = $sql->query("
+		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
+		FROM users u
+		WHERE lastactivity > $onlinetime OR lastposttime > $onlinetime AND ($ismod OR !hideactivity)
+		ORDER BY name
+	");
+	$numonline = $sql->num_rows($onusers);
+	$tnumonline = ($numonline !=1 ? 's' : '' );
+
+	$onlineusersa	= array();
+	while($onuser = $sql->fetch($onusers)) {
+		
+		//$namecolor=explode("=", getnamecolor($onuser['sex'],$onuser['powerlevel']));
+		//$namecolor=$namecolor[1];
+		//$namelink="<a href=profile.php?id=$onuser[id] style='color: #$namecolor'>$onuser[name]</a>";
+
+		$namelink = getuserlink($onuser);
+
+		if($onuser['minipic']) {
+			$onuser['minipic'] = '<img width="16" height="16" src="'.str_replace('"','%22',$onuser['minipic']).'" align="absmiddle"> ';
+		}
+		
+		// Posted using alternate credentials / without using cookies?
+		if($onuser['nologpost']) {
+			$namelink = "($namelink)";
+		}		
+		
+		if($onuser['hideactivity'])
+			$namelink="[$namelink]";	
+		$onlineusersa[] = "{$onuser['minipic']}$namelink";
+	}
+
+	$onlineusers = $onlineusersa ? ': '. implode(", ", $onlineusersa) : '';
+	
+	/*
+		Online guests
+	*/
+	if (!$isadmin) {
+		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests WHERE date > $onlinetime");
+		$onlineguests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"") : "";
 	} else {
-		if (filter_string($_GET['action']) == 'markforumread' and $log) {
-			$sql->query("DELETE FROM forumread WHERE user=$loguserid AND forum='$forumid'");
-			$sql->query("DELETE FROM `threadsread` WHERE `uid` = '$loguserid' AND `tid` IN (SELECT `id` FROM `threads` WHERE `forum` = '$forumid')");
-			$sql->query("INSERT INTO forumread (user,forum,readdate) VALUES ($loguserid,$forumid,".ctime().')');
-			return header("Location: index.php");
+		// Detailed view of tor/proxy/bots
+		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
+		$ginfo = array_fill(0, 4, 0);
+		for ($numguests = 0; $onguest = $sql->fetch($onguests); ++$numguests) {
+			if      ($onguest['flags'] & BPT_TOR) 		$ginfo[2]++;
+			else if ($onguest['flags'] & BPT_IPBANNED) 	$ginfo[0]++;
+			else if ($onguest['flags'] & BPT_BOT) 		$ginfo[3]++;
+			//if ($onguest['flags'] & BPT_PROXY) 		$ginfo[1]++;
 		}
-		
-		if (filter_string($_GET['action']) == 'markallforumsread' and $log) {
-			$sql->query("DELETE FROM forumread WHERE user=$loguserid");
-			$sql->query("DELETE FROM `threadsread` WHERE `uid` = '$loguserid'");
-			$sql->query("INSERT INTO forumread (user,forum,readdate) SELECT $loguserid,id,".ctime().' FROM forums');
-			return header("Location: index.php");
-		}
+		$specinfo = array('IP banned', 'Proxy', 'Tor banned', 'bots');
+		$guestcat = array();
+		for ($i = 0; $i < 4; ++$i)
+			if ($ginfo[$i])
+				$guestcat[] = $ginfo[$i] . " " . $specinfo[$i];
+		$onlineguests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")" : "") : "";
+	}
 
-		$postread = readpostread($loguserid);
-
-		$users1 = $sql->query("SELECT id,name,birthday,sex,powerlevel,aka FROM users WHERE FROM_UNIXTIME(birthday,'%m-%d')='".date('m-d',ctime() + $tzoff)."' AND birthday ORDER BY name");
-		$blist	= "";
-		for ($numbd=0;$user=$sql->fetch($users1);$numbd++) {
-			if(!$numbd) $blist="<tr>$tccell2s colspan=5>Birthdays for ".date('F j',ctime() + $tzoff).': ';
-			else $blist.=', ';
-			$users[$user['id']]=$user;
-			$y=date('Y',ctime())-date('Y',$user['birthday']);
-			$userurl = getuserlink($user);
-			$blist.= "$userurl ($y)"; 
-		}
-		
-		$onlinetime=ctime()-300;
-		$onusers=$sql->query("SELECT id,name,powerlevel,lastactivity,sex,minipic,aka,birthday FROM users WHERE lastactivity>$onlinetime OR lastposttime>$onlinetime ORDER BY name");
-		$numonline=mysql_num_rows($onusers);
-
-		$numguests=$sql->resultq("SELECT count(*) FROM guests WHERE date>$onlinetime",0,0);
-		if ($numguests) $guestcount=" | <nobr>$numguests guest".($numguests>1?"s":"");
-		$onlineusersa	= array();
-		for ($numon=0; $onuser = $sql->fetch($onusers);$numon++) {
-			
-			//$namecolor=explode("=", getnamecolor($onuser['sex'],$onuser['powerlevel']));
-			//$namecolor=$namecolor[1];
-			//$namelink="<a href=profile.php?id=$onuser[id] style='color: #$namecolor'>$onuser[name]</a>";
-
-			$namelink = getuserlink($onuser);
-
-			if($onuser['minipic']) {
-				$onuser['minipic']='<img width="16" height="16" src="'.str_replace('"','%22',$onuser['minipic']).'" align="absmiddle"> ';
-			}
-
-			if($onuser['lastactivity']<=$onlinetime) {
-				$namelink="($namelink)";
-			}
-			
-			$onlineusersa[]="$onuser[minipic]$namelink";
-		}
-
-		$onlineusers	= "";
-		if ($onlineusersa) $onlineusers = ': '. implode(", ", $onlineusersa);
-
+	/*
+		Are we logged in?
+	*/
+	
+	if($loguser['id']){
+		$myurl 	= getuserlink($loguser);
+		$logmsg = "You are logged in as $myurl.";
+	} else {
 		$logmsg	= "";
-		if($log){
-			$headlinks.=' - <a href=index.php?action=markallforumsread>Mark all forums read</a>';
-			$header=makeheader($header1,$headlinks,$header2);
+	}
+	
+	// Lastest user registered
+	$lastuser = $sql->fetchq("SELECT $userfields FROM users u ORDER BY u.id DESC LIMIT 1");
+	if ($lastuser)
+		$lastuserurl = getuserlink($lastuser);
+	
+	
 
-			$myurl = getuserlink($loguser);
-			$logmsg = "You are logged in as $myurl.";
-		}
+	$posts = $sql->fetchq('
+		SELECT 	(SELECT COUNT(*) FROM posts WHERE date>'.(ctime()-3600).')  AS h, 
+				(SELECT COUNT(*) FROM posts WHERE date>'.(ctime()-86400).') AS d');
 
-		$lastuser = $sql->fetchq('SELECT id,name,sex,powerlevel,aka,birthday FROM users ORDER BY id DESC LIMIT 1');
-    $lastuserurl = getuserlink($lastuser);
+	$count = $sql->fetchq('
+		SELECT 	(SELECT COUNT(*) FROM users)   AS u,
+				(SELECT COUNT(*) FROM threads) AS t, 
+				(SELECT COUNT(*) FROM posts)   AS p');
 
-		$posts = $sql->fetchq('SELECT (SELECT COUNT( * ) FROM posts WHERE date>'.(ctime()-3600).') AS h, (SELECT COUNT( * ) FROM posts WHERE date>'.(ctime()-86400).') AS d');
-		$count = $sql->fetchq('SELECT (SELECT COUNT( * ) FROM users) AS u, (SELECT COUNT(*) FROM threads) as t, (SELECT COUNT(*) FROM posts) as p');
+	$misc = $sql->fetchq('SELECT maxpostsday, maxpostshour, maxusers FROM misc');
+	
+	// Have we set a new record?
+	if($posts['d'] > $misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday  = {$posts['d']}, maxpostsdaydate  = ".ctime());
+	if($posts['h'] > $misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour = {$posts['h']}, maxpostshourdate = ".ctime());
+	if($numonline  > $misc['maxusers']) {
+		$sql->queryp("UPDATE misc SET maxusers = :num, maxusersdate = :date, maxuserstext = :text",
+			[
+				'num'	=> $numonline,
+				'date'	=> ctime(),
+				'text'	=> $onlineusers,
+			]);
+	}
 
-		$misc = $sql->fetchq('SELECT * FROM misc');
+	/*// index sparkline
+	$sprkq = mysql_query('SELECT COUNT(id),date FROM posts WHERE date >="'.(time()-3600).'" GROUP BY (date % 60) ORDER BY date');
+	$sprk = array();
+	
+	while ($r = mysql_fetch_row($sprkq)) {
+		array_push($sprk,$r[0]);
+	}
+	// print_r($sprk);
+	$sprk = implode(",",$sprk); */
+
+	/*
+		Recent posts counter
+	*/
+	if (filter_bool($_GET['oldcounter']))
+		$statsblip	= "{$posts['d']} posts during the last day, {$posts['h']} posts during the last hour.";
+	else {
+		$nthreads = $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `lastpostdate` > '". (ctime() - 86400) ."'");
+		$nusers   = $sql->resultq("SELECT COUNT(*) FROM `users`   WHERE `lastposttime` > '". (ctime() - 86400) ."'");
+		$tthreads = ($nthreads === 1) ? "thread" : "threads";
+		$tusers   = ($nusers   === 1) ? "user" : "users";
+		$statsblip	= "$nusers $tusers active in $nthreads $tthreads during the last day.";
+	}
+	
+	?>
+		<table class='table'>
+			<tr>
+				<td class='tdbg1 fonts center'>
+					<table width=100%>
+						<tr>
+							<td class='fonts'>
+								<?=$logmsg?>
+							</td>
+							<td align=right class='fonts'>
+								<?=$count['u']?> registered users<br>
+								Latest registered user: <?=$lastuserurl?>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<?=$blist?>
+			</tr>
+			<tr>
+				<td class='tdbg2 fonts center'>
+					<?=$count['t']?> threads and <?=$count['p']?> posts in the board | <?=$statsblip?>
+				</td>
+			<tr>
+				<td class='tdbg1 fonts center'>
+					<?=$numonline?> user<?=$tnumonline?> currently online<?=$onlineusers?><?=$onlineguests?> 
+				</td>
+			</tr>
+		</table>
+	<?php
+
+	// Displays total PMs along with unread unlike layout.php
+	$new = '&nbsp;';
+	$privatebox = '';
+	if ($loguser['id']) {
 		
-		if($posts['d']>$misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday=$posts[d],maxpostsdaydate=".ctime());
-		if($posts['h']>$misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour=$posts[h],maxpostshourdate=".ctime());
-		if($numonline>$misc['maxusers'])      $sql->query("UPDATE misc SET maxusers=$numonline,maxusersdate=".ctime().",maxuserstext='".addslashes($onlineusers)."'");
-
-		/*// index sparkline
-		$sprkq = mysql_query('SELECT COUNT(id),date FROM posts WHERE date >="'.(time()-3600).'" GROUP BY (date % 60) ORDER BY date');
-		$sprk = array();
+		$pms = $sql->getresultsbykey("
+			SELECT msgread, COUNT(*) num
+			FROM pmsgs
+			WHERE userto = {$loguser['id']}
+			GROUP BY msgread
+		");
 		
-		while ($r = mysql_fetch_row($sprkq)) {
-			array_push($sprk,$r[0]);
-		}
-		// print_r($sprk);
-		$sprk = implode(",",$sprk); */
+		// 0 -> unread ; 1 -> read
+		$totalpms = filter_int($pms[0]) + filter_int($pms[1]);
 
-		if (filter_bool($_GET['oldcounter']))
-			$statsblip	= "$posts[d] posts during the last day, $posts[h] posts during the last hour.";
-		else {
-			$nthreads = $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `lastpostdate` > '". (ctime() - 86400) ."'");
-			$nusers   = $sql->resultq("SELECT COUNT(*) FROM `users` WHERE `lastposttime` > '". (ctime() - 86400) ."'");
-			$tthreads = ($nthreads === 1) ? "thread" : "threads";
-			$tusers   = ($nusers   === 1) ? "user" : "users";
-			$statsblip	= "$nusers $tusers active in $nthreads $tthreads during the last day.";
-		}
+		if ($totalpms) {
+			
+			if ($pms[0]) $new = $statusicons['new'];
 
-	  print "$header
+			$pmsg = $sql->fetchq("
+				SELECT p.date, p.id pid, $userfields
+				FROM pmsgs p
+				INNER JOIN users u ON u.id = p.userfrom
+				WHERE p.userto = {$loguser['id']}". (($pms[0]) ? " AND p.msgread = 0": "") ."
+				ORDER BY p.id DESC
+				LIMIT 1
+			");
+
+			$namelink = getuserlink($pmsg);
+			$lastmsg = "<a href='showprivate.php?id={$pmsg['pid']}'>Last ". (($pms[0]) ? "unread " : "") ."message</a> from $namelink on ".printdate($pmsg['date']);
+		} else {
+			$lastmsg = "";
+		}
+		
+		?><br>
+			<table class='table'>
+				<tr>
+					<td class='tdbgh fonts center' colspan=2>
+						Private messages
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg1 center'>
+						<?=$new?>
+					</td>
+					<td class='tdbg2'>
+						<a href='private.php'>Private messages</a> -- You have <?=$totalpms?> private messages (<?=(int) $pms[0]?> new). <?=$lastmsg?>
+					</td>
+				</tr>
+			</table>
 		<br>
-		$tblstart
-		 $tccell1s><table width=100%><td class=fonts>$logmsg</td><td align=right class=fonts>$count[u] registered users<br>Latest registered user: $lastuserurl</table>
-		 $blist<tr>
-		$tccell2s>$count[t] threads and $count[p] posts in the board | $statsblip<tr>
-		 $tccell1s>$numonline user".($numonline!=1?'s':'')." currently online$onlineusers$guestcount
+		<?php
 
-	  ";
+	}
 
-		// Displays total PMs along with unread unlike layout.php
-	  $new='&nbsp;';
-		if($log) {
-			$pms = $sql->getresultsbykey("SELECT msgread, COUNT(*) num FROM pmsgs WHERE userto=$loguserid GROUP BY msgread", 'msgread', 'num');
-			$totalpms = intval($pms[0]+$pms[1]);
-
- 			if ($totalpms) {
-				if($pms[0]) $new = $statusicons['new'];
-
-				$pmsg = $sql->fetchq("SELECT date,u.id uid,name,sex,powerlevel,aka
-					FROM pmsgs p LEFT JOIN users u ON u.id=p.userfrom
-					WHERE userto=$loguserid". (($pms[0]) ? " AND msgread=0": "") ."
-					ORDER BY p.id DESC
-          LIMIT 1");
-
-				$namelink = getuserlink($pmsg, array('id'=>'uid'));
-				$lastmsg = "Last ". (($pms[0]) ? "unread " : "") ."message from $namelink on ".date($dateformat,$pmsg['date']+$tzoff);
-			}
-			$privatebox="
-				$tblstart<tr>
-				$tccellhs colspan=2>Private messages</tr><tr>
-				$tccell1>$new</td>
-				$tccell2l><a href='private.php'>Private messages</a> -- You have $totalpms private messages (".intval($pms[0])." new). $lastmsg</td></tr>
-				$tblend<br>
-			";
-
-		}
-
-  // Hopefully this version won't break horribly if breathed on wrong
+// Hopefully this version won't break horribly if breathed on wrong
 	$forumlist="
 		<tr>
-			$tccellh>&nbsp;</td>
-			$tccellh>Forum</td>
-			$tccellh width=80>Threads</td>
-			$tccellh width=80>Posts</td>
-			$tccellh width=15%>Last post</td>
+			<td class='tdbgh center'>&nbsp;</td>
+			<td class='tdbgh center'>Forum</td>
+			<td class='tdbgh center' width=80>Threads</td>
+			<td class='tdbgh center' width=80>Posts</td>
+			<td class='tdbgh center' width=15%>Last post</td>
 		</tr>
 	";
 
-	$forumquery = $sql->query("SELECT f.*,u.id AS uid,name,sex,powerlevel,aka,birthday FROM forums f LEFT JOIN users u ON f.lastpostuser=u.id WHERE (!minpower OR minpower<=$power) AND f.hidden = '0' ORDER BY catid,forder");
-	$catquery = $sql->query("SELECT id,name FROM categories WHERE (!minpower OR minpower<=$power) ORDER BY id");
-	$modquery = $sql->query("SELECT u.id id,name,sex,powerlevel,aka,forum,birthday FROM users u INNER JOIN forummods m ON u.id=m.user ORDER BY name");
+	$forumquery = $sql->query("
+		SELECT f.*, $userfields uid 
+		FROM forums f
+		LEFT JOIN users u      ON f.lastpostuser = u.id
+		LEFT JOIN categories c ON f.catid = c.id
+		WHERE (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
+		AND (!f.hidden OR $sysadmin)
+		ORDER BY c.corder, f.catid, f.forder
+	");
+	$catquery = $sql->query("
+		SELECT id, name
+		FROM categories
+		WHERE (!minpower OR minpower <= {$loguser['powerlevel']})
+		ORDER BY corder, id
+	");
+	$modquery = $sql->query("
+		SELECT $userfields, m.forum
+		FROM users u
+		INNER JOIN forummods m ON u.id = m.user
+		ORDER BY name
+	");
 
 	$categories	= array();
 	$forums		= array();
@@ -201,62 +345,101 @@
 	while ($res = $sql->fetch($modquery))
 		$mods[] = $res;
 
-  // Quicker (?) new posts calculation that's hopefully accurate v.v
-  if ($log) {
-	  $qadd = array();
-	  foreach ($forums as $forum) $qadd[] = "(lastpostdate > '{$postread[$forum[id]]}' AND forum = '$forum[id]')\r\n";
-	  $qadd = implode(' OR ', $qadd);
+// Quicker (?) new posts calculation that's hopefully accurate v.v
+	if ($loguser['id']) {
+		$qadd = array();
+		foreach ($forums as $forum) {
+			if (!isset($postread[$forum['id']])) continue;
+			$qadd[] = "(lastpostdate > '{$postread[$forum['id']]}' AND forum = '{$forum['id']}')\r\n";
+		}
+		
+		if ($qadd)
+			$qadd = "(".implode(' OR ', $qadd).")";
+		else
+			$qadd = "1";
 
-		$forumnew = $sql->getresultsbykey("SELECT forum, COUNT(*) AS unread FROM threads t LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = $loguser[id])
-			WHERE (`read` IS NULL OR `read` != 1) AND ($qadd) GROUP BY forum", 'forum', 'unread');
+		$forumnew = $sql->getresultsbykey("
+			SELECT forum, COUNT(*) AS unread
+			FROM threads t
+			LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
+			WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
+			GROUP BY forum
+		");
+		
 	}
 
+	// Category filtering
 	$cat	= filter_int($_GET['cat']);
+	
 	foreach ($categories as $category) {
-		$forumlist.="<tr><td class='tbl tdbgc center font' colspan=5><a href=index.php?cat=$category[id]>$category[name]</a></td></tr>";
+		
+		$forumlist .= "
+			<tr>
+				<td class='tbl tdbgc center font' colspan=5>
+					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
+				</td>
+			</tr>";
+		
+		
 		if($cat && $cat != $category['id'])
 		  continue;
 
 		foreach ($forums as $forumplace => $forum) {
+			
 			if ($forum['catid'] != $category['id'])
 				continue;
 
+			
+			
+			
+			/*
+				Local mod display
+			*/
 			$m = 0;
 			$modlist = "";
 			foreach ($mods as $modplace => $mod) {
+				
 				if ($mod['forum'] != $forum['id'])
 					continue;
 
 				$namelink = getuserlink($mod);
-				$modlist.=($m++?', ':'').$namelink;
+				$modlist .=($m++?', ':'').$namelink;
 				unset($mods[$modplace]);
 			}
 
-			if ($m)
-				$modlist="$smallfont(moderated by: $modlist)</font>";
+			if ($modlist)
+				$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
 
-			$namelink = getuserlink($forum, array('id'=>'uid'));
-			if($forum['numposts']){
-				$forumlastpost="<nobr>". date($dateformat,$forum['lastpostdate']+$tzoff);
-				$by="$smallfont<br>by $namelink". ($forum['lastpostid'] ? " <a href='thread.php?pid=". $forum['lastpostid'] ."#". $forum['lastpostid'] ."'>". $statusicons['getlast'] ."</a>" : "") ."</nobr></font>";
+			
+			
+			
+			if($forum['numposts']) {
+				$namelink = getuserlink($forum, $forum['uid']);
+				$forumlastpost = printdate($forum['lastpostdate']);
+				$by =  "<span class='fonts'>
+							<br>
+							by $namelink". ($forum['lastpostid'] ? " <a href='thread.php?pid={$forum['lastpostid']}#{$forum['lastpostid']}'>{$statusicons['getlast']}</a>" : "")
+					  ."</span>";
 			} else {
-				$forumlastpost=getblankdate();
-				$by='';
+				$forumlastpost = getblankdate();
+				$by = '';
 			}
 
 			$new='&nbsp;';
 
 			if ($forum['numposts']) {
-				if ($log && intval($forumnew[$forum['id']]) > 0) {
-  	      $new = $statusicons['new'] ."<br>". generatenumbergfx(intval($forumnew[$forum['id']]));
+				// If we're logged in, check the result set
+				if ($loguser['id'] && isset($forumnew[$forum['id']]) && $forumnew[$forum['id']] > 0) {
+					$new = $statusicons['new'] ."<br>". generatenumbergfx((int)$forumnew[$forum['id']]);
 				}
-				elseif (!$log && $forum['lastpostdate']>ctime()-3600) {
+				// If not, mark posts made in the last hour as new
+				else if (!$loguser['id'] && $forum['lastpostdate'] > ctime() - 3600) {
 					$new = $statusicons['new'];
 				}
-      }
+			}
 /*
 			if ($log && $forum['lastpostdate'] > $postread[$forum['id']]) {
-        $newcount	= $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '$loguser[id]' AND `read` = 1) AND `lastpostdate` > '". $postread[$forum['id']] ."' AND `forum` = '$forum[id]'");
+		$newcount	= $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '$loguser[id]' AND `read` = 1) AND `lastpostdate` > '". $postread[$forum['id']] ."' AND `forum` = '$forum[id]'");
 			}
 
 			if ((($forum['lastpostdate'] > $postread[$forum['id']] and $log) or (!$log and $forum['lastpostdate']>ctime()-3600)) and $forum['numposts']) {
@@ -265,12 +448,21 @@
 */
 		  $forumlist.="
 			<tr>
-				$tccell1>$new</td>
-				$tccell2l><a href=forum.php?id=$forum[id]>$forum[title]</a><br>
-				$smallfont$forum[description]<br>$modlist</td>
-				$tccell1>$forum[numthreads]</td>
-				$tccell1>$forum[numposts]</td>
-				$tccell2><span class='lastpost'>$forumlastpost</span> $by
+				<td class='tdbg1 center' style='width: 4%'>$new</td>
+				<td class='tdbg2'>
+					<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
+					<span class='fonts'>
+						{$forum['description']}<br>
+						$modlist
+					</span>
+				</td>
+				<td class='tdbg1 center'>{$forum['numthreads']}</td>
+				<td class='tdbg1 center'>{$forum['numposts']}</td>
+				<td class='tdbg2 center'>
+					<span class='lastpost nobr'>
+						$forumlastpost $by
+					</span>
+				</td>
 			</tr>
 		  ";
 
@@ -278,11 +470,13 @@
 		}
 	}
 
-		print "$tblend<br>$privatebox
-		
-		". adbox() ."<br>
-
-		$tblstart$forumlist$tblend$footer";
-		printtimedif($startingtime);
-	}
+	?>
+	<br>
+	<table class='table'>
+		<?=$forumlist?>
+	</table>
+	<?php
+	
+	pagefooter();
+	
 ?>

@@ -2,31 +2,42 @@
 
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
+	
+	// UTF-8 time?
+	header("Content-type: text/html; charset=utf-8'");
+
+	// cache bad
+	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+	header('Pragma: no-cache');
+	
+	
 
 	$startingtime = microtime(true);
 
-	// Awful old legacy thing. Too much code relies on register globals,
-	// and doesn't distinguish between _GET and _POST, so we have to do it here. fun
-	$id = filter_int($_POST['id']);
-	if ($id === null)
-		$id = filter_int($_GET['id']);
-	if ($id === null)
-		$id = 0;
-
+	
 	// Wait for the midnight backup to finish...
 	if ((int)date("Gi") < 5) {
 		require "lib/downtime.php";
 	}
-
+	
+	// Fields necessary to generate userlinks
+	$userfields = "u.name, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
+	
+	
+	$errors = array();
+	set_error_handler('error_reporter');
+	
 	require 'lib/config.php';
 	require 'lib/mysql.php';
+	require 'lib/layout.php';
+	require 'lib/rpg.php';
 
+	
+	
 	$sql	= new mysql;
 
 
-
-
-	$sql->connect($sqlhost, $sqluser, $sqlpass) or
+	$sql->connect($sqlhost, $sqluser, $sqlpass, $dbname) or
 		die("<title>Damn</title>
 			<body style=\"background: #000 url('images/bombbg.png'); color: #f00;\">
 				<font style=\"font-family: Verdana, sans-serif;\">
@@ -34,20 +45,21 @@
 				<img src=\"http://xkeeper.shacknet.nu:5/docs/temp/mysqlbucket.png\" title=\"bought the farm, too\">
 				<br><br><font style=\"color: #f88; size: 175%;\"><b>The MySQL server has exploded.</b></font>
 				<br>
-				<br><font style=\"color: #f55;\">Error: ". mysql_error() ."</font>
+				<br><font style=\"color: #f55;\">Error: ". $sql->error ."</font>
 				<br>
 				<br><small>This is not a hack attempt; it is a server problem.</small>
 			");
-	$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
+	//$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
 
-
-	if (file_exists("lib/firewall.php") && !filter_bool($disable_firewall)) {
+	
+	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
-
 	} else {
 
+		$die = 0;
 		// Bad Design Decisions 2001.
 		// :(
+		/*
 		if (!get_magic_quotes_gpc()) {
 			$_GET = addslashes_array($_GET);
 			$_POST = addslashes_array($_POST);
@@ -58,21 +70,25 @@
 			foreach($supers as $__s) if (is_array($$__s)) extract($$__s, EXTR_SKIP);
 			unset($supers);
 		}
+		*/
 	}
+	
 
-	if (filter_int($die) || filter_int($_GET['sec'])) {
+	if ($die || filter_int($_GET['sec'])) {
 		if ($die) {
-			$sql -> query("INSERT INTO `minilog` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `time` = '". ctime() ."', `banflags` = '$banflags'");
+			$sql->query("INSERT INTO `minilog` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `time` = '". ctime() ."', `banflags` = '$banflags'");
 
 			if ($_COOKIE['loguserid'] > 0) {
 				$newid	= 0;
 			} elseif (!$_COOKIE['loguserid'])
 				$newid	= 0 - ctime();
 
-			if ($newid) setcookie('loguserid',$newid,2147483647);
+			if (isset($newid)) {
+				setcookie('loguserid',$newid,2147483647);
+			}
 
 		}
-
+		
 		header("HTTP/1.1 403 Forbidden");
 
 		die("<title>Error</title>
@@ -83,12 +99,39 @@
 			");
 	}
 
-	if ($sql -> resultq("SELECT `disable` FROM `misc` WHERE 1")) {
-		if ($x_hacks['host'])
-			require "lib/downtime-bmf.php";
-		else
-			require "lib/downtime2.php";
 
+
+
+	// determine if the current request is an ajax request, currently only a handful of libraries
+	// set the x-http-requested-with header, with the value "XMLHttpRequest"
+	if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest") {
+		define("IS_AJAX_REQUEST", true); // ajax request!
+	} else {
+		define("IS_AJAX_REQUEST", false);
+	}
+	
+	// determine the origin of the request
+	$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : filter_string($_SERVER['HTTP_REFERER']);
+	if ($origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST))) {
+		define("SAME_ORIGIN", true);
+	} else {
+		define("SAME_ORIGIN", false);
+	}
+
+	
+	// Just fetch now everything from misc that's going to be used on every page
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle FROM misc", PDO::FETCH_ASSOC);
+	
+	if ($miscdata['disable']) {
+		if ($_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
+			if ($x_hacks['host'])
+				require "lib/downtime-bmf.php";
+			else
+				require "lib/downtime2.php";
+		} else {
+			$config['title-submessage'] = "<br>(THE BOARD IS DISABLED)";
+		}
+		/*
 		die("
 		<title>Damn</title>
 			<body style=\"background: #000 url('images/bombbg.png'); color: #f00;\">
@@ -105,15 +148,15 @@
 				<br>The forum should be back up within a short time. Until then, please do not panic;
 				<br>if something bad actually happened, we take backups often.
 			");
+			*/
 	}
-
-	$dateformat = $defaultdateformat;
-	$dateshort  = $defaultdateshort;
-
+	
+	
 	$loguser = array();
 
 	// Just making sure.  Don't use this anymore.
 	// (This is backup code to auto update passwords from cookies.)
+	/*
 	if (filter_int($_COOKIE['loguserid']) && filter_string($_COOKIE['logpassword'])) {
 		$loguserid = intval($_COOKIE['loguserid']);
 
@@ -137,74 +180,294 @@
 	}
 	$logpassword = null;
 	$logpwenc = null;
+	*/
+	
+	if(isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
+		$loguserid 	= (int) $_COOKIE['loguserid'];
+		$loguser 	= $sql->fetchq("SELECT * FROM `users` WHERE `id` = $loguserid");
 
-	if(filter_int($_COOKIE['loguserid']) && filter_string($_COOKIE['logverify'])) {
-		$loguserid = intval($_COOKIE['loguserid']);
-		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id`='$loguserid'");
-
-		$logverify = $_COOKIE['logverify'];
-		$verifyid = intval(substr($logverify, 0, 1));
+		$logverify 	= $_COOKIE['logverify'];
+		$verifyid 	= (int) substr($logverify, 0, 1);
 
 		$verifyhash = create_verification_hash($verifyid, $loguser['password']);
 
 		// Compare what we just created with what the cookie says, assume something is wrong if it doesn't match
 		if ($verifyhash !== $logverify)
 			$loguser = NULL;
-
+		
+		unset($loguserid, $logverify, $verifyid, $verifyhash);
 	}
+	
+	if ($config['force-user-id'])
+		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
 
-	$tzoff		= 0;
-
+	
 	if ($loguser) {
-		$loguserid = $loguser['id'];
-		$tzoff = $loguser['timezone']*3600;
-		$scheme = $loguser['scheme'];
-		if ($loguser['dateformat'])
-			$dateformat	= $loguser['dateformat'];
-		if ($loguser['dateshort'])
-			$dateshort	= $loguser['dateshort'];
-
-		$log = 1;
-
+		$loguser['tzoff'] = $loguser['timezone'] * 3600;
+		
+		if (!$loguser['dateformat'])
+			$loguser['dateformat'] = $config['default-dateformat'];
+		if (!$loguser['dateshort'])
+			$loguser['dateshort'] = $config['default-dateshort'];
+		
+		// Load inventory
+		$itemdb = getuseritems($loguser['id']);
+		
+		if ($itemdb)
+			foreach($itemdb as $item)
+				if ($item['effect'] == 5) $hacks['comments'] = true;
+		
 		if ($loguser['id'] == 1)
 			$hacks['comments'] = true;
-		else
-			$hacks['comments'] = $sql->resultq("SELECT COUNT(*) FROM `users_rpg` WHERE `uid` = '$loguserid' AND `eq6` IN ('43', '71', '238')");
-
+		//else 
+			//$hacks['comments'] = $sql->resultq("SELECT COUNT(*) FROM `users_rpg` WHERE `uid` = '{$loguser['id']}' AND `eq6` IN ('43', '71', '238')");
+		
+		/*
 		if ($loguser['viewsig'] >= 3)
 			return header("Location: /?sec=1");
+		*/
 		if ($loguser['powerlevel'] >= 1)
-			$boardtitle .= $submessage;
-
+			$config['board-title'] .= $config['title-submessage'];
+		/*
 		if ($loguser['id'] == 175 && !$x_hacks['host'])
 			$loguser['powerlevel'] = max($loguser['powerlevel'], 3);
+		*/
+		
 	}
 	else {
-		$loguserid				= null;
-		$loguser				= array();
-		$loguser['viewsig']		= 0;
-		$loguser['powerlevel']	= 0;
-		$loguser['signsep']		= 0;
-		$loguser['id']			= null;
-		$log					= 0;
+		$loguser = array(
+			'id'			=> 0, // This is a much more useful value to default to
+			'name'			=> '',
+			'password'		=> '',
+			'viewsig'		=> 1,
+			'powerlevel' 	=> 0,
+			'signsep'		=> 0,
+			'dateformat'	=> $config['default-dateformat'],
+			'dateshort'		=> $config['default-dateshort'],
+			'tzoff'			=> 0,
+			'scheme'		=> 0,
+			'title'			=> '',
+			'hideactivity'	=> 0,
+		);	
 	}
 
 	if ($x_hacks['superadmin']) $loguser['powerlevel'] = 4;
+	
+	register_shutdown_function('error_printer', false, ($loguser['powerlevel'] == 4), $GLOBALS['errors']);
 
-	$power     = $loguser['powerlevel'];
-	$banned    = ($power<0);
-	$ismod     = ($power>=2);
-	$isadmin   = ($power>=3);
-	if($banned) $power=0;
+	
+	
+	$banned    = (int) ($loguser['powerlevel'] <  0);
+	$issuper   = (int) ($loguser['powerlevel'] >= 1);
+	$ismod     = (int) ($loguser['powerlevel'] >= 2);
+	$isadmin   = (int) ($loguser['powerlevel'] >= 3);
+	$sysadmin  = (int) ($loguser['powerlevel'] >= 4);
+	
+	// >_>
+	$isChristmas = (date('n') == 12);
+	
+	// Doom timer setup
+	//$getdoom = true;
+	//require "ext/mmdoom.php";
+	
+	
+	
+	$ipbanned = $torbanned = $isbot = 0;
+	
+	const BPT_IPBANNED 	= 1;
+	const BPT_PROXY 	= 2;
+	const BPT_TOR 		= 4;
+	const BPT_BOT 		= 8;
+	
+	$bpt_flags = 0;
+	
+	// Disabled - this info can be faked
+	//if (!($clientip    = filter_var(filter_string($_SERVER['HTTP_CLIENT_IP']),       FILTER_VALIDATE_IP))) $clientip    = "";
+	//if (!($forwardedip = filter_var(filter_string($_SERVER['HTTP_X_FORWARDED_FOR']), FILTER_VALIDATE_IP))) $forwardedip = "";	
+	
+	// Build the query to check if we're IP Banned
+					  $checkips  = "INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1";
+	//if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
+	//if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
+
+	if($sql->resultq("SELECT COUNT(*) FROM ipbans WHERE $checkips")) $ipbanned = 1;
+	if($sql->resultq("SELECT COUNT(*) FROM tor WHERE `ip` = '{$_SERVER['REMOTE_ADDR']}' AND `allowed` = '0'")) $torbanned = 1;
+
+	
+	if ($_SERVER['HTTP_REFERER']) {
+		// NOTE: Doesn't work in a prepared query since the placeholder can't be in a function
+		$botinfo = $sql->fetchq("SELECT signature, malicious FROM bots WHERE INSTR('".addslashes(strtolower($_SERVER['HTTP_USER_AGENT']))."', signature) > 0");
+		if ($botinfo) {
+			$isbot = 1;
+			if ($botinfo['malicious']) $ipbanned = 1;
+		}
+	}
+	
+	//if ($ipbanned || $torbanned)
+	//	$windowtitle = $boardname;
+	
+	$url = $_SERVER['REQUEST_URI'];
+
+	if($ipbanned) {
+		$url .= ' (IP banned)';
+		$bpt_flags = $bpt_flags & BPT_IPBANNED;
+	}
+
+	if ($torbanned) {
+		$url .= ' (Tor proxy)';
+		$bpt_flags = $bpt_flags & BPT_TOR;
+		$sql->query("UPDATE `tor` SET `hits` = `hits` + 1 WHERE `ip` = '{$_SERVER['REMOTE_ADDR']}'");
+	}
+	
+	if ($isbot) {
+		$url .= ' (Bot)';
+		$bpt_flags = $bpt_flags & BPT_BOT;
+	}
+	
+
+	//if (isset($_SERVER['HTTP_REFERER']) && substr($_SERVER['HTTP_REFERER'], 0, strlen($config['board-url'])) != $config['board-url']){
+	if ($origin && !SAME_ORIGIN) {
+		$sql->queryp("INSERT INTO referer (time, url, ref, ip) VALUES (:time,:url,:ref,:ip)",
+		[
+			'time' => ctime(),
+			'url'	=> $url,
+			'ref'	=> $_SERVER['HTTP_REFERER'],
+			'ip'	=> $_SERVER['REMOTE_ADDR']
+		]);
+	}
+
+	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(ctime() - 300));
+	
+	if($loguser['id']) {
+			
+		if ($loguser['powerlevel'] <= 5 && !IS_AJAX_REQUEST) {
+			
+			$influencelv = calclvl(calcexp($loguser['posts'], (ctime() - $loguser['regdate']) / 86400));
+
+			// Alart #defcon?
+			if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
+				// Determine IP block differences
+				$ip1 = explode(".", $loguser['lastip']);
+				$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
+				for ($diff = 0; $diff < 3; ++$diff)
+					if ($ip1[$diff] != $ip2[$diff]) break;
+				if ($diff == 0) $color = xk(4);	// IP completely different
+				else            $color = xk(8); // Not all blocks changed
+				$diff = "/".($diff+1)*8;
+
+				xk_ircsend("102|". xk(7) ."User {$loguser['name']} (id {$loguser['id']}) changed from IP ". xk(8) . $loguser['lastip'] . xk(7) ." to ". xk(8) . $_SERVER['REMOTE_ADDR'] .xk(7). " ({$color}{$diff}" .xk(7). ")");
+			}
+
+
+			$sql->queryp("
+				UPDATE users
+				SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
+				WHERE id = {$loguser['id']}",
+				[
+					'lastactivity' 	=> ctime(),
+					'lastip' 		=> $_SERVER['REMOTE_ADDR'],
+					'lasturl' 		=> $url,
+					'lastforum'		=> 0,
+					'influence'		=> $influencelv,
+				]);
+			
+		}
+
+	} else {
+		$sql->queryp("
+			INSERT INTO guests (ip, date, useragent, lasturl, lastforum, flags) VALUES (:ip, :date, :useragent, :lasturl, :lastforum, :flags)",
+			[
+				'ip'			=> $_SERVER['REMOTE_ADDR'],
+				'date'			=> ctime(),
+				'useragent'		=> $_SERVER['HTTP_USER_AGENT'],
+				'lasturl'		=> $url,
+				'lastforum'		=> 0,
+				'flags'			=> $bpt_flags,
+			]);
+	}
+	
+	
+	if ($ipbanned) {
+		if ($loguser['title'] == "Banned; account hijacked. Contact admin via PM to change it.") {
+			$reason	= "Your account was hijacked; please contact {$config['admin-name']} to reset your password and unban your account.";
+		} elseif ($loguser['title']) {
+			$reason	= "Ban reason: ". $loguser['title'] ."<br>If you think have been banned in error, please contact {$config['admin-name']}.";
+		} else {
+			$reason	= $sql->resultq("SELECT `reason` FROM ipbans WHERE $checkips");
+			$reason	= ($reason ? "Reason: $reason" : "<i>(No reason given)</i>");
+		}
+		
+		$message = 	"You are banned from this board.".
+					"<br>". $reason .
+					"<br>".
+					"<br>If you think you have been banned in error, please contact the administrator:".
+					"<br>E-mail: {$config['admin-email']}";
+		
+		echo dialog($message, "Banned");
+		
+	}
+	if ($torbanned) {
+		$message = 	"You appear to be using a Tor proxy. Due to abuse, Tor usage is forbidden.".
+					"<br>If you have been banned in error, please contact {$config['admin-name']}.".
+					"<br>".
+					"<br>E-mail: {$config['admin-email']}";
+		
+		echo dialog($message, "Tor is not allowed");
+	}
+	
+	/*
+		View milestones
+	*/
+
+	$views = $sql->resultq('SELECT views FROM misc') + 1;
+	
+	if (!$isbot && !IS_AJAX_REQUEST) {
+		
+		// Don't increment the view counter for bots
+		$sql->query("UPDATE misc SET views = views + 1");
+		
+		// Log hits close to a milestone
+		if($views%10000000>9999000 || $views%10000000<1000) {
+			$sql->query("INSERT INTO hits VALUES ($views ,{$loguser['id']}, '{$_SERVER['REMOTE_ADDR']}', ".ctime().")");
+		}
+		
+		// Print out a message to IRC whenever a 10-million-view milestone is hit
+		if (
+			 $views % 10000000 >  9999994 ||
+			($views % 10000000 >= 9991000 && $views % 1000 == 0) || 
+			($views % 10000000 >= 9999900 && $views % 10 == 0) || 
+			($views > 5 && $views % 10000000 < 5)
+		) {
+			// View <num> by <username/ip> (<num> to go)
+			xk_ircsend("0|View ". xk(11) . str_pad(number_format($views), 10, " ", STR_PAD_LEFT) . xk() ." by ". ($loguser['id'] ? xk(11) . str_pad($loguser['name'], 25, " ") : xk(12) . str_pad($_SERVER['REMOTE_ADDR'], 25, " ")) . xk() . ($views % 1000000 > 500000 ? " (". xk(12) . str_pad(number_format(1000000 - ($views % 1000000)), 5, " ", STR_PAD_LEFT) . xk(2) ." to go" . xk() .")" : ""));
+		}
+	}
+
+	// Dailystats update in one query
+	$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
+	             "VALUES ('".date('m-d-y',ctime())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
+	             "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
+	
 
 	$specialscheme = "";
-	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE");
-	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile']) == 1) {
+	
+	// "Mobile" layout
+	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE", "BlackBerry", "Mobile");
+	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
 		$loguser['layout']		= 2;
 		$loguser['viewsig']		= 0;
-		$boardtitle				= "<span style=\"font-size: 2em;\">$boardname</span>";
+		$config['board-title']				= "<span style='font-size: 2em'>$boardname</span>";
 		$x_hacks['smallbrowse']	= true;
 	}
+	
+	/*
+		Other helpful stuff
+	*/
+	
+	$path = explode("/", $_SERVER['SCRIPT_NAME']);
+	$scriptname = end($path);
+	unset($path);
+	
 
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");
 //	if ($atempval == 199999 && $_SERVER['REMOTE_ADDR'] != "172.130.244.60") {
@@ -215,12 +478,16 @@
 
 //  $hacks['noposts'] = true;
 
+/*
 	$getdoom	= true;
 	require "ext/mmdoom.php";
-
+*/
 	//$x_hacks['rainbownames'] = ($sql->resultq("SELECT MAX(`id`) % 100000 FROM `posts`")) <= 100;
+	
+	// When a post milestone is reached, everybody gets rainbow colors for a day
 	$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
-
+	
+	/* we're not Jul, and the special sex->namecolor system got nuked anyway
 	if (!$x_hacks['host'] && filter_int($_GET['namecolors'])) {
 		//$sql->query("UPDATE `users` SET `sex` = '255' WHERE `id` = 1");
 		//$sql->query("UPDATE `users` SET `name` = 'Ninetales', `powerlevel` = '3' WHERE `id` = 24 and `powerlevel` < 3");
@@ -248,7 +515,7 @@
 		$sql->query("UPDATE `users` SET `name` = 'Xkeeper' WHERE `id` = 1"); #Xkeeper. (Change this and I WILL Z-Line you from Badnik for a week.)
 
 	}
-
+*/
 // New birthday shit
 /*
 	$today = date('m-d',ctime() - (60 * 60 * 3));
@@ -267,12 +534,32 @@
 		mysql_query("UPDATE `users` SET `sex` = '255' WHERE $bquery");
 */
 
+// For our convenience (read: to go directly into a query), at the cost of sacrificing the NULL return value
+function filter_int(&$v) 		{ return (int) $v; }
+function filter_float(&$v)		{ return (float) $v; }
+function filter_bool(&$v) 		{ return (bool) $v; }
+function filter_array (&$v)		{ return (array) $v; }
+function filter_string(&$v, $codefilter = false) { 
+	if ($codefilter) {
+		$v = str_replace("\x00", "", $v);
+		$v = preg_replace("'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]'", "", $v);
 
+		//Unicode Control Codes
+		$v = str_replace("\xC2\xA0","\x20", $v);
+		$v = preg_loop($v, "\xC2+[\x80-\x9F]");
+		
+		// Entities
+		$v = preg_replace("'(&(\n)?#x?([0-9]|[a-f])+[;>]?)+'si", "<small>(garbage entities were deleted)</small>", $v);
+	}
+	return (string) $v; 
+}
+
+/*
 function filter_int(&$v) {
 	if (!isset($v)) {
 		return null;
 	} else {
-		$v	= intval($v);
+		$v	= (int) $v;
 		return $v;
 	}
 }
@@ -281,7 +568,7 @@ function filter_bool(&$v) {
 	if (!isset($v)) {
 		return null;
 	} else {
-		$v	= (bool)$v;
+		$v	= (bool) $v;
 		return $v;
 	}
 }
@@ -291,39 +578,42 @@ function filter_string(&$v) {
 	if (!isset($v)) {
 		return null;
 	} else {
-		$v	= (string)$v;
+		$v	= (string) $v;
 		return $v;
 	}
 }
+*/
 
-
-function readsmilies(){
+function readsmilies($path = 'smilies.dat') {
 	global $x_hacks;
 	if ($x_hacks['host']) {
-		$fpnt=fopen('smilies2.dat','r');
+		$fpnt = fopen('smilies2.dat','r');
 	} else {
-		$fpnt=fopen('smilies.dat','r');
+		$fpnt = fopen($path,'r');
 	}
-	for ($i=0;$smil[$i]=fgetcsv($fpnt,300,',');$i++);
-	$r=fclose($fpnt);
+	for ($i = 0; $smil[$i] = fgetcsv($fpnt, 300, ','); ++$i);
+	$r = fclose($fpnt);
 	return $smil;
 }
 
+/* bad leftover from the old days
 function numsmilies(){
 	$fpnt=fopen('smilies.dat','r');
 	for($i=0;fgetcsv($fpnt,300,'');$i++);
 	$r=fclose($fpnt);
 	return $i;
 }
+*/
 
-function readpostread($userid){
+function readpostread($userid) {
 	global $sql;
 	if (!$userid) return array();
-	return $sql->getresultsbykey("SELECT forum,readdate FROM forumread WHERE user=$userid", 'forum', 'readdate');
+	return $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = $userid");
 }
 
-function timeunits($sec){
-	if($sec<60)	return "$sec sec.";
+function timeunits($sec) {
+	if(!$sec)		return "now";
+	if($sec<60)		return "$sec sec.";
 	if($sec<3600)	return floor($sec/60).' min.';
 	if($sec<7200)	return '1 hour';
 	if($sec<86400)	return floor($sec/3600).' hours';
@@ -331,66 +621,47 @@ function timeunits($sec){
 	return floor($sec/86400).' days';
 }
 
-function timeunits2($sec){
-	$d = floor($sec/86400);
-	$h = floor($sec/3600)%24;
-	$m = floor($sec/60)%60;
-	$s = $sec%60;
-	$ds= ($d!=1?'s':'');
-	$hs= ($h!=1?'s':'');
-	$str=($d?"$d day$ds ":'').($h?"$h hour$hs ":'').($m?"$m min. ":'').($s?"$s sec.":'');
+function timeunits2($sec) {
+	$d = floor($sec / 86400);
+	$h = floor($sec / 3600) % 24;
+	$m = floor($sec / 60) % 60;
+	$s = $sec % 60;
+	
+	$ds = ($d != 1 ? 's' : '');
+	$hs = ($h != 1 ? 's' : '');
+	
+	$str = ($d?"$d day$ds ":'').($h?"$h hour$hs ":'').($m?"$m min. ":'').($s?"$s sec.":'');
 	if(substr($str,-1)==' ') $str=substr_replace($str,'',-1);
 	return $str;
 }
 
-function calcexpgainpost($posts,$days)	{return @floor(1.5*@pow($posts*$days,0.5));}
-function calcexpgaintime($posts,$days)	{return sprintf('%01.3f',172800*@(@pow(@($days/$posts),0.5)/$posts));}
 
-function calcexpleft($exp)			{return calclvlexp(calclvl($exp)+1)-$exp;}
-function totallvlexp($lvl)			{return calclvlexp($lvl+1)-calclvlexp($lvl);}
 
-function calclvlexp($lvl){
-  if($lvl==1) return 0;
-  else return floor(pow(abs($lvl),3.5))*($lvl>0?1:-1);
-}
-function calcexp($posts,$days){
-  if(@($posts/$days)>0) return floor($posts*pow($posts*$days,0.5));
-  elseif($posts==0) return 0;
-  else return 'NaN';
-}
-function calclvl($exp){
-  if($exp>=0){
-    $lvl=floor(@pow($exp,2/7));
-    if(calclvlexp($lvl+1)==$exp) $lvl++;
-    if(!$lvl) $lvl=1;
-  }else $lvl=-floor(pow(-$exp,2/7));
-  if(is_string($exp) && $exp=='NaN') $lvl='NaN';
-  return $lvl;
-}
-
-function generatenumbergfx($num,$minlen=0,$double=false){
+function generatenumbergfx($num, $minlen=0, $double = false) {
 	global $numdir;
 
 	$nw			= 8 * ($double ? 2 : 1);
-	$num		= strval($num);
+	$num		= (string) $num; // strval
+	$len		= strlen($num);
 	$gfxcode	= "";
 
-	if($minlen>1 && strlen($num) < $minlen) {
-		$gfxcode = '<img src=images/_.gif width='. ($nw * ($minlen - strlen($num))) .' height='. $nw .'>';
+	// Left-Padding
+	if($minlen > 1 && $len < $minlen) {
+		$gfxcode = "<img src='images/_.gif' width=". ($nw * ($minlen - $len)) ." height=$nw>";
 	}
 
-	for($i=0;$i<strlen($num);$i++) {
-		$code	= $num{$i};
+	for($i = 0; $i < $len; ++$i) {
+		$code	= $num[$i];
 		switch ($code) {
 			case "/":
 				$code	= "slash";
 				break;
 		}
 		if ($code == " ") {
-			$gfxcode.="<img src=images/_.gif width=$nw height=$nw>";
+			$gfxcode.="<img src='images/_.gif' width=$nw height=$nw>";
 
 		} else {
-			$gfxcode.="<img src=numgfx/$numdir$code.png width=$nw height=$nw>";
+			$gfxcode.="<img src='numgfx/$numdir$code.png' width=$nw height=$nw>";
 
 		}
 	}
@@ -400,7 +671,7 @@ function generatenumbergfx($num,$minlen=0,$double=false){
 
 
 function dotags($msg, $user, &$tags = array()) {
-	global $sql, $dateformat, $tzoff;
+	global $sql, $loguser;
 	if (is_string($tags)) {
 		$tags	= json_decode($tags, true);
 	}
@@ -414,12 +685,12 @@ function dotags($msg, $user, &$tags = array()) {
 	if (empty($tags)) {
 		$tags	= array(
 			'/me '			=> "*<b>". $user['username'] ."</b> ",
-			'&date&'		=> date($dateformat, ctime() + $tzoff),
+			'&date&'		=> date($loguser['dateformat'], ctime() + $loguser['tzoff']),
 			'&numdays&'		=> floor($user['days']),
 
 			'&numposts&'	=> $user['posts'],
 			'&rank&'		=> getrank($user['useranks'], '', $user['posts'], 0),
-			'&postrank&'	=> $sql->resultq("SELECT count(*) FROM `users` WHERE posts>$user[posts]")+1,
+			'&postrank&'	=> $sql->resultq("SELECT count(*) FROM `users` WHERE posts > {$user['posts']}") + 1,
 			'&5000&'		=>  5000 - $user['posts'],
 			'&10000&'		=> 10000 - $user['posts'],
 			'&20000&'		=> 20000 - $user['posts'],
@@ -443,7 +714,7 @@ function dotags($msg, $user, &$tags = array()) {
 			'&level&'		=> $user['level'],
 			'&lvlexp&'		=> calclvlexp($user['level'] + 1),
 			'&lvllen&'		=> $user['lvllen'],
-			);
+		);
 	}
 
 	$msg	= strtr($msg, $tags);
@@ -451,20 +722,19 @@ function dotags($msg, $user, &$tags = array()) {
 }
 
 
-function doreplace($msg, $posts, $days, $username, &$tags = null) {
+function doreplace($msg, $posts, $days, $userid, &$tags = null) {
 	global $tagval, $sql;
 
-	// This should probably go off of user ID but welp
-	$user			= $sql->fetchq("SELECT * FROM `users` WHERE `name` = '".addslashes($username)."'", MYSQL_BOTH, true);
+	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, true);
 
 	$userdata		= array(
-		'id'		=> $user['id'],
-		'username'	=> $username,
+		'id'		=> $userid,
+		'username'	=> $user['name'],
 		'posts'		=> $posts,
 		'days'		=> $days,
 		'useranks'	=> $user['useranks'],
 		'exp'		=> calcexp($posts,$days)
-		);
+	);
 
 	$userdata['level']		= calclvl($userdata['exp']);
 	$userdata['expdone']	= $userdata['exp'] - calclvlexp($userdata['level']);
@@ -481,22 +751,113 @@ function doreplace($msg, $posts, $days, $username, &$tags = null) {
 }
 
 function escape_codeblock($text) {
-	$list = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
+	/* Old code formatting
+	$list  = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
 	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 
 	// @TODO why not just use htmlspecialchars() or htmlentities()
 	return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
+	*/
+	// Experimental (did you mean: insane) code block parser
+	$text[0] = substr($text[0] , 6, -6);
+	$len = strlen($text[0]);
+	$intext = $escape = $noprint = false;
+	$prev = $ret = '';
+	for ($i = 0; $i < $len; ++$i) {
+		
+		$next = isset($text[0][$i+1]) ? $text[0][$i+1] : NULL;
+		
+		switch ($text[0][$i]) {
+			case '(':
+			case ')':
+			case '[':
+			case ']':
+			case '{':
+			case '}':
+			case '=':
+			case '<':
+			case '>':
+			case ':':
+				if ($intext) break;
+				$ret .= "<span style='color: #007700'>".htmlentities($text[0][$i])."</span>";
+				$noprint = true;
+				break;	
+
+			case '+':
+			case '-':
+			case '&':
+			case '|':
+			case '!':
+				if ($intext) break;
+				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
+				$noprint = true;
+				break;	
+				
+			// Accounts for /* , */
+			case '*':
+				if ($intext || $prev == '/' || $next == '/') break;
+				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
+				$noprint = true;
+				break;
+				
+			// Accounts for /* , */ , //
+			case '/':
+				if ($intext || $prev == '/' || $next == '/' || $prev == '*' || $next == '*') break;
+				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
+				$noprint = true;
+				break;
+				
+			case '"':
+			case '\'':
+				if ($escape || ($intext && $intext != $text[0][$i])) break;
+				
+				if (!$intext) {
+					$ret .= "<span style='color: #DD0000'>";
+					$intext = $text[0][$i];
+				}
+				else {
+					$ret .= htmlentities($text[0][$i])."</span>";
+					$intext = false;
+					$noprint = true;
+				}
+				break;
+				
+			case '\\':
+				if ($escape) break;
+				$escape = $i;
+				
+		}
+		
+		if (!$noprint) 	$ret .= htmlspecialchars($text[0][$i]);
+		else 			$noprint = false;
+		
+		$prev = $text[0][$i];
+		
+		// Escape effect lasts for only one character
+		if ($escape && $escape != $i)
+			$escape = false;
+	}
+	
+	
+	//	Comment lines
+	$ret = preg_replace("'\/\*(.*?)\*\/'si", "<span style='color: #FF8000'>/*$1*/</span>",$ret); /* */
+	$ret = preg_replace("'\/\/(.*?)\r?\n'i", "<span style='color: #FF8000'>//$1\r\n</span>",$ret); //
+	
+	//$ret = str_replace("\x09", "&nbsp;&nbsp;&nbsp;&nbsp;", $ret); // Tab
+	
+	//return "[quote]<code>$ret</code>[/quote]";
+	return "[quote]<code style='background: #000 !important; color: #fff'>$ret</code>[/quote]";
 }
 
-function doreplace2($msg, $options='0|0'){
+function doreplace2($msg, $options='0|0', $nosbr = false){
 	// options will contain smiliesoff|htmloff
 	$options = explode("|", $options);
 	$smiliesoff = $options[0];
 	$htmloff = $options[1];
 
 
-	$list = array("<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
-	$list2 = array("&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
+	//$list = array("<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
+	//$list2 = array("&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 	$msg=preg_replace_callback("'\[code\](.*?)\[/code\]'si", 'escape_codeblock',$msg);
 
 
@@ -507,10 +868,10 @@ function doreplace2($msg, $options='0|0'){
 
 	if (!$smiliesoff) {
 		global $smilies;
-		if(!$smilies) $smilies=readsmilies();
-		for($s=0;$smilies[$s][0];$s++){
-			$smilie=$smilies[$s];
-			$msg=str_replace($smilie[0],"<img src=$smilie[1] align=absmiddle>",$msg);
+		if (!$smilies) $smilies = readsmilies();
+		for($s = 0; $smilies[$s][0]; ++$s){
+			$smilie = $smilies[$s];
+			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);
 		}
 	}
 
@@ -535,7 +896,7 @@ function doreplace2($msg, $options='0|0'){
 	$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
 	$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 	$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
-	$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
+	//$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
 	$msg=preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
 
 
@@ -545,7 +906,7 @@ function doreplace2($msg, $options='0|0'){
 	} while ($replaced >= 1);
 
 
-	sbr(0,$msg);
+	if (!$nosbr) sbr(0,$msg);
 
 	return $msg;
 }
@@ -563,38 +924,145 @@ function settags($text, $tags) {
 }
 
 
-function doforumlist($id){
-	global $fonttag,$loguser,$power,$sql;
-	$forumlinks="
-	<table><td>$fonttag Forum jump: </td>
-	<td><form><select onChange=parent.location=this.options[this.selectedIndex].value style=\"position:relative;top:8px;\">
-	";
-
-	$cats	= $sql->query("SELECT id,name,minpower FROM categories WHERE (minpower<=$power OR minpower<=0) ORDER BY id ASC");
-	while ($cat = $sql->fetch($cats)) {
-		$fjump[$cat['id']]	= "<optgroup label=\"". $cat['name'] ."\">";
+function doforumlist($id, $name = ''){
+	global $loguser,$sql;
+	
+	if (!$name) {
+		$forumlinks = "
+		<table>
+			<tr>
+				<td class='font'>Forum jump: </td>
+				<td>
+					<form>
+						<select onChange='parent.location=\"forum.php?id=\"+this.options[this.selectedIndex].value' style='position:relative;top:8px'>
+		";
+		$showhidden = 0;
 	}
-
-	$forum1= $sql->query("SELECT id,title,catid FROM forums WHERE (minpower<=$power OR minpower<=0) AND `hidden` = '0' AND `id` != '0' OR `id` = '$id' ORDER BY forder") or print mysql_error();
-	while($forum=$sql->fetch($forum1)) {
-		$fjump[$forum['catid']]	.="<option value=forum.php?id=$forum[id]".($forum['id']==$id?' selected':'').">$forum[title]</option>";
+	else {
+		$forumlinks = "";
+		$showhidden = 1;
 	}
-
-	foreach($fjump as $jtext) {
-		$forumlinks	.= $jtext ."</optgroup>";
+	// (`c.minpower` <= $power OR `c.minpower` <= 0) is not really necessary but whatever
+	$forums = $sql->query("
+		SELECT f.id, f.title, f.catid, f.hidden, c.name catname
+		FROM forums f
+		
+		LEFT JOIN categories c ON f.catid = c.id
+		
+		WHERE 	(c.minpower <= {$loguser['powerlevel']} OR !c.minpower)
+			AND (f.minpower <= {$loguser['powerlevel']} OR !f.minpower)
+			AND (!f.hidden OR {$loguser['powerlevel']} >= 4 OR $showhidden)
+			AND !ISNULL(c.id)
+			OR  f.id = $id
+			
+		ORDER BY f.catid, f.forder, f.id
+	");
+	
+	$prev 	= NULL;	// In case the current forum is in an invalid category, the non-existing category name won't be printed
+	
+	while ($forum = $sql->fetch($forums)) {
+		// New category
+		if ($prev != $forum['catid']) {
+			$forumlinks .= "</optgroup><optgroup label=\"{$forum['catname']}\">";
+			$prev = $forum['catid'];
+		}
+		
+		if ($forum['hidden']) {
+			$forum['title'] = "({$forum['title']})";
+		}
+		
+		$forumlinks .= "<option value={$forum['id']}".($forum['id'] == $id ? ' selected' : '').">{$forum['title']}</option>";
 	}
-	$forumlinks.='</select></table></form>';
+	
+	// Multi-use forum list
+	if ($name) return "<select name='$name'>$forumlinks</select>";
+	
+	$forumlinks .= "	</optgroup>
+					</select>
+				</form>
+			</td>
+		</tr>
+	</table>";
+	
 	return $forumlinks;
 }
 
-function ctime(){return time()+3*3600;}
-function cmicrotime(){return microtime(true)+3*3600;}
+// Note: -1 becomes NULL
+function doschemeList($all = false, $sel = 0, $name = 'scheme'){
+	global $sql;
+	
+	$schemes = $sql->query("SELECT * FROM schemes ".($all ? "ORDER BY special," : "WHERE special = 0 ORDER BY")." ord, id");
+	
+	if ($sel === NULL) $sel = '-1';
+	$scheme[$sel] = "selected";
+	
+	$input 	= "";
+	$prev	= 1; // Previous special value
+	while($x = $sql->fetch($schemes)){
+		// If we only fetch normal schemes don't bother separating between them.
+		if ($all && $prev != $x['special']){
+			$prev 	= $x['special'];
+			$input .= "</optgroup><optgroup label='".($prev ? "Special" : "Normal")." schemes'>";
+		}
+		$input	.= "<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">{$x['name']}</option>";
+	}
+	return "<select name='$name'>".($all ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
+}
 
-function getrank($rankset,$title,$posts,$powl){
+// When it comes to this kind of code being repeated across files...
+function dothreadiconlist($iconid = NULL, $customicon = '') {
+	
+
+
+	// Check if we have selected one of the default thread icons
+	$posticons = file('posticons.dat');
+	
+	if (isset($iconid) && $iconid != -1)
+		$selected = trim($posticons[$iconid]);
+	else
+		$selected = trim($customicon);
+	
+	
+	$customicon = $selected;
+	
+	$posticonlist = "";
+	
+	for ($i = 0; isset($posticons[$i]);) {
+		
+		$posticons[$i] = trim($posticons[$i]);
+		// Does the icon match?
+		if($selected == $posticons[$i]){
+			$checked    = 'checked=1';
+			$customicon	= '';					// If so, blank out the custom icon
+		} else {
+			$checked    = '';
+		}
+
+		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src='{$posticons[$i]}' HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
+
+		$i++;
+		if($i % 10 == 0) $posticonlist .= '<br>';
+	}
+
+	// Blank or set to None?
+	if (!$selected || $iconid == -1) $checked = 'checked=1';
+	
+	$posticonlist .= 	"<br>".
+						"<input type=radio class='radio' name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
+						"Custom: <input type='text' name=custposticon VALUE=\"".htmlspecialchars($customicon)."\" SIZE=40 MAXLENGTH=100>";
+	
+	return $posticonlist;
+}
+
+function ctime(){global $config; return time() + $config['server-time-offset'];}
+function cmicrotime(){global $config; return microtime(true) + $config['server-time-offset'];}
+
+function getrank($rankset, $title, $posts, $powl){
 	global $hacks, $sql;
 	$rank	= "";
 	if ($rankset == 255) {   //special code for dots
 		if (!$hacks['noposts']) {
+			// Dot values - can configure
 			$pr[5] = 5000;
 			$pr[4] = 1000;
 			$pr[3] =  250;
@@ -603,6 +1071,11 @@ function getrank($rankset,$title,$posts,$powl){
 
 			if ($rank) $rank .= "<br>";
 			$postsx = $posts;
+			
+			for ($i = max(array_keys($pr)); $i !== 0; --$i) {
+				$dotnum[$i] = floor($postsx / $pr[$i]);		
+				$postsx = $postsx - $dotnum[$i] * $pr[$i];	// Posts left
+			}/*
 			$dotnum[5] = floor($postsx / $pr[5]);
 			$postsx = $postsx - $dotnum[5] * $pr[5];
 			$dotnum[4] = floor($postsx / $pr[4]);
@@ -612,18 +1085,23 @@ function getrank($rankset,$title,$posts,$powl){
 			$dotnum[2] = floor($postsx / $pr[2]);
 			$postsx = $postsx - $dotnum[2] * $pr[2];
 			$dotnum[1] = floor($postsx / $pr[1]);
-
+*/
 			foreach($dotnum as $dot => $num) {
-				for ($x = 0; $x < $num; $x++) {
-					$rank .= "<img src=images/dot". $dot .".gif align=\"absmiddle\">";
+				for ($x = 0; $x < $num; ++$x) {
+					$rank .= "<img src='images/dot". $dot .".gif' align='absmiddle'>";
 				}
 			}
 			if ($posts >= 10) $rank = floor($posts / 10) * 10 ." ". $rank;
 		}
 	}
 	else if ($rankset) {
-		$posts%=10000;
-		$rank = @$sql->resultq("SELECT text FROM ranks WHERE num<=$posts AND rset=$rankset ORDER BY num DESC LIMIT 1", 0, 0, true);
+		$posts %= 10000;
+		$rank = $sql->resultq("
+			SELECT text FROM ranks
+			WHERE num <= $posts	AND rset = $rankset
+			ORDER BY num DESC
+			LIMIT 1
+		", 0, 0, true);
 	}
 
 	$powerranks = array(
@@ -633,6 +1111,7 @@ function getrank($rankset,$title,$posts,$powl){
 		3  => '<b>Administrator</b>'
 	);
 
+	// Separator
 	if($rank && (in_array($powl, $powerranks) || $title)) $rank.='<br>';
 
 	if($title)
@@ -642,7 +1121,7 @@ function getrank($rankset,$title,$posts,$powl){
 
 	return $rank;
 }
-
+/* there's no gunbound rank
 function updategb() {
 	global $sql;
 	$hranks = $sql->query("SELECT posts FROM users WHERE posts>=1000 ORDER BY posts DESC");
@@ -661,21 +1140,28 @@ function updategb() {
 		elseif($i==floor($c*0.70)) $sql->query("UPDATE ranks SET num=$n WHERE rset=3 AND text LIKE '%=11%'");
 	}
 }
+*/
 
+// Only used to check if an user exists
 function checkusername($name){
 	global $sql;
-	$u = $sql->resultq("SELECT id FROM users WHERE name='".addslashes($name)."'");
-	if($u<1) $u=-1;
+	if (!$name) return -1;
+	$u = $sql->resultp("SELECT id FROM users WHERE name = ?", [$name]);
+	if (!$u) $u = -1;
 	return $u;
 }
 
-function checkuser($name,$pass){
+function checkuser($name, $pass){
 	global $hacks, $sql;
 
-	$user = $sql->fetchq("SELECT id,password FROM users WHERE name='$name'");
+	if (!$name) return -1;
+	//$sql->query("UPDATE users SET password = '".getpwhash($pass, 1)."' WHERE id = 1");
+	$user = $sql->fetchp("SELECT id, password FROM users WHERE name = ?", [$name]);
 
 	if (!$user) return -1;
-	if ($user['password'] !== getpwhash($pass, $user['id'])) {
+	
+	//if ($user['password'] !== getpwhash($pass, $user['id'])) {
+	if (!password_verify(sha1($user['id']).$pass, $user['password'])) {
 		// Also check for the old md5 hash, allow a login and update it if successful
 		// This shouldn't impact security (in fact it should improve it)
 		if (!$hacks['password_compatibility'])
@@ -688,7 +1174,7 @@ function checkuser($name,$pass){
 			else return -1;
 		}
 	}
-
+	
 	return $user['id'];
 }
 
@@ -701,9 +1187,36 @@ function create_verification_hash($n,$pw) {
 		$vstring .= array_shift($ipaddr) . "|";
 
 	// don't base64 encode like I do on my fork, waste of time (honestly)
-	return $n . sha1($pw . $vstring, false);
+	return $n . hash('sha256', $pw . $vstring);
 }
 
+function generate_token($div = 20, $extra = "") {
+	global $config, $loguser;
+	
+	$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
+	
+	$n 		= count($ipaddr) - 2;
+	$orig 	= $ipaddr[$n+1];
+	
+	for ($i = $n; $i >= 0; --$i) 
+		$ipaddr[$i+1] = $ipaddr[$i+1] << ($ipaddr[$i] / $div);
+	$ipaddr[0] = $ipaddr[0] << ($orig / $div);
+	
+	$ipaddr = implode('.', $ipaddr);
+		
+	return hash('sha256', $loguser['name'] . $ipaddr . $config['salt-string'] . $extra . $loguser['password']);
+	
+}
+
+function check_token(&$var, $div = 20, $extra = "") {
+	$res = (trim($var) == generate_token($div, $extra));
+	if (!$res) errorpage("Invalid token.");
+}
+
+function getpwhash($pass, $id) {
+	return password_hash(sha1($id).$pass, PASSWORD_BCRYPT);
+}
+/*
 function shenc($str){
 	$l=strlen($str);
 	for($i=0;$i<$l;$i++){
@@ -742,14 +1255,21 @@ function fadec($c1,$c2,$pct) {
   $ret=dechex($ret);
   return $ret;
 }
-
+*/
+/*
 function getuserlink(&$u, $substitutions = null, $urlclass = '') {
+	
 	if ($substitutions === true) {
 		global $herpderpwelp;
 		if (!$herpderpwelp)
 			trigger_error('Deprecated: $substitutions passed true (old behavior)', E_USER_NOTICE);
 		$herpderpwelp = true;
 	}
+	
+	global $herpderpwelp;
+	if (!$herpderpwelp)
+		trigger_error('Deprecated: getuserlink function used', E_USER_NOTICE);
+	$herpderpwelp = true;
 
 	// dumb hack for $substitutions
 	$fn = array(
@@ -773,76 +1293,132 @@ function getuserlink(&$u, $substitutions = null, $urlclass = '') {
 	$birthday = (date('m-d', $u[$fn['birthday']]) == date('m-d',ctime() + $tzoff));
 	$rsex = (($birthday) ? 255 : $u[$fn['sex']]);
 
-	$namecolor = getnamecolor($rsex, $u[$fn['powerlevel']], false);
+	$namecolor = getnamecolor($rsex, $u[$fn['powerlevel']]);
 
-	if ($urlclass)
-		$class = " class='{$urlclass}'";
-	else $class = '';
-	return "<a style='color:#{$namecolor};'{$class} href='profile.php?id="
-		. $u[$fn['id']] ."'{$alsoKnownAs}>". $u[$fn['name']] ."</a>";
+	$class = $urlclass ? " class='{$urlclass}'" : "";
+	
+	return "<a style='color:#{$namecolor};'{$class} href='profile.php?id=". $u[$fn['id']] ."'{$alsoKnownAs}>". $u[$fn['name']] ."</a>";
+}
+*/
+
+function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
+	global $sql, $loguser, $userfields;
+	
+	if (!$u) {
+		if ($id == $loguser['id']) $u = $loguser;
+		else {
+			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, true);
+			//if (!$u) return "<span style='color: #FF0000'>[Invalid userlink with ID #$id]</span>"; // (development only notice)
+		}
+	}
+	
+	if ($id) $u['id'] = $id;
+	
+	// Values being NULL is a sign of a deleted user
+	// Print this so we don't just end up with a blank link.
+	if ($u['name'] == NULL) {
+		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
+	}
+	
+	$akafield		= htmlspecialchars($u['aka']);
+	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: {$akafield}\"" : '';
+	$u['name'] 		= htmlspecialchars($u['name'], ENT_QUOTES);
+	// Don't calculate birthday effect again
+	if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) {
+		$u['namecolor'] = 'rnbow';
+	}
+	$namecolor		= getnamecolor($u['sex'], $u['powerlevel'], $u['namecolor']);
+	
+	$minipic		= ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
+	
+	$class = $urlclass ? " class='{$urlclass}'" : "";
+	
+	
+	return "$minipic<a style='color:#{$namecolor}'{$class} href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
 }
 
-// eventually: change/remove prefix. ugh. it's there so nothing old breaks.
-function getnamecolor($sex, $powl, $prefix = true){
+function getnamecolor($sex, $powl, $namecolor = ''){
 	global $nmcol, $x_hacks;
 
 	// don't let powerlevels above admin have a blank color
 	$powl = min(3, $powl);
-
-	$namecolor = (($prefix) ? 'color=' : '');
-
+	
+	// Force rainbow effect on everybody
+	if ($x_hacks['rainbownames']) $namecolor = 'rnbow';
+	
 	if ($powl < 0) // always dull drab banned gray.
-		$namecolor .= $nmcol[0][$powl];
-
-	// RAINBOW MULTIPLIER
-	elseif ($x_hacks['rainbownames'] || $sex == 255) {
-		$stime=gettimeofday();
-		// slowed down 5x
-		$h = (($stime['usec']/25) % 600);
-		if ($h<100) {
-			$r=255;
-			$g=155+$h;
-			$b=155;
-		} elseif($h<200) {
-			$r=255-$h+100;
-			$g=255;
-			$b=155;
-		} elseif($h<300) {
-			$r=155;
-			$g=255;
-			$b=155+$h-200;
-		} elseif($h<400) {
-			$r=155;
-			$g=255-$h+300;
-			$b=255;
-		} elseif($h<500) {
-			$r=155+$h-400;
-			$g=155;
-			$b=255;
-		} else {
-			$r=255;
-			$g=155;
-			$b=255-$h+500;
+		$output = $nmcol[0][$powl];
+	else if ($namecolor) {
+		switch ($namecolor) {
+			case 'rnbow':
+				// RAINBOW MULTIPLIER
+				$stime = gettimeofday();
+				// slowed down 5x
+				$h = (($stime['usec']/25) % 600);
+				if ($h<100) {
+					$r=255;
+					$g=155+$h;
+					$b=155;
+				} elseif($h<200) {
+					$r=255-$h+100;
+					$g=255;
+					$b=155;
+				} elseif($h<300) {
+					$r=155;
+					$g=255;
+					$b=155+$h-200;
+				} elseif($h<400) {
+					$r=155;
+					$g=255-$h+300;
+					$b=255;
+				} elseif($h<500) {
+					$r=155+$h-400;
+					$g=155;
+					$b=255;
+				} else {
+					$r=255;
+					$g=155;
+					$b=255-$h+500;
+				}
+				$output = substr(dechex($r*65536+$g*256+$b),-6);
+				break;
+			case 'random':
+				$nc 	= mt_rand(0,0xffffff);
+				$output = str_pad(dechex($nc), 6, "0", STR_PAD_LEFT);
+				break;
+			case 'time':
+				$z 	= max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - ctime()));
+				$c 	= 127 + max(floor($z / 32400 * 127), 0);
+				$cz	= str_pad(dechex(256 - $c), 2, "0", STR_PAD_LEFT);
+				$output = str_pad(dechex($c), 2, "0", STR_PAD_LEFT) . $cz . $cz;
+				break;
+			default:
+				$output = $namecolor;
+				break;
 		}
-		$namecolor .= substr(dechex($r*65536+$g*256+$b),-6);
 	}
-
-	else switch ($sex) {
+	else $output = $nmcol[$sex][$powl];
+	
+	/* old sex-dependent name color 
+	switch ($sex) {
 		case 3:
 			//$stime=gettimeofday();
 			//$rndcolor=substr(dechex(1677722+$stime[usec]*15),-6);
 			//$namecolor .= $rndcolor;
 			$nc = mt_rand(0,0xffffff);
-			$namecolor .= str_pad(dechex($nc), 6, "0", STR_PAD_LEFT);
+			$output = str_pad(dechex($nc), 6, "0", STR_PAD_LEFT);
 			break;
+			
 		case 4:
 			$namecolor .= "ffffff"; break;
+			
 		case 5:
 			$z = max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - ctime()));
 			$c = 127 + max(floor($z / 32400 * 127), 0);
 			$cz	= str_pad(dechex(256 - $c), 2, "0", STR_PAD_LEFT);
-			$namecolor .= str_pad(dechex($c), 2, "0", STR_PAD_LEFT) . $cz . $cz;
+			$output = str_pad(dechex($c), 2, "0", STR_PAD_LEFT) . $cz . $cz;
 			break;
+			
 		case 6:
 			$namecolor .= "60c000"; break;
 		case 7:
@@ -879,46 +1455,82 @@ function getnamecolor($sex, $powl, $prefix = true){
 			$namecolor .= $nmcol[0][3]; break;
 		case 97:
 			$namecolor .= "6600DD"; break;
+			
 		default:
-			$namecolor .= $nmcol[$sex][$powl];
+			$output = $nmcol[$sex][$powl];
 			break;
-	}
+	}*/
 
-	return $namecolor;
+	return $output;
 }
 
 function fonlineusers($id){
-	global $userip,$loguserid,$sql;
+	global $loguser, $sql, $userfields, $isadmin, $ismod;
 
-	if($loguserid)
-		$sql->query("UPDATE users SET lastforum=$id WHERE id=$loguserid");
+	if($loguser['id'])
+		$sql->query("UPDATE users  SET lastforum = $id WHERE id = {$loguser['id']}");
 	else
-		$sql->query("UPDATE guests SET lastforum=$id WHERE ip='$userip'");
+		$sql->query("UPDATE guests SET lastforum = $id WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 
-	$forumname		=@$sql->resultq("SELECT title FROM forums WHERE id=$id",0,0);
-	$onlinetime		=ctime()-300;
-	$onusers		=$sql->query("SELECT id,name,lastactivity,minipic,lasturl,aka,sex,powerlevel,birthday FROM users WHERE lastactivity>$onlinetime AND lastforum=$id ORDER BY name");
-
+	$forumname		= $sql->resultq("SELECT title FROM forums WHERE id = $id");
+	$onlinetime		= ctime()-300;
+	$onusers		= $sql->query("
+		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
+		FROM users u
+		WHERE lastactivity > $onlinetime AND lastforum = $id AND ($ismod OR !hideactivity)
+		ORDER BY name
+	");
+	
+	
 	$onlineusers	= "";
 
-	for($numon=0;$onuser=$sql->fetch($onusers);$numon++){
-		if($numon) $onlineusers.=', ';
+	for($numon = 0; $onuser = $sql->fetch($onusers); ++$numon){
+		
+		if($numon) $onlineusers .= ', ';
 
 		/* if ((!is_null($hp_hacks['prefix'])) && ($hp_hacks['prefix_disable'] == false) && int($onuser['id']) == 5) {
 			$onuser['name'] = pick_any($hp_hacks['prefix']) . " " . $onuser['name'];
 		} */
-
-		$namelink							= getuserlink($onuser);
-		$onlineusers						.='<nobr>';
-		$onuser['minipic']					=str_replace('>','&gt;',$onuser['minipic']);
-		if($onuser['minipic']) $onlineusers	.="<img width=16 height=16 src=$onuser[minipic] align=top> ";
-		if($onuser['lastactivity']			<=$onlinetime) $namelink="($namelink)";
-		$onlineusers						.="$namelink</nobr>";
+		$onuser['minipic']	 = htmlspecialchars($onuser['minipic'], ENT_QUOTES);
+		$namelink			 = getuserlink($onuser);
+		$onlineusers		.='<nobr>';
+		
+		if($onuser['nologpost']) // Was the user posting without using cookies?
+			$namelink="($namelink)";
+			
+		if($onuser['hideactivity'])
+			$namelink="[$namelink]";		
+			
+		if ($onuser['minipic'])
+			$namelink = "<img width=16 height=16 src=\"".htmlspecialchars($onuser['minipic'])."\" align='absmiddle'> $namelink";
+			
+		$onlineusers .= "$namelink</nobr>";
 	}
 	$p = ($numon ? ':' : '.');
 	$s = ($numon != 1 ? 's' : '');
-	$numguests = $sql->resultq("SELECT count(*) AS n FROM guests WHERE date>$onlinetime AND lastforum=$id",0,0);
-	if($numguests) $guests="| $numguests guest".($numguests>1?'s':'');
+	
+	$guests = "";
+	if (!$isadmin) {
+		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > $onlinetime AND lastforum = $id");
+		if($numguests) $guests = "| $numguests guest" . ($numguests > 1 ? 's' : '');
+	} else {
+		// Detailed view of tor/proxy/bots
+		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
+		$ginfo = array_fill(0, 4, 0);
+		for ($numguests = 0; $onguest = $sql->fetch($onguests); ++$numguests) {
+			if      ($onguest['flags'] & BPT_TOR) 		$ginfo[2]++;
+			else if ($onguest['flags'] & BPT_IPBANNED) 	$ginfo[0]++;
+			else if ($onguest['flags'] & BPT_BOT) 		$ginfo[3]++;
+			//if ($onguest['flags'] & BPT_PROXY) 		$ginfo[1]++;
+		}
+		$specinfo = array('IP banned', 'Proxy', 'Tor banned', 'bots');
+		$guestcat = array();
+		for ($i = 0; $i < 4; ++$i)
+			if ($ginfo[$i])
+				$guestcat[] = $ginfo[$i] . " " . $specinfo[$i];
+		$guests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")" : "") : "";
+	}
+	
 	return "$numon user$s currently in $forumname$p $onlineusers $guests";
 }
 
@@ -946,18 +1558,29 @@ function jspageexpand($start, $end) {
 }
 */
 
-function redirect($url,$msg,$delay){
-	if($delay<1) $delay=1;
+function redirect($url, $msg, $delay){
+	if($delay < 1) $delay = 1;
 	return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=$delay;URL=$url>";
 }
 
 function postradar($userid){
-	global $sql, $loguser, $loguserid;
+	global $sql, $loguser, $userfields;
 	if (!$userid) return "";
+	
+	$race = '';
 
 	//$postradar = $sql->query("SELECT posts,id,name,aka,sex,powerlevel,birthday FROM users u RIGHT JOIN postradar p ON u.id=p.comp WHERE p.user={$userid} ORDER BY posts DESC", MYSQL_ASSOC);
-	$postradar = $sql->query("SELECT posts,id,name,aka,sex,powerlevel,birthday FROM users,postradar WHERE postradar.user={$userid} AND users.id=postradar.comp ORDER BY posts DESC", MYSQL_ASSOC);
-	if (@mysql_num_rows($postradar)>0) {
+	$postradar = $sql->query("
+		SELECT u.posts, $userfields
+		FROM postradar p
+		INNER JOIN users u ON p.comp = u.id
+		WHERE p.user = $userid
+		ORDER BY posts DESC
+	", PDO::FETCH_ASSOC);
+	
+	$rows = $sql->num_rows($postradar);
+	
+	if ($rows) {
 		$race = 'You are ';
 
 		function cu($a,$b) {
@@ -966,44 +1589,51 @@ function postradar($userid){
 			$dif = $a-$b['posts'];
 			if ($dif < 0)
 				$t = (!$hacks['noposts'] ? -$dif : "") ." behind";
-			elseif ($dif > 0)
+			else if ($dif > 0)
 				$t = (!$hacks['noposts'] ?  $dif : "") ." ahead of";
 			else
 				$t = ' tied with';
 
 			$namelink = getuserlink($b);
-			$t .= " {$namelink}" . (!$hacks['noposts'] ? " ($b[posts])" : "");
+			$t .= " {$namelink}" . (!$hacks['noposts'] ? " ({$b['posts']})" : "");
 			return "<nobr>{$t}</nobr>";
 		}
 
 		// Save ourselves a query if we're viewing our own post radar
-		// since we already fetch all user fields for $loguserid
-		if ($userid == $loguserid)
+		// since we already fetch all user fields for $loguser
+		if ($userid == $loguser['id'])
 			$myposts = $loguser['posts'];
 		else
-			$myposts = $sql->resultq("SELECT posts FROM users WHERE id=$userid");
+			$myposts = $sql->resultq("SELECT posts FROM users WHERE id = $userid");
 
-		for($i=0;$user2=$sql->fetch($postradar);$i++) {
-			if($i) $race.=', ';
-			if($i && $i == mysql_num_rows($postradar)-1) $race.='and ';
+		for($i = 0; $user2 = $sql->fetch($postradar); ++$i) {
+			if ($i) 					$race .= ', ';
+			if ($i && $i == $rows - 1) 	$race .= 'and ';
 			$race .= cu($myposts, $user2);
 		}
 	}
 	return $race;
 }
 
+/* useless function, leftover that should have never been used in the first place
 function loaduser($id,$type){
-  global $sql;
+	global $sql;
 	if ($type==1) {$fields='id,name,sex,powerlevel,posts';}
 	return @$sql->fetchq("SELECT $fields FROM users WHERE id=$id");
 }
+*/
 
 function getpostlayoutid($text){
 	global $sql;
-	$id=@$sql->resultq("SELECT id FROM postlayouts WHERE text='".addslashes($text)."' LIMIT 1",0,0);
-	if(!$id){
-		$sql->query("INSERT INTO postlayouts (text) VALUES ('".addslashes($text)."')");
-		$id=mysql_insert_id();
+	
+	// Everything breaks on transactions if $text is blank
+	if (!$text) return 0;
+	
+	$id = $sql->resultp("SELECT id FROM postlayouts WHERE text = ? LIMIT 1", [$text]);
+	// Is this a new layout?
+	if (!$id) {
+		$sql->queryp("INSERT INTO postlayouts (text) VALUES (?)", [$text]);
+		$id = $sql->insert_id();
 	}
 	return $id;
 }
@@ -1023,20 +1653,22 @@ function squot($t, &$src){
   }*/
 }
 function sbr($t, &$src){
-	global $br;
 	switch($t) {
-		case 0: $src=str_replace($br,'<br>',$src); break;
-		case 1: $src=str_replace('<br>',$br,$src); break;
+		case 0: $src=str_replace("\n",'<br>',$src); break;
+		case 1: $src=str_replace('<br>',"\n",$src); break;
 	}
 }
+/*
 function mysql_get($query){
   global $sql;
   return $sql->fetchq($query);
 }
+*/
+/*
 function sizelimitjs(){
 	// where the fuck is this used?!
 	return "";
-  /*return '
+  return '
 	<script>
 	  function sizelimit(n,x,y){
 		rx=n.width/x;
@@ -1048,32 +1680,30 @@ function sizelimitjs(){
 		else if(ry>1) n.height=y;
 	  }
 	</script>
-  '; */
-}
+  '; 
+}*/
 
 function loadtlayout(){
-	global $log,$loguser,$tlayout,$sql;
-	$tlayout    = (filter_int($loguser['layout']) ? $loguser['layout'] : 1);
-	$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id='$tlayout'",0,0);
+	global $loguser, $tlayout, $sql;
+	$tlayout    = $loguser['layout'] ? $loguser['layout'] : 1;
+	$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id = $tlayout");
 	require "tlayouts/$layoutfile.php";
 }
 
-function errorpage($text, $redir = '', $redirurl = '') {
-	global $header,$tblstart,$tccell1,$tblend,$footer,$startingtime;
+function errorpage($text, $redirurl = '', $redir = '', $redirtimer = 4) {
+	if (!defined('HEADER_PRINTED')) pageheader();
 
-	print "{$header}<br>{$tblstart}{$tccell1}>{$text}";
-
+	print "<table class='table'><tr><td class='tdbg1 center'>$text";
 	if ($redir)
-		print '<br>'.redirect($redirurl,$redir,0);
+		print '<br>'.redirect($redirurl, $redir, $redirtimer);
+	print "</table>";
 
-	print "{$tblend}{$footer}";
-
-	printtimedif($startingtime);
-	die();
+	pagefooter();
 }
 
+
 function moodlist($sel = 0, $return = false) {
-	global $loguserid, $log, $loguser;
+	global $loguser;
 	$sel		= floor($sel);
 
 	$a	= array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
@@ -1083,7 +1713,7 @@ function moodlist($sel = 0, $return = false) {
 	$c[$sel]	= " checked";
 	$ret		= "";
 
-	if ($log && $loguser['moodurl'])
+	if ($loguser['id'] && $loguser['moodurl'])
 		$ret = '
 			<script type="text/javascript">
 				function avatarpreview(uid,pic)
@@ -1101,41 +1731,53 @@ function moodlist($sel = 0, $return = false) {
 			</script>
 		';
 
-	$ret .= "<b>Mood avatar list:</b><br><table cellpadding=0 border=0 cellspacing=0><tr><td width=150px style='white-space:nowrap;'>";
+	$ret .= "
+		<b>Mood avatar list:</b><br>
+		<table style='border-spacing: 0px'>
+			<tr>
+				<td style='width: 150px; white-space:nowrap'>";
 
 	foreach($a as $num => $name) {
-		$jsclick = (($log && $loguser['moodurl']) ? "onclick='avatarpreview($loguserid,$num)'" : "");
-		$ret .= "<input type='radio' name='moodid' value='$num'". filter_string($c[$num]) ." id='mood$num' tabindex='". (9000 + $num) ."' style=\"height: 12px;\" $jsclick>
-             <label for='mood$num' ". filter_string($c[$sel]) ." style=\"font-size: 12px;\">&nbsp;$num:&nbsp;$name</label><br>\r\n";
+		$jsclick = (($loguser['id'] && $loguser['moodurl']) ? "onclick='avatarpreview({$loguser['id']},$num)'" : "");
+		$ret .= "<input type='radio' name='moodid' value='$num'". filter_string($c[$num]) ." id='mood$num' tabindex='". (9000 + $num) ."' style='height: 12px' $jsclick>
+             <label for='mood$num' ". filter_string($c[$sel]) ." style='font-size: 12px'>&nbsp;$num:&nbsp;$name</label><br>\r\n";
 	}
 
-	if (!$sel || !$log || !$loguser['moodurl'])
+	if (!$sel || !$loguser['id'] || !$loguser['moodurl'])
 		$startimg = 'images/_.gif';
 	else
 		$startimg = htmlspecialchars(str_replace('$', $sel, $loguser['moodurl']));
 
-	$ret .= "</td><td><img src=\"$startimg\" id=prev></td></table>";
+	$ret .= "	</td>
+				<td>
+					<img src=\"$startimg\" id=prev>
+				</td>
+			</tr>
+		</table>";
 	return $ret;
 }
 
 function admincheck() {
-	global $tblstart, $tccell1, $tblend, $footer, $isadmin;
+	global $isadmin;
 	if (!$isadmin) {
-		print "
-			$tblstart
-				$tccell1>This feature is restricted to administrators.<br>You aren't one, so go away.<br>
-        ".redirect('index.php','return to the board',0)."
-        </td>
-			$tblend
-
-		$footer
-		";
-		die();
+		if (!defined('HEADER_PRINTED')) pageheader();
+		
+		?><table class='table'>
+			<tr>
+				<td class='tdbg1 center'>
+					This feature is restricted to administrators.<br>
+					You aren't one, so go away.<br>
+					<?=redirect('index.php','return to the board',0)?>
+				</td>
+			</tr>
+		</table><?php
+		
+		pagefooter();
 	}
 }
 
 function adminlinkbar($sel = 'admin.php') {
-	global $tblstart, $tblend, $tccell1, $tccellh, $tccellc, $isadmin;
+	global $isadmin;
 
 	if (!$isadmin) return;
 
@@ -1148,29 +1790,35 @@ function adminlinkbar($sel = 'admin.php') {
 			'announcement.php'     => "Go to Announcements",
 			'admin-editforums.php' => "Edit Forum List",
 			'admin-editmods.php'   => "Edit Forum Moderators",
-			'ipsearch.php'   => "IP Search",
+			'ipsearch.php'         => "IP Search",
 			'admin-threads.php'    => "ThreadFix",
 			'admin-threads2.php'   => "ThreadFix 2",
-			'del.php'    => "Delete User",
+			'del.php'              => "Delete User",
 		)
 	);
 
 	$r = "<div style='padding:0px;margins:0px;'>
-		$tblstart<tr>$tccellh><b>Admin Functions</b></td></tr>$tblend";
+			<table class='table'>
+				<tr>
+					<td class='tdbgh center'>
+						<b>Admin Functions</b>
+					</td>
+				</tr>
+			</table>";
 
     foreach ($links as $linkrow) {
 		$c	= count($linkrow);
 		$w	= floor(1 / $c * 100);
 
-		$r .= "$tblstart<tr>";
+		$r .= "<table class='table'><tr>";
 
 		foreach($linkrow as $link => $name) {
-			$cell = $tccell1;
-			if ($link == $sel) $cell = $tccellc;
-			$r .= "$cell width=\"$w%\"><a href=\"$link\">$name</a></td>";
+			$cell = '1';
+			if ($link == $sel) $cell = 'c';
+			$r .= "<td class='tdbg{$cell} center' width=\"$w%\"><a href=\"$link\">$name</a></td>";
 		}
 
-		$r .= "</tr>$tblend";
+		$r .= "</tr></table>";
 	}
 	$r .= "</div><br>";
 
@@ -1180,9 +1828,21 @@ function adminlinkbar($sel = 'admin.php') {
 function nuke_js($before, $after) {
 
 	global $sql, $loguser;
-	$page	= addslashes($_SERVER['REQUEST_URI']);
-	$time	= ctime();
-	$sql -> query("INSERT INTO `jstrap` SET `loguser` = '". $loguser['id'] ."', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `text` = '". addslashes($before) ."', `url` = '$page', `time` = '$time', `filtered` = '". addslashes($after) ."'");
+	$sql->queryp("
+		INSERT INTO `jstrap` SET
+			`loguser`  =  {$loguser['id']},
+			`ip`       = :ipaddr,
+			`text`     = :source,
+			`url`      = :url,
+			`time`     = ".ctime().",
+			`filtered` = :filtered",
+		[
+		 ':ipaddr'   => $_SERVER['REMOTE_ADDR'], 
+		 ':url'      => $_SERVER['REQUEST_URI'],
+		 ':source'   => $before,
+		 ':filtered' => $after
+		]
+	);
 
 }
 function include_js($fn, $as_tag = false) {
@@ -1199,9 +1859,60 @@ function include_js($fn, $as_tag = false) {
 }
 
 
+function xssfilters($p, $validate = false){
+
+	$temp = $p;
+	
+	$p=str_ireplace("FSCommand","BS<z>Command", $p);
+	$p=str_ireplace("execcommand","hex<z>het", $p);
+	// This shouldn't hit code blocks due to the way they are formatted
+	$p=preg_replace("'on\w+( *?)=( *?)(\'|\")'si", "jscrap=$3", $p);
+	$p=preg_replace("'<(/?)(script|meta|embed|object|svg|form|textarea|xml|title|input|xmp|plaintext|base|!doctype|html|head|body)'i", "&lt;$1$2", $p);
+	$p=preg_replace("'<iframe(?! src=\"https://www.youtube.com/embed/)'si",'<<z>iframe',$p);
+	
+	/*
+	$p=preg_replace("'onload'si",'onl<z>oad',$p);
+	$p=preg_replace("'onerror'si",'oner<z>ror',$p);
+	$p=preg_replace("'onunload'si",'onun<z>load',$p);
+	$p=preg_replace("'onchange'si",'onch<z>ange',$p);
+	$p=preg_replace("'onsubmit'si",'onsu<z>bmit',$p);
+	$p=preg_replace("'onreset'si",'onr<z>eset',$p);
+	$p=preg_replace("'onselect'si",'ons<z>elect',$p);
+	$p=preg_replace("'onblur'si",'onb<z>lur',$p);
+	$p=preg_replace("'onfocus'si",'onfo<z>cus',$p);
+	$p=preg_replace("'onclick'si",'oncl<z>ick',$p);
+	$p=preg_replace("'ondblclick'si",'ondbl<z>click',$p);
+	$p=preg_replace("'onmousedown'si",'onm<z>ousedown',$p);
+	$p=preg_replace("'onmousemove'si",'onmou<z>semove',$p);
+	$p=preg_replace("'onmouseout'si",'onmou<z>seout',$p);
+	$p=preg_replace("'onmouseover'si",'onmo<z>useover',$p);
+	$p=preg_replace("'onmouseup'si",'onmou<z>seup',$p);
+	*/
+	if ($temp != $p) {
+		nuke_js($temp, $p);
+		if ($validate) return NULL;
+	}
+	
+	
+	$p=preg_replace("'document.cookie'si",'document.co<z>okie',$p);
+	$p=preg_replace("'eval'si",'eva<z>l',$p);
+	$p=preg_replace("'javascript:'si",'javasc<z>ript:',$p);	
+	//$p=preg_replace("'document.'si",'docufail.',$p);
+	//$p=preg_replace("'<script'si",'<<z>script',$p);
+	//$p=preg_replace("'</script'si",'<<z>/script',$p);
+	//$p=preg_replace("'<meta'si",'<<z>meta',$p);
+	
+
+	return $p;
+	
+}
 function dofilters($p){
 	global $hacks;
-	$temp = $p;
+	
+	
+	$p = xssfilters($p);
+	
+	/*
 	if (filter_bool($_GET['t']) && false) {
 		$p=preg_replace("'<script(.*?)</script>'si",'',$p);
 		$p=preg_replace("'<script'si",'',$p);
@@ -1210,29 +1921,15 @@ function dofilters($p){
 			nuke_js($temp, $p);
 		}
 	} else {
+	
 
-		$p=preg_replace("'onload'si",'onl<z>oad',$p);
-		$p=preg_replace("'onerror'si",'oner<z>ror',$p);
-		$p=preg_replace("'onunload'si",'onun<z>load',$p);
-		$p=preg_replace("'onchange'si",'onch<z>ange',$p);
-		$p=preg_replace("'onsubmit'si",'onsu<z>bmit',$p);
-		$p=preg_replace("'onreset'si",'onr<z>eset',$p);
-		$p=preg_replace("'onselect'si",'ons<z>elect',$p);
-		$p=preg_replace("'onblur'si",'onb<z>lur',$p);
-		$p=preg_replace("'onfocus'si",'onfo<z>cus',$p);
-		$p=preg_replace("'onclick'si",'oncl<z>ick',$p);
-		$p=preg_replace("'ondblclick'si",'ondbl<z>click',$p);
-		$p=preg_replace("'onmousedown'si",'onm<z>ousedown',$p);
-		$p=preg_replace("'onmousemove'si",'onmou<z>semove',$p);
-		$p=preg_replace("'onmouseout'si",'onmou<z>seout',$p);
-		$p=preg_replace("'onmouseover'si",'onmo<z>useover',$p);
-		$p=preg_replace("'onmouseup'si",'onmou<z>seup',$p);
 
 		if ($temp != $p) {
 			nuke_js($temp, $p);
 		}
 	}
-
+	*/
+	
 	//$p=preg_replace("'<object(.*?)</object>'si","",$p);
 	//$p=preg_replace("'autoplay'si",'',$p); // kills autoplay, need to think of a solution for embeds.
 
@@ -1247,16 +1944,16 @@ function dofilters($p){
 	$p=preg_replace("':facepalm2:'si",'<img src=images/facepalm2.jpg>',$p);
 	$p=preg_replace("':epicburn:'si",'<img src=images/epicburn.png>',$p);
 	$p=preg_replace("':umad:'si",'<img src=images/umad.jpg>',$p);
-	$p=preg_replace("':gamepro5:'si",'<img src=http://xkeeper.net/img/gamepro5.gif title="FIVE EXPLODING HEADS OUT OF FIVE">',$p);
-	$p=preg_replace("':headdesk:'si",'<img src=http://xkeeper.net/img/headdesk.jpg title="Steven Colbert to the rescue">',$p);
+	$p=preg_replace("':gamepro5:'si",'<img src=images/gamepro5.gif title="FIVE EXPLODING HEADS OUT OF FIVE">',$p);
+	$p=preg_replace("':headdesk:'si",'<img src=images/headdesk.jpg title="Steven Colbert to the rescue">',$p);
 	$p=preg_replace("':rereggie:'si",'<img src=images/rereggie.png>',$p);
-	$p=preg_replace("':tmyk:'si",'<img src=http://xkeeper.net/img/themoreyouknow.jpg title="do doo do doooooo~">',$p);
+	$p=preg_replace("':tmyk:'si",'<img src=images/themoreyouknow.jpg title="do doo do doooooo~">',$p);
 	$p=preg_replace("':jmsu:'si",'<img src=images/jmsu.png>',$p);
 	$p=preg_replace("':noted:'si",'<img src=images/noted.png title="NOTED, THANKS!!">',$p);
-	$p=preg_replace("':apathy:'si",'<img src=http://xkeeper.net/img/stickfigure-notext.png title="who cares">',$p);
+	$p=preg_replace("':apathy:'si",'<img src=images/stickfigure-notext.png title="who cares">',$p);
 	$p=preg_replace("':spinnaz:'si", '<img src="images/smilies/spinnaz.gif">', $p);
-	$p=preg_replace("':trolldra:'si", '<img src="/images/trolldra.png">', $p);
-	$p=preg_replace("':reggie:'si",'<img src=http://xkeeper.net/img/reggieshrug.jpg title="REGGIE!">',$p);
+	$p=preg_replace("':trolldra:'si", '<img src="images/trolldra.png">', $p);
+	$p=preg_replace("':reggie:'si",'<img src=images/reggieshrug.jpg title="REGGIE!">',$p);
 
 //	$p=preg_replace("'drama'si", 'batter blaster', $p);
 //	$p=preg_replace("'TheKinoko'si", 'MY NAME MEANS MUSHROOM... IN <i>JAPANESE!</i> HOLY SHIT GUYS THIS IS <i>INCREDIBLE</i>!!!!!!!!!', $p);
@@ -1280,25 +1977,16 @@ function dofilters($p){
 	$p=str_replace("http://insectduel.proboards82.com","http://jul.rustedlogic.net/idiotredir.php?",$p);
 //	$p=str_replace("http://imageshack.us", "imageshit", $p);
 	$p=preg_replace("'http://.{0,3}\.?tinypic\.com'si",'tinyshit',$p);
-	$p=str_replace('<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">',"",$p);
+	$p=str_replace('<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">',"<!-- -->",$p);
 	$p=str_replace("tabindex=\"0\" ","title=\"the owner of this button is a fucking dumbass\" ",$p);
 	$p=str_replace("%WIKISTATSFRAME%","<div id=\"widgetIframe\"><iframe width=\"600\" height=\"260\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=VisitsSummary&actionToWidgetize=getSparklines&idSite=2&period=day&date=today&disableLink=1\" scrolling=\"no\" frameborder=\"0\" marginheight=\"0\" marginwidth=\"0\"></iframe></div>",$p);
 	$p=str_replace("%WIKISTATSFRAME2%", '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Referers&actionToWidgetize=getWebsites&idSite=2&period=day&date=2010-10-12&disableLink=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>', $p);
 //	$p=str_replace("http://xkeeper.shacknet.nu:5/", 'http://xchan.shacknet.nu:5/', $p);
 //	$p=preg_replace("'<style'si",'&lt;style',$p);
-
+	$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
 
 	//$p=preg_replace("'%BZZZ%'si",'onclick="bzzz(',$p);
-
-	$p=preg_replace("'document.cookie'si",'document.co<z>okie',$p);
-	$p=preg_replace("'eval'si",'eva<z>l',$p);
-	//  $p=preg_replace("'document.'si",'docufail.',$p);
-	$p=preg_replace("'<script'si",'<<z>script',$p);
-	$p=preg_replace("'</script'si",'<<z>/script',$p);
-	$p=preg_replace("'javascript:'si",'javasc<z>ript:',$p);
-	$p=preg_replace("'<iframe(?! src=\"https://www.youtube.com/embed/)'si",'<<z>iframe',$p);
-	$p=preg_replace("'<meta'si",'<<z>meta',$p);
-
+	
 	return $p;
 }
 
@@ -1320,132 +2008,239 @@ function addslashes_array($data) {
 }
 
 
-	function xk_ircout($type, $user, $in) {
+function xk_ircout($type, $user, $in) {
+	global $config;
+	
+	// gone
+	// return;
+	# and back
 
-		// gone
-		// return;
-		# and back
+	$indef = array(
+		'pow'		=> 1,
+		'fid'		=> 0,
+		'id'		=> 0,
+		//'pmatch'	=> 0,
+		'ip'		=> 0,
+		'forum'		=> 0,
+		'thread'	=> 0,
+		'pid'		=> 0,
+	);
+	
+	$in = array_merge($indef, $in);
+	
+	// Public forums have dest 0, everything else 1
+	$dest	= min(1, max(0, $in['pow']));
+	
+	// Posts in certain forums are reported elsewhere
+	if ($in['fid'] == 99) {
+		$dest	= 6;
+	} elseif ($in['fid'] == 98) {
+		$dest	= 7;
+	}
 
-		$dest	= min(1, max(0, $in['pow']));
-		if ($in['fid'] == 99) {
-			$dest	= 6;
-		} elseif ($in['fid'] == 98) {
-			$dest	= 7;
+	global $x_hacks;
+	if ($x_hacks['host'] || !$config['irc-reporting']) return;
+
+	
+	
+	if ($type == "user") {
+		/* not usable
+		if ($in['pmatch']) {
+			$color	= array(8, 7);
+			if		($in['pmatch'] >= 3) $color	= array(7, 4);
+			elseif	($in['pmatch'] >= 5) $color	= array(4, 5);
+			$extra	= " (". xk($color[1]) ."Password matches: ". xk($color[0]) . $in['pmatch'] . xk() .")";
 		}
-
-		global $x_hacks;
-		if ($x_hacks['host']) return;
-
-		if ($type == "user") {
-			if ($in['pmatch']) {
-				$color	= array(8, 7);
-				if		($in['pmatch'] >= 3) $color	= array(7, 4);
-				elseif	($in['pmatch'] >= 5) $color	= array(4, 5);
-				$extra	= " (". xk($color[1]) ."Password matches: ". xk($color[0]) . $in['pmatch'] . xk() .")";
-			}
-
-			$out	= "1|New user: #". xk(12) . $in['id'] . xk(11) ." $user ". xk() ."(IP: ". xk(12) . $in['ip'] . xk() .")$extra: https://jul.rustedlogic.net/?u=". $in['id'];
-
-		} else {
+		*/
+		$extra = "";
+		xk_ircsend("1|New user: #". xk(12) . $in['id'] . xk(11) ." $user ". xk() ."(IP: ". xk(12) . $in['ip'] . xk() .")$extra: {$config['board-url']}/?u=". $in['id']);
+		// Also show to public channel, but without the admin-only fluff
+		xk_ircsend("0|New user: #". xk(12) . $in['id'] . xk(11) ." $user ". xk() .")$extra: {$config['board-url']}/?u=". $in['id']);
+		
+		
+	} else {
 //			global $sql;
 //			$res	= $sql -> resultq("SELECT COUNT(`id`) FROM `posts`");
-			$out	= "$dest|New $type by ". xk(11) . $user . xk() ." (". xk(12) . $in['forum'] .": ". xk(11) . $in['thread'] . xk() ."): https://jul.rustedlogic.net/?p=". $in['pid'];
+		xk_ircsend("$dest|New $type by ". xk(11) . $user . xk() ." (". xk(12) . $in['forum'] .": ". xk(11) . $in['thread'] . xk() ."): {$config['board-url']}/?p=". $in['pid']);
 
-		}
-
-		xk_ircsend($out);
 	}
 
-	function xk_ircsend($str) {
-		$str = str_replace(array("%10", "%13"), array("", ""), rawurlencode($str));
+}
 
-		$str = html_entity_decode($str);
+function xk_ircsend($str) {
+	// $str = <chan id>|<message>
+/*	
+	$str = str_replace(array("%10", "%13"), array("", ""), rawurlencode($str));
 
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "http://treeki.rustedlogic.net:5000/reporting.php?t=$str");
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3); // <---- HERE
-		curl_setopt($ch, CURLOPT_TIMEOUT, 5); // <---- HERE
-		$file_contents = curl_exec($ch);
-		curl_close($ch);
+	$str = html_entity_decode($str);
+	
 
-		return true;
+	$ch = curl_init();
+	//curl_setopt($ch, CURLOPT_URL, "http://treeki.rustedlogic.net:5000/reporting.php?t=$str");
+	curl_setopt($ch, CURLOPT_URL, "ext/reporting.php?t=$str");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3); // <---- HERE
+	curl_setopt($ch, CURLOPT_TIMEOUT, 5); // <---- HERE
+	$file_contents = curl_exec($ch);
+	curl_close($ch);
+*/
+	return true;
+}
+
+// IRC Color code setup
+function xk($n = -1) {
+	if ($n == -1) $k = "";
+		else $k = str_pad($n, 2, 0, STR_PAD_LEFT);
+	return "\x03". $k;
+}
+
+function formatting_trope($input) {
+	$in		= "/[A-Z][^A-Z]/";
+	$out	= " \\0";
+	$output	= preg_replace($in, $out, $input);
+
+	return trim($output);
+}
+
+// I'm picky about this sorta thing
+function getblankdate() {
+	global $loguser;
+
+	// We only need to do the replacing one time
+	static $bl;
+	if ($bl) return $bl;
+
+	$bl = $loguser['dateformat'];
+	$bl = preg_replace('/[jNwzWnLgGI]/',	'-',      $bl);
+	$bl = preg_replace('/[dSmtyaAhHis]/',	'--',     $bl);
+	$bl = preg_replace('/[DFMBe]/',			'---',    $bl);
+	$bl = preg_replace('/[oY]/',			'----',   $bl);
+	$bl = preg_replace('/[lu]/',			'------', $bl);
+	$bl = preg_replace('/[c]/',				'----------T--:--:--+00:00', $bl);
+	$bl = preg_replace('/[r]/',				'---, -- --- ---- --:--:-- +0000', $bl);
+	return $bl;
+}
+
+function is_birthday($timestamp) {global $loguser; return (date('m-d', $timestamp) == date('m-d',ctime() + $loguser['tzoff']));}
+function printdate($timestamp = NULL, $short = false) {
+	global $loguser;
+	if (!$timestamp) $timestamp = ctime();
+	return date($short ? $loguser['dateshort'] : $loguser['dateformat'], $timestamp + $loguser['tzoff']);
+}
+
+// Helpful Unix timestamp conversion functions
+function datetofields(&$timestamp, $basename, $date = true, $time = false, $raw = false){
+	
+	if ($timestamp) $val = explode("|", date("n|j|Y|H|i|s", $timestamp));
+	else 			$val = array_fill(0, 6, "");
+	
+	if (!$raw) 	$fname = array('Month: ', ' Day: ', ' Year: ', ' Hours: ', ' Minutes: ', ' Seconds: ');
+	else		$fname = array('','-','-',' &nbsp; ',':',':');
+	
+	$fields = "";
+	
+	if ($date)
+		$fields .= 
+		"$fname[0]<input name='{$basename}month' 	type='text' maxlength='2' size='2' class='right' value='$val[0]'>".
+		"$fname[1]<input name='{$basename}day' 	type='text' maxlength='2' size='2' class='right' value='$val[1]'>".
+		"$fname[2]<input name='{$basename}year' 	type='text' maxlength='4' size='4' class='right' value='$val[2]'>";
+		
+	if ($time)		
+		$fields .= 
+		"$fname[3]<input name='{$basename}hour' 	type='text' maxlength='2' size='2' class='right' value='$val[3]'>".
+		"$fname[4]<input name='{$basename}min' 	type='text' maxlength='2' size='2' class='right' value='$val[4]'>".
+		"$fname[5]<input name='{$basename}sec' 	type='text' maxlength='4' size='4' class='right' value='$val[5]'>";
+		
+	return $fields;
+}
+
+// Automatic mktime wrapper for fields generated by datetofields()
+// Just say no to invalid dates
+function fieldstotimestamp($basename, $arrayname = 'GLOBALS'){
+	global ${$arrayname}; // Workaround to allow accessing superglobals with the $$ method
+	
+	// Follow the mktime argument order
+	$fnames = array('hour', 'min', 'sec', 'month', 'day', 'year');
+	
+	// Populate the array with the datetofields results (ie: $_POST['testyear'],... with $arrayname = '_POST' and $basename = 'test';
+	// The values may or may not exist, so we pass them by reference
+	$v = array();
+	for ($i = 0; $i < 6; ++$i) {
+		$v[$i] = &${$arrayname}[$basename.$fnames[$i]];
+		$v[$i] = (int) $v[$i];
 	}
+	// Don't allow zero timestamps
+	if (!$v[0] && !$v[1] && !$v[2] && !$v[3] && !$v[4] && !$v[5]) return NULL;
+	
+	// Is the date valid? (if one of the values is set, the other two have to be set as well)
+	if ($v[3] || $v[4] || $v[5])
+		if (!checkdate($v[3], $v[4], $v[5]))
+			return NULL;
+	
+	// Is the time in a valid range?
+	/*$limits = array(23, 59, 59);
+	for ($i = 0; $i < 3; ++$i)
+		if ($v[$i] < 0 || $v[$i] > $limits[$i])
+			return NULL;
+	*/
+	if ($v[0] < 0 || $v[0] > 23) $v[0] = 0;
+	if ($v[1] < 0 || $v[1] > 59) $v[1] = 0;
+	if ($v[2] < 0 || $v[2] > 59) $v[2] = 0;
+	
+	$res = mktime($v[0],$v[1],$v[2],$v[3],$v[4],$v[5]);
+	return ($res !== FALSE ? $res : NULL); // Return NULL so it can directly go in a prepared query
+}
 
-	function xk($n = -1) {
-		if ($n == -1) $k = "";
-			else $k = str_pad($n, 2, 0, STR_PAD_LEFT);
-		return "\x03". $k;
+function cleanurl($url) {
+	$pos1 = $pos = strrpos($url, '/');
+	$pos2 = $pos = strrpos($url, '\\');
+	if ($pos1 === FALSE && $pos2 === FALSE)
+		return $url;
+
+	$spos = max($pos1, $pos2);
+	return substr($url, $spos+1);
+}
+
+/* extra fun functions! */
+function pick_any($array) {
+	if (is_array($array)) {
+		return $array[array_rand($array)];
+	} elseif (is_string($array)) {
+		return $array;
 	}
+}
 
-	function formatting_trope($input) {
-		$in		= "/[A-Z][^A-Z]/";
-		$out	= " \\0";
-		$output	= preg_replace($in, $out, $input);
+function numrange($n, $lo, $hi) {
+	return max(min($hi, $n), $lo);
+}
 
-		return trim($output);
-	}
+function marqueeshit($str) {
+	return "<marquee scrollamount='". mt_rand(1, 50) ."' scrolldelay='". mt_rand(1, 50) ."' direction='". pick_any(array("left", "right")) ."'>$str</marquee>";
+}
 
-	// I'm picky about this sorta thing
-	function getblankdate() {
-		global $dateformat;
-
-		// We only need to do the replacing one time
-		static $bl;
-		if ($bl) return $bl;
-
-		$bl = $dateformat;
-		$bl = preg_replace('/[jNwzWnLgGI]/',	'-',      $bl);
-		$bl = preg_replace('/[dSmtyaAhHis]/',	'--',     $bl);
-		$bl = preg_replace('/[DFMBe]/',			'---',    $bl);
-		$bl = preg_replace('/[oY]/',			'----',   $bl);
-		$bl = preg_replace('/[lu]/',			'------', $bl);
-		$bl = preg_replace('/[c]/',				'----------T--:--:--+00:00', $bl);
-		$bl = preg_replace('/[r]/',				'---, -- --- ---- --:--:-- +0000', $bl);
-		return $bl;
-	}
-
-	function cleanurl($url) {
-		$pos1 = $pos = strrpos($url, '/');
-		$pos2 = $pos = strrpos($url, '\\');
-		if ($pos1 === FALSE && $pos2 === FALSE)
-			return $url;
-
-		$spos = max($pos1, $pos2);
-		return substr($url, $spos+1);
-	}
-
-	/* extra fun functions! */
-	function pick_any($array) {
-		if (is_array($array)) {
-			return $array[array_rand($array)];
-		} elseif (is_string($array)) {
-			return $array;
-		}
-	}
-
-	function numrange($n, $lo, $hi) {
-		return max(min($hi, $n), $lo);
-	}
-
-	function marqueeshit($str) {
-		return "<marquee scrollamount='". mt_rand(1, 50) ."' scrolldelay='". mt_rand(1, 50) ."' direction='". pick_any(array("left", "right")) ."'>$str</marquee>";
-	}
-
-	// additional includes
-	require_once "lib/datetime.php";
+// additional includes
+require_once "lib/datetime.php";
 
 
-	function unescape($in) {
+function unescape($in) {
 
+	$out	= urldecode($in);
+	while ($out != $in) {
+		$in		= $out;
 		$out	= urldecode($in);
-		while ($out != $in) {
-			$in		= $out;
-			$out	= urldecode($in);
-		}
-		return $out;
-
 	}
+	return $out;
+
+}
+
+function preg_loop($before, $regex){
+	$after = preg_replace("'{$regex}'", "", $before);
+	while ($before != $after){
+		$before = $after;
+		$after = preg_replace("'{$regex}'", "", $before);
+	}
+	return $after;
+}
 
 
 function adbox() {
@@ -1530,67 +2325,37 @@ function gethttpheaders() {
 	return $ret;
 }
 
-function printtimedif($timestart){
-	global $x_hacks, $sql, $sqldebuggers, $smallfont;
-
-	$exectime = microtime(true) - $timestart;
-
-	$qseconds = sprintf("%01.6f", mysql::$time);
-	$sseconds = sprintf("%01.6f", $exectime - mysql::$time);
-	$tseconds = sprintf("%01.6f", $exectime);
-
-	$queries = mysql::$queries;
-	$cache = mysql::$cachehits;
-
-	// Old text
-	//print "<br>{$smallfont} Page rendered in {$tseconds} seconds.</font><br>";
-
-	print "<br>
-		{$smallfont}{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</font>
-		<table cellpadding=0 border=0 cellspacing=0 class='fonts'>
-			<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
-			<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
-			<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
-		</table>";
-
-	/*
-	if (in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
-		if (!mysql::$debug_on && $_SERVER['REQUEST_METHOD'] != 'POST')
-			print "<br><a href=".$_SERVER['REQUEST_URI'].(($_SERVER['QUERY_STRING']) ? "&" : "?")."debugsql>Useless mySQL query debugging shit</a>";
-		else
-			print mysql::debugprinter();
-	}
-	*/
-
-	if (!$x_hacks['host']) {
-		$pages	= array(
-			"/index.php",
-			"/thread.php",
-			"/forum.php",
-		);
-		$url = $_SERVER['REQUEST_URI'];
-		if (in_array(substr($url, 0, 14), $pages)) {
-			$sql->query("INSERT INTO `rendertimes` SET `page` = '". addslashes($url) ."', `time` = '". ctime() ."', `rendertime`  = '". $exectime ."'");
-			$sql->query("DELETE FROM `rendertimes` WHERE `time` < '". (ctime() - 86400 * 14) ."'");
-		}
-	}
-}
-
-function ircerrors($type, $msg, $file, $line, $context) {
- 	global $loguser;
+function error_reporter($type, $msg, $file, $line, $context) {
+ 	global $loguser, $errors;
 
 	// They want us to shut up? (@ error control operator) Shut the fuck up then!
 	if (!error_reporting())
 		return true;
+	
 
 	switch($type) {
-		case E_USER_ERROR:		$typetext = xk(4) . "- Error";  break;
-		case E_USER_WARNING:	$typetext = xk(7) . "- Warning"; break;
-		case E_USER_NOTICE:		$typetext = xk(8) . "- Notice";  break;
-		default: return false;
+		case E_USER_ERROR:			$typetext = "User Error";   $irctypetext = xk(4) . "- Error";   break;
+		case E_USER_WARNING:		$typetext = "User Warning"; $irctypetext = xk(7) . "- Warning"; break;
+		case E_USER_NOTICE:			$typetext = "User Notice";  $irctypetext = xk(8) . "- Notice";  break;
+		case E_ERROR:			 	$typetext = "Error"; 				break;
+		case E_WARNING: 			$typetext = "Warning"; 				break;
+		case E_NOTICE:				$typetext = "Notice"; 				break;
+		case E_STRICT: 				$typetext = "Strict Notice";	 	break;
+		case E_RECOVERABLE_ERROR:	$typetext = "Recoverable Error"; 	break;
+		case E_DEPRECATED: 			$typetext = "Deprecated"; 			break;
+		case E_USER_DEPRECATED: 	$typetext = "User Deprecated"; 		break;		
+		default: $typetext = "Unknown type";
 	}
 
 	// Get the ACTUAL location of error for mysql queries
+	
+	if ($type == E_USER_NOTICE && substr($file, -9) === "mysql.php"){
+		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		for ($i = 1; substr($backtrace[$i]['file'], -9) === "mysql.php"; ++$i);
+		$file = $backtrace[$i]['file'];
+		$line = $backtrace[$i]['line'];
+	}
+	/*
 	if ($type == E_USER_ERROR && substr($file, -9) === "mysql.php") {
 		$backtrace = debug_backtrace();
 		for ($i = 1; isset($backtrace[$i]); ++$i) {
@@ -1600,7 +2365,8 @@ function ircerrors($type, $msg, $file, $line, $context) {
 				break;
 			}
 		}
-	}
+	}*/
+	
 	// Get the location of error for deprecation
 	elseif ($type == E_USER_NOTICE && substr($msg, 0, 10) === "Deprecated") {
 		$backtrace = debug_backtrace();
@@ -1609,10 +2375,60 @@ function ircerrors($type, $msg, $file, $line, $context) {
 	}
 
 	$errorlocation = str_replace($_SERVER['DOCUMENT_ROOT'], "", $file) ." #$line";
+	
+	// Without $irctypetext the error is marked as "local reporting only"
+	if (isset($irctypetext)) {
+		xk_ircsend("102|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
+				   " $irctypetext: ".xk()."($errorlocation) $msg");
+	}
 
-	xk_ircsend("102|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
-	           " $typetext: ".xk()."($errorlocation) $msg");
+	// Local reporting
+	$errors[] = array($typetext, $msg, $errorlocation);
+	
 	return true;
 }
 
+function error_printer($trigger, $report, $errors){
+	static $called = false;
+	
+	if (!$called){
+		
+		$called = true;
+		
+		if (!$report || empty($errors)){
+			return $trigger ? "" : true;
+		}
+		
+		if ($trigger != false){ // called by printtimedif()
+		
+			$list = "<table class='table' cellspacing=0>
+				<tr>
+					<td class='tbl tdbgh font center' colspan=4>Errors</td>
+				</tr>
+				<tr>
+					<td class='tbl tdbgc center font'>Type</td>
+					<td class='tbl tdbgc center font'>Message</td>
+					<td class='tbl tdbgc center font'>Location</td>
+				</tr>";
+			foreach ($errors as $error){
+				$list .= "
+					<tr>
+						<td class='tbl tdbg1 font'><nobr>".htmlspecialchars($error[0])."</nobr></td>
+						<td class='tbl tdbg2 font'>".htmlspecialchars($error[1])."</td>
+						<td class='tbl tdbg1 font'>".htmlspecialchars($error[2])."</td>
+					</tr>";
+			}
+				
+			return $list."</table><br>";
+			
+		}
+		else{
+				extract(error_get_last());
+				$ok = error_reporter($type, $message, $file, $line)[0];
+				die("<pre>Fatal Error!\n\nType: $ok[0]\nMessage: $ok[1]\nFile: $ok[2]\nLine: $ok[3]</pre>");				
+		}
+	}
+	
+	return true;
+}
 

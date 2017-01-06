@@ -1,9 +1,9 @@
 <?php
-
+	error_reporting(0);
 //	die("D'oh");
 	header("Cache-Control: no-cache");
 
-	if ($_GET['z']) {
+	if (isset($_GET['z'])) {
 		die( "<body bgcolor=#111122><META HTTP-EQUIV=REFRESH CONTENT=0;URL=newyear.php?z=". rand(0,9999) ."><center><br><br><br><br><img src=newyear.php width=100%>");
 	}
 

@@ -1,43 +1,32 @@
 <?php
 
-  $windowtitle	= "Admin Cruft";
+	require 'lib/function.php';
 
-  require 'lib/function.php';
-  require 'lib/layout.php';
-
-if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
-
-	print "
-		$header<br>
-		$tblstart
-			<tr>$tccell1>&nbsp;
-				<br>No.
-				<br>&nbsp;
-			</td></tr>
-		$tblend
-
-	$footer
-	";
-	printtimedif($startingtime);
-	die();
-  }
+	//if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
+	if ($loguser['powerlevel'] < 1) {
+		errorpage("&nbsp;<br>No.<br>&nbsp;");
+	}
 
 
-	$expower = in_array($loguserid, array(175, 1, 2100));
-
-	if ($expower && $_GET['banip'] && $_GET['valid'] == md5($_GET['banip'] . "aglkdgslhkadgshlkgds")) {
-		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_GET['banip'] ."', `reason`='Abusive/unwelcome activity', `date` = '". ctime() ."', `banner` = '$loguserid'") or print mysql_error();
+	//$expower = in_array($loguser['id'], array(175, 1, 2100));
+	$expower = ($loguser['id'] == 1);
+	
+	if ($expower && isset($_GET['banip'])) {
+		check_token($_GET['auth'], 20, $_GET['banip']);
+		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_GET['banip'] ."', `reason`='Abusive/unwelcome activity', `date` = '". ctime() ."', `banner` = '{$loguser['id']}'");// or print mysql_error();
 		xk_ircsend("1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_GET['banip'] . xk(7) .".");
 		return header("Location: ?");
 	}
-
-	print "$header<br>";
+	
+	pageheader("Admin Cruft");
 
 	$clearbutton = '&nbsp;';
 	if ($expower) {
-		if ($_POST['clear'])
-			$query	= $sql -> query("TRUNCATE `minilog`");
-		$clearbutton = "<br><form style='margin: 0px; padding: 0px;' action='?' method='post'>$inps='clear' value='Clear log'></form><br>";
+		if (isset($_POST['clear'])) {
+			check_token($_POST['auth'], 40);
+			$query = $sql->query("TRUNCATE `minilog`");
+		}
+		$clearbutton = "<br><form style='margin: 0px; padding: 0px;' action='?' method='post'><input type='submit' class=submit name='clear' value='Clear log'><input type='hidden' name='auth' value='".generate_token(40)."'></form><br>";
 	}
 
 	$banflagnames[    1]	= "union<br>select";
@@ -58,22 +47,22 @@ if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
 
 	$cells	= count($banflagnames) + 4;
 		
-	print "
-		$tblstart
-			<tr>$tccellh>Shitbug detection system</td></tr>
-			<tr>$tccell1>&nbsp;
-				<br>This page lists denied requests, showing what the reason was.
-				<br>$clearbutton
-			</td></tr>
-		$tblend
-		<br>
-		$tblstart
-	";
+?>
+<table class='table'>
+	<tr><td class='tdbgh center'>Shitbug detection system</td></tr>
+	<tr><td class='tdbg1 center'>&nbsp;
+		<br>This page lists denied requests, showing what the reason was.
+		<br><?=$clearbutton?>
+	</td></tr>
+</table>
+<br>
+<table class='table'>
+<?php
 			
-	$colheaders	= "<tr>$tccellh width='180'>Time</td>$tccellh width='50'>Count</td>$tccellh>IP</td>$tccellh width='50'>&nbsp</td>";
+	$colheaders	= "<tr><td class='tdbgh center' width='180'>Time</td><td class='tdbgh center' width='50'>Count</td><td class='tdbgh center'>IP</td><td class='tdbgh center' width='50'>&nbsp</td>";
 
 	foreach ($banflagnames as $flag => $name)
-		$colheaders	.= "$tccellh width='60'>$name</td>";
+		$colheaders	.= "<td class='tdbgh center' width='60'>$name</td>";
 
 	$colheaders	.= "</tr>";
 	print $colheaders;
@@ -84,6 +73,7 @@ if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
 	$lastflag	= 0;
 	$combocount	= 0;
 	$lastip		= "";
+	$tempout = "";
 	
 	while ($data = $sql -> fetch($query)) {
 		if (($lastip != $data['ip'] || $lastflag != $data['banflags']) && $lastflag != 0) {
@@ -93,7 +83,7 @@ if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
 			if (!($rowcnt % 50))
 				print $colheaders;
 			elseif ($lastip != $data['ip'])
-				print "<tr>$tccellh colspan='$cells'><img src='images/_.gif' height=5 width=5></td></tr>";
+				print "<tr><td class='tdbgh center' colspan='$cells'><img src='images/_.gif' height=5 width=5></td></tr>";
 
 			$tempout	= "";
 			$combocount	= 0;
@@ -104,20 +94,20 @@ if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
 		$combocount++;
 		
 		if ($combocount == 1) {
-			$tempout	= "<tr>$tccell1>". date("m-d-y H:i:s", $data['time']) ."</td>$tccell1>%%%COMBO%%%</td>$tccell1><a href='ipsearch.php?ip=". $data['ip'] ."'>". $data['ip'] ."</a></td>";
+			$tempout	= "<tr><td class='tdbg1 center'>". date("m-d-y H:i:s", $data['time']) ."</td><td class='tdbg1 center'>%%%COMBO%%%</td><td class='tdbg1 center'><a href='ipsearch.php?ip=". $data['ip'] ."'>". $data['ip'] ."</a></td>";
 
 			if ($data['banned'])
-				$tempout .= "$tccell1s><span style='color: #f88; font-weight: bold;'>Banned</span></td>";
+				$tempout .= "<td class='tdbg1 fonts center'><span style='color: #f88; font-weight: bold;'>Banned</span></td>";
 			elseif ($expower)
-				$tempout .= "$tccell1s><a href=?banip={$data['ip']}&valid=". md5($data['ip'] . "aglkdgslhkadgshlkgds") .">Ban</a></td>";
+				$tempout .= "<td class='tdbg1 fonts center'><a href='?banip={$data['ip']}&auth=".generate_token(20, $data['ip'])."'>Ban</a></td>";
 			else
-				$tempout .= "$tccell1s>&nbsp;</td>";
+				$tempout .= "<td class='tdbg1 fonts center'>&nbsp;</td>";
 
 			foreach ($banflagnames as $flag => $name) {
 				if ($data['banflags'] & $flag)
-					$tempout	.= "$tccellc width='60'>Hit</td>";
+					$tempout	.= "<td class='tdbgc center' width='60'>Hit</td>";
 				else
-					$tempout	.= "$tccell2 width='60'>&nbsp;</td>";
+					$tempout	.= "<td class='tdbg2 center' width='60'>&nbsp;</td>";
 			}
 			$tempout .= "</tr>";
 		}
@@ -125,6 +115,7 @@ if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
 	
 	print str_replace("%%%COMBO%%%", ($combocount > 1 ? " &times;$combocount" : ""), $tempout);
 
-	print "$tblend $footer";
-	printtimedif($startingtime);
+	print "</table>";
+	
+	pagefooter();
 ?>

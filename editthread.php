@@ -1,26 +1,44 @@
 <?php
 	require 'lib/function.php';
-	require 'lib/layout.php';
+	
 
-	$trashid = 27;
+	//$trashid = $config['trash-forum'];
+	
+	$id 				= filter_int($_GET['id']);
+	$_GET['action'] 	= filter_string($_GET['action']);
+	$_POST['action'] 	= filter_string($_POST['action']);
 
-	$thread  = $sql->fetchq("SELECT forum,closed,title,icon,replies,lastpostdate,lastposter,sticky FROM threads WHERE id=$id");
-	$forumid = $thread['forum'];
-	$posticons = file('posticons.dat');
-
-	if (@mysql_num_rows($sql->query("SELECT user FROM forummods WHERE forum={$forumid} and user={$loguserid}")))
-		$ismod = 1;
-
-	if (!$forumid)
-		$ismod = 0;
-	elseif ($sql->resultq("SELECT minpower FROM forums WHERE id={$forumid}") > $loguser['powerlevel'])
-		$ismod = 0;
-
-	if (!$ismod)
-		errorpage("You aren't allowed to edit this thread.",'the thread',"thread.php?id={$id}");
-
+	$thread  = $sql->fetchq("
+		SELECT 	t.forum, t.closed, t.title, t.description, t.icon, t.replies, t.lastpostdate, t.lastposter, t.sticky, t.user,
+				f.minpower, f.id valid, f.specialscheme, f.specialtitle
+		FROM threads t
+		LEFT JOIN forums f ON t.forum = f.id
+		WHERE t.id = $id
+	");
+	
+	
+	// If the thread is in an invalid forum, don't bother checking if we're a local mod
+	if ($thread && $thread['valid'] && !$ismod)
+		$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$thread['forum']} and user = {$loguser['id']}");
+	
+	if (!$thread || (!$ismod && !$thread['valid']))
+		$message = "This thread doesn't exist."; // or is in an invalid forum
+	else if ($thread['minpower'] && $thread['minpower'] > $loguser['powerlevel'])
+		$message = "This thread is in a restricted forum.";
+	//else if (!$ismod && (($_GET['action'] != 'rename') || ($loguser['id'] != $thread['user'])))
+	//	$message = "You aren't allowed to edit this thread.";
+	else
+		$message = NULL;
+	
+	if ($message) {
+		if (!$ismod) errorpage("You aren't allowed to edit this thread.","thread.php?id={$id}",'the thread');
+		else errorpage($message);
+	}
+	
+	
 	// Quickmod
-	if (substr($_GET['action'], 0, 1) == 'q') {
+	if ($ismod && substr($_GET['action'], 0, 1) == 'q') {
+		check_token($_GET['auth'], 32);
 		switch ($_GET['action']) {
 			case 'qstick':   $update = 'sticky=1'; break;
 			case 'qunstick': $update = 'sticky=0'; break;
@@ -28,109 +46,265 @@
 			case 'qunclose': $update = 'closed=0'; break;
 			default: return header("Location: thread.php?id={$id}");
 		}
-
 		$sql->query("UPDATE threads SET {$update} WHERE id={$id}");
 		return header("Location: thread.php?id={$id}");
 	}
-	elseif ($_POST['action'] == "trashthread") {
-		$sql->query("UPDATE threads SET sticky=0, closed=1, forum=$trashid WHERE id='$id'");
-		$numposts = $thread['replies'] + 1;
-		$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum=$forumid ORDER BY lastpostdate DESC LIMIT 1");
-		$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum=$trashid ORDER BY lastpostdate DESC LIMIT 1");
-		$sql->query("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=$t1[lastpostdate],lastpostuser=$t1[lastposter] WHERE id=$forumid");
-		$sql->query("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=$t2[lastpostdate],lastpostuser=$t2[lastposter] WHERE id=$trashid");
+	elseif ($ismod && $_GET['action'] == 'trashthread') {
+		
+		pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);
+		
+		if (isset($_POST['dotrash'])) {
+			
+			check_token($_POST['auth'], 18);
+			
+			$sql->beginTransaction();
+			$queryresults = array();
+			
+			$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$config['trash-forum']} WHERE id='$id'", false, $queryresults);
+			$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id");
+			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
+			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$config['trash-forum']} ORDER BY lastpostdate DESC LIMIT 1");
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
+			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$config['trash-forum']}", array($t2['lastpostdate'],$t2['lastposter']), $queryresults);
 
-		// Yeah whatever
-		errorpage("Thread successfully trashed.",'return to the thread',"thread.php?id=$id");
+			
+			// Yeah whatever
+			if ($sql->checkTransaction($queryresults))
+				errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
+			else
+				errorpage("An error occurred while trashing the thread.");
+			
+			
+		
+		}			
+		
+		
+		?>
+		<table class='table'>
+			<form action='editthread.php?action=trashthread&id=<?=$id?>' name='trashcompactor' method='POST'>
+				<tr>
+					<td class='tdbg1 center'>
+						Are you sure you want to trash this thread?<br>
+						<input type='hidden' value='trashthread' name='action'>
+						<input type='hidden' name='auth' value='<?=generate_token(18)?>'>
+						<input type='submit' name='dotrash' value='Trash Thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
+					</td>
+				</tr>
+			</form>
+		</table>
+		<?php
 	}
-	elseif ($_POST['action'] == 'editthread') {
-		$posticons[$iconid]=str_replace("\n",'',$posticons[$iconid]);
-
-		$icon=$posticons[$iconid];
-		if($custposticon) $icon=$custposticon;
+	else if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
 		
-		$subject 		= htmlspecialchars($_POST['subject']);
-		$description 	= htmlspecialchars($_POST['description']);
-		
-		$sql->query("UPDATE `threads` SET `forum` = '$forummove', `closed` = '$closed', `title` = '$subject', `description` = '$description', `icon` = '$icon', `sticky` = '$sticky' WHERE `id` = '$id'");
-		if($forummove!=$forumid) {
-			$numposts=$thread['replies']+1;
-			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum=$forumid ORDER BY lastpostdate DESC LIMIT 1");
-			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum=$forummove ORDER BY lastpostdate DESC LIMIT 1");
-			$sql->query("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=$t1[lastpostdate],lastpostuser=$t1[lastposter] WHERE id=$forumid");
-			$sql->query("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=$t2[lastpostdate],lastpostuser=$t2[lastposter] WHERE id=$forummove");
+		if (filter_bool($_POST['dodelete'])) {
+			
+			check_token($_POST['auth'], 18);
+			
+			// Double-confirm the checkbox 
+			$confirm = filter_bool($_POST['reallysure']);
+			if (!$confirm) return header("Location: thread.php?id=$id");
+			
+			
+			$sql->beginTransaction();
+			
+			$queryresults = array();
+			
+			$sql->query("DELETE FROM threads WHERE id={$id}", false, $queryresults);
+			$deleted = $sql->query("DELETE FROM posts WHERE thread = {$id}", false, $queryresults);
+			$numdeletedposts = $sql->num_rows($deleted);
+			
+			// Update forum status
+			$t1 = $sql->fetchq("SELECT lastpostdate, lastposter	FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numdeletedposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
+			
+			$result = $sql->checkTransaction($queryresults);
+			
+			$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$thread['forum']}");			
+			if ($result)
+				errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
+			else
+				errorpage("An error occurred while deleting the thread.");
+			
+		} else {
+			
+			pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);	
+			
+			?>
+			<table class='table'>
+			<form action='editthread.php?id=<?=$id?>' method='post'>
+				<tr>
+					<td class='tdbg1 center'>
+						<big><b>DANGER ZONE</b></big><br>
+						<br>
+						Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
+						<br>
+						<input type='checkbox' class=radio name='reallysure' value=1> <label for="reallysure">I'm sure</label><br>
+						<input type='hidden' name=deletethread VALUE=1>
+						<input type='hidden' name=auth value='<?=generate_token(18)?>'><br>
+						<input type='submit' name='dodelete' value='Delete thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
+					</td>
+				</tr>
+			</form>
+			</table>
+			<?php
+			
 		}
-		errorpage("Thank you, $loguser[name], for editing the thread.",'return to the thread',"thread.php?id=$id");
 	}
-	// Deletion disallowed for now
-/*	elseif ($_POST['action'] == 'deletethread') {
-		$sql->query("DELETE FROM threads WHERE id=$id");
-		$sql->query("DELETE FROM posts WHERE thread=$id");
-		$numdeletedposts=$thread[replies]+1;
-		$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum=$forumid ORDER BY lastpostdate DESC LIMIT 1");
-		$sql->query("UPDATE forums SET numposts=numposts-$numdeletedposts,numthreads=numthreads-1,lastpostdate=$t1[lastpostdate],lastpostuser=$t1[lastposter] WHERE id=$forumid");
-		errorpage("Thank you, $loguser[name], for deleting the thread.",'return to the thread',"thread.php?id=$id");
-	} */
-	elseif ($_GET['action'] == 'trashthread') {
-		print "$header<br>$tblstart
-			<form action='editthread.php' name='trashcompactor' method='post'>
-				<tr>$tccell1><input type='hidden' value='trashthread' name='action'>
-				Are you sure you want to trash this thread?<br>
-				<input type='hidden' value='$id' name='id'>
-				<input type='submit' value='Trash Thread'> -- <a href='/thread.php?id=$id'>Cancel</a></td></tr>
-			</form>$tblend$footer";
+	else if ($_POST['action'] == 'editthread') {
+		
+		pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);	
+		
+		check_token($_POST['auth']);
+		
+		$iconid 		= filter_int($_POST['iconid']);
+		$custposticon 	= filter_string($_POST['custposticon'], true);
+		
+		$posticons 			= file('posticons.dat');
+			
+		if ($custposticon)
+			$icon = xssfilters($custposticon);
+		else if (isset($posticons[$iconid]))
+			$icon = trim($posticons[$iconid]);
+		else
+			$icon = "";
+		
+		$title = filter_string($_POST['subject'], true);
+		if (!$title) errorpage("Couldn't edit the thread. You haven't entered a subject.");
+		
+		
+		
+		if ($ismod) {
+			$forummove 	= filter_int($_POST['forummove']);
+			$closed 	= filter_int($_POST['closed']);
+			$sticky 	= filter_int($_POST['sticky']);
+		} else { // Nice try, but no
+			$forummove	= $thread['forum'];
+			$closed		= $thread['closed'];
+			$sticky		= $thread['sticky'];	
+		}
+		
+		
+		// Here we go
+		$sql->beginTransaction();
+		
+		$c = array();
+		
+		$sql->queryp("UPDATE `threads` SET `title` = :title, `description` = :desc, `forum` = :forum, `closed` = :closed, `icon` = :icon, `sticky` = :sticky WHERE `id` = $id",
+		[
+			'title'		=> htmlspecialchars($title),
+			'desc'		=> xssfilters(filter_string($_POST['description'], true)),
+			'icon'		=> $icon,
+			'forum'		=> $forummove,
+			'closed'	=> $closed,
+			'sticky'	=> $sticky
+		], $c);
+		
+		if($forummove != $thread['forum']) {
+			$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id"); //$thread['replies'] + 1;
+			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
+			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum = $forummove ORDER BY lastpostdate DESC LIMIT 1");
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $c);
+			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id=$forummove", array($t2['lastpostdate'],$t2['lastposter']), $c);
+		}
+		if ($sql->checkTransaction($c))
+			errorpage("Thank you, {$loguser['name']}, for editing the thread.","thread.php?id=$id",'return to the thread');
+		else
+			errorpage("An error occurred while editing the thread.");
 	}
 	else {
-		$thread['icon'] = str_replace("\n","",$thread['icon']);
-		$customicon = $thread['icon'];
-
-		for ($i=0;$posticons[$i];) {
-			$posticons[$i] = str_replace($br,"",$posticons[$i]);
-			
-			if($thread['icon']==$posticons[$i]){
-				$checked='checked=1';
-				$customicon='';
-			}
-			
-			$posticonlist.="<INPUT type=radio class=radio name=iconid value=$i $checked>&nbsp;<IMG SRC=$posticons[$i] HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
-			$i++;
-			if($i%10==0) $posticonlist.='<br>';
-			$checked='';
-		}
 		
-		if (!$thread['icon'])
-			$checked='checked=1';
-
-		$posticonlist .= "
-			<br>$radio=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;
-			Custom: $inpt=custposticon VALUE='$customicon' SIZE=40 MAXLENGTH=100>
-		";
-
+		$posticonlist = dothreadiconlist(NULL, $thread['icon']);
+		
 		$check1[$thread['closed']]='checked=1';
 		$check2[$thread['sticky']]='checked=1';
-
-		$forums = $sql->query("SELECT id,title FROM forums WHERE minpower<='$power' ORDER BY forder");
-		while ($forum = $sql->fetch($forums)) {
-			$checked='';
-			if($thread['forum']==$forum['id']) $checked='selected';
-			$forummovelist.="<option value=$forum[id] $checked>$forum[title]</option>";
+		
+		$forummovelist = doforumlist($thread['forum'], 'forummove'); // Return a pretty forum list
+		
+		
+		if ($sysadmin && $config['allow-thread-deletion']) {
+			$delthread = " <INPUT type=checkbox class=radio name=deletethread value=1> Delete thread";
+		} else
+			$delthread = "";
+		
+		pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);
+		
+		?>
+		<FORM ACTION='editthread.php?id=<?=$id?>' NAME=REPLIER METHOD=POST>
+			<table class='table'>
+				<tr>
+					<td class='tdbgh' width=150>&nbsp;</td>
+					<td class='tdbgh'>&nbsp;</td>
+				</tr>
+				
+				<tr>
+					<td class='tdbg1 center'>
+						<b>Thread title:</b>
+					</td>
+					<td class='tdbg2'>
+						<input type='text' name=subject VALUE="<?=htmlspecialchars($thread['title'])?>" SIZE=40 MAXLENGTH=100>
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg1 center'>
+						<b>Thread description:</b>
+					</td>
+					<td class='tdbg2'>
+						<input type='text' name=description VALUE="<?=htmlspecialchars($thread['description'])?>" SIZE=100 MAXLENGTH=120>
+					</td>
+				</tr>
+				
+				<tr>
+					<td class='tdbg1 center'>
+						<b>Thread icon:</b>
+					</td>
+					<td class='tdbg2'>
+						<?=$posticonlist?>
+					</td>
+				</tr>
+				<?php
+				
+				/*
+					Start of mod-only actions
+				*/
+		if ($ismod) {
+			?>
+				<tr>
+					<td class='tdbg1 center' rowspan=2>&nbsp;</td>
+					<td class='tdbg2'>
+						<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
+						<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>>Closed
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg2'>
+						<input type=radio class='radio' name=sticky value=0 <?=filter_string($check2[0])?>> Normal&nbsp; &nbsp;
+						<input type=radio class='radio' name=sticky value=1 <?=filter_string($check2[1])?>>Sticky
+					</td>
+				</tr>
+				
+				<tr>
+					<td class='tdbg1 center'>
+						<b>Forum</b>
+					</td>
+					<td class='tdbg2'>
+						<?=$forummovelist?><?=$delthread?>
+					</td>
+				</tr>
+			<?php
 		}
-
-		print "$header<br><FORM ACTION=editthread.php NAME=REPLIER METHOD=POST>$tblstart
-			<tr>$tccellh width=150>&nbsp;</td>$tccellh>&nbsp;</td></tr>
-			<tr>$tccell1><b>Thread title:</b></td>	$tccell2l>$inpt=subject VALUE=\"{$thread['title']}\" SIZE=40 MAXLENGTH=100></td></tr>
-			<tr>$tccell1><b>Thread description:</b></td>$tccell2l>$inpt=description VALUE=\"{$thread['description']}\" SIZE=100 MAXLENGTH=120></td></tr>
-			
-			<tr>$tccell1><b>Thread icon:</b></td>	$tccell2l>$posticonlist</td></tr>
-			<tr>$tccell1 rowspan=2>&nbsp;</td>		$tccell2l>$radio=closed value=0 $check1[0]> Open&nbsp; &nbsp;$radio=closed value=1 $check1[1]>Closed</td></tr>
-			<tr>									$tccell2l>$radio=sticky value=0 $check2[0]> Normal&nbsp; &nbsp;$radio=sticky value=1 $check2[1]>Sticky</td></tr>
-			<tr>$tccell1><b>Forum</b></td>			$tccell2l><select name=forummove>$forummovelist</select>
-													<!-- <INPUT type=checkbox class=radio name=delete value=1>Delete thread --></td></tr>
-			<tr>$tccell1>&nbsp;</td>				$tccell2l>
-													$inph=action VALUE=editthread>$inph=id VALUE=$id>
-													$inps=submit VALUE=\"Edit thread\"></td></tr>
-		$tblend</FORM>$footer
-		";
+				/*
+					End of mod-only actions
+				*/		
+		?>
+				<tr>
+					<td class='tdbg1'>&nbsp;</td>
+					<td class='tdbg2'>
+						<input type='hidden' name=action VALUE=editthread>
+						<input type='hidden' name=auth value='<?=generate_token()?>'>
+						<input type='submit' class=submit name=submit VALUE="Edit thread"></td></tr>
+		</table></FORM>
+		<?php
 	}
-	printtimedif($startingtime);
+	
+	pagefooter();
 ?>

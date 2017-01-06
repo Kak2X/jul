@@ -1,55 +1,68 @@
 <?php
 	require 'lib/function.php';
-	if (!$id)
-		return header("Location: private.php");
-	$windowtitle = "$boardname -- Private Messages";
+	
+	$id 		= filter_int($_GET['id']);
+	
+	if (!$id) return header("Location: private.php");
+	
+	$windowtitle = "{$config['board-name']} -- Private Messages";
+	
 	$meta['noindex'] = true;
 
-	$msg = $sql->fetchq("SELECT * FROM pmsgs,pmsgs_text WHERE id=$id AND id=pid");
+	$msg = $sql->fetchq("SELECT * FROM pmsgs WHERE id = $id");
 
-	if (!$log) {
-		require_once 'lib/layout.php';
-		errorpage("Couldn't get the private message.  You are not logged in.",'log in (then try again)','login.php');
+	if (!$loguser['id']) {
+		errorpage("Couldn't get the private message.  You are not logged in.",'login.php','log in (then try again)');
 	}
-	elseif (!$msg || (($msg['userto'] != $loguserid && $msg['userfrom'] != $loguserid) && !$isadmin)) {
-		require_once 'lib/layout.php';
-		errorpage("Couldn't get the private message.  It either doesn't exist or was not sent to you.",'your private message inbox','private.php');
+	else if (!$msg || (($msg['userto'] != $loguser['id'] && $msg['userfrom'] != $loguser['id']) && !$isadmin)) {
+		errorpage("Couldn't get the private message.  It either doesn't exist or was not sent to you.",'private.php','your private message inbox');
 	}
 
-	if ($isadmin && $msg['userto'] != $loguserid)
-		$pmlinktext = "<a href='private.php?id=$msg[userto]'>".$sql->resultq("SELECT name FROM users WHERE id=$msg[userto]") . '\'s private messages</a>';
-	else $pmlinktext = "<a href=private.php>Private messages</a>";
+	if ($isadmin && $msg['userto'] != $loguser['id'])
+		$pmlinktext = "<a href='private.php?id={$msg['userto']}'>".$sql->resultq("SELECT name FROM users WHERE id = {$msg['userto']}")."'s private messages</a>";
+	else $pmlinktext = "<a href='private.php'>Private messages</a>";
 
-	$user = $sql->fetchq("SELECT * FROM users WHERE id=$msg[userfrom]");
-	$windowtitle = "$boardname -- Private Messages: $msg[title]";
-	require_once 'lib/layout.php';
+	$user = $sql->fetchq("SELECT * FROM users WHERE id = {$msg['userfrom']}");
+	$windowtitle = "{$config['board-name']} -- Private Messages: ".htmlspecialchars($msg['title']);
 
-	$top = "<table width=100%><td align=left>$fonttag<a href=index.php>$boardname</a> - <a href=private.php>$pmlinktext</a> - $msg[title]</table>";
-	if ($msg['userto'] == $loguserid)
-		$sql->query("UPDATE pmsgs SET msgread=1 WHERE id=$id");
+	$top = "<div class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='private.php'>$pmlinktext</a> - ".htmlspecialchars($msg['title'])."</div>";
+	
+	// Make sure we don't accidentaly mark the PM as read when viewing other people's inbox
+	if ($msg['userto'] == $loguser['id'])
+		$sql->query("UPDATE pmsgs SET msgread = 1 WHERE id=$id");
 
+	
+	// Threadpost requirements
 	loadtlayout();
 	$post = $user;
 	$post['uid']    = $user['id'];
 	$post['date']   = $msg['date'];
 	$post['headid'] = $msg['headid'];
 	$post['signid'] = $msg['signid'];
+	$post['moodid'] = $msg['moodid'];
+	$post['options'] = "0|0";
 	$post['text']   = $msg['text'];
 	$post['tagval'] = $msg['tagval'];
-	if($loguser['viewsig']==2){
+	$post['num']	= 0;
+	$post['noob']	= 0;
+	$post['act'] 	= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+	
+	if ($loguser['viewsig'] == 2){
 		$post['headtext'] = $user['postheader'];
 		$post['signtext'] = $user['signature'];
-	}
-	else {
+	} else {
 		$post['headtext'] = $msg['headtext'];
 		$post['signtext'] = $msg['signtext'];
 	}
 
-	if ($msg['userto'] == $loguserid)
-		$quote = "<a href=sendprivate.php?id=$id>Reply</a>";
+	if ($msg['userto'] == $loguser['id'])
+		$quote = "<a href='sendprivate.php?id=$id'>Reply</a>";
+	else $quote = "";
 	if ($isadmin)
-		$ip = (($quote) ? ' | ' : '') . "IP: <a href=ipsearch.php?ip=$msg[ip]>$msg[ip]</a>";
+		$ip = ($quote ? ' | ' : '') . "IP: <a href='ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
 
-	print $header.$top.$tblstart.threadpost($post,1).$tblend.$top.$footer;
-	printtimedif($startingtime);
+	
+	pageheader($windowtitle);
+	print "{$top}<table class='table'>".threadpost($post,1)."</table>{$top}";
+	pagefooter();
 ?>

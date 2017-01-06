@@ -11,7 +11,7 @@ a:hover { color: #CECAFE; }
 .tdbgh { 
 	background: #0048B7 url("/images/julold/header_shade.png") repeat-x bottom center; color: #FFF; border: 1px solid black; text-shadow: 2px 2px 4px #000; font: 13px 'verdana', sans-serif;
 } 
-td.tbl { border-right: 1px solid #000; border-bottom: 1px solid #000; }
+.tdbg1,.tdbg2,.tdbgc,.tdbgh	{ border-right: 1px solid #000; border-bottom: 1px solid #000; }
 .table { border-top: #000 1px solid; border-left: #000 1px solid; }
 .font { font: 13px 'verdana', sans-serif; }
 .fonts { font: 10px 'verdana', sans-serif; }

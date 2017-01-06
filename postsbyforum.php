@@ -1,79 +1,88 @@
 <?php
 	require 'lib/function.php';
-	require 'lib/layout.php';
 
+	$_GET['id'] = filter_int($_GET['id']);
+	
 	$qstrings = array();
 
-	if ($id) {
-		$qstrings[] = "posts.user={$id}";
-		$by = 'by '.$sql->resultq("SELECT name FROM users WHERE id={$id}");
+	if ($_GET['id']) {
+		$qstrings[] = "p.user = {$_GET['id']}";
+		$by = 'by '.$sql->resultq("SELECT name FROM users WHERE id = {$_GET['id']}");
+	} else {
+		$by = "";
 	}
 
-	if (!isset($_GET['posttime'])) $posttime = 86400;
-	else $posttime = intval($_GET['posttime']);
-	if (($posttime === 0 || $posttime > 2592000) && !$id)
-		$posttime = 2592000;
+	$_GET['posttime'] = isset($_GET['posttime']) ? (int) $_GET['posttime'] : 86400;
+	
+	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // All posts
+		$_GET['posttime'] = 2592000;
 
-	if ($posttime !== 0) {
-		$qstrings[] = "posts.date > ".(ctime()-$posttime);
-		$during = ' during the last '.timeunits2($posttime);
+	if ($_GET['posttime']) {
+		$qstrings[] = "p.date > ".(ctime()-$_GET['posttime']);
+		$during = ' during the last '.timeunits2($_GET['posttime']);
+	} else {
+		$during = "";
 	}
 
-	if (empty($qstrings)) $qwhere = '1';
-	else $qwhere = implode(' AND ', $qstrings);
+	if (empty($qstrings)) $qwhere = '';
+	else $qwhere = "WHERE ".implode(' AND ', $qstrings);
 
 	$posters = $sql->query(
-		"SELECT forums.*,COUNT(posts.id) AS cnt ".
-		"FROM forums,threads,posts ".
-		"WHERE posts.thread=threads.id ".
-		"AND threads.forum=forums.id ".
-		"AND {$qwhere} ".
-		"GROUP BY forums.id ORDER BY cnt DESC");
+		"SELECT f.*, COUNT(p.id) AS cnt ".
+		"FROM forums f ".
+		"LEFT JOIN threads t ON f.id = t.forum ".
+		"LEFT JOIN posts   p ON t.id = p.thread ".
+		"{$qwhere} ".
+		"GROUP BY f.id ".
+		"ORDER BY cnt DESC");
 
-	$userposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE $qwhere");
-	$lnk="<a href=postsbyforum.php?id=$id&posttime";
+	$userposts = $sql->resultq("SELECT COUNT(*) FROM posts p $qwhere");
+	
+	pageheader();
 
-	print "$header
-		$smallfont
-		$lnk=3600>During last hour</a> |
-		$lnk=86400>During last day</a> |
-		$lnk=604800>During last week</a> |
-		$lnk=2592000>During last 30 days</a>".
-		((!$id) ? "" : " | $lnk=0>Total</a>").
-		"<br>
-		$fonttag Posts $by in forums$during:
-		$tblstart<tr>
-		$tccellh width=20>&nbsp</td>
-		$tccellh width=100>&nbsp</td>
-		$tccellh>Forum</td>
-		$tccellh width=60>Posts</td>
-		$tccellh width=80>Forum total</td></tr>
-	";
+?>
+	<span class="fonts">
+		<a href='postsbyforum.php?id=<?=$_GET['id']?>&posttime=3600'>During last hour</a> |
+		<a href='postsbyforum.php?id=<?=$_GET['id']?>&posttime=86400'>During last day</a> |
+		<a href='postsbyforum.php?id=<?=$_GET['id']?>&posttime=604800'>During last week</a> |
+		<a href='postsbyforum.php?id=<?=$_GET['id']?>&posttime=2592000'>During last 30 days</a>
+		<?=((!$_GET['id']) ? "" : " | <a href='postsbyforum.php?id={$_GET['id']}&posttime=0'>Total</a>")?>
+		<br>
+	</span>
+	<span class="font"> Posts <?=$by?> in forums<?=$during?>:</span>
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center' width=20>&nbsp;</td>
+			<td class='tdbgh center' width=100>&nbsp;</td>
+			<td class='tdbgh center'>Forum</td>
+			<td class='tdbgh center' width=60>Posts</td>
+			<td class='tdbgh center' width=80>Forum total</td>
+		</tr>
+<?php
 
-	for ($i=1;$f=$sql->fetch($posters);$i++) {
-		print '<tr>';
-
-		if($f['minpower']>$power) {
+	for ($i = 1; $f=$sql->fetch($posters); ++$i) {
+		
+		if ($f['minpower'] && $f['minpower'] > $loguser['powerlevel']) {
 			$link="(restricted)";
 			$viewall="(<s><b>view</b></s>)";
-		}
-		else {
+		} else {
 			$link="<a href='forum.php?id=$f[id]'>$f[title]</a>";
-			$timeid = (($posttime !== 0) ? "&time={$posttime}" : '');
-			$viewall="(<a href='postsbyuser.php?id={$id}&forum={$f['id']}{$timeid}'>View</a>)";
+			$timeid = ($_GET['posttime'] ? "&time={$_GET['posttime']}" : '');
+			$viewall = ($_GET['id'] ? "(<a href='postsbyuser.php?id={$_GET['id']}&forum={$f['id']}{$timeid}'>View</a>)" : "");
 		}
 
-   if (!$id) $viewall = '';
-
-		print "
-			$tccell2>$i</td>
-			$tccell2>$viewall</td>
-			$tccell1l>$link</td>
-			$tccell1><b>$f[cnt]</td>
-			$tccell1>$f[numposts]</td></tr>
-		";
+		?>
+		<tr>
+			<td class='tdbg2 center'><?=$i?></td>
+			<td class='tdbg2 center'><?=$viewall?></td>
+			<td class='tdbg1'><?=$link?></td>
+			<td class='tdbg1 center'><b><?=$f['cnt']?></td>
+			<td class='tdbg1 center'><?=$f['numposts']?></td>
+		</tr>
+		<?php
 	}
-
-	print "$tblend Total: $userposts posts$footer";
-	printtimedif($startingtime);
+?>	</table>
+	<span class="font">Total: <?=$userposts?> posts</span>
+<?php
+	pagefooter();
 ?>

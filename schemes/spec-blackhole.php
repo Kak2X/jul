@@ -20,6 +20,6 @@
 	$scr6='210456';
 	$scr7='000020';
 */
-	$boardtitle='<img src=images/blackholetitle.png>';
+	$config['board-title']='<img src=images/blackholetitle.png>';
 
 ?>

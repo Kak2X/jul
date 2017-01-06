@@ -2,6 +2,13 @@
 
 #	die();
 	require 'lib/function.php';
+	
+	$_GET['id'] 	= filter_int($_GET['id']);
+	$_GET['cat'] 	= filter_int($_GET['cat']);
+	$_GET['item'] 	= filter_int($_GET['item']);
+	$_GET['type'] 	= filter_int($_GET['type']);
+	
+	
 	$stats		= array(
 		0	=> "sHP", 
 		1	=> "sMP", 
@@ -13,64 +20,89 @@
 		7	=> "sLck",
 		8	=> "sSpd", 
 		);
-	$effects	= array("None", "1: Forces female gender", "2: Forces male gender", "3: Forces catgirl status", "4: Other");
+	$effects	= array(
+		"None",
+		"1: Forces female gender",
+		"2: Forces male gender",
+		"3: Forces catgirl status [WIP]",
+		"4: Other [WIP]",
+		"5: Shows hidden comments"
+	);
 	
-	if ($loguser['powerlevel'] < 1) {
-		$windowtitle	= "nope.avi";
-		require "lib/layout.php";
-		print $header ."<br>$tblstart
-			$tccell1>No.</td><table>". $footer;
-		die();
+	if (!$issuper) {
+		pageheader("nope.avi");
+		errorpage("No.");
 	}
 
-	$hiddeneditok	= in_array($loguser['id'], array(1, 18));
+	$hiddeneditok	= ($loguser['id'] == 1); //in_array($loguser['id'], array(1, 18));
 
 
-	if ($_POST['edit']) {
-		$q	= 
-			"`name` = '". $_POST['name'] ."', ".
-			"`desc` = '". $_POST['desc'] ."', ".
-			"`cat` = '". $_POST['cat'] ."', ".
-			"`type` = '". $_POST['type'] ."', ".
-			"`effect` = '". $_POST['effect'] ."', ".
-			"`coins` = '". $_POST['coins'] ."', ".
-			($hiddeneditok ? "`hidden` = '". $_POST['hidden'] ."', " : "").
-			"`gcoins` = '". $_POST['gcoins'] ."', ";
-	
-		foreach($stats as $stat) {
-			if ($_POST['m'. $stat] == "m") $_POST[$stat] *= 100;
-			$q		.= "`$stat` = '". $_POST[$stat] ."', ";
-			$stypes	.= $_POST['m'. $stat];
-		}
-		$q	.= "`stype` = '$stypes'";
-
-		if ($_POST['coins'] < 0 || $_POST['gcoins'] < 0) {
+	if (isset($_POST['edit'])) {
+		check_token($_POST['auth']);
+		
+		if (filter_int($_POST['coins']) < 0 || filter_int($_POST['gcoins']) < 0) {
 			// $sql -> query("UPDATE `users` SET `powerlevel` = -1, `title` = 'Next time, read the goddamn warning before doing something stupid'");
 			die("You don't pay warnings much heed, do you?");
 		}
-
+		
+		$vals = array(
+			'name'		=> filter_string($_POST['name'], true),
+			'desc'		=> filter_string($_POST['desc'], true),
+			'cat'		=> filter_int($_POST['cat']),
+			'type'		=> filter_int($_POST['type']),
+			'effect'	=> filter_int($_POST['effect']),
+			'coins'		=> filter_int($_POST['coins']),
+			'gcoins'	=> filter_int($_POST['gcoins'])
+		);
+		$q = "name=:name,`desc`=:desc,cat=:cat,type=:type,effect=:effect,coins=:coins,gcoins=:gcoins,";
+		
+		if ($hiddeneditok) {
+			$vals['hidden'] = filter_int($_POST['hidden']);
+			$q .= "hidden=:hidden,";
+		}
+	
+		$stypes = "";
+		foreach($stats as $stat) {
+			$itemstat 	= filter_float($_POST[$stat]);
+			$operator 	= filter_string($_POST["m$stat"]);	// m -> * [.2 float], (nothing) -> + [int]
+			if ($operator == "m") $itemstat *= 100;
+			$vals[":$stat"] = $itemstat;
+			$q 		.= "$stat=:$stat,";
+			$stypes	.= $operator;
+		}
+		$vals['stype'] = $stypes;
+		$q	.= "stype=:stype";
+		
+		$queryok = array();
 		if ($_GET['id'] <= -1) {
-			$sql -> query("INSERT INTO `items` SET $q, `user` = '". $loguser['id'] ."'");
-			if (mysql_error()) die(mysql_error());
-			$id	= mysql_insert_id();
+			$sql->queryp("INSERT INTO items SET $q, user = {$loguser['id']}", $vals, $queryok);
+			if (!$queryok[0]) errorpage("Couldn't add the item.");
+			$id	= $sql->insert_id();
 		} else {
-			$sql -> query("UPDATE `items` SET $q WHERE `id` = '". $_GET['id'] ."'");
-			if (mysql_error()) die(mysql_error());
+			$sql->queryp("UPDATE items SET $q WHERE id = {$_GET['id']}", $vals, $queryok);
+			if (!$queryok[0]) errorpage("Couldn't add the item.");
 			$id	= $_GET['id'];
 		}
 
-		header("Location: ?cat=". $_POST['cat'] ."&id=". $id . ($_GET['type'] ? "&type=". $_POST['type'] : ""));
+		header("Location: ?cat=".filter_int($_POST['cat'])."&id=". $id . ($_GET['type'] ? "&type=".filter_int($_POST['type']) : ""));
 		die($q);
 	}
 
 
-	$windowtitle	= "Shop Editor";
-	require "lib/layout.php";
-	print $header ."<br>";
+	pageheader("Shop Editor");
 
-	echo "$tblstart<tr>$tccellh><b>WARNING</b></td></tr><tr>$tccell1>
-		MAKE AN ITEM WITH A NEGATIVE COST AND YOU <span style=\"border-bottom: 1px dotted #f00;font-style:italic;\" title=\"did you mean: won't really (but don't try it anyway, it won't work)\">WILL</span> GET BANNED</td></tr></table><br>";
-
+	?>
+	<table class='table'>
+		<tr><td class='tdbgh center'><b>WARNING</b></td></tr>
+		<tr>
+			<td class='tdbg1 center'>
+				MAKE AN ITEM WITH A NEGATIVE COST AND YOU <span style="border-bottom: 1px dotted #f00;font-style:italic;" title="did you mean: won't really (but don't try it anyway, it won't work)">WILL</span> GET BANNED
+			</td>
+		</tr>
+	</table>
+	<br>
+	<?php
+/*
 	$categories	= array(
 		1	=> "Weapons",
 		2	=> "Armor",
@@ -80,8 +112,13 @@
 		6	=> "Accessories",
 		7	=> "Usable",
 		99	=> "Special",
-		);
-	$cat	= ($_GET['cat'] ? $_GET['cat'] : "1");
+	);*/
+	$categories = $sql->getresultsbykey("SELECT id, name FROM itemcateg ORDER BY id ASC");
+	$categories[99] = "Special";
+		
+
+	$cat	= $_GET['cat'] ? $_GET['cat'] : 1;
+	
 	echo linkbar($categories, $cat);
 
 //	$stats	= array("sHP", "sMP", "sAtk", "sDef", "sInt", "sMDf", "sDex", "sLck", "sSpd");
@@ -89,8 +126,9 @@
 	$types	= $sql -> query("SELECT `id`, `name` FROM `itemtypes` WHERE `id` IN (SELECT DISTINCT(`type`) FROM `items` WHERE `cat` = '$cat') ORDER BY `ord` ASC");
 	$typerow[0]		= "";
 	while ($type	= $sql -> fetch($types)) {
-		$typerow[$type['id']] = "<tr>$tccellc colspan=\"16\"><a href=\"?cat=". $_GET['cat'] . ($_GET['item'] ? "&item=". $_GET['item'] : "") . ($_GET['type'] == $type['id'] ? "" : "&type=". $type['id']) ."\">". $type['name'] ."</a></td></tr>";
+		$typerow[$type['id']] = "<tr><td class='tdbgc center' colspan=\"16\"><a href=\"?cat=". $_GET['cat'] . ($_GET['item'] ? "&item=". $_GET['item'] : "") . ($_GET['type'] == $type['id'] ? "" : "&type=". $type['id']) ."\">". $type['name'] ."</a></td></tr>";
 	}
+	$typerow[255] = "<tr><td class='tdbgc center' colspan=\"16\"><b>Unknown</b></td></tr>";
 	
 	if ($_GET['id']) {
 	
@@ -100,99 +138,106 @@
 			$alltypes[$typex['id']]	= $typex['name'];
 		}
 
-		$item	= $sql -> fetchq("SELECT * FROM `items` WHERE `id` = '". $_GET['id'] ."'" . ($hiddeneditok ? "" : " AND `hidden` = '0'"));
+		
+		$item	= $sql->fetchq("SELECT * FROM `items` WHERE `id` = '". $_GET['id'] ."'" . ($hiddeneditok ? "" : " AND `hidden` = '0'"));
 		if (!$item) {
-			$item['cat']	= $cat;
+			$item = array('cat' => $cat, 'name' => "", 'desc' => "", 'hidden' => "", 'type' => "", 'effect' => 0, 'coins' => 0, 'gcoins' => 0);
 			$_GET['id']		= -1;
+			$newitem 		= true;
 		}
 
 		foreach ($stats as $n => $stat) {
-			if ($item['stype']{$n} == "m") {
+			if (!isset($newitem) && $item['stype']{$n} == "m") {
 				$optionbox		= "<select name=\"m$stat\"><option value=\"m\" selected>x</option><option value=\"a\">+/-</option></select>";
 				$val			= number_format($item[$stat] / 100, 2);
 			} else {
 				$optionbox		= "<select name=\"m$stat\"><option value=\"m\">x</option><option value=\"a\" selected>+/-</option></select>";
-				$val			= $item[$stat];
+				$val			= isset($item[$stat]) ? $item[$stat] : "";
 			}
 			$stbox[$stat]	= "
-				$tccellh width=\"11%\">". substr($stat, 1) ."</td>
-				$tccell1l width=\"22%\"><input type=\"text\" name=\"$stat\" maxlength=\"8\" size=\"5\" value=\"$val\" class=\"right\"> $optionbox</td>";
+				<td class='tdbgh center' width=\"11%\">". substr($stat, 1) ."</td>
+				<td class='tdbg1' width=\"22%\"><input type=\"text\" name=\"$stat\" maxlength=\"8\" size=\"5\" value=\"$val\" class=\"right\"> $optionbox</td>";
 		}
-		echo "
-		
-		<form method=\"post\" action=\"?cat=1&id=". $_GET['id'] . ($_GET['type'] ? "&type=". $_GET['type'] : "") ."\">
-		$tblstart
+?>
+		<form method="post" action="?cat=1&id=<?=$_GET['id']?><?=($_GET['type'] ? "&type=". $_GET['type'] : "")?>">
+		<table class='table'>
 			<tr>
-				$tccellh colspan=6>Editing <b>". ($_GET['id'] >= 1 ? $item['name'] : "New item") ."</b></td>
+				<td class='tdbgh center' colspan=6>Editing <b><?=($_GET['id'] >= 1 ? htmlspecialchars($item['name']) : "New item")?></b></td>
 			</tr>
 			<tr>
-				$tccellh>Name</td>
-				$tccell1l colspan=3><input type=\"text\" name=\"name\" value=\"". $item['name'] ."\"  style=\"width: 100%;\" maxlength=\"255\">
-					". ($hiddeneditok ? "<br><input type=\"checkbox\" id=\"hiddenitem\" name=\"hidden\" value=\"1\"". ($item['hidden'] ? " checked" : "") ."> <label for=\"hiddenitem\">Hidden item</label>" : "") ."
-					</td>
-				$tccellh>Category</td>
-				$tccell1l>". linkbar($categories, $item['cat'], 1, "cat") ." / ". linkbar($alltypes, $item['type'], 1, "type") ."</td>
+				<td class='tdbgh center'>Name</td>
+				<td class='tdbg1' colspan=3><input type="text" name="name" value="<?=htmlspecialchars($item['name'])?>"  style="width: 100%" maxlength="255">
+					<?=($hiddeneditok ? "<br><input type=\"checkbox\" id=\"hiddenitem\" name=\"hidden\" value=\"1\"". ($item['hidden'] ? " checked" : "") ."> <label for=\"hiddenitem\">Hidden item</label>" : "")?>
+				</td>
+				<td class='tdbgh center'>Category</td>
+				<td class='tdbg1'><?=linkbar($categories, $item['cat'], 1, "cat")?> / <?=linkbar($alltypes, $item['type'], 1, "type")?></td>
 			</tr>
 			<tr>
-				$tccellh>Desc</td>
-				$tccell1l colspan=3><input type=\"text\" name=\"desc\" value=\"". $item['desc'] ."\" style=\"width: 100%;\"></td>
-				$tccellh>Effect <small>(wip)</small></td>
-				$tccell1l>". linkbar($effects, $item['effect'], 1, "effect") ."</td>
+				<td class='tdbgh center'>Desc</td>
+				<td class='tdbg1' colspan=3><input type="text" name="desc" value="<?=htmlspecialchars($item['desc'])?>" style="width: 100%"></td>
+				<td class='tdbgh center'>Effect</td>
+				<td class='tdbg1'><?=linkbar($effects, $item['effect'], 1, "effect")?></td>
 			</tr>
 
-			<tr>$tccellc colspan=6><img src=\"images/_.gif\" height=6 width=6></td></tr>
-			<tr>". $stbox['sHP'] . $stbox['sMP'] . $stbox['sLck'] ."</tr>
-			<tr>". $stbox['sAtk'] . $stbox['sInt'] . $stbox['sDex'] ."</tr>
-			<tr>". $stbox['sDef'] . $stbox['sMDf'] . $stbox['sSpd'] ."</tr>
-			<tr>$tccellc colspan=6><img src=\"images/_.gif\" height=6 width=6></td></tr>
+			<tr><td class='tdbgc center' colspan=6><img src="images/_.gif" height=6 width=6></td></tr>
+			<tr><?=$stbox['sHP'] ?><?=$stbox['sMP'] ?><?=$stbox['sLck']?></tr>
+			<tr><?=$stbox['sAtk']?><?=$stbox['sInt']?><?=$stbox['sDex']?></tr>
+			<tr><?=$stbox['sDef']?><?=$stbox['sMDf']?><?=$stbox['sSpd']?></tr>
+			<tr><td class='tdbgc center' colspan=6><img src="images/_.gif" height=6 width=6></td></tr>
 
 			<tr>
-				$tccellc colspan=2><input type=\"submit\" name=\"edit\" value=\"Save\"></td>
-				$tccellh> Coins </td>
-				$tccell1l><input type=\"text\" name=\"coins\" maxlength=\"8\" size=\"10\" value=\"". $item['coins'] ."\" class=\"right\"> <img src=\"images/coin.gif\" align=\"absmiddle\"></td>
-				$tccellh> G.Coins </td>
-				$tccell1l><input type=\"text\" name=\"gcoins\" maxlength=\"8\" size=\"10\" value=\"". $item['gcoins'] ."\" class=\"right\"> <img src=\"images/coin2.gif\" align=\"absmiddle\"></td>
+				<td class='tdbgc center' colspan=2><input type="submit" name="edit" value="Save"><input type="hidden" name="auth" value="<?=generate_token()?>"</td>
+				<td class='tdbgh center'> Coins </td>
+				<td class='tdbg1'><input type="text" name="coins" maxlength="8" size="10" value="<?=$item['coins']?>" class="right"> <img src="images/coin.gif" align="absmiddle"></td>
+				<td class='tdbgh center'> G.Coins </td>
+				<td class='tdbg1'><input type="text" name="gcoins" maxlength="8" size="10" value="<?=$item['gcoins']?>" class="right"> <img src="images/coin2.gif" align="absmiddle"></td>
 			</tr>
 		
-		</table></form><br>";
+		</table></form><br>
+<?php
 	}
 
-
-	$items	= $sql -> query("SELECT `items`.*, `users`.`id` as uid, `users`.`sex` as usex, `users`.`powerlevel` as upow, `users`.`name` as uname FROM `items` LEFT JOIN `users` ON `users`.`id` = `items`.`user` WHERE `cat` = '$cat'". ($_GET['type'] ? " AND `type` = '". $_GET['type'] ."' " : "") . ($hiddeneditok ? "" : " AND `hidden` = '0'") ." ORDER BY `type` ASC, `coins` ASC, `gcoins` ASC");
-	echo "
-		$tblstart
-			<tr>$tccellc colspan=\"16\">&lt; <a href=\"?cat=$cat&id=-1\">New Item</a> &gt;</td></tr>
-			<tr>
-				$tccellh>&nbsp;</td>
-				$tccellh colspan='2'>Name</td>
-				$tccellh>HP</td>
-				$tccellh>MP</td>
-				$tccellh>Atk</td>
-				$tccellh>Def</td>
-				$tccellh>Int</td>
-				$tccellh>MDf</td>
-				$tccellh>Dex</td>
-				$tccellh>Lck</td>
-				$tccellh>Spd</td>
-				$tccellh>Efx</td>
-				$tccellh>Coins</td>
-				$tccellh>G.Coins</td>
-				$tccellh>Pv</td>
-			</tr>";
+	$items	= $sql->query("
+		SELECT `items`.*, `users`.`id` as uid, `users`.`sex` as usex, `users`.`powerlevel` as upow, `users`.`namecolor` as unc, `users`.`name` as uname
+		FROM `items`
+		LEFT JOIN `users` ON `users`.`id` = `items`.`user`
+		WHERE `cat` = '$cat'". ($_GET['type'] ? "
+		AND `type` = '". $_GET['type'] ."' " : "") .
+		($hiddeneditok ? "" : " AND `hidden` = '0'") ."
+		ORDER BY `type` ASC, `coins` ASC, `gcoins` ASC
+	");
+	
+	?>
+	<table class='table'>
+		<tr><td class='tdbgc center' colspan="16">&lt; <a href="?cat=$cat&id=-1">New Item</a> &gt;</td></tr>
+		<tr>
+			<td class='tdbgh center'>&nbsp;</td>
+			<td class='tdbgh center' colspan='2'>Name</td>
+			<td class='tdbgh center'>HP</td>
+			<td class='tdbgh center'>MP</td>
+			<td class='tdbgh center'>Atk</td>
+			<td class='tdbgh center'>Def</td>
+			<td class='tdbgh center'>Int</td>
+			<td class='tdbgh center'>MDf</td>
+			<td class='tdbgh center'>Dex</td>
+			<td class='tdbgh center'>Lck</td>
+			<td class='tdbgh center'>Spd</td>
+			<td class='tdbgh center'>Efx</td>
+			<td class='tdbgh center'>Coins</td>
+			<td class='tdbgh center'>G.Coins</td>
+			<td class='tdbgh center'>Pv</td>
+		</tr>
+	<?php
 
 	while ($item = $sql->fetch($items)) {
 		$stype	= str_split($item['stype']);
 		
 		if ($_GET['id'] == $item['id']) {
-			$tc2	= $tccellh;
-			$tc2l	= $tccellhl;
-			$tc2r	= $tccellhr;
-			$tc1	= $tccellh;
+			$tc1	= "h";
+			$tc2	= "h";
 		} else {
-			$tc2	= $tccell2;
-			$tc2l	= $tccell2l;
-			$tc2r	= $tccell2r;
-			$tc1	= $tccell1;
+			$tc2	= "2";
+			$tc1	= "1";
 		}
 
 		if ($item['hidden']) {
@@ -205,7 +250,7 @@
 		}
 */
 		if ($item['uname']) {
-			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><font ". getnamecolor($item['usex'], $item['upow']) .">". $item['uname'] ."</font></a></nobr>";
+			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['upow'], $item['unc']) ."'>". $item['uname'] ."</span></a></nobr>";
 		} else {
 			$item['uname']	= "";
 		}
@@ -215,8 +260,8 @@
 		}
 
 		$typerow[$item['type']] .= "<tr>
-				$tccell1s><a href=\"?cat=$cat&id=". $item['id'] . ($_GET['type'] ? "&type=". $_GET['type'] : "") ."\">Edit</a></td>
-				$tc2>". $item['uname'] ."</td>$tc2l>". $item['name'] ."</td>";
+				<td class='tdbg1 fonts center'><a href=\"?cat=$cat&id=". $item['id'] . ($_GET['type'] ? "&type=". $_GET['type'] : "") ."\">Edit</a></td>
+				<td class='tdbg{$tc2} center'>". $item['uname'] ."</td><td class='tdbg{$tc2}'>". $item['name'] ."</td>";
 
 		$val	= 0;
 		foreach($stats as $n => $stat) {
@@ -241,7 +286,7 @@
 				$val -= floor(pow(abs($item[$stat] - 100) * 2.5, 1.3));
 			}
 
-			$typerow[$item['type']] .= "$tc1>". $num ."</td>\n";
+			$typerow[$item['type']] .= "<td class='tdbg{$tc1} center'>". $num ."</td>\n";
 		}
 
 		$valt	= $val ."t";
@@ -251,71 +296,65 @@
 		
 
 		$typerow[$item['type']] .= "
-				$tc2>". ($item['effect'] ? $item['effect'] : "&nbsp;") ."</td>
-				$tc2r>". number_format($item['coins']) ."</td>
-				$tc2r>". number_format($item['gcoins']) ."</td>
-				$tc2r>$smallfont<nobr>". $val ." Pv</nobr></td>
+				<td class='tdbg{$tc2} center'>". ($item['effect'] ? $item['effect'] : "&nbsp;") ."</td>
+				<td class='tdbg{$tc2} right'>". number_format($item['coins']) ."</td>
+				<td class='tdbg{$tc2} right'>". number_format($item['gcoins']) ."</td>
+				<td class='tdbg{$tc2} right fonts nobr'>". $val ." Pv</td>
 			</tr>";
 	}
 
 	if ($typerow[0]) {
-		$typerow[0]	= "<tr>$tccellc colspan=\"16\"><b>???</b></td></tr>". $typerow[0];
+		$typerow[0]	= "<tr><td class='tdbgc center' colspan=\"16\"><b>???</b></td></tr>". $typerow[0];
 	}
 
 	print implode("", $typerow);
-	echo "<tr>
-				$tccellh>&nbsp;</td>
-				$tccellh colspan='2'>Name</td>
-				$tccellh>HP</td>
-				$tccellh>MP</td>
-				$tccellh>Atk</td>
-				$tccellh>Def</td>
-				$tccellh>Int</td>
-				$tccellh>MDf</td>
-				$tccellh>Dex</td>
-				$tccellh>Lck</td>
-				$tccellh>Spd</td>
-				$tccellh>Efx</td>
-				$tccellh>Coins</td>
-				$tccellh>G.Coins</td>
-				$tccellh>Pv</td>
-			</tr>
-			<tr>$tccellc colspan=\"16\">&lt; <a href=\"?cat=$cat&id=-1\">New Item</a> &gt;</td></tr>
-			</table>";
-
+	?>
+	<tr>
+		<td class='tdbgh center'>&nbsp;</td>
+		<td class='tdbgh center' colspan='2'>Name</td>
+		<td class='tdbgh center'>HP</td>
+		<td class='tdbgh center'>MP</td>
+		<td class='tdbgh center'>Atk</td>
+		<td class='tdbgh center'>Def</td>
+		<td class='tdbgh center'>Int</td>
+		<td class='tdbgh center'>MDf</td>
+		<td class='tdbgh center'>Dex</td>
+		<td class='tdbgh center'>Lck</td>
+		<td class='tdbgh center'>Spd</td>
+		<td class='tdbgh center'>Efx</td>
+		<td class='tdbgh center'>Coins</td>
+		<td class='tdbgh center'>G.Coins</td>
+		<td class='tdbgh center'>Pv</td>
+	</tr>
+	<tr><td class='tdbgc center' colspan="16">&lt; <a href="?cat=$cat&id=-1">New Item</a> &gt;</td></tr>
+	</table>
+	<?php
 	
-	print $footer;
-	printtimedif($startingtime);
+	pagefooter();
 
 
 
 
 	function linkbar($links, $sel = 1, $type = 0, $name = "cat") {
 
-		global $tblstart, $tblend, $tccell1, $tccellh, $tccellc;
-
 		if ($type == 0) {
 			$c	= count($links);
 			$w	= floor(1 / $c * 100);
 
-			$r	= "$tblstart<tr>$tccellh colspan=$c><b>Item Categories</b></td></tr><tr>";
+			$r	= "<table class='table'><tr><td class='tdbgh center' colspan=$c><b>Item Categories</b></td></tr><tr>";
 
 			foreach($links as $link => $name) {
 
-				$cell	= $tccell1;
-				if ($link == $sel) $cell	= $tccellc;
-				$r	.= "$cell width=\"$w%\"><a href=\"?cat=$link\">$name</a></td>";
+				$cell = ($link == $sel) ? "c" : "1";
+				$r	.= "<td class='tdbg{$cell} center' width=\"$w%\"><a href=\"?cat=$link\">$name</a></td>";
 			}
 
-			return $r ."$tblend<br>";
+			return $r ."</table><br>";
 		} else {
 
 			$r	= "<select name=\"$name\">";
 
 			foreach($links as $link => $name) {
-
-				$cell	= $tccell1;
-				if ($link == $sel) $cell	= $tccellc;
 				$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">$name</option>";
 			}
 

@@ -1,157 +1,220 @@
 <?php
-  require_once('lib/function.php');
-  $windowtitle = "IP Address Search";
-  require_once('lib/layout.php');
-  print "$header<br>";
-  admincheck();
-  print adminlinkbar('ipsearch.php');
-  print "$tblstart";
+	require 'lib/function.php';
+	pageheader("IP Address Search");
+	admincheck();
+	print adminlinkbar('ipsearch.php');
 
-	if(!$su) $su='n';
-	if(!$sp) $sp='u';
-	if(!$sm) $sm='n';
-	if(!$d)  $d='y';
-	$ch1[$su]=' checked';
-	$ch2[$sp]=' checked';
-	$ch3[$sm]=' checked';
-	$ch4[$d]=' checked';
+	$_POST['ip'] = filter_string($_POST['ip']);
+	if(!filter_string($_POST['su'])) $_POST['su']='n';
+	if(!filter_string($_POST['sp'])) $_POST['sp']='u';
+	if(!filter_string($_POST['sm'])) $_POST['sm']='n';
+	if(!filter_string($_POST['y']))  $_POST['d'] ='y';
+	$ch1[$_POST['su']]= ' checked';
+	$ch2[$_POST['sp']]= ' checked';
+	$ch3[$_POST['sm']]= ' checked';
+	$ch4[$_POST['d']] = ' checked';
 
-	print "
-	  <form action=ipsearch.php method=post>
-	  $tccellh colspan=2>IP search<tr>
-	  $tccell1 width=20%><b>IP to search:</b></td>
-	  $tccell2l>$inpt=ip size=15 maxlength=15 value=$ip><tr>
-	  $tccell1><b>Sort users by:</b></td>
-	  $tccell2l>
-	    $radio=su value=n$ch1[n]> Name &nbsp; &nbsp;
-	    $radio=su value=p$ch1[p]> Posts &nbsp; &nbsp;
-	    $radio=su value=r$ch1[r]> Registration &nbsp; &nbsp;
-	    $radio=su value=s$ch1[s]> Last post &nbsp; &nbsp;
-	    $radio=su value=a$ch1[a]> Last activity &nbsp; &nbsp;
-	    $radio=su value=i$ch1[i]> Last IP
-	  <tr>
-	  $tccell1><b>Sort posts by:</b></td>
-	  $tccell2l>
-	    $radio=sp value=u$ch2[u]> User &nbsp; &nbsp;
-	    $radio=sp value=d$ch2[d]> Date &nbsp; &nbsp;
-	    $radio=sp value=i$ch2[i]> IP
-	  <tr>
-	  $tccell1><b>Sort private messages by:</b></td>
-	  $tccell2l>
-	    $radio=sm value=n$ch3[n]> Sent by &nbsp; &nbsp;
-	    $radio=sm value=d$ch3[d]> Date &nbsp; &nbsp;
-	    $radio=sm value=i$ch3[i]> IP
-	  <tr>
-	  $tccell1><b>Distinct users and IP's:</b></td>
-	  $tccell2l>
-	    $radio=d value=y$ch4[y]> Yes &nbsp; &nbsp;
-	    $radio=d value=n$ch4[n]> No
-	  <tr>
-	  $tccell1>&nbsp</td>
-	  $tccell1l>$inps=s value=Submit></td>
-	  </form>
-	";
-
-	if($ip) {
-		$ip=str_replace('*','%',$ip);
-		switch($su) {
-		  case 'n': $usort='ORDER BY name'; break;
-		  case 'p': $usort='ORDER BY posts DESC'; break;
-		  case 'r': $usort='ORDER BY regdate'; break;
-		  case 's': $usort='ORDER BY lastposttime'; break;
-		  case 'a': $usort='ORDER BY lastactivity'; break;
-		  case 'i': $usort='ORDER BY lastip'; break;
-		}
-		switch($sp) {
-		  case 'u': $psort='ORDER BY name'; break;
-		  case 'd': $psort='ORDER BY date'; break;
-		  case 'i': $psort='ORDER BY ip'; break;
-		}
-		switch($sm) {
-		  case 'n': $msort='ORDER BY name1'; break;
-		  case 'd': $msort='ORDER BY date'; break;
-		  case 'i': $msort='ORDER BY ip'; break;
-		}
-		if($d === 'y') {
-		  $pgroup='GROUP BY p.ip,u.id';
-		  $mgroup='GROUP BY p.ip,u1.id';
-		}
-		$users=$sql->query("SELECT * FROM users WHERE lastip LIKE '$ip' $usort");
-		$posts=$sql->query("SELECT p.*,u.name,u.sex,u.powerlevel,t.title FROM posts p,users u,threads t WHERE ip LIKE '$ip' AND p.user=u.id AND p.thread=t.id $pgroup $psort");
-		$pmsgs=$sql->query("SELECT p.*,t.title,u1.name AS name1,u2.name AS name2,u1.sex AS sex1,u2.sex AS sex2,u1.powerlevel pow1,u2.powerlevel pow2 FROM pmsgs p,pmsgs_text t,users u1,users u2 WHERE ip LIKE '$ip' AND p.userfrom=u1.id AND p.userto=u2.id AND p.id=pid $mgroup $msort");
-
-		print "
-		  $tblend<br>$tblstart
-		  $tccellh colspan=7><b>Users: ".mysql_num_rows($users)."</b><tr>
-		  $tccellc>id</td>
-		  $tccellc>Name</td>
-		  $tccellc>Registered on</td>
-		  $tccellc>Last post</td>
-		  $tccellc>Last activity</td>
-		  $tccellc>Posts</td>
-		  $tccellc>Last IP</td>
-		";
-		for($c=0;$c<500 && $user=$sql->fetch($users);$c++)
-		  if ($users['id'] != 428) print "
-		    <tr>
-		    $tccell2>$user[id]</td>
-		    $tccell1><a href=profile.php?id=$user[id]><font ".getnamecolor($user['sex'],$user['powerlevel']).">$user[name]</font></a></td>
-		    $tccell1>".@date($dateformat,$user['regdate'])."</td>
-		    $tccell1>".date($dateformat,$user['lastposttime'])."</td>
-		    $tccell1>".date($dateformat,$user['lastactivity'])."</td>
-		    $tccell1>$user[posts]</td>
-		    $tccell2>$user[lastip]</td>
-		  ";
-		if($post=$sql->fetch($users))
-		  print "<tr>$tccell2 colspan=7>Too many results!";
-
-		print "
-		  $tblend<br>$tblstart
-		  $tccellh colspan=5><b>Posts: ".mysql_num_rows($posts)."</b><tr>
-		  $tccellc>id</td>
-		  $tccellc>Posted by</td>
-		  $tccellc>Thread</td>
-		  $tccellc>Date</td>
-		  $tccellc>IP</td>
-		";
-		for($c=0;$c<500 && $post=$sql->fetch($posts);$c++)
-			if ($post['user'] != 428)
-			print "
-		    <tr>
-		    $tccell2>$post[id]</td>
-		    $tccell1><a href=profile.php?id=$post[user]><font ".getnamecolor($post['sex'],$post['powerlevel']).">$post[name]</font></a></td>
-		    $tccell1><a href=thread.php?id=$post[thread]>$post[title]</a></td>
-		    $tccell1><nobr>".date($dateformat,$post['date'])."</nobr></td>
-		    $tccell2>$post[ip]</td>
-		  ";
-		if($post=$sql->fetch($posts))
-		  print "<tr>$tccell2 colspan=5>Too many results!";
-
-		print "
-		  $tblend<br>$tblstart
-		  $tccellh colspan=6><b>Private messages: ".mysql_num_rows($pmsgs)."</b><tr>
-		  $tccellc>id</td>
-		  $tccellc>Sent by</td>
-		  $tccellc>Sent to</td>
-		  $tccellc>Title</td>
-		  $tccellc>Date</td>
-		  $tccellc>IP</td>
-		";
-		for($c=0;$c<500 && $pmsg=$sql->fetch($pmsgs);$c++)
-			if ($pmsg['userfrom'] != 428 && $pmsg['userto'] != 428)
-			print "
-		    <tr>
-		    $tccell2>$pmsg[id]</td>
-		    $tccell1><a href=profile.php?id=$pmsg[userfrom]><font ".getnamecolor($pmsg['sex1'],$pmsg['pow1']).">$pmsg[name1]</font></a></td>
-		    $tccell1><a href=profile.php?id=$pmsg[userto]><font ".getnamecolor($pmsg['sex2'],$pmsg['pow2']).">$pmsg[name2]</font></a></td>
-		    $tccell1><a href=showprivate.php?id=$pmsg[id]>$pmsg[title]</a></td>
-		    $tccell1><nobr>".date($dateformat,$pmsg['date'])."</nobr></td>
-		    $tccell2>$pmsg[ip]</td>
-		  ";
-		if($pmsg=$sql->fetch($pmsgs))
-			print "<tr>$tccell2 colspan=6>Too many results!";
-
-  }
-  print $tblend.$footer;
-  printtimedif($startingtime);
 ?>
+<form action=ipsearch.php method=post>
+<table class='table'>
+	<tr><td class='tdbgh center' colspan=2>IP search</td></tr>
+	<tr>
+		<td class='tdbg1 center' style="width: 20%"><b>IP to search:</b></td>
+		<td class='tdbg2'><input type='text' name=ip size=15 maxlength=15 value="<?=htmlspecialchars($_POST['ip'])?>"></td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'><b>Sort users by:</b></td>
+		<td class='tdbg2'>
+			<input type=radio class='radio' name=su value=n<?=filter_string($ch1['n'])?>> Name &nbsp; &nbsp;
+			<input type=radio class='radio' name=su value=p<?=filter_string($ch1['p'])?>> Posts &nbsp; &nbsp;
+			<input type=radio class='radio' name=su value=r<?=filter_string($ch1['r'])?>> Registration &nbsp; &nbsp;
+			<input type=radio class='radio' name=su value=s<?=filter_string($ch1['s'])?>> Last post &nbsp; &nbsp;
+			<input type=radio class='radio' name=su value=a<?=filter_string($ch1['a'])?>> Last activity &nbsp; &nbsp;
+			<input type=radio class='radio' name=su value=i<?=filter_string($ch1['i'])?>> Last IP
+		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'><b>Sort posts by:</b></td>
+		<td class='tdbg2'>
+			<input type=radio class='radio' name=sp value=u<?=filter_string($ch2['u'])?>> User &nbsp; &nbsp;
+			<input type=radio class='radio' name=sp value=d<?=filter_string($ch2['d'])?>> Date &nbsp; &nbsp;
+			<input type=radio class='radio' name=sp value=i<?=filter_string($ch2['i'])?>> IP
+		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'><b>Sort private messages by:</b></td>
+		<td class='tdbg2'>
+			<input type=radio class='radio' name=sm value=n<?=filter_string($ch3['n'])?>> Sent by &nbsp; &nbsp;
+			<input type=radio class='radio' name=sm value=d<?=filter_string($ch3['d'])?>> Date &nbsp; &nbsp;
+			<input type=radio class='radio' name=sm value=i<?=filter_string($ch3['i'])?>> IP
+		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'><b>Distinct users and IP's:</b></td>
+		<td class='tdbg2'>
+			<input type=radio class='radio' name=d value=y<?=filter_string($ch4['y'])?>> Yes &nbsp; &nbsp;
+			<input type=radio class='radio' name=d value=n<?=filter_string($ch4['n'])?>> No
+		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center'>&nbsp;</td>
+		<td class='tdbg1'><input type='submit' class=submit name=s value=Submit></td>
+	</tr>
+</table>
+</form>
+<?php
+
+	if ($_POST['ip']) {
+		$_POST['ip'] = str_replace('*', '%', $_POST['ip']);
+		
+		switch ($_POST['su']) {
+			case 'n': $usort='ORDER BY name'; break;
+			case 'p': $usort='ORDER BY posts DESC'; break;
+			case 'r': $usort='ORDER BY regdate'; break;
+			case 's': $usort='ORDER BY lastposttime'; break;
+			case 'a': $usort='ORDER BY lastactivity'; break;
+			case 'i': $usort='ORDER BY lastip'; break;
+		}
+		switch ($_POST['sp']) {
+			case 'u': $psort='ORDER BY u.name'; break;
+			case 'd': $psort='ORDER BY p.date'; break;
+			case 'i': $psort='ORDER BY p.ip'; break;
+		}
+		switch ($_POST['sm']) {
+			case 'n': $msort='ORDER BY u.name'; break; // name1
+			case 'd': $msort='ORDER BY p.date'; break;
+			case 'i': $msort='ORDER BY p.ip'; break;
+		}
+		if ($_POST['d'] === 'y') {
+			$pgroup='GROUP BY p.ip,u.id';
+			$mgroup='GROUP BY p.ip,u.id'; // u1
+		} else {
+			$pgroup=$mgroup='';
+		}
+		$users = $sql->queryp("SELECT * FROM users WHERE lastip LIKE ? $usort", [$_POST['ip']]);
+		$posts = $sql->queryp("
+			SELECT p.*, $userfields uid, t.title
+			FROM posts p
+			LEFT JOIN users   u ON p.user   = u.id
+			LEFT JOIN threads t ON p.thread = t.id 
+			WHERE p.ip LIKE ?
+			$pgroup $psort
+		", [$_POST['ip']]);
+		// u1.name, u AS name1,u2.name AS name2,u1.sex AS sex1,u2.sex AS sex2,u1.powerlevel pow1,u2.powerlevel pow2 
+		// AND p.userto=u2.id
+		// bah
+		$pmsgs = $sql->queryp("
+			SELECT p.id, p.userfrom, p.userto, p.title, p.ip, p.date, $userfields uid
+			FROM pmsgs p
+			LEFT JOIN users u ON p.userfrom = u.id
+			WHERE p.ip LIKE ?
+			$mgroup $msort
+		", [$_POST['ip']]);
+
+
+		
+		
+?>
+<br>
+<table class='table'>
+	<tr>
+		<td class='tdbgh center' colspan=7><b>Users: <?=$sql->num_rows($users)?></b><tr>
+		<td class='tdbgc center'>id</td>
+		<td class='tdbgc center'>Name</td>
+		<td class='tdbgc center'>Registered on</td>
+		<td class='tdbgc center'>Last post</td>
+		<td class='tdbgc center'>Last activity</td>
+		<td class='tdbgc center'>Posts</td>
+		<td class='tdbgc center'>Last IP</td>
+	</tr>
+<?php
+		for($c=0; $c<500 && $user=$sql->fetch($users); ++$c) {
+			//  if ($users['id'] != 428)
+?>
+	<tr>
+		<td class='tdbg2 center'><?=$user['id']?></td>
+		<td class='tdbg1 center'><?=getuserlink($user)?></td>
+		<td class='tdbg1 center'><?=printdate($user['regdate'])?></td>
+		<td class='tdbg1 center'><?=printdate($user['lastposttime'])?></td>
+		<td class='tdbg1 center'><?=printdate($user['lastactivity'])?></td>
+		<td class='tdbg1 center'><?=$user['posts']?></td>
+		<td class='tdbg2 center'><?=$user['lastip']?></td>
+	</tr>
+<?php
+		}
+		if($post = $sql->fetch($users))
+			print "<tr><td class='tdbg2 center' colspan=7>Too many results!</td></tr>";
+?>
+</table>
+<br>
+<?php
+
+
+
+?>
+<table class='table'>
+	<tr>
+		<td class='tdbgh center' colspan=5><b>Posts: <?=$sql->num_rows($posts)?></b><tr>
+		<td class='tdbgc center'>id</td>
+		<td class='tdbgc center'>Posted by</td>
+		<td class='tdbgc center'>Thread</td>
+		<td class='tdbgc center'>Date</td>
+		<td class='tdbgc center'>IP</td>
+	</tr>
+<?php
+		for($c=0; $c<500 && $post=$sql->fetch($posts); ++$c) {
+		//if ($post['user'] != 428)
+?>
+	<tr>
+		<td class='tdbg2 center'><?=$post['id']?></td>
+		<td class='tdbg1 center'><?=getuserlink($post, $post['user'])?></td>
+		<td class='tdbg1 center'><a href="thread.php?id=<?=$post['thread']?>"><?=htmlspecialchars($post['title'])?></a></td>
+		<td class='tdbg1 center nobr'><?=printdate($post['date'])?></td>
+		<td class='tdbg2 center'><?=$post['ip']?></td>
+	</tr>
+<?php
+		}
+		if($post=$sql->fetch($posts))
+			print "<tr><td class='tdbg2 center' colspan=5>Too many results!</td></tr>";
+
+?>
+</table>
+<br>
+<?php
+
+
+
+?>
+<table class='table'>
+	<tr>
+		<td class='tdbgh center' colspan=6><b>Private messages: <?=$sql->num_rows($pmsgs)?></b><tr>
+		<td class='tdbgc center'>id</td>
+		<td class='tdbgc center'>Sent by</td>
+		<td class='tdbgc center'>Sent to</td>
+		<td class='tdbgc center'>Title</td>
+		<td class='tdbgc center'>Date</td>
+		<td class='tdbgc center'>IP</td>
+	</tr>
+<?php
+		for($c=0; $c<500 && $pmsg=$sql->fetch($pmsgs); ++$c) {
+			//if ($pmsg['userfrom'] != 428 && $pmsg['userto'] != 428)
+?>
+	<tr>
+		<td class='tdbg2 center'><?=$pmsg['id']?></td>
+		<td class='tdbg1 center'><?=getuserlink($pmsg, $pmsg['userfrom'])?></td>
+		<td class='tdbg1 center'><?=getuserlink(NULL, $pmsg['userto'])?></td>
+		<td class='tdbg1 center'><a href="showprivate.php?id=<?=$pmsg['id']?>"><?=htmlspecialchars($pmsg['title'])?></a></td>
+		<td class='tdbg1 center nobr'><?=printdate($pmsg['date'])?></td>
+		<td class='tdbg2 center'><?=$pmsg['ip']?></td>
+	</tr>
+<?php	
+		}
+		if($pmsg=$sql->fetch($pmsgs))
+			print "<tr><td class='tdbg2 center' colspan=6>Too many results!</td></tr>";
+
+?>
+</table>
+<?php
+	}
+
+	pagefooter();

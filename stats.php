@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
-	require 'lib/layout.php';
 
+	
 	$misc   = $sql->fetchq('SELECT * FROM misc');
 	$tstats = $sql->query('SHOW TABLE STATUS');
 	while ($t = $sql->fetch($tstats)) $tbl[$t['Name']]=$t;
@@ -18,37 +18,50 @@
 	');
 
 	while ($row = $sql->fetch($schemes)) {
-		$sch_info .= "<tr>$tccell1>$row[name]</td>$tccell1>$row[schemecount]</tr>";
+		$sch_info .= "<tr><td class='tdbg1 center'>$row[name]</td><td class='tdbg1 center'>$row[schemecount]</tr>";
 	} */
-
-	print "
-	$header<br>$tblstart
-	$tccellh>Records$tccellh>&nbsp<tr>
-	$tccell1s><b>Most posts within 24 hours:</td>
-	$tccell2ls>$misc[maxpostsday], on ".date($dateformat,$misc['maxpostsdaydate'])."<tr>
-	$tccell1s><b>Most posts within 1 hour:</td>
-	$tccell2ls>$misc[maxpostshour], on ".date($dateformat,$misc['maxpostshourdate'])."<tr>
-	$tccell1s><b>Most users online:</td>
-	$tccell2ls>$misc[maxusers], on ".date($dateformat,$misc['maxusersdate'])."$misc[maxuserstext]
-	$tblend<br>".
+	
+	pageheader();
+	
+?>
+	<table class='table'>
+		<tr><td class='tdbgh center'>Records</td><td class='tdbgh center'>&nbsp;</td></tr>
+		<tr>
+			<td class='tdbg1 fonts center'><b>Most posts within 24 hours:</td>
+			<td class='tdbg2 fonts'><?=$misc['maxpostsday']?>, on <?=date($loguser['dateformat'],$misc['maxpostsdaydate'])?></td>
+		</tr>
+		<tr>
+			<td class='tdbg1 fonts center'><b>Most posts within 1 hour:</td>
+			<td class='tdbg2 fonts'><?=$misc['maxpostshour']?>, on <?=date($loguser['dateformat'],$misc['maxpostshourdate'])?></td>
+		</tr>
+		<tr>
+			<td class='tdbg1 fonts center'><b>Most users online:</td>
+			<td class='tdbg2 fonts'><?=$misc['maxusers']?>, on <?=date($loguser['dateformat'],$misc['maxusersdate'])?><?=$misc['maxuserstext']?></td>
+		</tr>
+	</table>
+	<br>
+	<?php
 /*
 	// This is kind of in Edit Profile already.
-	"$tblstart<tr>$tccellh colspan='2'>Scheme Usage Breakdown</td></tr>
-	<tr>$tccellh>Scheme Name</td>$tccellh>Users</td></tr>
+	"<table class='table'><tr><td class='tdbgh center' colspan='2'>Scheme Usage Breakdown</td></tr>
+	<tr><td class='tdbgh center'>Scheme Name</td><td class='tdbgh center'>Users</td></tr>
 	$sch_info
-	$tblend<br>".
+	</table><br>".
 */
-	"$tblstart<tr>
-	$tccellh>Table name</td>
-	$tccellh>Rows</td>
-	$tccellh>Avg. data/row</td>
-	$tccellh>Data size</td>
-	$tccellh>Index size</td>
-	$tccellh>Overhead</td>
-	$tccellh>Total size</td></tr>"
-	.tblinfo('posts_text')
-	.tblinfo('posts')
-	.tblinfo('pmsgs_text')
+?>	<table class='table'>
+		<tr>
+			<td class='tdbgh center'>Table name</td>
+			<td class='tdbgh center'>Rows</td>
+			<td class='tdbgh center'>Avg. data/row</td>
+			<td class='tdbgh center'>Data size</td>
+			<td class='tdbgh center'>Index size</td>
+			<td class='tdbgh center'>Overhead</td>
+			<td class='tdbgh center'>Total size</td>
+		</tr>
+	<?php
+echo //tblinfo('posts_text').
+	tblinfo('posts')
+	//.tblinfo('pmsgs_text')
 	.tblinfo('pmsgs')
 	.tblinfo('postlayouts')
 	.tblinfo('threads')
@@ -59,48 +72,51 @@
 	.tblinfo('ipbans')
 	.tblinfo('defines')
 	.tblinfo('dailystats')
-	.tblinfo('rendertimes')
-	."$tblend
+	.tblinfo('rendertimes');
+?>	</table>
   <br>
-  $tblstart<tr>
-	$tccellhs colspan=9>Daily stats<tr>
-	$tccellcs>Date</td>
-	$tccellcs>Total users</td>
-	$tccellcs>Total posts</td>
-	$tccellcs>Total threads</td>
-	$tccellcs>Total views</td>
-	$tccellcs>New users</td>
-	$tccellcs>New posts</td>
-	$tccellcs>New threads</td>
-	$tccellcs>New views</td></tr>
-  ";
-	$users=0;
-	$posts=0;
-	$threads=0;
-	$views=0;
-	$stats=$sql->query("SELECT * FROM dailystats");
-	while($day=$sql->fetch($stats)){
-		print "<tr>
-		$tccell1s>$day[date]</td>
-		$tccell2s>$day[users]</td>
-		$tccell2s>$day[posts]</td>
-		$tccell2s>$day[threads]</td>
-		$tccell2s>$day[views]</td>
-		$tccell2s>".($day['users']-$users)."</td>
-		$tccell2s>".($day['posts']-$posts)."</td>
-		$tccell2s>".($day['threads']-$threads)."</td>
-		$tccell2s>".($day['views']-$views)."</td></tr>
-		";
-		$users=$day['users'];
-		$posts=$day['posts'];
-		$threads=$day['threads'];
-		$views=$day['views'];
+  <table class='table'>
+	<tr><td class='tdbgh fonts center' colspan=9>Daily stats</td></tr>
+	<tr>
+		<td class='tdbgc fonts center'>Date</td>
+		<td class='tdbgc fonts center'>Total users</td>
+		<td class='tdbgc fonts center'>Total posts</td>
+		<td class='tdbgc fonts center'>Total threads</td>
+		<td class='tdbgc fonts center'>Total views</td>
+		<td class='tdbgc fonts center'>New users</td>
+		<td class='tdbgc fonts center'>New posts</td>
+		<td class='tdbgc fonts center'>New threads</td>
+		<td class='tdbgc fonts center'>New views</td>
+	</tr>
+<?php
+	$users 		= 0;
+	$posts 		= 0;
+	$threads	= 0;
+	$views		= 0;
+	$stats = $sql->query("SELECT * FROM dailystats ORDER BY id ASC");	// NOTE: Originally dailystats did not have an ID. Added due to InnoDB shenanigains.
+	while($day = $sql->fetch($stats)){
+		?>
+	<tr>
+		<td class='tdbg1 fonts center'><?=$day['date']?></td>
+		<td class='tdbg2 fonts center'><?=$day['users']?></td>
+		<td class='tdbg2 fonts center'><?=$day['posts']?></td>
+		<td class='tdbg2 fonts center'><?=$day['threads']?></td>
+		<td class='tdbg2 fonts center'><?=$day['views']?></td>
+		<td class='tdbg2 fonts center'><?=($day['users']-$users)?></td>
+		<td class='tdbg2 fonts center'><?=($day['posts']-$posts)?></td>
+		<td class='tdbg2 fonts center'><?=($day['threads']-$threads)?></td>
+		<td class='tdbg2 fonts center'><?=($day['views']-$views)?></td>
+	</tr>
+	<?php
+		$users 		= $day['users'];
+		$posts 		= $day['posts'];
+		$threads 	= $day['threads'];
+		$views 		= $day['views'];
 	}
-	print $tblend.$footer;
-	printtimedif($startingtime);
+?></table><?php
 
-
-
+	pagefooter();
+	
 	function sp($sz) {
 //    $b="$sz B";
 //    if($sz>1023) $b=sprintf('%01.2f',$sz/1024).' kB';
@@ -114,17 +130,17 @@
 	}
 
 	function tblinfo($n) {
-		global $tbl,$tccell2,$tccell2l;
+		global $tbl;
 		$t=$tbl[$n];
 		return "
 		<tr align=right>
-		$tccell2>$t[Name]</td>
-		$tccell2l>".sp($t['Rows']) ."</td>
-		$tccell2l>".sp($t['Avg_row_length'])."</td>
-		$tccell2l>".sp($t['Data_length'])."</td>
-		$tccell2l>".sp($t['Index_length'])."</td>
-		$tccell2l>".sp($t['Data_free'])."</td>
-		$tccell2l>".sp($t['Data_length']+$t['Index_length'])."</td></tr>";
+		<td class='tdbg2 center'>$t[Name]</td>
+		<td class='tdbg2'>".sp($t['Rows']) ."</td>
+		<td class='tdbg2'>".sp($t['Avg_row_length'])."</td>
+		<td class='tdbg2'>".sp($t['Data_length'])."</td>
+		<td class='tdbg2'>".sp($t['Index_length'])."</td>
+		<td class='tdbg2'>".sp($t['Data_free'])."</td>
+		<td class='tdbg2'>".sp($t['Data_length']+$t['Index_length'])."</td></tr>";
 	}
 
 ?>

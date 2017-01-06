@@ -1,5 +1,5 @@
 <?php
-  $boardtitle='<img src=\'images/zen/zentitle.png\'>';
+  $config['board-title']='<img src=\'images/zen/zentitle.png\'>';
 
 	$formcss=1;
 	$inputborder='000000';
@@ -11,6 +11,14 @@
 	$linkcolor2='99c090';
 	$linkcolor3='CFFFBE';
 	$linkcolor4='CEFECA';
+	
+	$scr1='';
+	$scr2='';
+	$scr3='';
+	$scr4='';
+	$scr5='';
+	$scr6='';
+	$scr7='';
 
 	$tablebg1='005028';
 	$tablebg2='104830';

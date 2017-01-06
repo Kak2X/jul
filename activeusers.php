@@ -1,30 +1,32 @@
 <?php
 	require 'lib/function.php';
 
-	$windowtitle	= "$boardname -- Active users";
-	require 'lib/layout.php';
-
-	if (($type == 'pm' || $type == 'pms') && !$log)
+	$windowtitle	= "{$config['board-name']} -- Active users";
+	
+	$tid	= filter_int($_GET['tid']); // Thread ID filtering 
+	$type 	= filter_string($_GET['type']);
+	
+	if (($type == 'pm' || $type == 'pms') && !$loguser['id'])
 		unset($type);
 
 	if (!isset($_GET['time']))
 		$time = 86400;
 	else
-		$time = intval($_GET['time']);
+		$time = (int) $_GET['time'];
 
-	$query='SELECT users.id, regdate, name, minipic, sex, powerlevel, aka, birthday, COUNT(*) AS cnt FROM users';
-	$endp=' GROUP BY users.id ORDER BY cnt DESC';
+	$query 	= "SELECT $userfields, u.regdate, COUNT(*) AS cnt FROM users u";
+	$endp 	= " GROUP BY u.id ORDER BY cnt DESC";
 
 	$linklist[0] = "<a href=\"?time=$time\">posts made</a>";
 	$linklist[1] = "<a href=\"?type=thread&time=$time\">new threads</a>";
-	if ($log) {
+	if ($loguser['id']) {
 		$linklist[2] = "<a href=\"?type=pms&time=$time\">PMs sent by you</a>";
 		$linklist[3] = "<a href=\"?type=pm&time=$time\">PMs sent to you</a>";
 	}
 
 	if ($type == 'thread')	{
-		$posters	= $sql-> query("$query, threads WHERE threads.user=users.id"
-			.($time ? " AND threads.firstpostdate> '". (ctime() - $time) ."'" : '')
+		$posters	= $sql->query("$query LEFT JOIN threads t ON t.user = u.id"
+			.($time ? " WHERE t.firstpostdate > '". (ctime() - $time) ."'" : '')
 			.$endp);
 		$desc		= "Most active thread posters";
 		$column		= "Threads";
@@ -33,9 +35,9 @@
 		$linklist[1] = "new threads";
 
 	} elseif ($type == 'pm') {
-		$posters	= $sql-> query("$query, pmsgs WHERE pmsgs.userto=$loguserid"
-			.($time ? " AND pmsgs.date> '". (ctime() - $time) ."'" : '')
-			." AND pmsgs.userfrom=users.id$endp");
+		$posters	= $sql->query("$query LEFT JOIN pmsgs p ON p.userto = {$loguser['id']}"
+			.($time ? " AND p.date> '". (ctime() - $time) ."' AND" : ' WHERE')
+			." p.userfrom = u.id$endp");
 		$desc		= "PMs recieved from";
 		$column		= "PMs";
 		$column2	= "PMs";
@@ -43,9 +45,9 @@
 		$linklist[3] = "PMs sent to you";
 
 	} elseif ($type == 'pms') {
-		$posters	= $sql-> query("$query, pmsgs WHERE pmsgs.userfrom=$loguserid"
-			.($time ? " AND pmsgs.date> '". (ctime() - $time) ."'" : '')
-			." AND pmsgs.userto=users.id$endp");
+		$posters	= $sql->query("$query LEFT JOIN pmsgs p ON p.userfrom = {$loguser['id']}"
+			.($time ? " WHERE p.date> '". (ctime() - $time) ."' AND" : ' WHERE')
+			." p.userto = u.id$endp");
 		$desc		= "PMs sent to";
 		$column		= "PMs";
 		$column2	= "PMs";
@@ -53,9 +55,9 @@
 		$linklist[2] = "PMs sent by you";
 
 	} else {
-		$posters	= $sql-> query("$query, posts WHERE posts.user=users.id"
-			.($tid ? " AND thread='$tid'" : '')
-			.($time ? " AND posts.date> '". (ctime() - $time) ."'" : '')
+		$posters	= $sql->query("$query LEFT JOIN posts p ON u.id = p.user WHERE 1"
+			.($tid ? " AND p.thread='$tid'" : '')
+			.($time ? " AND p.date> '". (ctime() - $time) ."'" : '')
 			.$endp);
 		$desc		= "Most active posters";
 		$column		= "Posts";
@@ -65,18 +67,23 @@
 		$type = '';
 	}
 
-	$link='<a href='.(($type) ? "?type={$type}&" : '?').'time';
-	print "
-		$header
-		$tblstart
-		<td align=left width=50%>$smallfont
-			Show $stat in the:
-			<br>$link=3600>last hour</a> - $link=86400>last day</a> - $link=604800>last week</a> - $link=2592000>last 30 days</a> - $link=0>from the beginning</a>
-		</td><td width=50% align=right>$smallfont
-		Most active users by:<br>
-		".implode(" - ", $linklist)."
-		$tblend
-	"; 
+	$link = '<a href='.(($type) ? "?type={$type}&" : '?').'time';
+	
+	pageheader($windowtitle);
+	?>
+	<table style='width: 100%'>
+		<tr>
+			<td class='fonts' width=50%>
+				Show <?=$stat?> in the:<br>
+				<?=$link?>=3600>last hour</a> - <?=$link?>=86400>last day</a> - <?=$link?>=604800>last week</a> - <?=$link?>=2592000>last 30 days</a> - <?=$link?>=0>from the beginning</a>
+			</td>
+			<td width=50% class='fonts right'>
+				Most active users by:<br>
+				<?=implode(" - ", $linklist)?>
+			</td>
+		</tr>
+	</table>
+	<?php 
 
 	if ($time)
 		$timespan = " during the last ". timeunits2($time);
@@ -97,51 +104,50 @@
 
 		$pcounts = $sql->fetch($pcounts);
 		print "
-		$tblstart
-		<tr>$tccellh colspan=2>Staff vs. Normal User Posts</tr>
-		<tr>$tccell1>$pcounts[posts_staff]</td>$tccell1>$pcounts[posts_users]</td></tr>
-		<tr>$tccell2 colspan=2>The ratio for staff posts to normal user posts is ".round($pcounts["posts_staff"]/$pcounts["posts_users"],3).".</td></tr>
-		<tr>$tccell2 colspan=2>Not included were the ".abs($pcounts[posts_banned])." posts shat out by a collective of morons. Depressing.</td></tr>
-		$tblend
+		<table class='table'>
+		<tr><td class='tdbgh center' colspan=2>Staff vs. Normal User Posts</tr>
+		<tr><td class='tdbg1 center'>$pcounts[posts_staff]</td><td class='tdbg1 center'>$pcounts[posts_users]</td></tr>
+		<tr><td class='tdbg2 center' colspan=2>The ratio for staff posts to normal user posts is ".round($pcounts["posts_staff"]/$pcounts["posts_users"],3).".</td></tr>
+		<tr><td class='tdbg2 center' colspan=2>Not included were the ".abs($pcounts[posts_banned])." posts shat out by a collective of morons. Depressing.</td></tr>
+		</table>
 		<br>
 		";
 	}
 */
 
-	print "
-		$tblstart
-			<tr>$tccellc colspan=6><b>$desc$timespan</b></td></tr>
-			<tr>
-			$tccellh width=30>#</td>
-			$tccellh colspan=2>Username</td>
-			$tccellh width=200>Registered on</td>
-			$tccellh width=130 colspan=2>$column</td>
-	";
+	?>
+	<table class='table'>
+		<tr><td class='tdbgc center' colspan=6><b><?=$desc?><?=$timespan?></b></td></tr>
+		<tr>
+			<td class='tdbgh center' width=30>#</td>
+			<td class='tdbgh center' colspan=2>Username</td>
+			<td class='tdbgh center' width=200>Registered on</td>
+			<td class='tdbgh center' width=130 colspan=2>$column</td>
+	<?php
 
 	$total = 0;
-	for($i = 1; $user = $sql->fetch($posters); $i++) {
-		if($i == 1) $max = $user['cnt'];
+	$oldcnt = NULL;
+	for ($i = 1; $user = $sql->fetch($posters); ++$i) {
+		if ($i == 1) $max = $user['cnt'];
 		if ($user['cnt'] != $oldcnt) $rank = $i;
 		$oldcnt	= $user['cnt'];
 		$ulink = getuserlink($user);
 		print "
 			<tr>
-			$tccell1>$rank</td>
-			$tccell1 width=16>". ($user['minipic'] ? "<img src=\"". htmlspecialchars($user['minipic']) ."\" width=16 height=16>" : "&nbsp;") ."</td>
-			$tccell2l>{$ulink}</td>
-			$tccell1>".date($dateformat, $user['regdate'] + $tzoff) ."</td>
-			$tccell2 width=30><b>". $user['cnt'] ."</b></td>
-			$tccell2 width=100>". number_format($user['cnt'] / $max * 100, 1) ."%<br><img src=images/minibar.png width=\"". number_format($user['cnt'] / $max * 100) ."%\" align=left height=3> </td>
+				<td class='tdbg1 center'>$rank</td>
+				<td class='tdbg1 center' width=16>". ($user['minipic'] ? "<img src=\"". htmlspecialchars($user['minipic']) ."\" width=16 height=16>" : "&nbsp;") ."</td>
+				<td class='tdbg2'>{$ulink}</td>
+				<td class='tdbg1 center'>".printdate($user['regdate'])."</td>
+				<td class='tdbg2 center' width=30><b>". $user['cnt'] ."</b></td>
+				<td class='tdbg2 center' width=100>". number_format($user['cnt'] / $max * 100, 1) ."%<br><img src=images/minibar.png width=\"". number_format($user['cnt'] / $max * 100) ."%\" align=left height=3> </td>
 			</tr>";
 
 		$total	+= $user['cnt'];
 	}
 
-	print "
-		<tr>
-			$tccellc colspan=6>". ($i - 1) ." users, $total $column2</td>
-		</tr>
-	";
+	?>
+		<tr><td class='tdbgc center' colspan=6><?=($i - 1)?> users, <?=$total?> <?=$column2?></td></tr>
+	</table>
+	<?php
 
-	print $tblend.$footer;
-	printtimedif($startingtime);
+	pagefooter();

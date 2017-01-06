@@ -21,6 +21,6 @@
 	$scr6='210456';
 	$scr7='000020';
 
-	$boardtitle='<nobr><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src="/xkeeper/pics/kattycombs.gif" align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle></nobr>';
+	$config['board-title']='<nobr><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src="images/kattycombs.gif" align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle><img src=images/waffleiron.jpg align=absmiddle></nobr>';
 	
 ?>

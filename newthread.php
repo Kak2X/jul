@@ -55,7 +55,7 @@
 	}
 	
 	$posticons		= file('posticons.dat');
-	$iconid 		= filter_int($_POST['iconid']);
+	$iconid 		= (isset($_POST['iconid']) ? (int) $_POST['iconid'] : -1); // 'None' should be the default value
 	$custposticon 	= filter_string($_POST['custposticon']);
 
 
@@ -187,7 +187,7 @@
 				$sql->queryp("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `sticky`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`, `poll`) ".
 							 "VALUES                (:forum,  :user,  :views,  :closed,  :sticky,  :title,  :description,  :icon,  :replies,  :firstpostdate,  :lastpostdate,  :lastposter,  :poll)",
 						 [
-							'forum'			=> $id,
+							'forum'				=> $id,
 							'user'				=> $user['id'],
 							
 							'closed'			=> 0,
@@ -195,13 +195,13 @@
 							
 							'poll'				=> $pollid,
 							
-							'title'			=> xssfilters($subject),
+							'title'				=> xssfilters($subject),
 							'description'		=> xssfilters($description),
 							'icon'				=> $posticon,
 							
-							'views'			=> 0,
+							'views'				=> 0,
 							'replies'			=> 0,
-							'firstpostdate'	=> $currenttime,
+							'firstpostdate'		=> $currenttime,
 							'lastpostdate'		=> $currenttime,
 							'lastposter'		=> $user['id'],
 							

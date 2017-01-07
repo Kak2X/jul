@@ -16,7 +16,7 @@
 
 	$min = $curtime['hours'] * 60 + $curtime['minutes'];
  
-	$bgimage 			= 'images/themes/back09.gif';
+	$bgimage 			= 'images/back09.gif';
 	$bgcolor 			= '000000';
 	$tableheadtext 		= 'FFFFFF';
 	

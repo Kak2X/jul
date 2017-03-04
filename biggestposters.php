@@ -11,13 +11,7 @@
 	// Time for an update?
 	if ($sql->resultq("SELECT bigpostersupdate FROM misc") <= ctime()-(3600 * 8)) {
 		$sql->query("TRUNCATE biggestposters");
-		/*$sql->query(" "
-		." "
-		."SELECT  "
-		."FROM `posts` p "
-		."LEFT JOIN `users` u ON p.user = u.id "
-		."LEFT JOIN `posts_text` pt on p.id = pt.pid "
-		."WHERE (u.posts >= 5 OR u.posts < 0) GROUP BY p.user");*/
+		
 		$sql->query("
 			INSERT INTO biggestposters (id, posts, waste)
 				SELECT u.id, u.posts, SUM(LENGTH(p.text))

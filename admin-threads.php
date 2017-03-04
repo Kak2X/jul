@@ -2,9 +2,9 @@
 
 	require 'lib/function.php';
 
-
 	pageheader("Thread Repair System");
-	admincheck();
+	
+	admincheck('forum-admin');
 	
 	print adminlinkbar("admin-threads.php");
 

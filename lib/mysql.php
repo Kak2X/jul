@@ -11,7 +11,7 @@
 		// Query debugging functions for admins
 		static $connection_count = 0;
 		static $debug_on   = false;
-		static $debug_list = array(); // [<id>, <function>, <file:line>, <info>, <time taken>]
+		static $debug_list = array(); // [<id>, <function>, <file:line>, <info>, <time taken>, <prepared>]
 
 		var $cache = array();
 		var $connection = NULL;
@@ -40,8 +40,6 @@
 			
 			$t 			= microtime(true) - $start;
 			$this->id 	= ++self::$connection_count;
-			//$this->set_character_encoding("utf8");
-			
 						
 			if ($config['enable-sql-debugger']) {
 				self::$debug_on = true;
@@ -62,13 +60,6 @@
 			return $this->connection;
 		}
 
-		/*public function selectdb($dbname)	{
-			$start=microtime(true);
-			$r = mysql_select_db($dbname, $this->connection);
-			self::$time += microtime(true)-$start;
-			return $r;
-		}
-		*/
 		// $usecache contains hash
 		public function query($query, $hash = false, &$querycheck = array()) {
 			
@@ -145,7 +136,8 @@
 						$b['pfunc'],
 						$b['file'] . ":" . $b['line'],
 						"<font color=#00dd00>".htmlentities($query)."</font>",
-						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>"
+						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>",
+						true
 					);
 				}
 				return NULL; // We don't need to return anything
@@ -156,7 +148,7 @@
 			$res = NULL;
 			try {
 				$res = $this->connection->prepare($query, $options);
-				++self::$queries;
+				//++self::$queries;  # Don't count prepares
 			}
 			catch (PDOException $e) {
 				$err = $e->getMessage();
@@ -174,7 +166,8 @@
 					$b['pfunc'],
 					$b['file'] . ":" . $b['line'],
 					((!isset($err)) ? "<span style='color:#ffff44'>".htmlentities($query)."</span>" : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
+					sprintf("%01.6fs", $t),
+					true
 				);
 			}
 
@@ -191,6 +184,11 @@
 			
 			try {
 				$res = $result->execute($vals);
+				// Workaround for the inability to catch certain kinds of errors
+				// Thank you PDO
+				if (!is_numeric($result->errorInfo()[0])) {
+					throw new PDOException("Error code ".$result->errorInfo()[0]);
+				}
 				++self::$queries;
 				
 				if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
@@ -220,7 +218,7 @@
 			return $res;
 		}
 
-		public function fetch($result, $flag = PDO::FETCH_BOTH, $hash = NULL){
+		public function fetch($result, $flag = PDO::FETCH_ASSOC, $hash = NULL){
 			$start = microtime(true);
 			$res = NULL;
 			
@@ -236,7 +234,7 @@
 			return $res;
 		}
 		
-		public function fetchAll($result, $flag = PDO::FETCH_BOTH, $hash = NULL){
+		public function fetchAll($result, $flag = PDO::FETCH_ASSOC, $hash = NULL){
 			$start = microtime(true);
 			$res = NULL;
 			
@@ -281,14 +279,14 @@
 			return $q;
 		}
 		
-		public function fetchq($query, $flag = PDO::FETCH_BOTH, $cache = false, $all = false){
+		public function fetchq($query, $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
 			$hash = (!$cache) ? NULL : md5($query);
 			$res = $this->query($query, $hash);
 			$res = (!$all) ? $this->fetch($res, $flag, $hash) : $this->fetchAll($res, $flag, $hash);
 			return $res;
 		}
 		
-		public function fetchp($query, $values = array(), $flag = PDO::FETCH_BOTH, $cache = false, $all = false){
+		public function fetchp($query, $values = array(), $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
 			$hash = (!$cache) ? NULL : md5($query);
 			$res = $this->prepare($query, array(), $hash);
 			if (!$cache) 
@@ -332,15 +330,7 @@
 				
 			if ($hash)
 				$this->cache[$hash] = $ret;
-			/*
-			$ret = array();
-			$tmp = array();
 
-			while ($res = @$this->fetch($q, MYSQL_ASSOC))
-				$tmp[$res[$key]][] = $res[$wanted];
-			foreach ($tmp as $keys => $values)
-				$ret[$keys] = implode(",", $values);
-			*/
 			return $ret;
 		}
 		
@@ -348,11 +338,6 @@
 			$hash = (!$cache) ? NULL : md5($query);
 			$q = $this->query($query, $cache);
 			$ret = $this->fetchAll($q, PDO::FETCH_KEY_PAIR, $hash);
-			/*
-			$ret = array();
-			while ($res = @$this->fetch($q, MYSQL_ASSOC))
-				$ret[$res[$key]] = $res[$wanted];
-			*/
 			return $ret;
 		}
 		
@@ -360,11 +345,6 @@
 			$hash = (!$cache) ? NULL : md5($query);
 			$q = $this->query($query, $cache);
 			$ret = $this->fetchAll($q, PDO::FETCH_COLUMN, $hash);
-				
-			/*$ret = array();
-			while ($res = @$this->fetch($q, MYSQL_ASSOC))
-				$ret[] = $res[$wanted];
-			*/
 			return $ret;
 		}
 		
@@ -375,13 +355,7 @@
 			
 			if ($hash && isset($this->cache[$hash]))
 				return $this->cache[$hash];
-			/*
-			$ret = $this->fetchAll($q, PDO::FETCH_UNIQUE);
-			// Code compatibility - FETCH_UNIQUE doesn't add the index to the actual array
-			$keys = array_keys($ret);
-			foreach ($keys as $id)
-				$ret[$id][$key] = $id;
-				*/
+			
 			$ret = array();
 			while ($res = $this->fetch($q, PDO::FETCH_ASSOC))
 				$ret[$res[$key]] = $res;
@@ -397,10 +371,6 @@
 			// $ret[<num>] = <entire assoc row>
 			$q = $this->query($query, $hash);
 			$ret = $this->fetchAll($q, PDO::FETCH_ASSOC, $hash);
-			/*$ret = array();
-			while ($res = @$this->fetch($q, MYSQL_ASSOC))
-				$ret[] = $res;
-			*/
 			return $ret;
 		}
 
@@ -474,13 +444,7 @@
 			self::$time += microtime(true) - $start;
 			return $result;
 		}
-	
-		/*public function set_character_encoding($s) {
-			return mysql_set_charset($s, $this->connection);
-		}*/
-
-		//private function __construct() {}
-
+		
 		// Debugging shit for admins
 		public static function debugprinter() {
 			if (!self::$debug_on) return "";
@@ -500,12 +464,13 @@
 						<td class='tdbgh center' width=*  >Query</td>
 						<td class='tdbgh center' width=90 >Time</td>
 					</tr>";
-			$oldid = NULL;
+			$oldid  = NULL;
+			$offset = 0;
 			foreach(self::$debug_list as $i => $d) {
 				// Cycling tccell1/2
 				$cell = (($i & 1)+1);
 				
-				// Is the query ID identical to the previous?
+				// Is the connection ID not identical to the previous?
 				if ($oldid != $d[0]) {
 					// If so, add a separator
 					$out .= "
@@ -516,9 +481,16 @@
 						</tr>";
 				}
 				$oldid = $d[0];
+				if (isset($d[5])) {
+					// Prepared query
+					$c = "[P]";
+					$offset++;
+				} else {
+					$c = $i - $offset;
+				}
 				$out .= "
 					<tr>
-						<td class='tdbg{$cell} center'>$i</td>
+						<td class='tdbg{$cell} center'>$c</td>
 						<td class='tdbg{$cell} center'>$d[0]</td>
 						<td class='tdbg{$cell} center'>
 							$d[1]<span class='fonts'><br>
@@ -547,6 +519,17 @@
 			$backtrace[$i]['file'] = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
 			
 			return $backtrace[$i];
+		}
+		
+		public function setplaceholders() {
+			$out = "";
+			$fields = func_get_args();
+			$i = false;
+			foreach ($fields as $field) {
+				$out .= ($i ? "," : "")."$field=:".str_replace("`","",$field);
+				$i = true;
+			}
+			return $out;
 		}
 	}
 ?>

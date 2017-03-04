@@ -1,6 +1,6 @@
 <?php
 	
-	function threadpost($post,$bg,$pthread='') {
+	function threadpost($post,$bg,$forum=0,$pthread='') {
 		
 		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts; //${"tablebg$bg"};
 		
@@ -22,8 +22,9 @@
 
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
 		//unset($postuser);
-
-		$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel']);
+		
+		//$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel']);
+		$set['userrank'] = getrank($post['useranks'], $post['title'], $post['posts'], $post['group'], $post['ban_expire']);
 		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);
@@ -55,14 +56,13 @@
 		}
 
 		$post['text'] = doreplace2($post['text'], $post['options']);
-	//  if (strpos($post['text'], "http://hyperhacker.no-ip.org/b/smilies/lolface.png") || strpos($post['text'], "images/smilies/roflx.gif")) $post['text'] = "<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>";
-
+		
 		if (filter_int($post['editdate'])) {
 			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
 		}
 		
 		
-		return dofilters(postcode($post,$set));
+		return dofilters(postcode($post,$set), $forum);
 	}
 
 	function preplayouts($posts) {
@@ -76,8 +76,9 @@
 			if ($ps['signid']) $ids[] = $ps['signid'];
 		}
 
-		if (!count($ids)) return;
-		$postl = $sql->getresultsbykey("SELECT id, text FROM postlayouts WHERE id IN (".implode(",", array_unique($ids, SORT_NUMERIC)).")");
+		if (count($ids)) {
+			$postl = $sql->getresultsbykey("SELECT id, text FROM postlayouts WHERE id IN (".implode(",", array_unique($ids, SORT_NUMERIC)).")");
+		}
 	}
 
 	function setlayout($post) {
@@ -98,12 +99,12 @@
 		if($loguser['viewsig']!=2){ // Not Autoupdate
 			if($headid=filter_int($post['headid'])) {
 				// just in case
-				if($postl[$headid] === NULL) $postl[$headid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$headid");
+				if(!isset($postl[$headid])) $postl[$headid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$headid");
 				$post['headtext']=$postl[$headid];
 			}
 			if($signid=filter_int($post['signid'])) {
 				// just in case
-				if($postl[$signid] === NULL) $postl[$signid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$signid");
+				if(!isset($postl[$signid])) $postl[$signid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$signid");
 				$post['signtext']=$postl[$signid];
 			}
 		}

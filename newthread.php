@@ -2,20 +2,24 @@
 	require 'lib/function.php';
 	
 	
-	$id 		= filter_int($_GET['id']);
-	$poll 		= filter_int($_GET['poll']);
+	$id 			= filter_int($_GET['id']);
+	$poll 			= filter_int($_GET['poll']);
+	$announcement 	= filter_int($_GET['announcement']); // TODO: Implement this! (checkbox)
 	
 	
 	// Stop this insanity.  Never index newthread.
 	$meta['noindex'] = true;	
 
-	// Detect all three (invalid forum, banned user, restricted forum) in one query
-	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = $id AND {$loguser['powerlevel']} >= minpowerthread");
-	if (!$forum) { // Stop right there
-		if ($banned)
-			errorpage("Sorry, but you are not allowed to post, because you are banned from this board.", "forum.php?id=$id",'return to the forum', 0);
-		else 
-			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
+	if ($banned) {
+		errorpage("Sorry, but you are not allowed to post, because you are banned from this board.", "forum.php?id=$id",'return to the forum', 0);
+	}
+	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = $id");
+	if (!$forum) {
+		errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
+	}
+	$forumperm = get_forum_perm($id, $loguser['id'], $loguser['group']);
+	if (!has_forum_perm('read', $forumperm)) {
+		errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
 	}
 	
 	
@@ -24,13 +28,8 @@
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	$smilies = readsmilies();
-	
 	replytoolbar(1);
 
-
-	if ($id == $config['trash-forum']) {
-		errorpage("No. Stop that, you idiot.");
-	}
 
 	if ($forum['pollstyle'] == '-2' && $poll) {
 		errorpage("A for effort, but F for still failing.");
@@ -57,11 +56,7 @@
 	$posticons		= file('posticons.dat');
 	$iconid 		= (isset($_POST['iconid']) ? (int) $_POST['iconid'] : -1); // 'None' should be the default value
 	$custposticon 	= filter_string($_POST['custposticon']);
-
-
-	// Determine the correct icon URL
-
-	
+		
 	// register_globals!!
 	$subject		= filter_string($_POST['subject'], true);
 	$description 	= filter_string($_POST['description'], true);
@@ -72,6 +67,10 @@
 	$nosmilies		= filter_int($_POST['nosmilies']);
 	$nohtml			= filter_int($_POST['nohtml']);
 	$nolayout		= filter_int($_POST['nolayout']);
+	
+	$tsticky = filter_int($_POST['stick']);
+	$tclosed = filter_int($_POST['close']);
+	$tannc	 = (int) filter_int($_POST['tannc']) || filter_int($_GET['a']);
 	
 	
 	if (isset($_POST['preview']) || isset($_POST['submit'])) {
@@ -90,25 +89,29 @@
 			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
 		}
 		
-		if(!$user || $user['powerlevel'] < 0) $userid = -1;
+		if (!$user) {
+			$userid = -1;
+		} else {
+			$forumperm = get_forum_perm($id, $userid, filter_int($user['group'])); // A bad userid would set forumperm to 0
+			
+			// can't be posting too fast now
+			$limithit 		= $user['lastposttime'] < (ctime()-30);
+			// can they post in this forum?
+			$authorized 	= has_forum_perm('post', $forumperm);
+			// does the forum exist?
+			$forumexists 	= $forum['id'];
 
-		// can't be posting too fast now
-		$limithit 		= $user['lastposttime'] < (ctime()-30);
-		// can they post in this forum?
-		$authorized 	= $user['powerlevel'] >= $forum['minpowerthread'];
-		// does the forum exist?
-		$forumexists 	= $forum['id'];
-
-		// ---
-		// lol i'm eminem
-		if (strpos($message , '[Verse ') !== FALSE) {
-			$authorized = false;
-			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
-			if ($loguser['id']) //if ($_COOKIE['loguserid'] > 0)
-				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$loguser['id']}");
-			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+			// ---
+			// lol i'm eminem
+			if (strpos($message , '[Verse ') !== FALSE) {
+				$authorized = false;
+				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
+				if ($loguser['id']) //if ($_COOKIE['loguserid'] > 0)
+					$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$loguser['id']}");
+				xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+			}
+			// ---
 		}
-		// ---
 		
 		if($userid != -1 && $subject && $message && $forumexists && $authorized && $limithit) {
 			
@@ -184,14 +187,21 @@
 					$signid = getpostlayoutid($sign);
 				}
 				
-				$sql->queryp("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `sticky`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`, `poll`) ".
-							 "VALUES                (:forum,  :user,  :views,  :closed,  :sticky,  :title,  :description,  :icon,  :replies,  :firstpostdate,  :lastpostdate,  :lastposter,  :poll)",
+				if (!has_forum_perm('mod', $forumperm)) {
+					$tclosed = 0;
+					$tsticky = 0;
+					$tannc   = 0;
+				}
+				
+				$sql->queryp("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `sticky`, `announcement`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`, `poll`) ".
+							 "VALUES                (:forum,  :user,  :views,  :closed,  :sticky,  :announcement,  :title,  :description,  :icon,  :replies,  :firstpostdate,  :lastpostdate,  :lastposter,  :poll)",
 						 [
 							'forum'				=> $id,
 							'user'				=> $user['id'],
 							
-							'closed'			=> 0,
-							'sticky'			=> 0,
+							'closed'			=> $tclosed,
+							'sticky'			=> $tsticky,
+							'announcement'		=> $tannc,
 							
 							'poll'				=> $pollid,
 							
@@ -244,13 +254,14 @@
 				$whatisthis = $poll ? "Poll" : "Thread";
 				
 				if ($sql->checkTransaction($querycheck)) {
-					
+					// @TODO: Add field value
+					$forum['ircout'] = 0;
 					xk_ircout(strtolower($whatisthis), $user['name'], array(
 						'forum'		=> $forum['title'],
 						'fid'		=> $forum['id'],
 						'thread'	=> str_replace("&lt;", "<", $subject),
 						'pid'		=> $pid,
-						'pow'		=> $forum['minpower'],
+						'dest'		=> $forum['ircout'],
 					));
 					
 					errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
@@ -263,14 +274,16 @@
 		}
 		else {
 			
-			$reason = "You haven't entered your username and password correctly.";
-			if (!$limithit) 	$reason = "You are trying to post too rapidly.";
-			if (!$message) 		$reason = "You haven't entered a message.";
-			if (!$subject) 		$reason = "You haven't entered a subject.";
-			if (!$authorized) 	$reason = "You aren't allowed to post in this forum.";
+			if ($userid == -1)	   $reason = "You haven't entered your username and password correctly.";
+			else if (!$limithit)   $reason = "You are trying to post too rapidly.";
+			else if (!$message)    $reason = "You haven't entered a message.";
+			else if (!$subject)    $reason = "You haven't entered a subject.";
+			else if (!$authorized) $reason = "You aren't allowed to post in this forum.";
 			errorpage("Couldn't post the thread. $reason", "forum.php?id=$id", $forum['title'], 2);
 		}		
 		
+	} else {
+		$ismod = has_forum_perm('mod', $forumperm);
 	}
 	
 	/*
@@ -309,7 +322,11 @@
 	$nosmilieschk 	= $nosmilies 	? " checked" : "";
 	$nohtmlchk	 	= $nohtml 		? " checked" : "";
 	$nolayoutchk 	= $nolayout 	? " checked" : "";
-
+	
+	$selsticky = $tsticky ? "checked" : "";
+	$selclosed = $tclosed ? "checked" : "";
+	$seltannc  = $tannc   ? "checked" : "";
+		
 	$forumlink = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id=$id'>".htmlspecialchars($forum['title'])."</a></span>";
 
 	if ($loguser['id']) {
@@ -427,7 +444,7 @@
 		</tr>
 	</table>
 	<table class='table'>
-		<?=threadpost($ppost,1)?>
+		<?=threadpost($ppost,1,$id)?>
 	</table>
 			<?php
 			$focuson = 'message';
@@ -435,8 +452,29 @@
 			$focuson = 'subject';
 		}
 		
-		?>
+	$modoptions	= "";
+	
+	if ($ismod) {
 		
+		$selsticky = $tsticky ? "checked" : "";
+		$selclosed = $tclosed ? "checked" : "";
+		$seltannc  = $tannc   ? "checked" : "";
+		
+		
+		$modoptions = 
+		"<tr>
+			<td class='tdbg1 center'>
+				<b>Moderator Options:</b>
+			</td>
+			<td class='tdbg2' colspan=2>
+				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
+				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
+				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
+			</td>
+		</tr>";
+	}
+	
+		?>
 	<?=$forumlink?>
 	<form action="<?=$formlink?>" name=replier method=post autocomplete=off>
 	<table class='table'>
@@ -598,6 +636,7 @@
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label>
 				</td>
 			</tr>
+			<?=$modoptions?>
 		</table>
 		</form>
 		<?=$forumlink?>

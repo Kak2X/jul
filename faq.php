@@ -49,8 +49,8 @@
 	");
 
 	
-	$faq	.= faqformat("aboot", "About Jul", "
-		Jul itself is a community made up of people who predominantly like to just hang around friendlies and talk about whatever, though we also like games and occasionally anime/other things.
+	$faq	.= faqformat("aboot", "About {$config['board-name']}", "
+		{$config['board-name']} itself is a community made up of people who predominantly like to just hang around friendlies and talk about whatever, though we also like games and occasionally anime/other things.
 	");
 
 	$faq	.= faqformat("newbies", "I'm new here. Where should I start?", "
@@ -59,7 +59,6 @@
 		<br>Once you've done that, <a href='register.php'>sign up for an account</a> (or <a href='login.php'>log in</a> if you've already made one). It's simple and very easy to do. After you're registered, you're more than welcome to just <a href='newthread.php?id=1'>jump in and say hi</a>. We're friendly people and won't bite (usually). Let us know about yourself, how you found us, or whatever's on your mind &mdash; or just jump in and start contributing to discussions.
 	");
 
-/*
 	$faq	.= faqformat("n00b", "I have this <img src='images/noob/noobsticker2-4.png' alt='n00b' title='TKEP regulars know this one' align='absmiddle' style='margin-top: -4px; margin-bottom: -4px;'> sticker on my post. What's up with that?", "
 		The n00b sticker is our way of telling you that your post was pretty awful. Usually it's for one of the following reasons:
 		<ol>
@@ -73,7 +72,7 @@
 		<br>
 		<br><strong>Remember:</strong> The fastest way to get yourself stamped is to make a big deal out of it.
 	");
-*/
+
 
 	$faq	.= faqformat("halp", "I've got a question and I need some help, or I found a bug somewhere.", "
 		<a href='forum.php?id=39'>Post it in the forum here</a>, or alternatively just message the <a href='sendprivate.php?userid=1'>main administrator</a>. If it's a security bug in the code, we <i>really</i> recommend the latter.
@@ -86,10 +85,10 @@
 	");
 
 	$faq	.= faqformat("cantpass", "I've lost/forgotten my password. Now what?", "
-		The best thing you can do is to <a href='profile.php?id=1'>contact Xkeeper directly</a>. He can help you get it fixed.
+		The best thing you can do is to <a href='profile.php?id=1'>contact {$config['admin-name']} directly</a>. He can help you get it fixed.
 	");
 
-
+/*
 	$faq	.= faqformat("frosteddonut", "I want to throw money at you guys. How do I do that?", "
 			Really? How generous.
 		<br>
@@ -103,7 +102,7 @@
 		<br>
 		<br>At some point we plan on getting a 'donor star' for those who paid our bills... other than that, there isn't really any other benefit than a warm, fuzzy feeling.
 	");
-
+*/
 
 	$faq	.= faqformat("leganese", "Legal Crap", "
 		The site does not own and cannot be held responsible for statements made by members on the forum. This site is offered as-is to the user. Any statements made on the board may be altered or removed at the discretion of the staff.

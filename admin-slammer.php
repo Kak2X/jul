@@ -32,20 +32,37 @@ else if ($_POST['knockout']) {
 	$sql->query("DELETE FROM threads WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50
 	echo "Deleted threads.\n";
 
-	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
+	
+	// Update forum counters
+	$pcount = $sql->getresultsbykey("SELECT t.forum, COUNT(*) FROM posts p LEFT JOIN threads t ON p.thread = t.id WHERE p.user = '{$target_id}' GROUP BY t.forum");
+	foreach ($pcount as $fid => $cnt) {
+		$sql->query("UPDATE forums SET numposts = numposts - {$cnt} WHERE id = '{$fid}'", false, $querycheck);
+	}
+	$tcount = $sql->getresultsbykey("SELECT forum, COUNT(*) FROM threads WHERE user = '{$target_id}' GROUP BY forum");
+	foreach ($tcount as $fid => $cnt) {
+		$sql->query("UPDATE forums SET numthreads = numthreads - {$cnt} WHERE id = '{$fid}'", false, $querycheck);
+	}
+	
+	
 	$sql->query("DELETE FROM posts WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50
 	echo "Deleted posts.\n";
 	
 	// No PMs?
-	$sql->query("DELETE FROM pmsgs WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM pmsgs        WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM pmsg_folders WHERE folderto = '{$target_id}'", false, $querycheck);
+	
 	echo "Deleted private messages.\n";
 	
 	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1", false, $querycheck);
 	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1", false, $querycheck);
+	$sql->query("DELETE FROM perm_users WHERE id = '{$target_id}' LIMIT 1", false, $querycheck);
+	$sql->query("DELETE FROM perm_forumusers WHERE user = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM postradar WHERE user = '{$target_id}' OR comp = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM announcementread WHERE user = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM forumread WHERE user = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM threadsread WHERE uid = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM events WHERE user = '{$target_id}'", false, $querycheck);	
 	echo "Deleted user data.\n";
-	
-	$sql->query("DELETE FROM events WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50	
-	echo "Deleted events.\n";
 	
 
 
@@ -70,8 +87,8 @@ else if ($_POST['knockout']) {
 }
 else {
 	
-	$threads 	= $sql->getarraybykey("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'", 'id');
-	$posts 		= $sql->getarraybykey("SELECT id, thread FROM posts WHERE user = '{$target_id}'", 'id');
+	$threads 	= $sql->getarraybykey("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'",'id');
+	$posts 		= $sql->getarraybykey("SELECT id, thread FROM posts WHERE user = '{$target_id}'",'id');
 
 	$ct_threads = count($threads);
 	$ct_posts   = count($posts);

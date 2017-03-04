@@ -14,7 +14,7 @@
 
 	$_GET['posttime'] = isset($_GET['posttime']) ? (int) $_GET['posttime'] : 86400;
 	
-	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // All posts
+	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // 30 days max
 		$_GET['posttime'] = 2592000;
 
 	if ($_GET['posttime']) {
@@ -27,14 +27,17 @@
 	if (empty($qstrings)) $qwhere = '';
 	else $qwhere = "WHERE ".implode(' AND ', $qstrings);
 
-	$posters = $sql->query(
-		"SELECT f.*, COUNT(p.id) AS cnt ".
-		"FROM forums f ".
-		"LEFT JOIN threads t ON f.id = t.forum ".
-		"LEFT JOIN posts   p ON t.id = p.thread ".
-		"{$qwhere} ".
-		"GROUP BY f.id ".
-		"ORDER BY cnt DESC");
+	$posters = $sql->query("
+		SELECT f.id, f.title, f.numposts, COUNT(p.id) AS cnt, pf.group{$loguser['group']} forumperm, pu.permset userperm
+		FROM forums f 
+		LEFT JOIN threads          t ON f.id = t.forum
+		LEFT JOIN posts            p ON t.id = p.thread
+		LEFT JOIN perm_forums     pf ON f.id = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id = pu.forum AND pu.user = {$loguser['id']}
+		{$qwhere}
+		GROUP BY f.id
+		ORDER BY cnt DESC
+	");
 
 	$userposts = $sql->resultq("SELECT COUNT(*) FROM posts p $qwhere");
 	
@@ -62,11 +65,11 @@
 
 	for ($i = 1; $f=$sql->fetch($posters); ++$i) {
 		
-		if ($f['minpower'] && $f['minpower'] > $loguser['powerlevel']) {
+		if (!has_forum_perm('read', $f)) {
 			$link="(restricted)";
 			$viewall="(<s><b>view</b></s>)";
 		} else {
-			$link="<a href='forum.php?id=$f[id]'>$f[title]</a>";
+			$link="<a href='forum.php?id={$f['id']}'>{$f['title']}</a>";
 			$timeid = ($_GET['posttime'] ? "&time={$_GET['posttime']}" : '');
 			$viewall = ($_GET['id'] ? "(<a href='postsbyuser.php?id={$_GET['id']}&forum={$f['id']}{$timeid}'>View</a>)" : "");
 		}

@@ -38,7 +38,7 @@
 	
 /*  User ratings (disabled)
 	$users1=$sql->query("SELECT id,posts,regdate FROM users");
-	while($u=$sql->fetch_array($users1)){
+	while($u=$sql->fetch($users1)){
 		$u['level']=calclvl(calcexp($u['posts'],(ctime()-$u['regdate'])/86400));
 		if ($u['posts']<0 or $u['regdate']>ctime()) $u['level']=1;
 		$users[$u['id']]=$u;
@@ -65,30 +65,29 @@
 	$ratingstatus = "";
 	
 	$maxposts 		= $sql->resultq("SELECT posts FROM users ORDER BY posts DESC LIMIT 1");
-	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel']);
+	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel'],$user['ban_expire']);
 	$threadsposted 	= $sql->resultq("SELECT COUNT(id) FROM threads WHERE user = $id");
 	if (!$maxposts) $maxposts = 1;
 	//$i = 0;
 	
 	
 	// Forum last post
+	$lastpostdate = "None";
+	$lastpostlink = "";
 	if($user['posts']) {
 		$lastpostdate = printdate($user['lastposttime']);
 
 		//$postsfound=$sql->resultq("SELECT count(id) AS cnt FROM posts WHERE user=$id",0,"cnt");
-		// TODO: Why not just ORDER BY date DESC?
 		$post = $sql->fetchq("SELECT id, thread FROM posts WHERE user = $id AND date = {$user['lastposttime']}");
 
 		if ($post && $thread = $sql->fetchq("SELECT title,forum FROM threads WHERE id = {$post['thread']}")) {
-			$forum = $sql->fetchq("SELECT id,title,minpower FROM forums WHERE id = {$thread['forum']}");
-			if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel'])
+			$forum = $sql->fetchq("SELECT id,title FROM forums WHERE id = {$thread['forum']}");
+			$forumperm = get_forum_perm($forum['id'], $loguser['id'], $loguser['group']);
+			if (!is_array($forumperm) || !has_forum_perm('read', $forumperm))
 				$lastpostlink = ", in a restricted forum";
 			else
 				$lastpostlink = ", in <a href=thread.php?pid={$post['id']}#{$post['id']}>".htmlspecialchars($thread['title'])."</a> (<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>)";
 		}
-	} else {
-		$lastpostdate = "None";
-		$lastpostlink = "";
 	}
 
 	// Action links
@@ -97,14 +96,16 @@
 		$token = generate_token(32);
 		$sendpmsg = " | <a href='sendprivate.php?userid=$id'>Send private message</a>".
 					" | <a href='profile.php?id=$id&action=blocklayout&auth=$token'>".($isblocked ? "Unb" : "B")."lock layout</a>";
-		if($isadmin){
+		if (has_perm('admin-actions')) {
 			if($user['lastip'])
 				$lastip = " <br>with IP: <a href='ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
-			$sneek = "<tr><td class='tdbg1 fonts center' colspan=2><a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |"
-				." <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
-				//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"
-				." <a href='editprofile.php?id={$id}' style='font-style:italic;'>Edit user</a>";
 		}
+		$sneek = "<tr><td class='tdbg1 fonts center' colspan=2>"
+				.(has_perm('view-others-pms') ? "<a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |" : "")
+				.(has_perm('admin-actions') ? " <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
+				//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"
+				." <a href='editprofile.php?id={$id}' style='font-style:italic;'>Edit user</a> |"
+				." <a href='admin-editperms.php?mode=1&id={$id}' style='font-style:italic;'>Edit permissions</a>" : "");
 	}
 
 	$aim = str_replace(" ", "+", $user['aim']);
@@ -215,9 +216,17 @@
 			break;
 	}
 	// AKA
-	if ($user['aka'] && $user['aka'] != $user['name'])
+	if ($user['aka'] && $user['aka'] != $user['name']) {
 		$aka = "<tr><td class='tdbg1' width=150><b>Also known as</td><td class='tdbg2'>".htmlspecialchars($user['aka'])."</td></tr>";
-	else $aka='';
+	} else {
+		$aka = '';
+	}
+	if ($user['group'] == GROUP_BANNED && $user['ban_expire']) {
+		$bantime =  "<tr><td class='tdbg1' width=150><b>Banned until</td><td class='tdbg2'>".printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-ctime())." remaining)</td></tr>";
+	} else {
+		$bantime = "";
+	}
+	//($user['powerlevel']<0 ? ($user['ban_expire'] ? ." (".sprintf("%d",()." days remaining)" : "Never") : "")
 
 	
 	
@@ -231,6 +240,7 @@
 			<tr><td class='tdbgh center' colspan=2>General information</td></tr>
 			<!-- <td class='tdbg1' width=150><b>Username</td>			<td class='tdbg2'><?=$user['name']?><tr> -->
 			<?=$aka?>
+			<?=$bantime?>
 			<tr><td class='tdbg1' width=150><b>Total posts</td>			<td class='tdbg2'><?=$user['posts']?> (<?=$postavg?> per day) <?=$projdate?><br><?=$bar?></td></tr>
 			<tr><td class='tdbg1' width=150><b>Total threads</td>		<td class='tdbg2'><?=$threadsposted?></td></tr>
 			<tr><td class='tdbg1' width=150><b>EXP</td>					<td class='tdbg2'><?=$expstatus?></td></tr>

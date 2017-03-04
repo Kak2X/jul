@@ -28,13 +28,18 @@
 		
 		$thread = filter_int($_GET['thread']);
 		$t = $sql->fetchq("
-			SELECT t.title, t.forum, f.minpower, v.thread fav
+			SELECT t.title, t.forum, v.thread fav
 			FROM threads t
-			INNER JOIN forums f ON t.forum = f.id
-			LEFT JOIN favorites v ON t.id = v.thread AND v.user = {$loguser['id']}
+			INNER JOIN forums    f ON t.forum = f.id
+			LEFT  JOIN favorites v ON t.id    = v.thread AND v.user = {$loguser['id']}
 			WHERE t.id = $thread
 		");
-		if ($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) {
+		
+		if (!$t) {
+			errorpage("You can't favorite a thread that doesn't exist!","index.php",'the board');
+		}
+		$forumperm = get_forum_perm($t['forum'], $loguser['id'], $loguser['group']);
+		if (!has_forum_perm('read', $forumperm)) {
 			errorpage("You can't favorite a thread you don't have access to!","index.php",'the board');
 		}
 
@@ -81,15 +86,16 @@
 		$threadcount = $sql->resultq("SELECT COUNT(*) FROM threads where user = $user");
 	}
 	else if ($id) { # Default case, show forum with id
-		$forum = $sql->fetchq("SELECT id, title, minpower, numthreads, specialscheme, specialtitle, pollstyle FROM forums WHERE id = $id");
+		$forum = $sql->fetchq("SELECT id, title, numthreads, specialscheme, specialtitle, pollstyle FROM forums WHERE id = $id");
 
 		if (!$forum) {
 			trigger_error("Attempted to access invalid forum $id", E_USER_NOTICE);
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 			notAuthorizedError();
 		}
-		elseif ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
-			trigger_error("Attempted to access level-{$forum['minpower']} restricted forum $id (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+		$forumperm = get_forum_perm($forum['id'], $loguser['id'], $loguser['group']);
+		if (!has_forum_perm('read', $forumperm)) {
+			trigger_error("Attempted to access restricted forum $id (".($loguser['id'] ? "user's group: {$grouplist[$loguser['group']]['name']} ({$loguser['group']}); user's name: {$loguser['name']}" : "guest's IP: {$_SERVER['REMOTE_ADDR']}").")", E_USER_NOTICE);
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 			notAuthorizedError();
 		}
@@ -116,13 +122,13 @@
 	
 	
 	$ppp = (isset($_GET['ppp']) ? ((int) $_GET['ppp']) : (($loguser['id']) ? $loguser['postsperpage'] : $config['default-ppp']));
-	$ppp = max(min($ppp, 500), 1);
+	$ppp = numrange($ppp, 1, 500);
 
 	$tpp = (isset($_GET['tpp']) ? ((int) $_GET['tpp']) : (($loguser['id']) ? $loguser['threadsperpage'] : $config['default-tpp']));
-	$tpp = max(min($tpp, 500), 1);
+	$tpp = numrange($tpp, 1, 500);
 
 	$page = filter_int($_GET['page']);
-    $min = $page*$tpp;
+    $min  = $page*$tpp;
 	
 
 	$newthreadbar = $forumlist = '';
@@ -149,7 +155,7 @@
 
 	// Forum page list at the top & bottom
 	$forumpagelinks = '';
-	if($threadcount > $tpp) {
+	if ($threadcount > $tpp) {
 		
 		$query = ($id ? "id=$id" : ($user ? "user=$user" : "fav=1")); // Determine correct mode
 		if (isset($_GET['tpp'])) $query .= "&tpp=$tpp";
@@ -172,59 +178,53 @@
 	if ($id) {
 		
 		// bah
-		$ac = array('0', $id);		// Query
+		if ($id == $miscdata['announcementforum'])
+			$ac = array($miscdata['announcementforum'], "0");		// Query
+		else
+			$ac = array($miscdata['announcementforum'], "$id AND t.announcement = 1");
 		$al = array('A','Forum a');	// Label
+		
+		
+		
+
 		
 		for ($i = 0; $i < 2; ++$i) {
 			
 			$annc = $sql->fetchq("
-				SELECT a.id aid, a.date, a.title atitle, a.forum, $userfields
-				FROM announcements a
-				LEFT JOIN users u ON a.user = u.id
-				WHERE a.forum = {$ac[$i]}
-				ORDER BY date DESC
+				SELECT t.id aid, t.title atitle, t.description adesc, t.firstpostdate date, t.forum, $userfields, r.readdate
+				FROM threads t
+				LEFT JOIN users            u ON t.user = u.id
+				LEFT JOIN announcementread r ON t.forum = r.forum AND r.user = {$loguser['id']}
+				WHERE t.forum = {$ac[$i]}
+				ORDER BY t.firstpostdate DESC
 				LIMIT 1
 			");
 			
 			if($annc) {
-				$userlink = getuserlink($annc);
 				$threadlist .= 
 					"<tr>
-						<td colspan=7 class='tbl tdbgh center fonts'>
+						<td colspan=7 class='tdbgh center fonts'>
 							{$al[$i]}nnouncements
 						</td>
 					</tr>
 					<tr>
 						<td class='tdbg2 center'>
-							". ($loguser['lastannouncement'] < $annc['aid'] && $loguser['id'] ? $statusicons['new'] : "&nbsp;") ."
+							". ($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;") ."
 						</td>
 						<td class='tdbg1' colspan=6>
-							<a href=announcement.php?f={$annc['forum']}>{$annc['atitle']}</a> -- Posted by {$userlink} on ".printdate($annc['date'])."
+							<a href=announcement.php".($i ? "?f={$annc['forum']}" : "").">{$annc['atitle']}</a> -- Posted by ".getuserlink($annc)." on ".printdate($annc['date'])."
 						</td>
 					</tr>";
 			}
 		}
-		/*
-		if($annc = $sql->fetchq("SELECT user id,date,announcements.title,name,sex,powerlevel FROM announcements,users WHERE forum=$id AND user=users.id ORDER BY date DESC LIMIT 1")) {
-			$userlink = getuserlink($annc);
-			$threadlist .= "<tr>
-				<td class='tdbgh fonts center' colspan=7>Forum announcements</td>
-			</tr><tr>
-				<td class='tdbg2 center'>&nbsp;</td>
-				<td class='tdbg1' colspan=6><a href=announcement.php?f=$id>$annc[title]</a> -- Posted by {$userlink} on ".date($dateformat,$annc[date]+$tzoff)."</td>
-			</tr>";
-		}
-		*/
     }
-    // Forum names
-    else
-		$forumnames = $sql->getresultsbykey("SELECT id, title FROM forums WHERE !minpower OR minpower <= {$loguser['powerlevel']}");
-
+    else {
+		// Used to display "In <forum name>" under the thread title when viewing threads by an user
+		$forumnames = $sql->getresultsbykey("SELECT id, title FROM forums");
+	}
 	
 	
 	// Get threads
-	
-	
 	if ($loguser['id']) {
 		$q_trval 	= ", r.read tread, r.time treadtime ";
 		$q_trjoin 	= "LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']} ";
@@ -233,18 +233,21 @@
 	}
 	
 	// these queries used to be full of unreadable fake explicit joins and asghfghbsafsadasahsgsahghassas
-	if($fav)
+	if ($fav) {
 		$threads = $sql->query("
-			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid,
-					u1.name      , u1.sex     , u1.powerlevel     , u1.aka     , u1.birthday    , u1.namecolor   ,
-					u2.name name2, u2.sex sex2, u2.powerlevel pwr2, u2.aka aka2, u2.birthday bd2, u2.namecolor nc2
+			SELECT 	t.*, f.pollstyle, f.id forumid,
+					u1.name, u1.sex, u1.`group`, u1.aka, u1.birthday, u1.namecolor,
+					u2.name, u2.sex, u2.`group`, u2.aka, u2.birthday, u2.namecolor,
+					pf.group{$loguser['group']} forumperm, pu.permset userperm
 					$q_trval
 			
 			FROM threads t
-			LEFT JOIN users      u1 ON t.user       =  u1.id
-			LEFT JOIN users      u2 ON t.lastposter =  u2.id
-			LEFT JOIN forums      f ON t.forum      =   f.id
-			LEFT JOIN favorites fav ON t.id         = fav.thread
+			LEFT JOIN users           u1 ON t.user       =  u1.id
+			LEFT JOIN users           u2 ON t.lastposter =  u2.id
+			LEFT JOIN forums           f ON t.forum      =   f.id
+			LEFT JOIN favorites      fav ON t.id         = fav.thread
+			LEFT JOIN perm_forums     pf ON f.id         = pf.id
+			LEFT JOIN perm_forumusers pu ON f.id         = pu.forum AND pu.user = {$loguser['id']}
 			$q_trjoin
 			
 			WHERE fav.user = {$user}
@@ -252,17 +255,20 @@
 					
 			LIMIT $min,$tpp			
 		");
-
-	else if ($user)
+	}
+	else if ($user) {
 		$threads = $sql->queryp("
-			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid,
-					:u1name name,  :u1sex sex , :u1powerlevel powerlevel, :u1aka aka , :u1birthday birthday, :u1namecolor namecolor,
-					 u.name name2,  u.sex sex2,  u.powerlevel       pwr2,  u.aka aka2,  u.birthday      bd2,  u.namecolor nc2
+			SELECT 	t.*, f.pollstyle, f.id forumid,
+					:name name, :sex sex, :group `group`, :aka aka, :birthday birthday, :namecolor namecolor,
+					    u.name,    u.sex,      u.`group`,    u.aka,         u.birthday,          u.namecolor,
+					pf.group{$loguser['group']} forumperm, pu.permset userperm
 					$q_trval
 			
 			FROM threads t
-			LEFT JOIN users  u ON t.lastposter = u.id
-			LEFT JOIN forums f ON t.forum      = f.id
+			LEFT JOIN users            u ON t.lastposter = u.id
+			LEFT JOIN forums           f ON t.forum      = f.id
+			LEFT JOIN perm_forums     pf ON f.id         = pf.id
+			LEFT JOIN perm_forumusers pu ON f.id         = pu.forum AND pu.user = {$loguser['id']}
 			$q_trjoin
 			
 			WHERE t.user = {$user}
@@ -270,24 +276,25 @@
 					
 			LIMIT $min,$tpp",
 			[
-				'u1name'		=> $userdata['name'],		
-				'u1sex'			=> $userdata['sex'],
-				'u1powerlevel'	=> $userdata['powerlevel'],
-				'u1aka'			=> $userdata['aka'],
-				'u1birthday'	=> $userdata['birthday'],
-				'u1namecolor'	=> $userdata['namecolor']
+				'name'       => $userdata['name'],		
+				'sex'        => $userdata['sex'],
+				'group'      => $userdata['group'],
+				'aka'        => $userdata['aka'],
+				'birthday'   => $userdata['birthday'],
+				'namecolor'  => $userdata['namecolor']
 			]
 		);
-	else
+	}
+	else {
 		$threads = $sql->query("
 			SELECT 	t.*,
-					u1.name      , u1.sex     , u1.powerlevel     , u1.aka     , u1.birthday    , u1.namecolor   ,
-					u2.name name2, u2.sex sex2, u2.powerlevel pwr2, u2.aka aka2, u2.birthday bd2, u2.namecolor nc2
+					u1.name, u1.sex, u1.`group`, u1.aka, u1.birthday, u1.namecolor,
+					u2.name, u2.sex, u2.`group`, u2.aka, u2.birthday, u2.namecolor
 					$q_trval
 			
 			FROM threads t
-			LEFT JOIN users      u1 ON t.user       =  u1.id
-			LEFT JOIN users      u2 ON t.lastposter =  u2.id
+			LEFT JOIN users u1 ON t.user       =  u1.id
+			LEFT JOIN users u2 ON t.lastposter =  u2.id
 			$q_trjoin
 			
 			WHERE t.forum = {$id}
@@ -295,6 +302,7 @@
 					
 			LIMIT $min,$tpp			
 		");
+	}
 
     $threadlist .= "<tr>
 		<td class='tdbgh center' width=30></td>
@@ -310,19 +318,19 @@
 	if ($sql->num_rows($threads) <= 0) {
 		$threadlist .= 
 			"<tr>
-				<td class='tdbg1 center' style='font-style:italic;' colspan=7>
+				<td class='tdbg1 center' style='font-style:italic' colspan=7>
 					There are no threads to display.
 				</td>
 			</tr>";
-	} else for($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_ASSOC); ++$i) {
+	} else for($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
 		
 		// Sticky separator
 		if($sticklast && !$thread['sticky'])
 			$threadlist .= "<tr><td class='tdbgh center' colspan=7><img src='images/_.gif' height=6 width=6>";
 		$sticklast = $thread['sticky'];
 
-		// Always check the powerlevel if we're not showing a forum id
-		if(!$id && $thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) {
+		// Always check the group if we're not showing a forum id
+		if(!$id && !has_forum_perm('read', ['forumperm' => $thread['forumperm'], 'userperm' => $thread['userperm']])) {
 			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
 			continue;
 		}
@@ -380,19 +388,22 @@
 			Secondary thread status icon
 		*/
 		$sicon			= "";
+		if ($thread['announcement'] && (!$id || ($id == $miscdata['announcementforum']))) {
+			$sicon	.= "ann";
+		}
 		if ($thread['sticky'])	{
 			$threadtitle	= "<i>". $threadtitle ."</i>";
 			$sicon	.= "sticky";
 		}
 		
 		if ($thread['poll'])	$sicon	.= "poll";
-		if ($sicon)
+		if ($sicon) {
 			$threadtitle	= $statusicons[$sicon] ." ". $threadtitle;
-
+		}
 		// Show forum name if not in a forum
-		if (!$id)
+		if (!$id) {
 			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>".$forumnames[$thread['forumid']]."</a>";
-
+		}
 		// Extra pages
 		if($thread['replies'] >= $ppp) {
 			$pagelinks='';
@@ -426,20 +437,8 @@
 
 		if(!$thread['icon']) $posticon='&nbsp;';
 		
-		
-		// Userlinks
-		$lastposter_arr = array (
-			'id'			=> $thread['lastposter'],
-			'name'			=> $thread['name2'],
-			'sex'			=> $thread['sex2'],
-			'powerlevel'	=> $thread['pwr2'],
-			'aka'			=> $thread['aka2'],
-			'birthday'		=> $thread['bd2'],
-			'namecolor'		=> $thread['nc2']
-		);
-		
-		$threadauthor 	= getuserlink($thread, $thread['user']);
-		$lastposter 	= getuserlink($lastposter_arr);
+		$threadauthor 	= getuserlink(array_column_by_key($thread, 0), $thread['user']);
+		$lastposter 	= getuserlink(array_column_by_key($thread, 1), $thread['lastposter']);
 		
 		$threadlist .= 
 			"<tr>

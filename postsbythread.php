@@ -14,7 +14,7 @@
 
 	$_GET['posttime'] = isset($_GET['posttime']) ? (int) $_GET['posttime'] : 86400;
 	
-	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // All posts
+	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // 30 days max
 		$_GET['posttime'] = 2592000;
 
 	if ($_GET['posttime']) {
@@ -26,16 +26,23 @@
 	
 	if (empty($qstrings)) $qwhere = '1';
 	else $qwhere = implode(' AND ', $qstrings);	
-
-	$posters = $sql->query(
-		"SELECT t.id, t.replies, t.title, t.forum, f.minpower, f.title ftitle, COUNT(p.id) cnt ".
-		"FROM threads t ".
-		"LEFT JOIN forums  f ON f.id = t.forum ".
-		"LEFT JOIN posts   p ON t.id = p.thread ".
-		"WHERE {$qwhere} AND ($ismod OR !ISNULL(f.id)) ".
-		"GROUP BY t.id ".
-		"ORDER BY cnt DESC, t.firstpostdate DESC ".
-		"LIMIT 1000");
+	
+	$posters = $sql->query("
+		SELECT 	t.id, t.replies, t.title, t.forum, 
+				f.title ftitle, COUNT(p.id) cnt, 
+				pf.group{$loguser['group']} forumperm, pu.permset userperm
+		FROM threads t 
+		
+		LEFT JOIN forums           f ON f.id = t.forum 
+		LEFT JOIN posts            p ON t.id = p.thread 
+		LEFT JOIN perm_forums     pf ON f.id = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id = pu.forum AND pu.user = {$loguser['id']}
+		
+		WHERE {$qwhere} AND (".has_perm('forum-admin')." OR !ISNULL(f.id)) 
+		GROUP BY t.id 
+		ORDER BY cnt DESC, t.firstpostdate DESC 
+		LIMIT 1000
+	");
 
 	pageheader();
 
@@ -61,7 +68,7 @@
 
 	for ($i = 1; $t=$sql->fetch($posters); ++$i) {
 		
-		if ($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) {
+		if (!has_forum_perm('read', $t)) {
 			$forum  = '(restricted forum)';
 			$thread = '(private thread)';
 		} else {

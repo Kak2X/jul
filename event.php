@@ -12,17 +12,17 @@
 	if ($banned) {
 		errorpage("You are banned and cannot create or edit events.",'calendar.php', 'return to the calendar');
 	}
-	//if (!$_GET['id']) {
-	//	errorpage("No event ID specified.",'calendar.php', 'return to the calendar');
-	//}
-
+	if (!has_perm('edit-own-events')) {
+		errorpage("You aren't allowed to create or edit events.",'calendar.php', 'return to the calendar');
+	}
+	
 	// Editing an event?
 	if ($_GET['id']) {
 		$event     = $sql->fetchq("SELECT * FROM events WHERE id = {$_GET['id']}");
 		if (!$event) {
 			errorpage("Event ID #{$_GET['id']} doesn't exist.",'calendar.php', 'return to the calendar');
 		}
-		if (!$isadmin && $event['user'] != $loguser['id']) {
+		if (!has_perm('admin-actions') && $event['user'] != $loguser['id']) {
 			errorpage("This isn't your event.",'calendar.php', 'return to the calendar');
 		}
 	} else {

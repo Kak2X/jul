@@ -16,6 +16,7 @@
 	
 	// View full event ID
 	$_GET['event'] = filter_int($_GET['event']);
+	$isadmin = has_perm('admin-actions');
 	if ($_GET['event']) {
 		// An admin can see all events regardless of privacy setting
 		$eventdata = $sql->fetchq("
@@ -75,8 +76,9 @@
 	<table style="width: 100%">
 		<tr>
 			<td class='font'><a href="index.php"><?=$config['board-name']?></a> - Calendar</td>
-			<td class='font right'><a href="event.php">New event</a></td>
+			<?=($loguser['id'] ? "<td class='font right'><a href='event.php'>New event</a></td>" : "")?>
 		</tr>
+	</table>
 	<table class='table'>
 	<?php
 
@@ -95,7 +97,7 @@
 				</table>
 			</td>
 		</tr>
-		<tr><td class='tdbg1 center' colspan=7>".dofilters($eventdata['text'])."</td></tr>";
+		<tr><td class='tdbg1 center' colspan=7>".doreplace2(dofilters($eventdata['text']))."</td></tr>";
 	}
 
 	?>

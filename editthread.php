@@ -1,32 +1,27 @@
 <?php
 	require 'lib/function.php';
 	
-
-	//$trashid = $config['trash-forum'];
-	
 	$id 				= filter_int($_GET['id']);
 	$_GET['action'] 	= filter_string($_GET['action']);
 	$_POST['action'] 	= filter_string($_POST['action']);
 
 	$thread  = $sql->fetchq("
-		SELECT 	t.forum, t.closed, t.title, t.description, t.icon, t.replies, t.lastpostdate, t.lastposter, t.sticky, t.user,
-				f.minpower, f.id valid, f.specialscheme, f.specialtitle
+		SELECT 	t.forum, t.closed, t.title, t.description, t.icon, t.replies, t.lastpostdate, t.lastposter, t.sticky, t.user, t.announcement,
+				f.id valid, f.specialscheme, f.specialtitle,
+				pf.group{$loguser['group']} forumperm, pu.permset userperm
 		FROM threads t
-		LEFT JOIN forums f ON t.forum = f.id
+		LEFT JOIN forums          f  ON t.forum = f.id
+		LEFT JOIN perm_forums     pf ON f.id    = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 		WHERE t.id = $id
 	");
 	
-	
-	// If the thread is in an invalid forum, don't bother checking if we're a local mod
-	if ($thread && $thread['valid'] && !$ismod)
-		$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$thread['forum']} and user = {$loguser['id']}");
+	$ismod = ismod($thread);
 	
 	if (!$thread || (!$ismod && !$thread['valid']))
 		$message = "This thread doesn't exist."; // or is in an invalid forum
-	else if ($thread['minpower'] && $thread['minpower'] > $loguser['powerlevel'])
+	else if (!has_forum_perm('read', $thread))
 		$message = "This thread is in a restricted forum.";
-	//else if (!$ismod && (($_GET['action'] != 'rename') || ($loguser['id'] != $thread['user'])))
-	//	$message = "You aren't allowed to edit this thread.";
 	else
 		$message = NULL;
 	
@@ -56,23 +51,27 @@
 		if (isset($_POST['dotrash'])) {
 			
 			check_token($_POST['auth'], 18);
-			
-			$sql->beginTransaction();
-			$queryresults = array();
-			
-			$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$config['trash-forum']} WHERE id='$id'", false, $queryresults);
-			$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id");
-			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
-			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$config['trash-forum']} ORDER BY lastpostdate DESC LIMIT 1");
-			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
-			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$config['trash-forum']}", array($t2['lastpostdate'],$t2['lastposter']), $queryresults);
+			$trashforum = $sql->resultq("SELECT trashforum FROM misc");
+			if ($trashforum) {
+				$sql->beginTransaction();
+				$queryresults = array();
+				
+				$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$trashforum} WHERE id='$id'", false, $queryresults);
+				$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id");
+				$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
+				$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$trashforum} ORDER BY lastpostdate DESC LIMIT 1");
+				$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
+				$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$trashforum}", array($t2['lastpostdate'],$t2['lastposter']), $queryresults);
 
-			
-			// Yeah whatever
-			if ($sql->checkTransaction($queryresults))
-				errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
-			else
-				errorpage("An error occurred while trashing the thread.");
+				
+				// Yeah whatever
+				if ($sql->checkTransaction($queryresults))
+					errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
+				else
+					errorpage("An error occurred while trashing the thread.");
+			} else {
+				errorpage("Can't trash the thread since no forum is set to be the trash.");
+			}
 			
 			
 		
@@ -94,7 +93,7 @@
 		</table>
 		<?php
 	}
-	else if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
+	else if (has_perm('sysadmin-actions') && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
 		
 		if (filter_bool($_POST['dodelete'])) {
 			
@@ -171,16 +170,18 @@
 		$title = filter_string($_POST['subject'], true);
 		if (!$title) errorpage("Couldn't edit the thread. You haven't entered a subject.");
 		
-		
-		
-		if ($ismod) {
-			$forummove 	= filter_int($_POST['forummove']);
-			$closed 	= filter_int($_POST['closed']);
-			$sticky 	= filter_int($_POST['sticky']);
+		// Check if we can actually read the forum we're trying to move this thread to
+		$forummove 	= filter_int($_POST['forummove']);
+		$forum 		= get_forum_perm($forummove, $loguser['id'], $loguser['group']);
+		if ($forum && has_forum_perm('mod', $forum)) {
+			$closed       = filter_int($_POST['closed']);
+			$sticky       = filter_int($_POST['sticky']);
+			$announcement = filter_int($_POST['announcement']);
 		} else { // Nice try, but no
-			$forummove	= $thread['forum'];
-			$closed		= $thread['closed'];
-			$sticky		= $thread['sticky'];	
+			$forummove    = $thread['forum'];
+			$closed	      = $thread['closed'];
+			$sticky	      = $thread['sticky'];
+			$announcement = $thread['announcement'];
 		}
 		
 		
@@ -189,14 +190,15 @@
 		
 		$c = array();
 		
-		$sql->queryp("UPDATE `threads` SET `title` = :title, `description` = :desc, `forum` = :forum, `closed` = :closed, `icon` = :icon, `sticky` = :sticky WHERE `id` = $id",
+		$sql->queryp("UPDATE `threads` SET ".$sql->setplaceholders("title","description","forum","closed","icon","sticky","announcement")." WHERE `id` = $id",
 		[
-			'title'		=> htmlspecialchars($title),
-			'desc'		=> xssfilters(filter_string($_POST['description'], true)),
-			'icon'		=> $icon,
-			'forum'		=> $forummove,
-			'closed'	=> $closed,
-			'sticky'	=> $sticky
+			'title'        => htmlspecialchars($title),
+			'description'  => xssfilters(filter_string($_POST['description'], true)),
+			'icon'         => $icon,
+			'forum'        => $forummove,
+			'closed'       => $closed,
+			'sticky'       => $sticky,
+			'announcement' => $announcement
 		], $c);
 		
 		if($forummove != $thread['forum']) {
@@ -217,11 +219,13 @@
 		
 		$check1[$thread['closed']]='checked=1';
 		$check2[$thread['sticky']]='checked=1';
+		$check3[$thread['announcement']]='checked=1';
+		
 		
 		$forummovelist = doforumlist($thread['forum'], 'forummove'); // Return a pretty forum list
 		
 		
-		if ($sysadmin && $config['allow-thread-deletion']) {
+		if (has_perm('sysadmin-actions') && $config['allow-thread-deletion']) {
 			$delthread = " <INPUT type=checkbox class=radio name=deletethread value=1> Delete thread";
 		} else
 			$delthread = "";
@@ -269,7 +273,7 @@
 		if ($ismod) {
 			?>
 				<tr>
-					<td class='tdbg1 center' rowspan=2>&nbsp;</td>
+					<td class='tdbg1 center' rowspan=3>&nbsp;</td>
 					<td class='tdbg2'>
 						<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
 						<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>>Closed
@@ -279,6 +283,12 @@
 					<td class='tdbg2'>
 						<input type=radio class='radio' name=sticky value=0 <?=filter_string($check2[0])?>> Normal&nbsp; &nbsp;
 						<input type=radio class='radio' name=sticky value=1 <?=filter_string($check2[1])?>>Sticky
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg2'>
+						<input type=radio class='radio' name=announcement value=0 <?=filter_string($check3[0])?>> Normal Thread&nbsp; &nbsp;
+						<input type=radio class='radio' name=announcement value=1 <?=filter_string($check3[1])?>>Forum Announcement
 					</td>
 				</tr>
 				

@@ -16,10 +16,11 @@
 
 
 	if ($_GET['forum']) {
-		$forum = $sql->fetchq("SELECT title, minpower FROM forums WHERE id = {$_GET['forum']}");
-		if (!$forum || ($forum['minpower'] && $loguser['powerlevel'] < $forum['minpower'])) {
+		$forumperm = get_forum_perm($_GET['forum'], $loguser['id'], $loguser['group']);
+		if (!is_array($forumperm) || !has_forum_perm('read', $forumperm)) {
 			errorpage("You don't have access to view posts in this forum.", 'index.php', 'return to the board');
 		}
+		$forum['title'] = $sql->resultq("SELECT title FROM forums WHERE id = {$_GET['forum']}");
 		$where 		= "in ".htmlspecialchars($forum['title']);
 		$forumquery = " AND t.forum = {$_GET['forum']}";
 	} else {
@@ -38,21 +39,24 @@
  	if (!$_GET['ppp'])  $_GET['ppp'] = 50;
 	$min = $_GET['ppp'] * $_GET['page'];
 
-	$posts = $sql->query(
-		 "SELECT p.id, p.thread, p.ip, p.date, p.num, t.title, f.minpower "
-		."FROM posts p "
-		."LEFT JOIN threads t ON thread  = t.id "
-		."LEFT JOIN forums  f ON t.forum = f.id "
-		."WHERE p.user = {$_GET['id']}{$forumquery}{$timequery} AND ($ismod OR !ISNULL(f.id)) "
-		."ORDER BY p.id DESC "
-		."LIMIT $min,{$_GET['ppp']}");
+	$posts = $sql->query("
+		SELECT p.id, p.thread, p.ip, p.date, p.num, t.title, pf.group{$loguser['group']} forumperm, pu.permset userperm
+		FROM posts p 
+		LEFT JOIN threads          t ON p.thread = t.id 
+		LEFT JOIN forums           f ON t.forum  = f.id 
+		LEFT JOIN perm_forums     pf ON f.id     = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id     = pu.forum AND pu.user = {$loguser['id']}
+		WHERE p.user = {$_GET['id']}{$forumquery}{$timequery} AND (".has_perm('forum-admin')." OR !ISNULL(f.id)) 
+		ORDER BY p.id DESC 
+		LIMIT $min,{$_GET['ppp']}
+	");
 		
 		
 	$posttotal = $sql->resultq("
 		SELECT COUNT(*) FROM posts p 
 		LEFT JOIN threads t ON thread  = t.id
 		LEFT JOIN forums  f ON t.forum = f.id
-		WHERE p.user = {$_GET['id']}{$forumquery}{$timequery} AND ($ismod OR !ISNULL(f.id))
+		WHERE p.user = {$_GET['id']}{$forumquery}{$timequery} AND (".has_perm('forum-admin')." OR !ISNULL(f.id))
 	");
 
 	// No scrollable cursors in PDO+MySQL
@@ -75,6 +79,7 @@
 	
 	pageheader("Listing posts by $user");
 	
+	$isadmin = has_perm('admin-actions');
 ?>
 <span class="font">Posts by <?=$user?> <?=$where?><?=$when?>: (<?=$posttotal?> posts found)</span>
 <?php
@@ -92,7 +97,7 @@
 
 	while(($post = $sql->fetch($posts)) && $_GET['ppp']--) {
 		
-		if ($post['minpower'] && $post['minpower'] > $loguser['powerlevel'])
+		if (!has_forum_perm('read', $post))
 			$threadlink = '(restricted)';
 		else
 			$threadlink = "<a href='thread.php?pid={$post['id']}#{$post['id']}'>".htmlspecialchars($post['title'])."</a>";

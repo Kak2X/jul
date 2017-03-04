@@ -28,7 +28,7 @@
 		SELECT $userfields, COUNT(*) cnt 
 		FROM users AS u
 		INNER JOIN posts p ON u.id = p.user
-		WHERE p.date >= $dd AND p.date < $dd2 AND u.powerlevel >= 0
+		WHERE p.date >= $dd AND p.date < $dd2 AND u.group NOT IN(".GROUP_BANNED.",".GROUP_PERMABANNED.")
 		GROUP BY u.id 
 		ORDER BY cnt DESC
 	");

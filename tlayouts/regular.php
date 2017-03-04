@@ -1,7 +1,7 @@
 <?php
 
 function userfields(){
-	return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
+	return 'u.posts,u.sex,u.`group`,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
 }
 
 
@@ -130,7 +130,7 @@ function postcode($post,$set){
 		
 		return 
 		"<div style='position:relative'>
-			<table class='table contbar{$post['uid']}{$csskey}'>
+			<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
 					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
 						{$noobspan}{$set['userlink']}</span>

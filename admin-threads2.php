@@ -4,7 +4,7 @@
 
 	pageheader("Thread Repair System II");
 
-	admincheck();
+	admincheck('forum-admin');
   
 	print adminlinkbar("admin-threads2.php");
 

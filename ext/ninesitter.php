@@ -24,11 +24,15 @@
 
 	if ($ta) {
 
-		$query		= "SELECT `id`, `forum`, `title` FROM `threads` WHERE `id` IN (". implode(", ", $ta) .")";
+		$query		= 
+			"SELECT t.`id`, t.`forum`, t.`title`, pf.`group".GROUP_NORMAL."` 
+			FROM `threads` t 
+			LEFT JOIN perm_forums pf ON t.`forum` = pf.`id`
+			WHERE t.`id` IN (". implode(", ", $ta) .")";
 		$threads	= $sql->query($query);
 		while ($thread = $sql->fetch($threads)) {
-			$minpower	= $sql->resultq("SELECT `minpower` FROM `forums` WHERE `id` = '". $thread['forum'] ."'");
-			if ($minpower <= 0) {
+			//$minpower	= $sql->resultq("SELECT `minpower` FROM `forums` WHERE `id` = '". $thread['forum'] ."'");
+			if (has_forum_perm('read', $thread)) {
 
 				$dat	= $sql->query("SELECT `p`.`id`, `p`.`date`, `u`.`name` FROM `posts` `p` LEFT JOIN `users` `u` ON `u`.`id` = `p`.`user` WHERE `p`.`thread` = '". $thread['id'] ."' ORDER BY `p`.`date` DESC LIMIT 5");// or print mysql_error();
 

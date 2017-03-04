@@ -73,13 +73,17 @@
 		$page		= filter_int($_GET['page']);
 	}
 
-	define('E_BADPOSTS', -1);
-	define('E_BADFORUM', -2);
+	const E_BADPOSTS = -1;
+	const E_BADFORUM = -2;
 	$thread_error = 0;
 	$forumid = 0;
 
 	$specialscheme = $specialtitle = NULL;
 	$thread	= array();
+	
+	$isadmin = has_perm('forum-admin');
+	// set as global mod perm until we're sure the thread isn't invalid
+	$ismod = has_perm('all-forum-access');
 
 	// fuck brace overkill
 	if ($id) do {
@@ -121,13 +125,19 @@
 			$forum['title'] = " --- BAD FORUM ID --- ";
 			break;
 		}
-
-		if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
-			trigger_error("Attempted to access thread $id in level-{$forum['minpower']} restricted forum $forumid (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+		
+		$forumperm = get_forum_perm($forumid, $loguser['id'], $loguser['group']);
+		
+		if (!has_forum_perm('read', $forumperm)) {
+			trigger_error("Attempted to access thread $id in restricted forum $forumid (".($loguser['id'] ? "user's group: {$loguser['group']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 			notAuthorizedError();
 		}
-
+		
+		if (!$ismod) {
+			$ismod = has_forum_perm('mod', $forumperm);
+		}
+		
 		$specialscheme = $forum['specialscheme'];
 		$specialtitle  = $forum['specialtitle'];
 		
@@ -136,7 +146,7 @@
 		if ($loguser['id']) {
 			
 			// Unread posts count
-			$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forumid'");
+			$readdate = (int) $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forumid'");
 			
 			if ($thread['lastpostdate'] > $readdate)
 				$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
@@ -205,11 +215,12 @@
 	pageheader($windowtitle, $specialscheme, $specialtitle);
 
 	//$fonline = "";
-	if ($id && !$thread_error) {
+	/*if ($id && !$thread_error) {
 		//$fonline = fonlineusers($forumid);
 		if ($sql->resultq("SELECT 1 FROM forummods WHERE forum='$forumid' and user = '{$loguser['id']}'"))
 			$ismod = true;
 	}	
+	*/
 	
 	// Moderator options
 	$modfeats = '';
@@ -230,7 +241,8 @@
 			else
 				$linklist[] = "$link=qunclose'>Open</a>";
 
-			if ($thread['forum'] != $config['trash-forum'])
+			$trashforum = $sql->resultq("SELECT trashforum FROM misc");
+			if ($trashforum && $thread['forum'] != $trashforum)
 				$linklist[] = "$link=trashthread'>Trash</a>";
 
 			//$linklist[] = "$link=delete'>Delete</a>";
@@ -238,7 +250,7 @@
 			$modfeats = "<tr><td class='tdbgc fonts' colspan=2>Moderating options: $linklist -- $fulledit</td></tr>";
 		}
 		else if ($loguser['id'] == $thread['user']) {
-			// Allow users to rename their own thread
+			// Allow users to edit their own thread
 			$modfeats = "<tr><td class='tdbgc fonts' colspan=2>Thread options: <a href='editthread.php?id=$id'>Edit thread</a></td></tr>";
 		}
 	}
@@ -459,6 +471,19 @@
 		LIMIT $min,$ppp
 	");
 	
+	if (!$id) {
+		$forumid = -1; // Special value to select all filters regardless of forum.
+		// Precache everything
+		$idcache = $sql->fetchq("SELECT DISTINCT thread FROM posts WHERE {$searchon}", PDO::FETCH_COLUMN, false, true);
+		$threadcache = $sql->fetchq("SELECT t.id tmp, t.id, t.title, t.forum FROM threads t WHERE t.id IN (".implode(",", $idcache).")", PDO::FETCH_UNIQUE, false, true);
+		$permcache  = $sql->fetchq("
+			SELECT f.id, pf.group{$loguser['group']} forumperm, pu.permset userperm
+			FROM forums f
+			LEFT JOIN perm_forums     pf ON f.id    = pf.id
+			LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
+			WHERE f.id IN (".implode(",", array_unique(array_column($threadcache, 'forum'))).")
+		", PDO::FETCH_UNIQUE, false, true);
+	}	
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		
 		// Post controls
@@ -471,10 +496,12 @@
 			$quote	.= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
 
 		$edit = '';
-		if ($ismod || (!$banned && $post['user'] == $loguser['id'])) {
+		if ($ismod || ($post['user'] == $loguser['id'] && (has_perm('edit-own-posts') || (!$id && has_forum_perm('edit', $permcache))))) {
         	if ($ismod || ($id && !$thread['closed']))
 				$edit = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
-			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(35)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
+			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+			if ($ismod)
+				$edit .= " | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(35)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
 			
 		}
 
@@ -482,19 +509,11 @@
 			$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 
 
-		$pforum		= null;
-		$pthread	= null;
-		if (!$id) {
-			// Enable caching for these
-			$pthread = $sql->fetchq("SELECT id,title,forum FROM threads WHERE id={$post['thread']}", PDO::FETCH_BOTH, true);
-			$pforum  = $sql->resultq("SELECT minpower FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, true);
-		}
-		
 		$post['act'] = filter_int($act[$post['user']]);
 
-		if (!$pforum || $pforum <= $loguser['powerlevel'])
-			$postlist .= threadpost($post, $bg, $pthread);
-		else
+		if ($id || has_forum_perm('read', $permcache[$threadcache[$post['thread']]['forum']])) {
+			$postlist .= threadpost($post, $bg, $forumid, filter_int($threadcache[$post['thread']]));
+		} else {
 			$postlist .=
 				"<table class='table'>
 					<tr>
@@ -505,6 +524,7 @@
 						</td>
 					</tr>
 				</table>";
+		}
 	}
 
 	// Strip _GET variables that can set the page number

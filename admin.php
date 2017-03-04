@@ -4,11 +4,12 @@
 	$windowtitle	= "Admin Cruft -- {$config['board-name']}";
 	pageheader($windowtitle);
 	
-	if (!$isadmin) {
+	if (!has_perm('admin-actions')) {
 		errorpage("Uh oh, you are not the admin go away.");
 	}
 	
-	$misc	= $sql -> fetchq("SELECT * FROM `misc`");
+	$sysadmin = has_perm('sysadmin-actions');
+	$misc     = $sql->fetchq("SELECT * FROM `misc`");
 	
 	if (isset($_POST['submit'])) {
 		// Token check
@@ -29,10 +30,9 @@
 		}
 		
 		// The rest
-		$qadd = "views=:views,hotcount=:hotcount,maxpostsday=:maxpostsday,maxpostshour=:maxpostshour,maxpostsdaydate=:maxpostsdaydate,".
-				"maxpostshourdate=:maxpostshourdate,maxusers=:maxusers,maxusersdate=:maxusersdate,maxuserstext=:maxuserstext,".
-				"disable=:disable,donations=:donations,ads=:ads,valkyrie=:valkyrie,scheme=:scheme,specialtitle=:specialtitle,regmode=:regmode,regcode=:regcode";		
-		$sql->queryp("UPDATE misc SET $qadd",
+		$sql->queryp("UPDATE misc SET ".$sql->setplaceholders(
+			"views","hotcount","maxpostsday","maxpostshour","maxpostsdaydate","maxpostshourdate","maxusers","maxusersdate",
+			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode","announcementforum","trashforum"),
 			[
 				'views'				=> filter_int($_POST['views']),
 				'hotcount'			=> filter_int($_POST['hotcount']),
@@ -51,7 +51,9 @@
 				'scheme' 			=> $scheme,
 				'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 				'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
-				'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode'])
+				'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
+				'announcementforum' => filter_int($_POST['announcementforum']),
+				'trashforum' 		=> filter_int($_POST['trashforum']),
 			]);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
@@ -70,9 +72,8 @@
 		<tr><td class='tdbgh center'><b>Panel de Admin<br></td></tr>
 		<tr><td class='tdbg1 center'>
 			&nbsp;<br>
-			<b>PRO TIP</b><br>
-			<br>
-			Don't bother changing disabled options - it won't work.
+			There are a few features you can use. Select one from above.<br>
+			Alternatively you can change some general board options in the panel below.
 			<br>&nbsp;
 		</td></tr>
 	</table>
@@ -104,6 +105,14 @@
 		<tr><td class='tdbg1 center' width='200'><b>Registration code</b></td>
 			<td class='tdbg2'><input type='text' name='regcode' value="<?=htmlspecialchars($misc['regcode'])?>" <?=$sysset?>></td>
 		</tr>
+		
+		<tr><td class='tdbg1 center' width='200'><b>Announcement forum</b></td>
+			<td class='tdbg2'><?=doforumList($misc['announcementforum'], 'announcementforum', 'None')?></td>
+		</tr>
+		<tr><td class='tdbg1 center' width='200'><b>Trash forum</b></td>
+			<td class='tdbg2'><?=doforumList($misc['trashforum'], 'trashforum', 'None')?></td>
+		</tr>
+		
 		
 		<tr><td class='tdbgc center' colspan=2>Appareance</td></tr>
 		<tr>

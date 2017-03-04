@@ -6,6 +6,7 @@
 
 	if (!$_GET['set']) $_GET['set'] = -1;
 	
+	$allranks = has_perm('show-all-ranks'); // This sure needed its own permission
 	//$set 		= (($_GET['set']) ? (int) $_GET['set'] : -1);
 	//$showall 	= (($_GET['showall']) ? 1 : 0);
 
@@ -94,7 +95,7 @@
 		if ($inactive) 		$userlisting .= ($userlisting?', ':'')."$inactive inactive";
 		if (!$userlisting) 	$userlisting = '&nbsp;';
 
-		if ($userlisting != '&nbsp;' || $rank['num'] <= $loguser['posts'] || $ismod) {
+		if ($userlisting != '&nbsp;' || ($loguser['id'] && $rank['num'] <= $loguser['posts']) || $allranks) {
 ?>	<tr>
 		<td class='tdbg2 fonts' width=200><?=$rank['text']?></td>
 		<td class='tdbg1 center' width=60><?=$rank['num']?></td>

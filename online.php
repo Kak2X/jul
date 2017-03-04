@@ -1,5 +1,11 @@
 <?php
 	require 'lib/function.php';
+	
+	// Thank you almighty god AlbertoCML
+	if (!has_perm('view-online-page')) {
+		xk_ircsend("1|". ($loguser['id'] ? xk(5) . $loguser['name'] . xk(7)." (" : "A guest (with ") ."IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .") tried to view online.php at ". date("Y-m-d h:i:s"));
+		errorpage("Sorry, but this page is experiencing techinical difficulties.", 'index.php', 'the index');
+	}
 
 	$windowtitle = "{$config['board-name']} -- Online users";
 
@@ -22,7 +28,7 @@
 	if (!$time) $time = 300;
 
 	// FOR THE LOVE OF GOD XKEEPER JUST GIVE ME ~NUKE ACCESS
-	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 /* || $loguser['id'] == 5 || $loguser['id'] == 2100*/);
+	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 || has_perm('logs-banner'));
 
 	if ($banorama && filter_string($_GET['banip'])) {
 		check_token($_POST['auth'], 45, $_GET['banip']);
@@ -42,8 +48,9 @@
 
 	pageheader($windowtitle);
 	
-	// (this disabled the IP sorting, for whatever it's worth)
-	//$sort	= filter_bool($_GET['sort']); 
+	$viewbpt = has_perm('view-bpt-info');
+	$isadmin = has_perm('admin-actions');
+	
 	$sort = filter_string($_GET['sort']);
 	if ($sort == 'IP' && $isadmin) $ipsort = true;	// Just check now and don't bother for the rest
 	$lnk 	= ($sort ? "?sort=1&" : '?');
@@ -63,7 +70,7 @@
 	$posters = $sql->query("
 		SELECT $userfields, u.posts, lastactivity, lastip, lastposttime, lasturl, hideactivity
 		FROM users u
-		WHERE lastactivity > ".(ctime()-$time)." AND ($ismod OR !hideactivity)
+		WHERE lastactivity > ".(ctime()-$time)." AND (".has_perm('show-hidden-user-activity')." OR !hideactivity)
 		ORDER BY ".(isset($ipsort) ? 'lastip' : 'lastactivity DESC')
 	);
 
@@ -94,7 +101,7 @@
 		$user['lasturl']=preg_replace('/[\?\&]debugsql(|=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
 		$user['lasturl']=preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
 		$user['lasturl']=htmlspecialchars($user['lasturl'], ENT_QUOTES);		
-		if (substr($user['lasturl'], -11) =='(IP banned)' || substr($user['lasturl'], -11) =='(Tor proxy)' || substr($user['lasturl'], -5) == '(Bot)') {
+		if ($viewbpt && (substr($user['lasturl'], -11) =='(IP banned)' || substr($user['lasturl'], -11) =='(Tor proxy)' || substr($user['lasturl'], -5) == '(Bot)')) {
 			$ptr = strrpos($user['lasturl'], '(', -4);
 			$realurl = substr($user['lasturl'], 0, $ptr-1);
 		} else {
@@ -162,7 +169,7 @@
 
 		$marker = '';
 		
-		if (substr($guest['lasturl'], -11) =='(IP banned)' || substr($guest['lasturl'], -11) =='(Tor proxy)' || substr($guest['lasturl'], -5) == '(Bot)') {
+		if ($viewbpt && (substr($guest['lasturl'], -11) =='(IP banned)' || substr($guest['lasturl'], -11) =='(Tor proxy)' || substr($guest['lasturl'], -5) == '(Bot)')) {
 			$ptr = strrpos($guest['lasturl'], '(', -4);
 			$realurl = substr($guest['lasturl'], 0, $ptr-1);
 		} else {

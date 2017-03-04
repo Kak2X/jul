@@ -47,8 +47,7 @@
 
 
 function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols,
-			$isadmin, $issuper, $sysadmin, $isChristmas;
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols, $isChristmas;
 			
 	// Load images right away
 	require 'lib/colors.php';
@@ -78,7 +77,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	/*
 		Board title (and sub titles)
 	*/
-	if(!$windowtitle) $windowtitle = $config['board-name'];
+	if (!$windowtitle) $windowtitle = $config['board-name'];
 	
 	// Overriding the default title?
 	if ($miscdata['specialtitle'])
@@ -88,9 +87,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
 	
+	if (has_perm('view-submessage'))
+		$config['board-title'] .= $config['title-submessage'] ? "<br><b>".$config['title-submessage']."</b>" : "";
+	
 	// Admin-only info
 	// in_array($loguserid,array(1,5,2100))
-	if ($sysadmin) {
+	if (has_perm('logs-banner')) {
 		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
 		if ($xminilog['count']) {
 			$xminilogip	= $sql->fetchq("SELECT `ip`, `banflags` FROM `minilog` ORDER BY `time` DESC LIMIT 1");
@@ -109,17 +111,20 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		Header links at the top of every page
 	*/
 	$headlinks = '';
-	if($loguser['id']) {
+	if ($loguser['id']) {
 		
-		if($isadmin)
+		if (has_perm('admin-actions'))
 			$headlinks .= '<a href="admin.php" style="font-style:italic;">Admin</a> - ';
 
-		if($issuper) {
+		if (has_perm('use-shoped')) {
 			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
 		}
 		
-		$headlinks.='
-		<a href="javascript:document.logout.submit()">Logout</a>
+		$headlinks .= '<noscript><style>#logoutlink{display: none;}</style></noscript>
+		<span id="logoutlink"><a href="javascript:document.logout.submit()">Logout</a></span>
+		<input type="hidden" name="action" value="logout">
+		<input type="hidden" name="auth" value="'.generate_token(30).'">
+		<noscript><input type="submit" name="njout" class="tdbg1 buttonlink fonts" value="Logout"></noscript>
 		- <a href="editprofile.php">Edit profile</a>
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
@@ -185,7 +190,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		if ($unreadpm['cnt']) {
 			$privatebox = "
 				<tr>
-					<td colspan=3 class='tbl tdbg2 center fonts'>
+					<td colspan=3 class='tdbg2 center fonts'>
 						{$statusicons['new']} <a href=private.php>You have {$unreadpm['cnt']} new private message".($unreadpm['cnt'] == 1 ? 's' : '')."</a> -- Last unread message from ".getuserlink($unreadpm)." on ".date($loguser['dateformat'], $unreadpm['date'] + $loguser['tzoff'])."
 					</td>
 				</tr>";
@@ -222,7 +227,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		} 
 
 		// Force Xmas scheme (cue whining, as always)
-		if (false && $isChristmas && !$x_hacks['host']) {
+		if ($isChristmas && !$x_hacks['host']) {
 			$scheme = 3;
 			$x_hacks['rainbownames'] = true;
 		}
@@ -247,6 +252,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	
 	require "schemes/$filename";
+	
+	// Hide Normal+ to non-admins
+	if (!has_perm('show-super-users')) {
+		$grouplist[GROUP_SUPER]['namecolor0'] = $grouplist[GROUP_NORMAL]['namecolor0'];
+		$grouplist[GROUP_SUPER]['namecolor1'] = $grouplist[GROUP_NORMAL]['namecolor1'];
+		$grouplist[GROUP_SUPER]['namecolor2'] = $grouplist[GROUP_NORMAL]['namecolor2'];
+	}
 
 	if ($schemepre) {
 		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";
@@ -291,16 +303,16 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 				cursor:	url('images/ikachanpointer2.png'), pointer;
 				}
 */			a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
-			a {
+			a,.buttonlink {
 				color: #$linkcolor;
 			}
-			a:visited {
+			a:visited,.buttonlink:visited {
 				color: #$linkcolor2;
 			}
-			a:active {
+			a:active,.buttonlink:active {
 				color: #$linkcolor3;
 			}
-			a:hover {
+			a:hover,.buttonlink:hover {
 				color: #$linkcolor4;
 			}
 			img { border:none; }
@@ -331,6 +343,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.center	{text-align:center}
 			.right	{text-align:right}
 			.nobr	{white-space:nowrap}
+			.w		{width:100%}
+			.buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
 			.table	{empty-cells:	show; width: 100%;
 					 border-top:	#$tableborder 1px solid;
 					 border-left:	#$tableborder 1px solid;
@@ -476,15 +490,11 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<?=$overlay?>
 		<center>
 			<table class='table'>
-				<form action='login.php' method='post' name='logout'>
-					<input type='hidden' name='action' value='logout'>
-					<input type='hidden' name='auth' value='<?=generate_token(30)?>'>
-				</form>
 				<tr>
-					<td class='tbl tdbg1 center' colspan=3><?=$config['board-title']?>
+					<td class='tdbg1 center' colspan=3><?=$config['board-title']?>
 						<span class='fonts'>
 							<br>
-							<?=$headlinks?>				
+							<form action="login.php" method="post" name="logout" style="display: inline"><?=$headlinks?></form>			
 <?php		
 		if (!$x_hacks['smallbrowse']) {
 				// Desktop header
@@ -495,7 +505,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 					<td style='width: 120px' class='tdbg2 center fonts nobr'>
 						Views: <?=$dispviews?>
 					</td>
-					<td class='tbl tdbg2 center fonts'>
+					<td class='tdbg2 center fonts'>
 						<?=$headlinks2?>
 					</td>
 					<td style='width: 120px' class='tdbg2 center fonts nobr'>
@@ -633,12 +643,13 @@ piwikTracker.enableLinkTracking();
 			<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
 		</table>";
 		
+	$debugPerm = has_perm('view-debugger');
 	// Print errors locally
-	print error_printer(true, ($loguser['powerlevel'] == 4 || $config['always-show-debug']), $GLOBALS['errors']);
+	print error_printer(true, ($debugPerm || $config['always-show-debug']), $GLOBALS['errors']);
 
 	// Print mysql queries
-	if (mysql::$debug_on && in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $loguser['id'] == 1 || $config['always-show-debug']) {
-		if (!isset($_GET['debugsql'])) // $_SERVER['REQUEST_METHOD'] != 'POST'
+	if ((mysql::$debug_on && (in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $loguser['id'] == 1 || $debugPerm)) || $config['always-show-debug']) {
+		if (!isset($_GET['debugsql']) && !$config['always-show-debug']) // $_SERVER['REQUEST_METHOD'] != 'POST'
 			print "<br><a href='".$_SERVER['REQUEST_URI'].(($_SERVER['QUERY_STRING']) ? "&" : "?")."debugsql=1'>Useless mySQL query debugging shit</a>";
 		else
 			print mysql::debugprinter();
@@ -660,99 +671,9 @@ piwikTracker.enableLinkTracking();
 	die;
 }
 
-	
-	function dialog($message, $title = 'Board Message') {
-	
-?><html>
-	<head>
-		<title><?=$title?></title>
-		<link rel="shortcut icon" href="favicon3x.ico" type="image/x-icon">
-		<style>
-		a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold}
-		a {
-			color: #BEBAFE;
-		}
-		a:visited {
-			color: #9990c0;
-		}
-		a:active {
-			color: #CFBEFF;
-		}
-		a:hover {
-			color: #CECAFE;
-		}
-		img { border:none; }
-		pre br { display: none; }
-		body {
-			scrollbar-face-color:		7d7bc1;
-			scrollbar-track-color:		000020;
-			scrollbar-arrow-color:		210456;
-			scrollbar-highlight-color:	a9a7d6;
-			scrollbar-3dlight-color:	d4d3eb;
-			scrollbar-shadow-color:	524fad;
-			scrollbar-darkshadow-color:	312d7d;
-			color: #DDDDDD;
-			font:13px verdana;
-			background: #000F1F url('images/starsbg.png');
-		}
-		.font 	{font:13px verdana}
-		.fonth	{font:13px verdana;color:FFEEFF}
-		.fonts	{font:10px verdana}
-		.fontt	{font:10px tahoma}
-		.tdbg1	{background:#111133}
-		.tdbg2	{background:#11112B}
-		.tdbgc	{background:#2F2F5F}
-		.tdbgh	{background:#302048}
-		.center	{text-align:center}
-		.right	{text-align:right}
-		.table	{empty-cells:	show;
-				 border-top:	#000000 1px solid;width:100%;
-				 border-left:	#000000 1px solid;width:100%;
-				 border-spacing: 0px}
-		td.tbl	{border-right:	#000000 1px solid;
-				 border-bottom:	#000000 1px solid}
-		code {
-			overflow:		auto;
-			width:			100%;
-			white-space:	pre;
-			display:		block;
-		}
-		code br { display: none; }
-	
-		textarea,input,select{
-		  border:	#663399 solid 1px;
-		  background:#000000;
-		  color:	#DDDDDD;
-		  font:	10pt verdana;}
-		.radio{
-		  border:	none;
-		  background:none;
-		  color:	#DDDDDD;
-		  font:	10pt verdana;}
-		.submit{
-		  border:	#663399 solid 2px;
-		  font:	10pt verdana;}
-		</style>
-	</head>
-	<body>
-		<center>
-			<div class="fonts" style="position: fixed; width: 600px; margin-left: -300px; top: 40%; left: 50%;">
-				<table class="table font">
-					<tr>
-						<td class='tbl tdbgh center' style="padding: 3px;">
-							<b><?=$title?></b>
-						</td>
-					</tr>
-					<tr>
-					  <td class='tbl tdbg1 center'>
-						&nbsp;<br><?=$message?><br>&nbsp;
-					  </td>
-					</tr>
-				</table>
-			</div>
-		</center>
-	</body>
-</html>
-<?php
-	die;
+	/*
+		Print a full screen error message
+	*/
+	function dialog($message, $messagetitle = 'Board Message', $title = 'Board Message') {
+		require "lib/dialog.php";
 	}

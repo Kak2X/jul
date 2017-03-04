@@ -14,9 +14,19 @@
   $linkcolor3='eeeeee';
   $linkcolor4='ffffff;}
 	img.post{ border: none ';
-  $malecolor='90a0c0';
-  $femalecolor='c090b0';
-  $bannedcolor='999999';
+  
+  $grouplist[GROUP_PERMABANNED]['namecolor0'] = '999999';
+  $grouplist[GROUP_PERMABANNED]['namecolor1'] = '999999';
+  $grouplist[GROUP_PERMABANNED]['namecolor2'] = '999999';
+	
+  $grouplist[GROUP_BANNED]['namecolor0'] = '999999';
+  $grouplist[GROUP_BANNED]['namecolor1'] = '999999';
+  $grouplist[GROUP_BANNED]['namecolor2'] = '999999';
+	
+  $grouplist[GROUP_NORMAL]['namecolor0'] = '90a0c0';
+  $grouplist[GROUP_NORMAL]['namecolor1'] = 'c090b0';
+  $grouplist[GROUP_NORMAL]['namecolor2'] = '7C60B0';
+  
   $tablebg1='101010';
   $tablebg2='202020';
   $categorybg='404040';

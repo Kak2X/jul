@@ -10,25 +10,32 @@
 
 	$thread  = $sql->fetchq("
 		SELECT 	t.forum, t.closed, t.title, t.user, t.poll,
-				f.minpower, f.id valid, f.specialscheme, f.specialtitle, f.title ftitle,
-				p.question, p.closed pollclosed, p.briefing, p.doublevote
-				
+				f.id valid, f.specialscheme, f.specialtitle, f.title ftitle,
+				p.question, p.closed pollclosed, p.briefing, p.doublevote,
+				pf.group{$loguser['group']} forumperm, pu.permset userperm
 		FROM threads t
-		LEFT JOIN forums f ON t.forum = f.id
-		LEFT JOIN poll   p ON t.poll  = p.id
+		
+		LEFT JOIN forums          f  ON t.forum = f.id
+		LEFT JOIN poll            p  ON t.poll  = p.id
+		LEFT JOIN perm_forums     pf ON f.id    = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
+			
 		WHERE t.id = $id
 	", PDO::FETCH_ASSOC);
 	
 	
 	// If the thread is in an invalid forum, don't bother checking if we're a local mod
-	if ($thread && $thread['valid'] && !$ismod)
-		$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$thread['forum']} and user = {$loguser['id']}");
+	if ($thread && $thread['valid']) {
+		$ismod = has_forum_perm('mod', $thread);
+	} else {
+		$ismod = has_perm('all-forum-access');
+	}
 	
 	if (!$thread || (!$ismod && !$thread['valid']))
 		$message = "This poll doesn't exist."; // or is in an invalid forum
 	if (!$thread['poll'])
 		$message = "Good job idiot. This isn't a poll.";
-	else if ($thread['minpower'] && $thread['minpower'] > $loguser['powerlevel'])
+	else if (!has_perm('read', $thread))
 		$message = "This poll is in a restricted forum.";
 	else
 		$message = NULL;

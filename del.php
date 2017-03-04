@@ -8,7 +8,7 @@
 		
 		);
 
-	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers)) errorpage("Nein.");
+	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers) && !has_perm('sysadmin-actions')) errorpage("Nein.");
   
 	pageheader();
 	
@@ -41,8 +41,6 @@
 				// Backup the user's data just in case
 				$sql->query("INSERT INTO `delusers` ( SELECT * FROM `users` WHERE `id` = '$id' )", false, $querycheck);
 				$sql->query("UPDATE posts SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id", false, $querycheck);
-//				$ups=$sql->query("SELECT id FROM posts WHERE user=$id");
-//				while($up=mysql_fetch_array($ups)) $sql->query("UPDATE posts_text SET signtext=CONCAT_WS('','$line',signtext) WHERE pid=$up[id]") or print mysql_error();
 				$sql->query("UPDATE threads SET user={$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
 				$sql->query("UPDATE threads SET lastposter={$config['deleted-user-id']} WHERE lastposter=$id", false, $querycheck);
 				$sql->query("UPDATE forums SET lastpostuser={$config['deleted-user-id']} WHERE lastpostuser=$id", false, $querycheck);
@@ -56,6 +54,12 @@
 				$sql->query("DELETE FROM pollvotes WHERE user=$id", false, $querycheck);
 				$sql->query("DELETE FROM users WHERE id=$id", false, $querycheck);
 				$sql->query("DELETE FROM users_rpg WHERE uid=$id", false, $querycheck);
+				$sql->query("DELETE FROM perm_users WHERE id = $id LIMIT 1", false, $querycheck);
+				$sql->query("DELETE FROM perm_forumusers WHERE user = $id", false, $querycheck);
+				$sql->query("DELETE FROM postradar WHERE user = $id OR comp = '{$target_id}'", false, $querycheck);
+				$sql->query("DELETE FROM announcementread WHERE user = $id", false, $querycheck);
+				$sql->query("DELETE FROM forumread WHERE user = $id", false, $querycheck);
+				$sql->query("DELETE FROM threadsread WHERE uid = $id", false, $querycheck);
 				
 				$delusertext	.= "\r\n<tr><td class='tdbg1 center' width=120>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
 				$delusercnt		++;
@@ -85,11 +89,14 @@
 	$_POST['searchip']			= filter_string($_POST['searchip']);
 	$_POST['maxposts']			= filter_int($_POST['maxposts']);
 	
-	$_POST['sortpowerlevel'] 	= filter_string($_POST['sortpowerlevel']);
+	if (!isset($_POST['sortpowerlevel'])) {
+		$_POST['sortpowerlevel'] = -1;
+	} else {
+		$_POST['sortpowerlevel'] 	= filter_int($_POST['sortpowerlevel']);
+	}
 	$_POST['sortord'] 			= filter_int($_POST['sortord']);
 	$_POST['sorttype'] 			= filter_int($_POST['sorttype']);
 	// Variable defaults
-	if (!$_POST['sortpowerlevel']) 	$_POST['sortpowerlevel'] = "ab";
 	if (!$_POST['sortord']) 		$_POST['sortord']		 = 0;
 	$powerselect[$_POST['sortpowerlevel']]	= 'selected';
 	$sortsel[$_POST['sorttype']]			= 'selected';
@@ -107,18 +114,15 @@
 		<td class='tdbg2'><input type='text' name=searchip size=30 maxlength=32 value="<?=htmlspecialchars($_POST['searchip'])?>"></td></tr>
 	<tr><td class='tdbg1 center' width=300><b>Show users with less than:</b></td>
 		<td class='tdbg2'><input type='text' name=maxposts size=15 maxlength=9 value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
-	<tr><td class='tdbg1 center'><b>Powerlevel:</b></td>
+	<tr><td class='tdbg1 center'><b>Group:</b></td>
 		<td class='tdbg2'>
 			<select name='sortpowerlevel'>
-				<option value='aa'  <?=filter_string($powerselect['aa']) ?>>* Any powerlevel</option>
-				<option value='ab'  <?=filter_string($powerselect['ab']) ?>>* All banned</option>
-				<option value='s3'  <?=filter_string($powerselect['s3']) ?>>Administrator</option>
-				<option value='s2'  <?=filter_string($powerselect['s2']) ?>>Moderator</option>
-				<option value='s1'  <?=filter_string($powerselect['s1']) ?>>Local Moderator</option>
-				<option value='s0'  <?=filter_string($powerselect['s0']) ?>>Normal User</option>
-				<option value='s-1' <?=filter_string($powerselect['s-1'])?>>Banned</option>
-				<option value='s-2' <?=filter_string($powerselect['s-2'])?>>Permabanned</option>
-			</select>
+				<option value=0  <?=filter_string($powerselect[0]) ?>>* Any group</option>
+				<option value='-1'  <?=filter_string($powerselect['-1']) ?>>* All banned (default)</option>
+<?php	foreach ($grouplist as $groupid => $group) {
+				echo "<option value={$groupid} ".filter_string($powerselect[$groupid]).">{$group['name']}</option>\n";
+		} 
+?>			</select>
 		</td>
 	</tr>
 	<tr><td class='tdbg1 center' width=300><b>Sort by:</b></td>
@@ -127,7 +131,7 @@
 				<option value='0' <?=filter_string($sortsel[0])?>> Last activity </option>
 				<option value='1' <?=filter_string($sortsel[1])?>> Register date </option>
 				<option value='2' <?=filter_string($sortsel[2])?>> Posts </option>
-				<option value='3' <?=filter_string($sortsel[3])?>> Powerlevel </option>
+				<option value='3' <?=filter_string($sortsel[3])?>> Group </option>
 				<option value='4' <?=filter_string($sortsel[4])?>> IP address</option>
 			</select>, 
 			<input type=radio class='radio' name=sortord value='0' <?=filter_string($ordsel[0])?>> Descending&nbsp;&nbsp;
@@ -165,14 +169,14 @@
 		$values['searchname']	= '%'.$_POST['searchname'].'%';
 	}
 
-	if ($_POST['sortpowerlevel'] != "aa") {
+	if ($_POST['sortpowerlevel'] != 0) {
 		if ($sqlquery)	$sqlquery	.= " AND ";
 
-		if ($_POST['sortpowerlevel'] == "ab") 
-			$sqlquery	.= "`powerlevel` < '0'";
+		if ($_POST['sortpowerlevel'] == -1) 
+			$sqlquery	.= "(`group` = ".GROUP_BANNED." OR `group` = ".GROUP_PERMABANNED.") ";
 		else {
 			$sqlquery	.= "`powerlevel` = :powerlevel";
-			$values['powerlevel'] = str_replace("s", "", $_POST['sortpowerlevel']);
+			$values['powerlevel'] = $_POST['sortpowerlevel'];
 		}
 	}
 
@@ -187,7 +191,7 @@
 			$sortfield	= "posts";
 			break;
 		case 3:
-			$sortfield	= "powerlevel";
+			$sortfield	= "group";
 			break;
 		case 4:
 			$sortfield	= "lastip";

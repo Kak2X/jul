@@ -1,20 +1,6 @@
 <?php
 	require 'lib/function.php';
 
-	function sortbyexpdesc($a,$b) {
-		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
-		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
-		if ($cmpa == $cmpb) return $a['id']-$b['id'];
-		return $cmpb - $cmpa;
-	}
-	// horror dot png
-	function sortbyexpasc($a,$b) {
-		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
-		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
-		if ($cmpa == $cmpb) return $b['id']-$a['id'];
-		return $cmpa - $cmpb;
-	}
-	
 	// Variable filtering and query strings
 	$_GET['sex'] 	= filter_string($_GET['sex']);
 	$_GET['sort'] 	= filter_string($_GET['sort']);
@@ -44,16 +30,16 @@
 		case 'n': $qwhere[] = '(sex=2)'; break;
 	}
 	if ($_GET['pow']) {
-		if (($_GET['pow'] == 1 || $_GET['pow'] == 0) && $loguser['powerlevel'] < 3)
-			$sqlpower = "IN (0, 1)";
-		elseif ($_GET['pow'] == 3 || $_GET['pow'] == 4) // merge admin + sysadmin (they appear the same)
-			$sqlpower = "IN (3, 4)";
-		elseif ($_GET['pow'] == -1 || $_GET['pow'] == -2) // merge banned + permabanned
-			$sqlpower = "IN (-1, -2)";
+		if (($_GET['pow'] == GROUP_NORMAL || $_GET['pow'] == GROUP_SUPER) && !has_perm('show-super-users'))
+			$sqlpower = "IN (".GROUP_NORMAL.", ".GROUP_SUPER.")";
+		elseif ($_GET['pow'] == GROUP_ADMIN || $_GET['pow'] == GROUP_SYSADMIN) // merge admin + sysadmin (they appear the same)
+			$sqlpower = "IN (".GROUP_ADMIN.", ".GROUP_SYSADMIN.")";
+		elseif ($_GET['pow'] == GROUP_BANNED || $_GET['pow'] == GROUP_PERMABANNED) // merge banned + permabanned
+			$sqlpower = "IN (".GROUP_BANNED.", ".GROUP_PERMABANNED.")";
 		else
 			$sqlpower = "= '{$_GET['pow']}'";
 
-		$qwhere[] = "powerlevel $sqlpower";
+		$qwhere[] = "`group` $sqlpower";
 	}
 	$where = 'WHERE '.((empty($qwhere)) ? '1' : implode(' AND ', $qwhere));
 	
@@ -106,9 +92,19 @@
 	for($i = 0, $total = $numusers / $_GET['ppp']; $i < $total; ++$i) {
 		$pagelinks .= ($i == $_GET['page'] ? ' '.($i+1): " <a href='memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp&page=$i'>".($i+1).'</a>');
 	}
-	if ($numusers != 1) $s = "s";
+	$s = $numusers != 1 ? "s" : "";
 	
 	pageheader();
+	
+	// We don't need $grouplist anymore now, so it can be edited directly
+	if (!has_perm('show-super-users')) {
+		unset($grouplist[GROUP_SUPER]);
+	}
+	unset($grouplist[GROUP_SYSADMIN], $grouplist[GROUP_PERMABANNED], $grouplist[GROUP_GUEST]);
+	$groupout = "";
+	foreach ($grouplist as $key => $val) {
+		$groupout .= "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=$key'>{$val['name']}</a> | ";
+	}
 	
 print "
 <table class='table'>
@@ -133,13 +129,9 @@ print "
 		</td>
 	</tr>
 	<tr>
-		<td class='tdbg1 fonts center'>	Powerlevel:</td>
+		<td class='tdbg1 fonts center'>	Group:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=-1'>Banned</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=0'>Normal</a> |
-			". ($loguser['powerlevel'] >= 3 ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=1'>Normal +</a> | " : "") ."
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=2'>Moderator</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=3'>Administrator</a> |
+			$groupout
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord'>All</a>
 		</td>
 	</tr>
@@ -220,3 +212,17 @@ print "
 
 	print "$ulist</table>$pagelinks";
 	pagefooter();
+	
+	function sortbyexpdesc($a,$b) {
+		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
+		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
+		if ($cmpa == $cmpb) return $a['id']-$b['id'];
+		return $cmpb - $cmpa;
+	}
+	// horror dot png
+	function sortbyexpasc($a,$b) {
+		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
+		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
+		if ($cmpa == $cmpb) return $b['id']-$a['id'];
+		return $cmpa - $cmpb;
+	}

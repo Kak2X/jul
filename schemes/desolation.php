@@ -16,9 +16,19 @@
   text-decoration:none;
   font-size: 0.9em;
   font-weight:bold';
-  $malecolor='97ACEF';
-  $femalecolor='FEABED';
-  $bannedcolor='999999';
+  
+  $grouplist[GROUP_PERMABANNED]['namecolor0'] = '999999';
+  $grouplist[GROUP_PERMABANNED]['namecolor1'] = '999999';
+  $grouplist[GROUP_PERMABANNED]['namecolor2'] = '999999';
+	
+  $grouplist[GROUP_BANNED]['namecolor0'] = '999999';
+  $grouplist[GROUP_BANNED]['namecolor1'] = '999999';
+  $grouplist[GROUP_BANNED]['namecolor2'] = '999999';
+	
+  $grouplist[GROUP_NORMAL]['namecolor0'] = '97ACEF';
+  $grouplist[GROUP_NORMAL]['namecolor1'] = 'FEABED';
+  $grouplist[GROUP_NORMAL]['namecolor2'] = '7C60B0';
+	
   $tablebg1='101010; background: url(images/desolation/tdbg3.png); ';
   $tablebg2='202020; background: url(images/desolation/tdbg2.png); ';
   $categorybg='EEEEEE;;

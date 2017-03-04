@@ -3,13 +3,13 @@
 	require 'lib/function.php';
 
 	//if (!in_array($loguser['id'], array(175, 1)) && $loguser['powerlevel'] < 1) {
-	if ($loguser['powerlevel'] < 1) {
+	if (!has_perm('view-shitbugs')) {
 		errorpage("&nbsp;<br>No.<br>&nbsp;");
 	}
 
 
 	//$expower = in_array($loguser['id'], array(175, 1, 2100));
-	$expower = ($loguser['id'] == 1);
+	$expower = ($loguser['id'] == 1 || has_perm('logs-banner'));
 	
 	if ($expower && isset($_GET['banip'])) {
 		check_token($_GET['auth'], 20, $_GET['banip']);
@@ -30,10 +30,10 @@
 	}
 
 	$banflagnames[    1]	= "union<br>select";
-	$banflagnames[16384]	= "acunetix";
+	$banflagnames[16384]	= "<s>acunetix</s><br>[WIP]";
 	$banflagnames[ 2048]	= "get<br>+";
 	$banflagnames[    4]	= "get<br>--";
-//	$banflagnames[    8]	= "get<br>;";  // Disabled. Too many false positives.
+	$banflagnames[    8]	= "get<br>()";
 	$banflagnames[    2]	= "get<br>comment";
 	$banflagnames[   16]	= "get<br>exec";
 	$banflagnames[   32]	= "get<br>password";

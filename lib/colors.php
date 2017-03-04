@@ -4,15 +4,8 @@
 		Here lie the default strings / text colors
 	*/
 	
-	global 	$pwlnames, $nmcol, $statusicons,
-			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $numdir, $numfil;
-			
-	$pwlnames = array('-2'=>'Permabanned', '-1'=>'Banned', 'Normal', 'Normal +', 'Moderator', 'Administrator','Sysadmin');
-	$nmcol = array(
-		0 	 => array('-2'=>     '6a6a6a', '-1'=>'888888', '97ACEF',   'D8E8FE',   'AFFABE',        'FFEA95'),
-		1 	 => array('-2'=>     '767676', '-1'=>'888888', 'F185C9',   'FFB3F3',   'C762F2',        'C53A9E'),
-		2 	 => array('-2'=>     '767676', '-1'=>'888888', '7C60B0',   'EEB9BA',   '47B53C',        'F0C413')
-	);
+	global 	$pwlnames, $statusicons, $grouplist,
+			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $numdir, $numfil;	
 	
 	$linkcolor	='FFD040';
 	$linkcolor2 ='F0A020';
@@ -44,21 +37,23 @@
 
 		'sticky'		=> 'Sticky:',
 		'poll'			=> 'Poll:',
-		'stickypoll'	=> 'Sticky poll:'
+		'stickypoll'	=> 'Sticky poll:',
+		'ann'			=> 'Announcement:',
+		'annsticky'		=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annsticky' 	=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annstickypoll'	=> 'Announcement - Sticky poll:',
+		
 	);
 	
 	//$schemetime	= -1; // mktime(9, 0, 0) - time();
-	
 	$numfil = 'numnes';
 	
-	
-
-
-	// Hide Normal+ to non-admins
-	if ($loguser['powerlevel'] < 3) {
-		$nmcol[0][1]	= $nmcol[0][0];
-		$nmcol[1][1]	= $nmcol[1][0];
-		$nmcol[2][1]	= $nmcol[2][0];
-	}
-	//$nmcol[0][4]		= "#ffffff";
-
+	$scr1 = '';
+	$scr2 = '';
+	$scr3 = '';
+	$scr4 = '';
+	$scr5 = '';
+	$scr6 = '';
+	$scr7 = '';

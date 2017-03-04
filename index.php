@@ -96,7 +96,7 @@
 	$onusers = $sql->query("
 		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
 		FROM users u
-		WHERE lastactivity > $onlinetime OR lastposttime > $onlinetime AND ($ismod OR !hideactivity)
+		WHERE lastactivity > $onlinetime OR lastposttime > $onlinetime AND (".has_perm('show-hidden-user-activity')." OR !hideactivity)
 		ORDER BY name
 	");
 	$numonline = $sql->num_rows($onusers);
@@ -104,11 +104,6 @@
 
 	$onlineusersa	= array();
 	while($onuser = $sql->fetch($onusers)) {
-		
-		//$namecolor=explode("=", getnamecolor($onuser['sex'],$onuser['powerlevel']));
-		//$namecolor=$namecolor[1];
-		//$namelink="<a href=profile.php?id=$onuser[id] style='color: #$namecolor'>$onuser[name]</a>";
-
 		$namelink = getuserlink($onuser);
 
 		if($onuser['minipic']) {
@@ -130,7 +125,7 @@
 	/*
 		Online guests
 	*/
-	if (!$isadmin) {
+	if (!has_perm('view-bpt-info')) {
 		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests WHERE date > $onlinetime");
 		$onlineguests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"") : "";
 	} else {
@@ -164,9 +159,11 @@
 	
 	// Lastest user registered
 	$lastuser = $sql->fetchq("SELECT $userfields FROM users u ORDER BY u.id DESC LIMIT 1");
-	if ($lastuser)
+	if ($lastuser) {
 		$lastuserurl = getuserlink($lastuser);
-	
+	} else {
+		$lastuserurl = "(none)";
+	}
 	
 
 	$posts = $sql->fetchq('
@@ -300,6 +297,43 @@
 		<?php
 
 	}
+	
+	/*
+		Global announcements
+	*/
+		
+			
+	$annc = $sql->fetchq("
+		SELECT t.id aid, t.title atitle, t.description adesc, t.firstpostdate date, t.forum, $userfields, r.readdate
+		FROM threads t
+		LEFT JOIN users            u ON t.user = u.id
+		LEFT JOIN announcementread r ON t.forum = r.forum AND r.user = {$loguser['id']}
+		WHERE t.forum = {$miscdata['announcementforum']}
+		ORDER BY t.firstpostdate DESC
+		LIMIT 1
+	");
+	
+	if($annc) {
+		?>
+		<br>
+		<table class='table'>
+			<tr>
+				<td colspan=2 class='tdbgh center fonts'>
+					Announcements
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2 center' style='width: 33px'>
+					<?=($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;")?>
+				</td>
+				<td class='tdbg1'>
+					<a href=announcement.php><?=$annc['atitle']?></a> -- Posted by <?=getuserlink($annc)?> on <?=printdate($annc['date'])?>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
 
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumlist="
@@ -311,40 +345,33 @@
 			<td class='tdbgh center' width=15%>Last post</td>
 		</tr>
 	";
-
 	$forumquery = $sql->query("
-		SELECT f.*, $userfields uid 
+		SELECT f.*, $userfields uid, pf.group{$loguser['group']} forumperm, pu.permset userperm
 		FROM forums f
-		LEFT JOIN users u      ON f.lastpostuser = u.id
-		LEFT JOIN categories c ON f.catid = c.id
-		WHERE (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
-		AND (!f.hidden OR $sysadmin)
-		ORDER BY c.corder, f.catid, f.forder
+		LEFT JOIN users            u ON f.lastpostuser = u.id
+		LEFT JOIN perm_forums     pf ON f.id           = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id           = pu.forum AND pu.user = {$loguser['id']}
+		WHERE (!f.hidden OR ".has_perm('display-hidden-forums').")
+		ORDER BY f.catid, f.forder
 	");
 	$catquery = $sql->query("
-		SELECT id, name
+		SELECT id, name, showalways
 		FROM categories
-		WHERE (!minpower OR minpower <= {$loguser['powerlevel']})
 		ORDER BY corder, id
 	");
 	$modquery = $sql->query("
-		SELECT $userfields, m.forum
-		FROM users u
-		INNER JOIN forummods m ON u.id = m.user
-		ORDER BY name
+		SELECT $userfields, f.id forum
+		FROM forums f
+		INNER JOIN perm_forumusers pu ON f.id    = pu.forum
+		INNER JOIN users           u  ON pu.user = u.id
+		WHERE (pu.permset & ".PERM_FORUM_MOD.")
+		ORDER BY u.name
 	");
 
-	$categories	= array();
-	$forums		= array();
-	$mods		= array();
-
-	while ($res = $sql->fetch($catquery))
-		$categories[] = $res;
-	while ($res = $sql->fetch($forumquery))
-		$forums[] = $res;
-	while ($res = $sql->fetch($modquery))
-		$mods[] = $res;
-
+	$categories	= $sql->fetchAll($catquery);
+	$forums		= $sql->fetchAll($forumquery);
+	$mods		= $sql->fetchAll($modquery);
+	
 // Quicker (?) new posts calculation that's hopefully accurate v.v
 	if ($loguser['id']) {
 		$qadd = array();
@@ -373,101 +400,99 @@
 	
 	foreach ($categories as $category) {
 		
-		$forumlist .= "
-			<tr>
-				<td class='tbl tdbgc center font' colspan=5>
-					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
-				</td>
-			</tr>";
-		
-		
+		// Category link to show only one category
 		if($cat && $cat != $category['id'])
 		  continue;
 
+		$forumin = "";
 		foreach ($forums as $forumplace => $forum) {
 			
 			if ($forum['catid'] != $category['id'])
 				continue;
+			
+			if (has_forum_perm('read', $forum)) {
+			
+				/*
+					Local mod display
+				*/
+				$m = 0;
+				$modlist = "";
+				foreach ($mods as $modplace => $mod) {
+					if ($mod['forum'] != $forum['id'])
+						continue;
 
-			
-			
-			
-			/*
-				Local mod display
-			*/
-			$m = 0;
-			$modlist = "";
-			foreach ($mods as $modplace => $mod) {
+					$modlist .=($m++?', ':'').getuserlink($mod);
+					unset($mods[$modplace]);
+				}
+
+				if ($modlist)
+					$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
+
 				
-				if ($mod['forum'] != $forum['id'])
-					continue;
-
-				$namelink = getuserlink($mod);
-				$modlist .=($m++?', ':'').$namelink;
-				unset($mods[$modplace]);
-			}
-
-			if ($modlist)
-				$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
-
-			
-			
-			
-			if($forum['numposts']) {
-				$namelink = getuserlink($forum, $forum['uid']);
-				$forumlastpost = printdate($forum['lastpostdate']);
-				$by =  "<span class='fonts'>
-							<br>
-							by $namelink". ($forum['lastpostid'] ? " <a href='thread.php?pid={$forum['lastpostid']}#{$forum['lastpostid']}'>{$statusicons['getlast']}</a>" : "")
-					  ."</span>";
-			} else {
-				$forumlastpost = getblankdate();
-				$by = '';
-			}
-
-			$new='&nbsp;';
-
-			if ($forum['numposts']) {
-				// If we're logged in, check the result set
-				if ($loguser['id'] && isset($forumnew[$forum['id']]) && $forumnew[$forum['id']] > 0) {
-					$new = $statusicons['new'] ."<br>". generatenumbergfx((int)$forumnew[$forum['id']]);
+				
+				
+				if($forum['numposts']) {
+					$namelink = getuserlink($forum, $forum['uid']);
+					$forumlastpost = printdate($forum['lastpostdate']);
+					$by =  "<span class='fonts'>
+								<br>
+								by $namelink". ($forum['lastpostid'] ? " <a href='thread.php?pid={$forum['lastpostid']}#{$forum['lastpostid']}'>{$statusicons['getlast']}</a>" : "")
+						  ."</span>";
+				} else {
+					$forumlastpost = getblankdate();
+					$by = '';
 				}
-				// If not, mark posts made in the last hour as new
-				else if (!$loguser['id'] && $forum['lastpostdate'] > ctime() - 3600) {
-					$new = $statusicons['new'];
+
+				$new='&nbsp;';
+
+				if ($forum['numposts']) {
+					// If we're logged in, check the result set
+					if ($loguser['id'] && isset($forumnew[$forum['id']]) && $forumnew[$forum['id']] > 0) {
+						$new = $statusicons['new'] ."<br>". generatenumbergfx((int)$forumnew[$forum['id']]);
+					}
+					// If not, mark posts made in the last hour as new
+					else if (!$loguser['id'] && $forum['lastpostdate'] > ctime() - 3600) {
+						$new = $statusicons['new'];
+					}
 				}
-			}
-/*
-			if ($log && $forum['lastpostdate'] > $postread[$forum['id']]) {
-		$newcount	= $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '$loguser[id]' AND `read` = 1) AND `lastpostdate` > '". $postread[$forum['id']] ."' AND `forum` = '$forum[id]'");
-			}
+				
+			  $forumin .= "
+				<tr>
+					<td class='tdbg1 center' style='width: 4%'>$new</td>
+					<td class='tdbg2'>
+						<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
+						<span class='fonts'>
+							{$forum['description']}<br>
+							$modlist
+						</span>
+					</td>
+					<td class='tdbg1 center'>{$forum['numthreads']}</td>
+					<td class='tdbg1 center'>{$forum['numposts']}</td>
+					<td class='tdbg2 center'>
+						<span class='lastpost nobr'>
+							$forumlastpost $by
+						</span>
+					</td>
+				</tr>
+			  ";
 
-			if ((($forum['lastpostdate'] > $postread[$forum['id']] and $log) or (!$log and $forum['lastpostdate']>ctime()-3600)) and $forum['numposts']) {
-				$new = $statusicons['new'] ."<br>". generatenumbergfx($newcount);
+				unset($forums[$forumplace]);
 			}
-*/
-		  $forumlist.="
-			<tr>
-				<td class='tdbg1 center' style='width: 4%'>$new</td>
-				<td class='tdbg2'>
-					<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
-					<span class='fonts'>
-						{$forum['description']}<br>
-						$modlist
-					</span>
-				</td>
-				<td class='tdbg1 center'>{$forum['numthreads']}</td>
-				<td class='tdbg1 center'>{$forum['numposts']}</td>
-				<td class='tdbg2 center'>
-					<span class='lastpost nobr'>
-						$forumlastpost $by
-					</span>
-				</td>
-			</tr>
-		  ";
-
-			unset($forums[$forumplace]);
+			else {
+				unset($forums[$forumplace]);
+				continue;
+			}	
 		}
+		
+		if ($forumin || $category['showalways']) {
+			$forumlist .= "
+				<tr>
+					<td class='tbl tdbgc center font' colspan=5>
+						<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
+					</td>
+				</tr>";
+		}
+		$forumlist .= $forumin;
 	}
 
 	?>

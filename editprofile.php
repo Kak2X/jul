@@ -11,20 +11,22 @@
 		$titleopt	= 1;
 		$id_q		= "?id=$id";
 		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+		if (!has_perm('sysadmin-actions') && check_perm('sysadmin-actions', $userdata['group'])) {
+			errorpage("You cannot edit a root admin's profile.");
+		}
 	} else {
 		
 		if(!$loguser['id'])
 			errorpage('You must be logged in to edit your profile.');
 		if($banned)
 			errorpage("Sorry, but banned users aren't allowed to edit their profile.");
-		if($loguser['profile_locked'] == 1)
+		if(!has_perm('edit-own-profile'))
 			errorpage("You are not allowed to edit your profile.");
 		
 		// Custom title requirements
-		if		($loguser['titleoption']==0) $titleopt=0;
-		else if ($loguser['titleoption']==1) $titleopt=($loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
-		else if ($loguser['titleoption']==2) $titleopt=1;
-		else 								 $titleopt=0;
+		if		(has_perm('has-always-title')) 	$titleopt = 1;
+		else if	(!has_perm('has-title')) 		$titleopt = 0;
+		else $titleopt=($loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
 		
 		$id 		= $loguser['id'];
 		$id_q		= "";
@@ -35,8 +37,6 @@
 	//if($_GET['lol'] || ($loguserid == 1420)) errorpage('<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;"><object width="100%" height="100%"><param name="movie" value="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/lSNeL0QYfqo&hl=en_US&fs=1&color1=0x2b405b&color2=0x6b8ab6&autoplay=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="100%" height="100%"></embed></object></div>');
 	
 
-	
-	
 	if (isset($_POST['submit'])) {
 		check_token($_POST['auth']);
 		
@@ -63,7 +63,7 @@
 		sbr(0,$bio);
 		
 		// Make sure the thread layout does exist to prevent "funny" shit
-		$tlayout = filter_int($_POST['tlayout']);
+		$tlayout = filter_int($_POST['layout']);
 		$valid = $sql->resultq("SELECT id FROM tlayouts WHERE id = $tlayout");
 		if (!$valid) $tlayout = 1;	// Regular (no numgfx)
 			
@@ -103,7 +103,7 @@
 			$passwordenc = $userdata['password'];
 		}
 		
-		if ($issuper) {
+		if (has_perm('change-namecolor')) {
 			$namecolor = $_POST['colorspec'] ? $_POST['colorspec'] : $_POST['namecolor'];
 		} else {
 			$namecolor = $userdata['namecolor'];
@@ -112,6 +112,13 @@
 		
 		$sql->beginTransaction();
 		$querycheck = array();
+		
+		// Using extra schemes is locked behind a permission now
+		$scheme = filter_int($_POST['scheme']);
+		$secret = $sql->resultq("SELECT special FROM schemes WHERE id = $scheme");
+		if ($secret && !has_perm('select-secret-themes')) {
+			$scheme = 0; // Night theme
+		}
 		
 		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
 		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
@@ -155,7 +162,7 @@
 			'pollstyle' 		=> forcerange($_POST['pollstyle'], 0, 1, 0),
 			'layout' 			=> $tlayout,
 			'signsep' 			=> forcerange($_POST['signsep'], 0, 3, 0),
-			'scheme' 			=> filter_int($_POST['scheme']),
+			'scheme' 			=> $scheme,
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			// What user?
 			'id'				=> $id,
@@ -187,21 +194,25 @@
 				if (strcasecmp($user['name'], $username2) == 0) $samename = $user['name'];
 			}
 			 
+			// No "Imma become a root admin" bullshit
+			$group = filter_int($_POST['group']);
+			if (check_perm('sysadmin-actions', $group) && !has_perm('sysadmin-actions')) {
+				$group = GROUP_NORMAL;
+			}				
+			 
+			
 			// Extra edituser fields
 			$adminval = array(
 				
 				'name'				=> ($samename || !$username) ? $username : $userdata['name'],
-				// No "Imma become a root admin" bullshit
-				'powerlevel' 		=> $sysadmin ? filter_int($_POST['powerlevel']) : min(3, filter_int($_POST['powerlevel'])),
+				'group'		 		=> $group,
 				'regdate'			=> fieldstotimestamp('reg', '_POST'),
 				'posts'				=> filter_int($_POST['posts']),
-				'profile_locked'	=> filter_int($_POST['profile_locked']),
-				'editing_locked'	=> filter_int($_POST['editing_locked']),
-				'titleoption'		=> filter_int($_POST['titleoption']),
+				'ban_expire'		=> ($group == GROUP_BANNED && filter_int($_POST['ban_hours']) > 0) ? (ctime() + filter_int($_POST['ban_hours']) * 3600) : 0,
 				
 			);
 	
-			$adminset = "powerlevel=:powerlevel,name=:name,regdate=:regdate,posts=:posts,profile_locked=:profile_locked,editing_locked=:editing_locked,titleoption=:titleoption,";
+			$adminset = $sql->setplaceholders("`group`","name","regdate","posts","ban_expire").",";
 			
 			$gcoins = filter_int($_POST['gcoins']);
 			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id", false, $querycheck);
@@ -210,16 +221,13 @@
 			$adminset = "";
 		}
 		
-		
 		// You are not supposed to look at this.
-		// No, really. These are the same placeholder from the arrays above. It's a lot prettier to look at.
-		$sql->queryp("
-			UPDATE users SET {$adminset}password=:password,namecolor=:namecolor,picture=:picture,minipic=:minipic,signature=:signature,bio=:bio,email=:email,
-			icq=:icq,title=:title,useranks=:useranks,aim=:aim,sex=:sex,homepageurl=:homepageurl,homepagename=:homepagename,privateemail=:privateemail,
-			timezone=:timezone,dateformat=:dateformat,dateshort=:dateshort,postsperpage=:postsperpage,aka=:aka,realname=:realname,
-			location=:location,postheader=:postheader,scheme=:scheme,threadsperpage=:threadsperpage,birthday=:birthday,viewsig=:viewsig,
-			layout=:layout,moodurl=:moodurl,imood=:imood,signsep=:signsep,pagestyle=:pagestyle,pollstyle=:pollstyle,hideactivity=:hideactivity
-			WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
+		// No, really. These are the same placeholder from the arrays above.
+		$userset = $sql->setplaceholders("password","namecolor","picture","minipic","signature","bio","email","icq","title","useranks","aim","sex",
+		"homepageurl","homepagename","privateemail","timezone","dateformat","dateshort","postsperpage","aka","realname","location","postheader","scheme",
+		"threadsperpage","birthday","viewsig","layout","moodurl","imood","signsep","pagestyle","pollstyle","hideactivity");
+		
+		$sql->queryp("UPDATE users SET {$adminset}{$userset} WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
 		
 		if ($sql->checkTransaction($querycheck)) {
 			if (!$edituser)	errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
@@ -231,16 +239,6 @@
 	}
 	else {
 		
-			
-		//squot(0,$userdata['title']);
-		//squot(0,$userdata['realname']);
-		//squot(0,$userdata['aka']);
-		//squot(0,$userdata['location']);
-		//    squot(1,$userdata['aim']);
-		//    squot(1,$userdata['imood']);
-		//squot(0,$userdata['email']);
-		//    squot(1,$userdata['homepageurl']);
-		//squot(0,$userdata['homepagename']);
 		sbr(1,$userdata['postheader']);
 		sbr(1,$userdata['signature']);
 		sbr(1,$userdata['bio']);
@@ -248,6 +246,31 @@
 		/*
 			A ""slightly updated"" version of the table system from boardc
 			(You can now set a maxlength for input fields)
+			
+			----
+			
+			Format of the tables:
+			
+			table_format(<name of section>, <array>);
+			
+			<array> itself is a "list" with multiple arrays. each has this format:
+			<title of field> => [<type>, <input name>, <description>, <extra>, <extra2>]
+			
+			<title of field> - Text on the left
+			
+			<type> ID of input field
+			Types: 
+				0 - Input text. Uses <extra> and <extra2> for SIZE and MAXLENGTH respectively.
+				1 - Wide Textarea
+				2 - Radio buttons. Uses <extra> for the choices, ie: (No|Yes). The value IDs start from 0.
+				3 - Listbox. Uses <extra> to get choices. See above.
+				4 - Custom. It prints a variable with the same name of <input name>. It's up to you to create this variable.
+				
+			<input name> Name of the input field.
+			<description> Small text shown below the title of the field. This is only shown when editing your own profile.
+			<extra> & <extra2> What these do depends on <type>.
+				
+			table_format automatically appends array elements to the existing group
 		*/
 
 		table_format("Login information", array(
@@ -261,13 +284,11 @@
 			
 			// ... and also gets the extra "Administrative bells and whistles"
 			table_format("Administrative bells and whistles", array(
-				"Power level" 				=> [4, "powerlevel", ""], // Custom listbox with negative values.
-				//"Ban duration"			=> [4, "ban_hours", ""],
+				"Group"		 				=> [4, "group", ""], // Custom listbox with negative values.
+				"Ban duration"				=> [4, "ban_hours", ""],
 				"Number of posts"			=> [0, "posts", "", 6, 10],
 				"Registration time"			=> [4, "regdate", ""],
-				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
-				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked"],
-				"Custom Title Privileges" 	=> [2, "titleoption", "", "Revoked|Determine by rank/posts|Enabled"],
+				"User permissions"			=> [4, "permlink", ""],
 			));
 		}
 		
@@ -276,7 +297,7 @@
 				"Custom title" => [0, "title", "This title will be shown below your rank.", 60, 255],
 			));
 		}
-		if ($issuper) {
+		if (has_perm('change-namecolor')) {
 			table_format("Appareance", array(
 				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color (leave this blank to return to the default color). This is an hexadecimal number.<br>You can use the <a href='hex.php' target='_blank'>Color Chart</a> to select a color to enter here."],
 			));
@@ -301,7 +322,7 @@
 
 		table_format("Online services", array(
 			"Email address" 	=> [0, "email", "This is only shown in your profile; you don't have to enter it if you don't want to.", 60, 60],
-			"Email privacy" 	=> [2, "privateemail", "You can select a few privacy options for the email field.", "Public|Hide to guests|Private"],
+			"Email privacy" 	=> [2, "privateemail", "You can select a few privacy options for the email field.", "Public|Hide to guests|Staff only"],
 			"AIM screen name" 	=> [0, "aim", "Your AIM screen name, if you have one.", 30, 30],
 			"ICQ number" 		=> [0, "icq", "Your ICQ number, if you have one.", 10, 10],
 			"imood" 			=> [0, "imood", "If you have a imood account, you can enter the account name (email) for it here.", 60, 100],
@@ -363,25 +384,62 @@
 		$namecolor = "<input type='text' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=6 MAXLENGTH=6> $colorspec";
 		
 		if ($edituser) {
-			// Powerelevel selection
-			$powerlevel = "";
-			$check1[$userdata['powerlevel']] = 'selected';
-			if (!$sysadmin) unset($pwlnames[4]);
-			foreach ($pwlnames as $pwl => $pwlname) {
-				$powerlevel .= "<option value={$pwl} ".filter_string($check1[$pwl]).">{$pwlname}</option>";
+			// Group selection
+			$group = "";
+			$check1[$userdata['group']] = 'selected';
+			$sysadmin = has_perm('sysadmin-actions');
+			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups", PDO::FETCH_UNIQUE, false, true);
+			foreach ($grouplist as $groupid => $groupval) {
+				if (check_perm('sysadmin-actions', $groupid, $checkcache[$groupid]) && !$sysadmin) {
+					continue; // Hide groups that would give normal admins sysadmin actions
+				}
+				$group .= "<option value={$groupid} ".filter_string($check1[$groupid]).">{$groupval['name']}</option>";
 			}
-			$powerlevel = "<select name=powerlevel>{$powerlevel}</select>";
+			$group = "<select name=group>{$group}</select>";
+			
 			// Registration time
 			$regdate = datetofields($userdata['regdate'], 'reg', true, true);
+			
+			// Hours left before the user is unbanned
+			$ban_val 	= 
+				($userdata['group'] == GROUP_BANNED && $userdata['ban_expire']) ? 
+				 ceil(($userdata['ban_expire']-ctime())/3600) : 
+				 0;
+			
+			$ban_select = array(
+				$ban_val => timeunits2($ban_val*3600),
+				0		 => "*Permanent",
+				1		 => "1 hour",
+				3		 => "3 hours",
+				6		 => "6 hours",
+				24		 => "1 day",
+				72		 => "3 days",
+				168		 => "1 week",
+				336		 => "2 weeks",
+				774		 => "1 month",
+				1488	 => "2 months"
+			);
+			ksort($ban_select);
+			
+			$sel_b[$ban_val] = "selected";
+			
+			$ban_hours = "<select name='ban_hours'>";
+			foreach($ban_select as $i => $x){
+				$ban_hours .= "<option value=$i ".filter_string($sel_b[$i]).">$x</option>";
+			}
+			$ban_hours .= "</select> (has effect only for '".$grouplist[GROUP_BANNED]['name']."' users)";
+			
+			// Link to edit user permissions
+			$permlink = "You can edit them <a href='admin-editperms.php?mode=1&id=$id'>here</a>. Make sure to save the settings on this page if you don't want to lose them.";
 		}
 
 		
 		// listbox with <name> <used>
-		if (!$edituser && !$isadmin)
+		if (!$edituser && !has_perm('select-secret-themes'))
 			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.ord");
 		else
 			$scheme = doschemelist(true, $userdata['scheme'], 'scheme');
-		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY u.layout ORDER BY tl.ord');
+		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
 		
 		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
@@ -419,8 +477,6 @@
 					$ch[$userdata[$data[1]]] = "selected";
 					$choices = explode("|", $data[3]);
 					$input = "";
-					//for ($i = 0; isset($choices[$i]); $i+=2)
-					//	$input .= "<option value=".$choices[$i]." ".filter_string($ch[$i]).">".$choices[$i+1]."</option>";
 					foreach($choices as $i => $x)
 						$input .= "<option value=$i ".filter_string($ch[$i]).">$x</option>";
 					$input = "<select name='$data[1]'>$input</select>";
@@ -438,11 +494,10 @@
 	// Hack around autocomplete, fake inputs (don't use these in the file) 
 	// Web browsers think they're smarter than the web designer, so they ignore demands to not use autocomplete.
 	// This is STUPID AS FUCK when you're working on another user, and not YOURSELF.
-	
 	$finput = $edituser ? '<input style="display:none" type="text" name="__f__usernm__"><input style="display:none" type="password" name="__f__passwd__">' : "";
-	
+
 	?>
-	<br>
+	
 	<FORM ACTION="editprofile.php<?=$id_q?>" NAME=REPLIER METHOD=POST autocomplete=off>
 	<table class='table'>
 		<?=$finput?>

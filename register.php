@@ -26,6 +26,8 @@
 		3 - regcode
 	*/
 	
+	$isadmin = has_perm('reregister');
+	
 	if (!$isadmin && $regmode == 1)
 		errorpage("Registration is disabled. Please contact an admin if you have any questions.");
 	
@@ -159,7 +161,16 @@
 		if (!$samename && $pass && $pass != "123" && $username && !$shortpass && !$nomultis && !$badcode) {
 			
 			// The first user is super admin
-			$userlevel 		= $sql->num_rows($users) ? 0 : 4;	
+			switch ($sql->num_rows($users)) {
+				case 0: 
+					$userlevel = GROUP_SYSADMIN;
+					break;
+				case ($config['deleted-user-id'] - 1):
+					$userlevel = GROUP_PERMABANNED;
+					break;
+				default:
+					$userlevel = GROUP_NORMAL;
+			}
 			$newuserid 		= $sql->resultq("SELECT MAX(id) FROM users") + 1;
 			$currenttime 	= ctime();	
 			
@@ -188,11 +199,11 @@
 				// No longer useful
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
 
-				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `powerlevel` = :powl, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
+				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `group` = :group, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
 					[
 						'name'				=> $name,
 						'password'			=> getpwhash($pass, $newuserid),
-						'powl'				=> $userlevel,
+						'group'				=> $userlevel,
 						'ip'				=> $_SERVER['REMOTE_ADDR'],
 						'lastactivity'		=> $currenttime,
 						'regdate'			=> $currenttime,
@@ -205,18 +216,30 @@
 
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
 				
+				// Automatic registration of deleted user
+				if ($newuserid == $config['deleted-user-id']-1) {
+					$sql->query("INSERT INTO `users` SET 
+						`name`           = 'Deleted User',
+						`password`       = '',
+						`group`          = '".GROUP_PERMABANNED."',
+						`lastip`         = '0.0.0.0',
+						`lastactivity`   = '$currenttime',
+						`regdate`        = '$currenttime',
+						`postsperpage`   = '{$config['default-ppp']}',
+						`threadsperpage` = '{$config['default-tpp']}'");
+				}
+				
 				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
 			}
 			
 		} else {
 
-		/*	if ($password == "123") {
-			echo	"<td class='tdbg1 center'>Thank you, $username, for registering your account.<img src=cookieban.php width=1 height=1><br>".redirect('index.php','the board',0);
-			mysql_query("INSERT INTO `ipbans` (`ip`, `reason`, `date`) VALUES ('". $_SERVER['REMOTE_ADDR'] ."', 'blocked password of 123', '". ctime() ."')");
-			die();
-		}
-		*/
-
+		/*
+			if ($password == "123") {
+				$sql->query("INSERT INTO `ipbans` (`ip`, `reason`, `date`) VALUES ('". $_SERVER['REMOTE_ADDR'] ."', 'blocked password of 123', '". ctime() ."')");
+				errorpage("Thank you, $username, for registering your account.",'index.php','the board',0);
+			}
+*/
 			if ($badcode) {
 				$reason = "You have entered a bad registration code.";
 			} elseif ($samename) {
@@ -241,7 +264,28 @@
 		
 		pageheader();
 		
-		if ($regmode == 3)
+		$maxid = $sql->resultq("SELECT MAX(id) FROM users");
+		// Instruct the user if we're about to create a special account.
+		switch ($maxid) {
+			case 0: 
+				$readme = 
+					"You are registering the first account on this board.<br>".
+					"This account will be automatically given all the privileges.<br>".
+					"<br>".
+					"After registering and logging in, you may want to check out the <i><b>Admin</b></i> page (accessible from the header links) for further configuration options.";
+				break;
+			case ($config['deleted-user-id'] - 1):
+				$readme = 
+					"You are registering the 'Deleted User' account.<br>".
+					"This account will automatically be set to the '".$grouplist[GROUP_PERMABANNED]['name']."' group.<br>".
+					"<br>".
+					"When users are deleted, all of their posts and threads will change ownership to this user.";
+				break;
+			default:
+				$readme = "";
+		}
+		
+		if ($regmode == 3) {
 			$entercode = "
 		<tr>
 			<td class='tdbg1 center'>
@@ -254,14 +298,13 @@
 				<input type='regcode' name=regcode SIZE=15 MAXLENGTH=64>
 			</td>
 		</tr>";
-		
-		else $entercode = "";
-		
+		} else {
+			$entercode = "";
+		}
 ?>
-<body onload='window.document.REPLIER.username.focus()'>
+<?= quick_help($readme) ?>
 <form ACTION='register.php' NAME=REPLIER METHOD=POST>
-	<br>
-	<table class='table'>
+	<table class='table' onload='window.document.REPLIER.name.focus()'>
 		<tr><td class='tdbgh center' colspan=2>Login information</td></tr>
 		
 		<tr>
@@ -306,9 +349,7 @@
 		</tr>
 	</table>
 	<div style='visibility: hidden;'><b>Homepage:</b><small> DO NOT FILL IN THIS FIELD. DOING SO WILL RESULT IN INSTANT IP-BAN.</small> - <input type='text' name=homepage SIZE=25 MAXLENGTH=255></div>
-
 	</form>
-
 		<?php
 	}
  

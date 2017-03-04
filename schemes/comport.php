@@ -1,10 +1,33 @@
 <?php
 
- $nmcol[0]=array('-1'=>'404040','B0C0FF','E8F0FF','AFFABE','FFEA95');
- $nmcol[1]=array('-1'=>'404040','F185C9','FFB3F3','D880F5','B03088');
- $nmcol[2]=array('-1'=>'404040','B09CC7','EEB9BA','70D060','F0C413');
+	$grouplist[GROUP_PERMABANNED]['namecolor0'] = '404040';
+	$grouplist[GROUP_PERMABANNED]['namecolor1'] = '404040';
+	$grouplist[GROUP_PERMABANNED]['namecolor2'] = '404040';
+	
+	$grouplist[GROUP_BANNED]['namecolor0'] = '404040';
+	$grouplist[GROUP_BANNED]['namecolor1'] = '404040';
+	$grouplist[GROUP_BANNED]['namecolor2'] = '404040';
+	
+	$grouplist[GROUP_NORMAL]['namecolor0'] = 'B0C0FF';
+	$grouplist[GROUP_NORMAL]['namecolor1'] = 'F185C9';
+	$grouplist[GROUP_NORMAL]['namecolor2'] = 'B09CC7';
 
- 
+	$grouplist[GROUP_SUPER]['namecolor0'] = 'E8F0FF';
+	$grouplist[GROUP_SUPER]['namecolor1'] = 'FFB3F3';
+	$grouplist[GROUP_SUPER]['namecolor2'] = 'EEB9BA';
+
+	$grouplist[GROUP_MOD]['namecolor0'] = 'AFFABE';
+	$grouplist[GROUP_MOD]['namecolor1'] = 'D880F5';
+	$grouplist[GROUP_MOD]['namecolor2'] = '70D060';
+
+	$grouplist[GROUP_ADMIN]['namecolor0'] = 'FFEA95';
+	$grouplist[GROUP_ADMIN]['namecolor1'] = 'B03088';
+	$grouplist[GROUP_ADMIN]['namecolor2'] = 'F0C413';
+
+	$grouplist[GROUP_SYSADMIN]['namecolor0'] = 'FFEA95';
+	$grouplist[GROUP_SYSADMIN]['namecolor1'] = 'B03088';
+	$grouplist[GROUP_SYSADMIN]['namecolor2'] = 'F0C413';
+	
  $statusicons['hot'] 		= '<img src="images/comport/hot.gif">';
  $statusicons['new'] 		= '<img src="images/comport/new.gif">';
  $statusicons['newhot'] 	= '<img src="images/comport/new.gif">';

@@ -13,9 +13,6 @@
 	}
 
 	$_GET['posttime'] = isset($_GET['posttime']) ? (int) $_GET['posttime'] : 86400;
-	
-	if (!$_GET['id'] && (!$_GET['posttime'] || $_GET['posttime'] > 2592000)) // All posts
-		$_GET['posttime'] = 2592000;
 
 	if ($_GET['posttime']) {
 		$qstrings[] = "date > ".(ctime()-$_GET['posttime']);

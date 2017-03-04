@@ -12,8 +12,14 @@
 	if(!$loguser['id']) {
 		errorpage("Can't send a private message, because you are not logged in.","index.php", 'return to the index page', 0);
 	}
-	if($loguser['powerlevel'] <= -2) {
-		errorpage("You are permabanned and cannot send private messages.",'private.php','your private message box',0);
+	if(!has_perm('send-pms')) {
+		if ($loguser['group'] == GROUP_PERMABANNED) {
+			$message = "You are permabanned and cannot send private messages.";
+		} else {
+			$message = "Sorry, but you aren't allowed to send private messages.";
+		}
+		
+		errorpage($message,'private.php','your private message box',0)
 	}
 	
 	if($id) {
@@ -24,7 +30,7 @@
 		}
 	}
 
-	$bar = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='private.php'>Private messages</a>";
+	$bar = "<a href='index.php'>{$config['board-name']}</a> - <a href='private.php'>Private messages</a>";
 	
 	pageheader();
 	
@@ -113,7 +119,7 @@
 			$ppost['noob'] 		= 0;
 			
 			$ppost['act'] 		= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$userid}");
-			if ($isadmin)
+			if (has_perm('admin-actions'))
 				$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 			
 			?>

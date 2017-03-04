@@ -2,7 +2,7 @@
 
 require 'lib/function.php';
 
-admincheck();
+admincheck('forum-admin');
 
 $preview  = isset($_GET['preview']) ? ((int) $_GET['preview']) : NULL;
 $prevtext = isset($preview) ? "&preview=$preview" : "";
@@ -14,29 +14,22 @@ $_GET['catdelete'] 	= filter_int($_GET['catdelete']);
 
 
 if (isset($_POST['edit']) || isset($_POST['edit2'])) {
-	#if (!$isadmin) 
-	#	die("You aren't an admin!");
 	check_token($_POST['auth']);
-
-	//$hidden = (($_POST['hidden']) ? 1 : 0);
 	
+	$sql->beginTransaction();
+	$querycheck = array();
 	
 	if (isset($_POST['specialscheme']) && $_POST['specialscheme'] == -1)
 		$_POST['specialscheme'] = NULL;
 	else
 		$_POST['specialscheme'] = filter_int($_POST['specialscheme']);
 	
-	$qadd = "title=:title,description=:description,catid=:catid,minpower=:minpower,minpowerthread=:minpowerthread,".
-			"minpowerreply=:minpowerreply,numthreads=:numthreads,numposts=:numposts,forder=:forder,".
-			"specialscheme=:specialscheme,specialtitle=:specialtitle,hidden=:hidden,pollstyle=:pollstyle";
+	$qadd = $sql->setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle");
 	
 	$values = array(
 		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
 		'description'		=> xssfilters(filter_string($_POST['description'], true)),
 		'catid' 			=> filter_int($_POST['catid']),
-		'minpower' 			=> filter_int($_POST['minpower']),
-		'minpowerthread' 	=> filter_int($_POST['minpowerthread']),
-		'minpowerreply' 	=> filter_int($_POST['minpowerreply']),
 		'numthreads' 		=> filter_int($_POST['numthreads']),
 		'numposts' 			=> filter_int($_POST['numposts']),
 		'forder' 			=> filter_int($_POST['forder']), 
@@ -45,17 +38,37 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'hidden' 			=> filter_int($_POST['hideforum']),
 		'pollstyle' 		=> filter_int($_POST['pollstyle'])
 	);
-	$querycheck = array();
+	
+	// Permsets
+	$groups  = $sql->query("SELECT id FROM perm_groups");
+	while ($x = $sql->fetch($groups, PDO::FETCH_NUM)) {
+		$permSet[$x[0]] = filter_int($_POST['group'.$x[0].'r']) | filter_int($_POST['group'.$x[0].'p']) | filter_int($_POST['group'.$x[0].'e'])  | filter_int($_POST['group'.$x[0].'d']) | filter_int($_POST['group'.$x[0].'t']) | filter_int($_POST['group'.$x[0].'m']);
+	}
+	
+	
 	if ($_GET['id'] <= -1) {
 		$sql->queryp("INSERT INTO `forums` SET $qadd, `lastpostid` = '0'", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not add the forum.");
 		$id	= $sql->insert_id();
-		trigger_error("Created new forum \"".$values['forumtitle']."\" with ID $id", E_USER_NOTICE);
+		$sql->query("INSERT INTO perm_forums (id) VALUES ($id)", false, $querycheck);
+		foreach ($permSet as $i => $val) {
+			$sql->query("UPDATE perm_forums SET group$i = $val WHERE id = $id", false, $querycheck);
+		}
+		if ($sql->checkTransaction($querycheck)) {
+			trigger_error("Created new forum \"".$values['forumtitle']."\" with ID $id", E_USER_NOTICE);
+		} else {
+			errorpage("Could not add the forum.");
+		}
 	} else {
 		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['id'] ."'", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not edit the forum.");
-		$id	= $_GET['id'];
-		trigger_error("Edited forum ID $id", E_USER_NOTICE);
+		foreach ($permSet as $i => $val) {
+			$sql->query("UPDATE perm_forums SET group$i = $val WHERE id = {$_GET['id']}", false, $querycheck);
+		}
+		if ($sql->checkTransaction($querycheck)) {
+			$id	= $_GET['id'];
+			trigger_error("Edited forum ID $id", E_USER_NOTICE);
+		} else {
+			errorpage("Could not edit the forum.");
+		}
 	}
 
 	if ($_POST['edit'])
@@ -66,8 +79,6 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	die();
 }
 elseif (isset($_POST['delete'])) {
-	#if (!$isadmin)
-	#	die("You aren't an admin!");
 	check_token($_POST['auth']);
 	
 	$id      = (int) $_GET['delete'];
@@ -82,9 +93,13 @@ elseif (isset($_POST['delete'])) {
 	$sql->beginTransaction();
 	$counts = $sql->fetchq("SELECT `numthreads`, `numposts` FROM `forums` WHERE `id`='$id'");
 	$sql->query("UPDATE `threads` SET `forum`='$mergeid' WHERE `forum`='$id'", false, $querycheck);
-	$sql->query("UPDATE `announcements` SET `forum`='$mergeid' WHERE `forum`='$id'", false, $querycheck);
+	$sql->query("UPDATE `misc` SET `announcementforum` = '$mergeid' WHERE `announcementforum` = '$id'", false, $querycheck);
 	$sql->query("DELETE FROM `forummods` WHERE `forum`='$id'", false, $querycheck);
 	$sql->query("DELETE FROM `forums` WHERE `id`='$id'", false, $querycheck);
+	$sql->query("DELETE FROM `perm_forums` WHERE `id`='$id'", false, $querycheck);
+	$sql->query("DELETE FROM `perm_forumusers` WHERE `forum`='$id'", false, $querycheck);
+	
+	
 
 	$lastthread = $sql->fetchq("SELECT * FROM `threads` WHERE `forum`='$mergeid' ORDER BY `lastpostdate` DESC LIMIT 1");
 	$sql->query("UPDATE `forums` SET
@@ -105,12 +120,12 @@ elseif (isset($_POST['delete'])) {
 elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 	check_token($_POST['auth']);	
 	
-	$qadd = "name=:name,minpower=:minpower,corder=:corder";
+	$qadd = "name=:name,corder=:corder,showalways=:showalways";
 	
 	$values = array(
 		'name' 			=> xssfilters(filter_string($_POST['catname'], true)),
-		'minpower' 		=> filter_int($_POST['minpower']),
-		'corder' 			=> filter_int($_POST['catorder']), 
+		'corder' 		=> filter_int($_POST['catorder']), 
+		'showalways' 	=> filter_int($_POST['showalways']), 
 	);
 	$querycheck = array();
 	if ($_GET['catid'] <= -1) {
@@ -119,14 +134,14 @@ elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 		$id	= $sql->insert_id();
 		trigger_error("Created new category \"".$values['name']."\" with ID $id", E_USER_NOTICE);
 	} else {
-		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values, $querycheck);
+		$sql->queryp("UPDATE `categories` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values, $querycheck);
 		if (!$querycheck[0]) errorpage("Could not edit the category.");
 		$id	= $_GET['catid'];
 		trigger_error("Edited category ID $id", E_USER_NOTICE);
 	}
 
 	if ($_POST['catedit'])
-		header("Location: ?id=". $id . $prevtext);
+		header("Location: ?catid=". $id . $prevtext);
 	else
 		header("Location: ?".substr($prevtext, 1));
 
@@ -162,12 +177,6 @@ pageheader($windowtitle);
 
 print adminlinkbar('admin-editforums.php');
 
-foreach($pwlnames as $pwl => $pwlname) {
-	if ($pwl < 0) continue;
-	$powers[] = $pwlname;
-}
-$powers[] = '[no access]';
-
 $pollstyles = array(-2 => 'Disallowed',
                     -1 => 'Normal',
                      0 => 'Force Regular',
@@ -175,8 +184,6 @@ $pollstyles = array(-2 => 'Disallowed',
 
 
 if ($_GET['delete']) {
-	#if (!$isadmin)
-	#	errorpage("You aren't an admin!");	
 	$forums = $sql->getresultsbykey("SELECT id, title FROM forums ORDER BY catid, forder");
 	$forums[-1] = "Choose a forum to merge into...";
 	
@@ -212,16 +219,22 @@ if ($_GET['delete']) {
 }
 else if ($_GET['id']) {
 	$categories = $sql->getresultsbykey("SELECT id, name FROM categories ORDER BY id");
-	$forum = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
+	$forum      = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
+	$groups     = $sql->getresultsbykey("SELECT id, name FROM perm_groups ORDER BY ord ASC, id ASC");
 	if (!$forum) {
 		$_GET['id'] = -1;
+		// Initialize group permissions to 0
+		foreach ($groups as $id => $title) {
+			$perms['group'.$id] = 0;
+		}
 	} else {
 		if (!isset($categories[$forum['catid']]))
 			$categories[$forum['catid']] = "Unknown category #" . $forum['catid'];
-
-		//if ($forum['specialscheme'] == NULL)
-		//	$forum['specialscheme'] = '-1';
+		$perms = $sql->fetchq("SELECT * FROM `perm_forums` WHERE `id` = '". $_GET['id'] . "'");
+		unset($perms['id']);
 	}
+	
+	$numGroups = count($perms);
 
 ?>
 	<form method="post" action="?id=<?=$_GET['id']?><?=$prevtext?>">
@@ -233,29 +246,18 @@ else if ($_GET['id']) {
 		<tr>
 			<td class='tdbgh center'>Forum Name</td>
 			<td class='tdbg1' colspan=4><input type="text" name="forumtitle" value="<?=htmlspecialchars($forum['title'])?>"  style="width: 100%;" maxlength="250"></td>
-			<td class='tdbg1' width=10%><input type="checkbox" id="hideforums" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> <label for="hideforums">Hidden</label></td>
+			<td class='tdbg1' width=10%>
+				<input type="checkbox" id="hideforums" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> <label for="hideforums">Hidden</label>
+			</td>
 		</tr>
 
 		<tr>
 			<td class='tdbgh center' rowspan=4>Description</td>
-			<td class='tdbg1' rowspan=4 colspan=3><textarea wrap=virtual name=description ROWS=4 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
-			<td class='tdbgh center' colspan=2>Minimum power needed...</td>
+			<td class='tdbg1' rowspan=4 colspan=5><textarea wrap=virtual name=description ROWS=4 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
 		</tr>
-
-		<tr>
-			<td class='tdbgh center'>...to view the forum</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpower'], "minpower")?></td>
-		</tr>
-
-		<tr>
-			<td class='tdbgh center'>...to post a thread</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpowerthread'], "minpowerthread")?></td>
-		</tr>
-
-		<tr>
-			<td class='tdbgh center'>...to reply</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpowerreply'], "minpowerreply")?></td>
-		</tr>
+		<tr></tr>
+		<tr></tr>
+		<tr></tr>
 
 		<tr>
 			<td class='tdbgh center'  width='10%'>Number of Threads</td>
@@ -278,14 +280,70 @@ else if ($_GET['id']) {
 		<tr>
 			<td class='tdbgh center'>Custom header</td>
 			<td class='tdbg1' colspan=5><textarea wrap=virtual name=specialtitle ROWS=2 COLS=80 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['specialtitle'])?></TEXTAREA></td>
-		<tr>
+		<tr>	
 			<td class='tdbgc center' colspan=6>
 				<input type="submit" name="edit" value="Save and continue">&nbsp;<input type="submit" name="edit2" value="Save and close">
 				<input type="hidden" name="auth" value="<?=generate_token()?>">
 			</td>
 		</tr>
 
-	</table></form><br>
+	</table>
+	
+	<table class="table">
+		<tr><td class="tdbgh center" colspan=42><b>Group Permissions [Read/Post/Edit/Delete/Thread/Mod]</b></td>
+<?php
+	$oneSet = false;
+	while ($perms) {
+?>		</tr><tr><?php
+		
+		// Divide in rows of 6
+		$k = 0;
+		foreach ($groups as $id => $name) {
+			echo "<td class='tdbgh center' colspan=6><b>{$name}</b></td>".($oneSet ? "" : "<td class='tdbg2' rowspan=9999>&nbsp;</td>");
+			unset($groups[$id]);
+			++$k;
+			if ($k == 6) break;
+		}
+		// Leftovers
+		for (; $k < 6; ++$k) {
+			echo "<td class='tdbgh center' colspan=4>&nbsp;</td>";
+		}
+			
+	?>		</tr><tr><?php
+
+		for ($i = 0; $i < 6; ++$i) {
+	?>			<td class='tdbgc center'><b>R</b></td>
+				<td class='tdbgc center'><b>P</b></td>
+				<td class='tdbgc center'><b>E</b></td>
+				<td class='tdbgc center'><b>D</b></td>
+				<td class='tdbgc center'><b>T</b></td>
+				<td class='tdbgc center'><b>M</b></td>
+	<?php
+		}
+		
+	?>		</tr><tr><?php
+
+		$i = 0;
+		foreach ($perms as $permName => $val) {
+	?>			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'r'?>" value="<?=PERM_FORUM_READ  ?>" <?= ($val & PERM_FORUM_READ   ? "checked" : "") ?>></td>
+				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'p'?>" value="<?=PERM_FORUM_POST  ?>" <?= ($val & PERM_FORUM_POST   ? "checked" : "") ?>></td>
+				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'e'?>" value="<?=PERM_FORUM_EDIT  ?>" <?= ($val & PERM_FORUM_EDIT   ? "checked" : "") ?>></td>
+				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'d'?>" value="<?=PERM_FORUM_DELETE?>" <?= ($val & PERM_FORUM_DELETE ? "checked" : "") ?>></td>
+				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'t'?>" value="<?=PERM_FORUM_THREAD?>" <?= ($val & PERM_FORUM_THREAD ? "checked" : "") ?>></td>
+				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'m'?>" value="<?=PERM_FORUM_MOD   ?>" <?= ($val & PERM_FORUM_MOD    ? "checked" : "") ?>></td>
+	<?php	unset($perms[$permName]);
+			++$i;
+			if ($i == 6) break;
+		}
+		for (; $i < 6; ++$i) {
+			echo "<td class='tdbg1 center' colspan=6>&nbsp;</td>";
+		}
+		$oneSet = true;
+	}
+?>
+	</tr>
+	</table>
+	</form><br>
 <?php
 }
 else if ($_GET['catdelete']) {
@@ -344,8 +402,8 @@ else if ($_GET['catid']) {
 		</tr>
 		<tr>
 			<td class='tdbg2' colspan=4>&nbsp;</td>
-			<td class='tdbgh center nobr'>Minimum power needed to view</td>
-			<td class='tdbg1'><?=dropdownList($powers, $category['minpower'], "minpower")?></td>
+			<td class='tdbgh center nobr'>Show even if empty</td>
+			<td class='tdbg1'><input type="checkbox" id="showalways" name="showalways" value="1"<?=($category['showalways'] ? " checked" : "")?>> <label for="showalways">Enabled</label></td>
 		</tr>		
 		<tr>
 			<td class='tdbgc center' colspan=6>
@@ -368,49 +426,68 @@ $forumlist="
 	</tr>
 ";
 
-
 if (isset($preview)) {
+	
 	$forumquery = $sql->query("
-		SELECT f.*, $userfields uid
+		SELECT 	f.*, c.id valid, pf.group{$preview} forumperm, $userfields uid
 		FROM forums f
-		LEFT JOIN users u ON f.lastpostuser = u.id
-		WHERE (!minpower OR minpower <= $preview)
-		AND (f.hidden = '0' OR $sysadmin) 
-		ORDER BY catid, forder");
-	$catquery = $sql->query("
-		SELECT id, name
-		FROM categories
-		WHERE (!minpower OR minpower <= $preview)
-		ORDER BY corder, id
+		
+		LEFT JOIN users           u  ON f.lastpostuser = u.id
+		LEFT JOIN categories      c  ON f.catid        = c.id
+		LEFT JOIN perm_forums     pf ON f.id           = pf.id
+		
+		WHERE !f.hidden OR ".has_perm('display-hidden-forums')."
+		ORDER BY c.corder, f.catid, f.forder, f.id
 	");
+	
 } else {
 	$forumquery = $sql->query("
-		SELECT f.*, $userfields uid 
+		SELECT 	f.*, c.id valid, $userfields uid
 		FROM forums f
-		LEFT JOIN users u      ON f.lastpostuser = u.id
-		LEFT JOIN categories c ON f.catid = c.id
-		ORDER BY c.corder, f.catid, f.forder
+		LEFT JOIN users           u  ON f.lastpostuser = u.id
+		LEFT JOIN categories      c  ON f.catid        = c.id
+		ORDER BY c.corder, f.catid, f.forder, f.id
 	");
-	$catquery = $sql->query("SELECT id, name FROM categories ORDER BY corder, id");
 }
 
-$modquery = $sql->query("SELECT $userfields,m.forum FROM users u INNER JOIN forummods m ON u.id = m.user ORDER BY name");
+$catquery = $sql->query("
+	SELECT id, name, showalways
+	FROM categories
+	ORDER BY corder, id
+");
+$modquery = $sql->query("
+	SELECT $userfields, f.id forum
+	FROM forums f
+	INNER JOIN perm_forumusers pu ON f.id    = pu.forum
+	INNER JOIN users           u  ON pu.user = u.id
+	WHERE (pu.permset & ".PERM_FORUM_MOD.")
+	ORDER BY u.name
+");
 
-$categories = $sql->fetchAll($catquery, PDO::FETCH_ASSOC);
-$forums 	= $sql->fetchAll($forumquery, PDO::FETCH_ASSOC);
-$mods 		= $sql->fetchAll($modquery, PDO::FETCH_ASSOC);
+$categories	= $sql->fetchAll($catquery);
+$forums 	= $sql->fetchAll($forumquery);
+$mods 		= $sql->fetchAll($modquery);
 
 $forumlist .= "<tr><td class='tdbgc center' colspan=5>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>";
+$prevcat = NULL;
+
+
 
 foreach ($categories as $category) {
-	$forumlist .= "<tr><td class='tdbgc center fonts nobr'><a href=admin-editforums.php?catid={$category['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?catdelete={$category['id']}$prevtext>Delete</a></td><td class='tdbgc center' colspan=4><b>".htmlspecialchars($category['name'])."</b></td></tr>";
 
+	$forumin = "";
 	foreach ($forums as $forumplace => $forum) {
-		// loop over until we have reached the category this forum's in
-		if ($forum['catid'] != $category['id'])
-			continue;
 		
-		// Local mod list
+		if (isset($preview) && !has_forum_perm('read', $forum, true)) {
+			unset($forums[$forumplace]);
+			continue;
+		}
+		
+		// loop over until we have reached the category this forum's in
+		if (!$forum['valid'] || $forum['catid'] != $category['id']) {
+			continue;
+		}
+		
 		$m = 0;
 		$modlist = "";
 		foreach ($mods as $modplace => $mod) {
@@ -449,7 +526,7 @@ foreach ($categories as $category) {
 			$tc2	= '2';
 		}
 
-	  $forumlist.="
+	  $forumin .= "
 		<tr>
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
@@ -464,7 +541,14 @@ foreach ($categories as $category) {
 
 		unset($forums[$forumplace]);
 	}
+	
+	if ($forumin || !isset($preview) || $category['showalways']) {
+		$forumlist .= "<tr><td class='tdbgc center fonts nobr'><a href=admin-editforums.php?catid={$forum['catid']}$prevtext>Edit</a> / <a href=admin-editforums.php?catdelete={$forum['catid']}$prevtext>Delete</a></td><td class='tdbgc center' colspan=4><b>".htmlspecialchars($category['name'])."</b></td></tr>";
+	}
+	$forumlist .= $forumin;
 }
+	
+
 
 // Leftover forums
 if (!isset($preview) && count($forums)) {
@@ -525,7 +609,7 @@ if (!isset($preview) && count($forums)) {
 	}
 }
 
-print "<center><b>Preview forums with powerlevel:</b> ".previewbox()."</center>\n";
+print "<center><b>Preview forums with group:</b> ".previewbox()."</center>\n";
 print "<table class='table'>$forumlist</table>";
 pagefooter();
 
@@ -540,21 +624,21 @@ function dropdownList($links, $sel, $n) {
 }
 
 function previewbox(){
-	global $preview;
+	global $preview, $grouplist;
 	if ($_GET['id']) {
 		$idtxt  = "id=" . $_GET['id'] . "&";
 		$idtxt2 = "?id=" . $_GET['id'];
 	} else {
 		$idtxt = $idtxt2 = "";
 	}
-
+	
+	$groupselect = "";
+	foreach ($grouplist as $groupid => $arr) {
+		$groupselect .= "<option value='admin-editforums.php?{$idtxt}preview={$groupid}' ".((isset($preview) && $preview == $groupid) ? 'selected' : '') .">{$arr['name']}</option>\n";
+	}
 	return "<form><select onChange=parent.location=this.options[this.selectedIndex].value>
 			<option value='admin-editforums.php{$idtxt2}' ".((!$preview || $preview < 0 || $preview > 4) ? 'selected' : '') ."'>Disable</option>
-			<option value='admin-editforums.php?{$idtxt}preview=0' ".((isset($preview) && $preview == 0) ? 'selected' : '') .">Normal</option>
-			<option value='admin-editforums.php?{$idtxt}preview=1' ".($preview == 1 ? 'selected' : '') .">Normal +</option>
-			<option value='admin-editforums.php?{$idtxt}preview=2' ".($preview == 2 ? 'selected' : '') .">Moderator</option>
-			<option value='admin-editforums.php?{$idtxt}preview=3' ".($preview == 3 ? 'selected' : '') .">Administrator</option>
-			<option value='admin-editforums.php?{$idtxt}preview=4' ".($preview == 4 ? 'selected' : '') .">Administrator (hidden)</option>
+			$groupselect
 		</select></form>";
 }
 ?>

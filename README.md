@@ -1,19 +1,12 @@
 # jul
-
-Jul is a fork of "Acmlmboard 1.92", an *ancient* system designed by Acmlm (not me). This repository is mostly kept so that improvements and updates are possible by forum members, and to patch any possible vulnerabilities. The actual running code itself includes a few protections that are not in this repository, mostly to prevent and guard against automated attacks.
-
-The code is largely from 2005 and earlier, and has not seen major work in about as long. 
-
+This is an experimental fork of jul which acts as a continuation fpr BoardC development.
+'Classic' BoardC is discontinued in favour of an actual Acmlmboard codebase.
 
 ## installing
-You are on your own for the time being. No default configuration or database dump is provided at this time.
+You first need to set up the configuration file (lib/config.php) and then import **install.sql** to your database. A 1.92.08/BoardC-like installer may be provided at some point.
 
-
-## contributing
-
-Pull requests are welcome, and are usually processed in a timely basis.
-
+The first user registered will be a root administrator. Unless the 'deleted-user-id' setting is changed, a 'Deleted User' account will be automatically created as well to contain posts from deleted users.
+After logging in, you may want to change board options from the Admin Control Panel (ie: Active filters, Forum list, Permissions...)
 
 ## license
-
-This code is **not under a known license at this time**. That is not to say it is "free software" -- it is just not distributed under any license at the time being. In the future, maybe this will change.
+Exactly the same as the original branch.

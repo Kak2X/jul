@@ -4,7 +4,7 @@
 	admincheck();
 	print adminlinkbar('ipsearch.php');
 
-	$_POST['ip'] = filter_string($_POST['ip']);
+	$_POST['ip'] = filter_string($_REQUEST['ip']);
 	if(!filter_string($_POST['su'])) $_POST['su']='n';
 	if(!filter_string($_POST['sp'])) $_POST['sp']='u';
 	if(!filter_string($_POST['sm'])) $_POST['sm']='n';
@@ -81,13 +81,13 @@
 			case 'i': $psort='ORDER BY p.ip'; break;
 		}
 		switch ($_POST['sm']) {
-			case 'n': $msort='ORDER BY u.name'; break; // name1
+			case 'n': $msort='ORDER BY u1.name'; break;
 			case 'd': $msort='ORDER BY p.date'; break;
 			case 'i': $msort='ORDER BY p.ip'; break;
 		}
 		if ($_POST['d'] === 'y') {
 			$pgroup='GROUP BY p.ip,u.id';
-			$mgroup='GROUP BY p.ip,u.id'; // u1
+			$mgroup='GROUP BY p.ip,u1.id';
 		} else {
 			$pgroup=$mgroup='';
 		}
@@ -100,13 +100,13 @@
 			WHERE p.ip LIKE ?
 			$pgroup $psort
 		", [$_POST['ip']]);
-		// u1.name, u AS name1,u2.name AS name2,u1.sex AS sex1,u2.sex AS sex2,u1.powerlevel pow1,u2.powerlevel pow2 
-		// AND p.userto=u2.id
-		// bah
 		$pmsgs = $sql->queryp("
-			SELECT p.id, p.userfrom, p.userto, p.title, p.ip, p.date, $userfields uid
+			SELECT 	p.id, p.userfrom, p.userto, p.title, p.ip, p.date,
+					u1.name, u1.sex, u1.`group`, u1.aka, u1.birthday, u1.namecolor,
+					u2.name, u2.sex, u2.`group`, u2.aka, u2.birthday, u2.namecolor
 			FROM pmsgs p
-			LEFT JOIN users u ON p.userfrom = u.id
+			LEFT JOIN users u1 ON p.userfrom = u1.id
+			LEFT JOIN users u2 ON p.userto   = u2.id
 			WHERE p.ip LIKE ?
 			$mgroup $msort
 		", [$_POST['ip']]);
@@ -196,18 +196,19 @@
 		<td class='tdbgc center'>IP</td>
 	</tr>
 <?php
-		for($c=0; $c<500 && $pmsg=$sql->fetch($pmsgs); ++$c) {
-			//if ($pmsg['userfrom'] != 428 && $pmsg['userto'] != 428)
+		for($c=0; $c<500 && $pmsg=$sql->fetch($pmsgs, PDO::FETCH_NAMED); ++$c) {
+			if ($loguser['id'] == 1 || ($pmsg['userfrom'] != 1 && $pmsg['userto'] != 1)) {
 ?>
 	<tr>
 		<td class='tdbg2 center'><?=$pmsg['id']?></td>
-		<td class='tdbg1 center'><?=getuserlink($pmsg, $pmsg['userfrom'])?></td>
-		<td class='tdbg1 center'><?=getuserlink(NULL, $pmsg['userto'])?></td>
+		<td class='tdbg1 center'><?=getuserlink(array_column_by_key($pmsg, 0), $pmsg['userfrom'])?></td>
+		<td class='tdbg1 center'><?=getuserlink(array_column_by_key($pmsg, 1), $pmsg['userto'])?></td>
 		<td class='tdbg1 center'><a href="showprivate.php?id=<?=$pmsg['id']?>"><?=htmlspecialchars($pmsg['title'])?></a></td>
 		<td class='tdbg1 center nobr'><?=printdate($pmsg['date'])?></td>
 		<td class='tdbg2 center'><?=$pmsg['ip']?></td>
 	</tr>
 <?php	
+			}
 		}
 		if($pmsg=$sql->fetch($pmsgs))
 			print "<tr><td class='tdbg2 center' colspan=6>Too many results!</td></tr>";

@@ -3,6 +3,9 @@
 	
 	require 'lib/function.php';
 	
+	// Stop this insanity.  Never index newreply.
+	$meta['noindex'] = true;
+	
 	$id		= filter_int($_GET['id']);
 	$quoteid	= filter_int($_GET['postid']);
 	
@@ -10,32 +13,33 @@
 		errorpage("No thread specified.", "index.php", 'return to the index page', 0);
 	
 	
-	$thread = $sql->fetchq("SELECT forum, closed, sticky, title, lastposter FROM threads WHERE id = $id");
-
-	// Stop this insanity.  Never index newreply.
-	$meta['noindex'] = true;
+	$thread = $sql->fetchq("SELECT forum, closed, sticky, announcement, title, lastposter FROM threads WHERE id = $id");
 
 	if (!$thread) 
 		errorpage("Nice try. Next time, wait until someone makes the thread <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
 	
 
 	$forumid = (int) $thread['forum'];
-	$forum = $sql->fetchq("SELECT title, minpower, minpowerreply, id, specialscheme, specialtitle FROM forums WHERE id = $forumid");
+	$forum = $sql->fetchq("SELECT title, id, specialscheme, specialtitle FROM forums WHERE id = $forumid");
 	
-	
-	if($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$loguser['id']}"))
-		$ismod = 1;
-	
-	// Thread permissions for our sanity
-	$canviewforum 	= (!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']);
-	$canreply		= ($loguser['powerlevel'] >= $forum['minpowerreply']);
-	$closed			= (!$ismod && $thread['closed']);
-	
-	if ($closed) {
-		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.","thread.php?id=$id",$thread['title'],0);
-	} else if ($banned) {
-		errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id=$id",$thread['title'],0);
-	} else if (!$canreply || (!$forum && !$ismod)) { // Thread in broken forum = No
+	if ($forum) {
+		
+		$forumperm = get_forum_perm($forumid, $loguser['id'], $loguser['group']);
+		
+		// Thread permissions for our sanity
+		$canviewforum 	= has_forum_perm('read', $forumperm);//(!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']);
+		$canreply		= has_forum_perm('post', $forumperm);//($loguser['powerlevel'] >= $forum['minpowerreply']);
+		$ismod 			= has_forum_perm('mod', $forumperm);
+		$closed			= (!$ismod && $thread['closed']);
+		
+		if ($closed) {
+			errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.","thread.php?id=$id",$thread['title'],0);
+		} else if ($banned && !$canreply) {
+			errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id=$id",$thread['title'],0);
+		} else if (!$canreply || (!$forum && !has_perm('all-forum-access'))) { // Thread in broken forum = No
+			errorpage("You are not allowed to post in this thread.","thread.php?id=$id",$thread['title'],0);
+		}
+	} else {
 		errorpage("You are not allowed to post in this thread.","thread.php?id=$id",$thread['title'],0);
 	}
 	
@@ -62,6 +66,7 @@
 	
 	$tsticky = filter_int($_POST['stick']);
 	$tclosed = filter_int($_POST['close']);
+	$tannc	 = filter_int($_POST['tannc']);
 	
 	
 
@@ -83,16 +88,19 @@
 			
 			$user	= $sql->fetchq("SELECT * FROM users WHERE id='$userid'");
 			
+			$forumperm  = get_forum_perm($forumid, $user['id'], $user['group']);
+			$ismod 		= (has_perm('all-forum-access') || ($forum && has_forum_perm('mod', $forumperm, true)));
+			/*
 			if ($user['powerlevel'] >= 2)
 				$ismod = 1;
 			else if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$user['id']}"))
 				$ismod = 1;
 			else
 				$ismod = 0;
-			
+			*/
 			if ($thread['closed'] && !$ismod)
 				$error	= 'The thread is closed and no more replies can be posted.';
-			if ($user['powerlevel'] < $forum['minpowerreply'])	// or banned
+			if (!has_forum_perm('post', $forumperm))	// or banned
 				$error	= 'Replying in this forum is restricted, and you are not allowed to post in this forum.';
 			if (!$message)
 				$error	= "You didn't enter anything in the post.";
@@ -158,7 +166,7 @@
 			$pid = $sql->insert_id();
 			
 			
-			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky," : "";
+			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky, announcement = $tannc," : "";
 
 			$sql->query("UPDATE `threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '$userid' WHERE `id`='$id'", false, $querycheck);
 			$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '$currenttime', `lastpostuser` ='$userid', `lastpostid` = '$pid' WHERE `id`='$forumid'", false, $querycheck);
@@ -168,13 +176,14 @@
 
 			
 			if ($sql->checkTransaction($querycheck)) {
-				
+				// @TODO: Add field value
+				$forum['ircout'] = 0; 
 				xk_ircout("reply", $user['name'], array(
 					'forum'		=> $forum['title'],
 					'fid'		=> $forumid,
 					'thread'	=> str_replace("&lt;", "<", $thread['title']),
 					'pid'		=> $pid,
-					'pow'		=> $forum['minpower'],
+					'dest'		=> $forum['ircout'],
 				));
 
 				return header("Location: thread.php?pid=$pid#$pid");
@@ -243,7 +252,7 @@
 								</span>
 							</td>
 							<td class='tbl $bg' valign=top>
-								".doreplace2(dofilters($post['text']), $post['options'])."
+								".doreplace2(dofilters($post['text'], $forumid), $post['options'])."
 							</td>
 						</tr>";
 				} else {
@@ -306,7 +315,7 @@
 		$ppost['text']			= $message;
 		$ppost['options']		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		if ($isadmin)
+		if (has_perm('forum-admin'))
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 	/*	
 		$chks = array("", "", "");
@@ -323,7 +332,7 @@
 			</tr>
 		</table>
 		<table class='table'>
-			<?=threadpost($ppost,1)?>
+			<?=threadpost($ppost,1,$forumid)?>
 		</table>
 		<br>
 		<?php
@@ -331,6 +340,7 @@
 	} else {
 		$tsticky = $thread['sticky'];
 		$tclosed = $thread['closed'];
+		$tannc =   $thread['announcement'];
 	}
 	
 	$modoptions	= "";
@@ -339,6 +349,8 @@
 		
 		$selsticky = $tsticky ? "checked" : "";
 		$selclosed = $tclosed ? "checked" : "";
+		$seltannc  = $tannc   ? "checked" : "";
+		
 		
 		$modoptions = 
 		"<tr>
@@ -347,7 +359,8 @@
 			</td>
 			<td class='tdbg2' colspan=2>
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
-				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label>
+				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
+				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
 			</td>
 		</tr>";
 	}

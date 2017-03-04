@@ -30,11 +30,34 @@
 	$scr5			= 'ddcdbb'; # bottom-right outer shadow
 	$scr6			= '000000'; # button arrows
 	$scr7			= '8e6f3e';
+	
+	$grouplist[GROUP_PERMABANNED]['namecolor0'] = '888888';
+	$grouplist[GROUP_PERMABANNED]['namecolor1'] = '888888';
+	$grouplist[GROUP_PERMABANNED]['namecolor2'] = '888888';
+	
+	$grouplist[GROUP_BANNED]['namecolor0'] = '888888';
+	$grouplist[GROUP_BANNED]['namecolor1'] = '888888';
+	$grouplist[GROUP_BANNED]['namecolor2'] = '888888';
+	
+	$grouplist[GROUP_NORMAL]['namecolor0'] = '0c4e8b';
+	$grouplist[GROUP_NORMAL]['namecolor1'] = '662244';
+	$grouplist[GROUP_NORMAL]['namecolor2'] = '32126d';
 
-	#								 Banned    Normal   Normal+   Moderator   Admin
-	$nmcol[0]		= array('-1' => '888888', '0c4e8b', '2c7eca', '0a5427', '4e4400', );	# M
-	$nmcol[1]		= array('-1' => '888888', '662244', '884455', '910369', '570040', );	# F
-	$nmcol[2]		= array('-1' => '888888', '32126d', '522c97', '4b9d15', '5f4b00', );	# N/A
+	$grouplist[GROUP_SUPER]['namecolor0'] = '2c7eca';
+	$grouplist[GROUP_SUPER]['namecolor1'] = '884455';
+	$grouplist[GROUP_SUPER]['namecolor2'] = '522c97';
+
+	$grouplist[GROUP_MOD]['namecolor0'] = '0a5427';
+	$grouplist[GROUP_MOD]['namecolor1'] = '910369';
+	$grouplist[GROUP_MOD]['namecolor2'] = '4b9d15';
+
+	$grouplist[GROUP_ADMIN]['namecolor0'] = '4e4400';
+	$grouplist[GROUP_ADMIN]['namecolor1'] = '570040';
+	$grouplist[GROUP_ADMIN]['namecolor2'] = '5f4b00';
+
+	$grouplist[GROUP_SYSADMIN]['namecolor0'] = '4e4400';
+	$grouplist[GROUP_SYSADMIN]['namecolor1'] = '570040';
+	$grouplist[GROUP_SYSADMIN]['namecolor2'] = '5f4b00';
 
 	$newthreadpic	= '<img src="images/ymar/newthread.png" align="absmiddle">';
 	$newreplypic	= '<img src="images/ymar/newreply.png" align="absmiddle">';

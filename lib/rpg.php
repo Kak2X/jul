@@ -17,7 +17,7 @@ function basestat($p,$d,$stat){
 		case 8: return (pow($p,0.21) * pow($d,0.02) * pow($l,1.37) * 0.25) +  1; //Spd
 	}
 }
-function getstats($u, $items=0, $class = 0){
+function getstats($u, $items=array(), $class = array()){
 	global $stat;
 	$p = $u['posts'];
 	$d = (ctime()-$u['regdate'])/86400;

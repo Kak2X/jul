@@ -12,7 +12,8 @@
 	if (!$loguser['id']) {
 		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
 	}
-	if ($loguser['editing_locked'] == 1) {
+	if (!has_perm('edit-own-posts')) {
+		if ($banned) errorpage("Banned users aren't allowed to edit their posts.", 'index.php', 'return to the board');
 		errorpage("You are not allowed to edit your posts.", 'index.php', 'return to the board');
 	}
 	if (!$id) {	// You dummy
@@ -32,13 +33,18 @@
 
 	$smilies = readsmilies();
 
-	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = {$thread['forum']}");
+	$forum = $sql->fetchq("
+		SELECT f.*, pf.group{$loguser['group']} forumperm, pu.permset userperm
+		FROM forums f
+		LEFT JOIN perm_forums     pf ON f.id    = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
+		WHERE f.id = {$thread['forum']}
+	");
+
+	$ismod = ismod($forum);
 	
-	if ($loguser['powerlevel'] < $forum['minpower'] || (!$forum && !$ismod)) // Broken forum
+	if (!$ismod && !has_forum_perm('read', $forum))
 		errorpage("Sorry, but you are not allowed to do this in this restricted forum.", 'index.php' ,'return to the board', 0);
-	
-	if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forum['id']} and user = {$loguser['id']}"))
-		$ismod = 1;
 	
 	if (!$ismod && ($thread['closed'] || $loguser['id'] != $post['user']))
 		errorpage("You are not allowed to edit this post.", "thread.php?id=$threadid", "the thread", 0);
@@ -46,18 +52,14 @@
 	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 
-
-	
-	
-	
-/*	print "<font> - ". ($forum['minpower'] <= $loguser['powerlevel'] ? "" : "Restricted thread") ."
-";
-*/
-	
 	/*
 		Editing a post?
 	*/
 	if (!$action) {
+		
+		if (!$ismod && !has_forum_perm('edit', $forumperm)) {
+			errorpage("You are not allowed to edit your posts in this forum.", "thread.php?id=$threadid", "the thread", 0);
+		}
 		
 		if (isset($_POST['submit']) || isset($_POST['preview'])) {
 			
@@ -139,7 +141,7 @@
 				$ppost['num']		= $post['num'];
 				$ppost['date']		= $post['date'];
 				$ppost['tagval']	= $post['tagval'];
-				$ppost['noob']		= $post['noob'];
+				$ppost['noob']		= $post['noob'];				
 				
 				$ppost['moodid']	= $moodid;
 				$ppost['headtext']	= $head;
@@ -153,7 +155,7 @@
 				$ppost['editdate'] 	= ctime();
 
 	
-				if ($isadmin)
+				if (has_perm('forum-admin'))
 					$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 				
 				?>
@@ -165,7 +167,7 @@
 					</tr>
 				</table>
 				<table class='table'>
-				<?=threadpost($ppost,1)?>
+				<?=threadpost($ppost,1,$forum['id'])?>
 				</table>
 				<br>
 				<?php
@@ -268,6 +270,9 @@
   
 	else if ($action == 'delete'){
 		
+		if (!$ismod && !has_forum_perm('delete', $forumperm)) {
+			errorpage("You are not allowed to delete your posts in this forum.", "thread.php?id=$threadid", "the thread", 0);
+		}
 		if (isset($_POST['reallydelete'])) {
 			check_token($_POST['auth']);
 			/*
@@ -303,6 +308,8 @@
 		</table>
 		</form>
 		<?php
+	} else {
+		return header("Location: index.php");
 	}
 
 	pagefooter();

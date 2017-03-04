@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 05, 2017 at 09:24 PM
+-- Generation Time: Mar 03, 2017 at 11:20 PM
 -- Server version: 10.1.9-MariaDB
 -- PHP Version: 5.6.15
 
@@ -16,6 +16,10 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+--
+-- Database: `jul`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -27,33 +31,21 @@ CREATE TABLE `actionlog` (
   `atime` varchar(15) NOT NULL DEFAULT '',
   `adesc` mediumtext NOT NULL,
   `aip` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `announcements`
+-- Table structure for table `announcementread`
 --
 
-CREATE TABLE `announcements` (
-  `id` smallint(5) UNSIGNED NOT NULL,
+CREATE TABLE `announcementread` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
-  `date` int(10) NOT NULL DEFAULT '0',
-  `ip` varchar(32) NOT NULL DEFAULT '',
-  `title` varchar(250) NOT NULL DEFAULT '',
-  `text` text,
-  `forum` tinyint(3) NOT NULL DEFAULT '0',
-  `headtext` text,
-  `signtext` text,
-  `edited` text,
-  `editdate` int(11) UNSIGNED DEFAULT NULL,
-  `headid` mediumint(6) NOT NULL DEFAULT '0',
-  `signid` mediumint(6) NOT NULL DEFAULT '0',
-  `tagval` text NOT NULL,
-  `options` char(3) NOT NULL DEFAULT '0|0',
-  `moodid` tinyint(3) NOT NULL DEFAULT '0',
-  `noob` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+  `forum` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
+  `readdate` int(10) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `biggestposters`
@@ -64,7 +56,9 @@ CREATE TABLE `biggestposters` (
   `posts` mediumint(8) NOT NULL,
   `waste` mediumint(8) NOT NULL,
   `average` mediumint(8) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `blockedlayouts`
@@ -73,7 +67,7 @@ CREATE TABLE `biggestposters` (
 CREATE TABLE `blockedlayouts` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `blocked` smallint(5) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -83,9 +77,9 @@ CREATE TABLE `blockedlayouts` (
 
 CREATE TABLE `bots` (
   `id` int(11) NOT NULL,
-  `signature` text NOT NULL,
+  `signature` varchar(128) NOT NULL,
   `malicious` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `bots`
@@ -378,17 +372,18 @@ INSERT INTO `bots` (`id`, `signature`, `malicious`) VALUES
 CREATE TABLE `categories` (
   `id` smallint(5) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
-  `minpower` tinyint(4) DEFAULT '0',
-  `corder` tinyint(3) NOT NULL
-) ENGINE=InnoDB;
+  `corder` tinyint(3) NOT NULL,
+  `showalways` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `categories`
 --
 
-INSERT INTO `categories` (`id`, `name`, `minpower`, `corder`) VALUES
-(1, 'Main', 0, 1),
-(2, 'Special', 1, 2);
+INSERT INTO `categories` (`id`, `name`, `corder`, `showalways`) VALUES
+(1, 'Main', 2, 0),
+(2, 'Administration', 1, 0),
+(3, 'Thread Hell', 3, 0);
 
 -- --------------------------------------------------------
 
@@ -403,7 +398,7 @@ CREATE TABLE `dailystats` (
   `threads` int(11) NOT NULL DEFAULT '0',
   `posts` int(11) NOT NULL DEFAULT '0',
   `views` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -416,7 +411,7 @@ CREATE TABLE `defines` (
   `definition` varchar(255) NOT NULL,
   `date` int(11) NOT NULL,
   `user` varchar(32) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -437,13 +432,12 @@ CREATE TABLE `delusers` (
   `postheader` text,
   `signature` text,
   `bio` text,
-  `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
+  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `group` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
-  `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
   `useranks` tinyint(1) UNSIGNED NOT NULL DEFAULT '1',
-  `titleoption` tinyint(1) NOT NULL DEFAULT '1',
   `realname` varchar(60) NOT NULL DEFAULT '',
   `location` varchar(200) NOT NULL DEFAULT '',
   `birthday` int(11) NOT NULL DEFAULT '0',
@@ -469,15 +463,14 @@ CREATE TABLE `delusers` (
   `signsep` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `pagestyle` tinyint(4) NOT NULL DEFAULT '0',
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
-  `profile_locked` tinyint(1) NOT NULL DEFAULT '0',
-  `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) UNSIGNED NOT NULL DEFAULT '1',
-  `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) NOT NULL,
   `dateshort` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `events`
@@ -492,7 +485,7 @@ CREATE TABLE `events` (
   `title` varchar(200) NOT NULL DEFAULT '',
   `text` text NOT NULL,
   `private` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -506,7 +499,9 @@ CREATE TABLE `failedlogins` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `ip` varchar(32) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `failedregs`
@@ -519,7 +514,9 @@ CREATE TABLE `failedregs` (
   `password` varchar(255) NOT NULL,
   `ip` varchar(32) NOT NULL,
   `regcode` varchar(32) DEFAULT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `failsupress`
@@ -528,7 +525,7 @@ CREATE TABLE `failedregs` (
 CREATE TABLE `failsupress` (
   `ip` varchar(32) NOT NULL,
   `cnt` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -539,16 +536,77 @@ CREATE TABLE `failsupress` (
 CREATE TABLE `favorites` (
   `user` bigint(6) NOT NULL DEFAULT '0',
   `thread` bigint(9) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
--- Table structure for table `forummods`
+-- Table structure for table `filters`
 --
 
-CREATE TABLE `forummods` (
-  `forum` smallint(5) NOT NULL DEFAULT '0',
-  `user` mediumint(8) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+CREATE TABLE `filters` (
+  `id` int(11) NOT NULL,
+  `type` tinyint(4) NOT NULL DEFAULT '1',
+  `method` tinyint(4) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `forum` int(11) NOT NULL DEFAULT '0',
+  `source` varchar(127) NOT NULL,
+  `replacement` varchar(127) NOT NULL,
+  `comment` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `filters`
+--
+
+INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `replacement`, `comment`) VALUES
+(3, 3, 2, 1, 0, '''position\\s*:\\s*fixed''si', 'display:none', ''),
+(4, 3, 2, 0, 0, '''position\\s*:\\s*(absolute|fixed)''si', 'display:none', 'Absolute allowed now alongside position:relative div'),
+(5, 6, 1, 1, 0, ':facepalm:', '<img src=images/facepalm.jpg>', ''),
+(6, 6, 1, 1, 0, ':facepalm2:', '<img src=images/facepalm2.jpg>', ''),
+(7, 6, 1, 1, 0, ':epicburn:', '<img src=images/epicburn.png>', ''),
+(8, 6, 1, 1, 0, ':umad:', '<img src=images/umad.jpg>', ''),
+(9, 6, 1, 1, 0, ':gamepro5:', '<img src=images/gamepro5.gif title="FIVE EXPLODING HEADS OUT OF FIVE">', ''),
+(10, 6, 1, 1, 0, ':headdesk:', '<img src=images/headdesk.jpg title="Steven Colbert to the rescue">', NULL),
+(11, 6, 1, 1, 0, ':rereggie:', '<img src=images/rereggie.png>', NULL),
+(12, 6, 1, 1, 0, ':tmyk:', '<img src=images/themoreyouknow.jpg title="do doo do doooooo~">', NULL),
+(13, 6, 1, 1, 0, ':jmsu:', '<img src=images/jmsu.png>', NULL),
+(14, 6, 1, 1, 0, ':noted:', '<img src=images/noted.png title="NOTED, THANKS!!">', NULL),
+(15, 6, 1, 1, 0, ':apathy:', '<img src=images/stickfigure-notext.png title="who cares">', NULL),
+(16, 6, 1, 1, 0, ':spinnaz:', '<img src="images/smilies/spinnaz.gif">', NULL),
+(17, 6, 1, 1, 0, ':trolldra:', '<img src="images/trolldra.png">', NULL),
+(18, 6, 1, 1, 0, ':reggie:', '<img src=images/reggieshrug.jpg title="REGGIE!">', NULL),
+(19, 5, 1, 0, 0, 'drama', 'batter blaster', NULL),
+(20, 5, 1, 0, 0, 'TheKinoko', 'MY NAME MEANS MUSHROOM... IN <i>JAPANESE!</i> HOLY SHIT GUYS THIS IS <i>INCREDIBLE</i>!!!!!!!!!', NULL),
+(21, 5, 1, 0, 0, 'hopy', 'I am a dumb', NULL),
+(22, 5, 1, 1, 0, 'crashdance', 'CrashDunce', NULL),
+(23, 5, 1, 1, 0, 'get blue spheres', 'HI EVERYBODY I''M A RETARD PLEASE BAN ME', NULL),
+(24, 5, 1, 1, 0, 'zeon', 'shit', NULL),
+(25, 5, 1, 1, 0, 'faith in humanity', 'IQ', NULL),
+(26, 5, 1, 0, 0, 'motorcycles', '<img src="images/cardgames.png" align="absmiddle" title="DERP DERP DERP">', NULL),
+(27, 5, 1, 0, 0, 'card games', '<img src="images/motorcycles.png" align="absmiddle" title="GET BLUE SPHERES">', NULL),
+(28, 5, 1, 0, 0, 'touhou', 'Baby''s First Bullet Hell&trade;', NULL),
+(29, 5, 1, 0, 0, 'nintendo', 'grandma', NULL),
+(30, 5, 1, 0, 0, 'card games on motorcycles', 'bard dames on rotorcycles', NULL),
+(31, 2, 2, 0, 0, '''^.*(http://hyperhacker.no-ip.org/b/smilies/lolface.png).*$''im', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
+(32, 2, 2, 0, 0, '''.*?images/smilies/roflx.gif.*?''si', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', NULL),
+(33, 2, 0, 1, 0, 'ftp://teconmoon.no-ip.org', 'about:blank', NULL),
+(34, 2, 0, 1, 0, 'http://insectduel.proboards82.com', 'idiotredir.php?', NULL),
+(35, 2, 0, 1, 0, 'http://imageshack.us', 'imageshit', NULL),
+(36, 2, 2, 1, 0, '''http://.{0,3}.?tinypic.com''si', 'tinyshit', NULL),
+(37, 2, 0, 1, 0, '<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">', '<!-- -->', NULL),
+(38, 3, 0, 1, 0, 'tabindex="0" ', 'title="the owner of this button is a fucking dumbass" >', NULL),
+(39, 1, 0, 0, 0, '%WIKISTATSFRAME%', '<div id="widgetIframe"><iframe width="600" height="260" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=ifr', NULL),
+(40, 1, 0, 0, 0, '%WIKISTATSFRAME2%', '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=if', NULL),
+(41, 2, 0, 0, 0, 'http://xkeeper.shacknet.nu:5/', 'http://xchan.shacknet.nu:5/', NULL),
+(42, 3, 1, 0, 0, '<style', '&lt;style', NULL),
+(43, 5, 0, 1, 0, '-.-', 'MORONS EVERYWHERE BAN BAN BAN!!!', ''),
+(45, 3, 2, 1, 0, ''' src=("|\\'')[a-z]:(.*?)("|\\'')''si', ' src="images/linkingfail.gif"', ''),
+(46, 3, 1, 0, 0, '%BZZZ%', 'onclick="bzzz(', NULL),
+(47, 6, 1, 0, 0, ':awesome:', '<small>[unfunny]</small>', ''),
+(48, 3, 2, 0, 0, 'autoplay', 'ap', 'kills autoplay, need to think of a solution for embeds.');
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `forumread`
@@ -558,7 +616,9 @@ CREATE TABLE `forumread` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `forum` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `readdate` int(10) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `forums`
@@ -568,11 +628,7 @@ CREATE TABLE `forums` (
   `id` smallint(5) UNSIGNED NOT NULL,
   `title` varchar(250) DEFAULT NULL,
   `description` text,
-  `olddesc` text NOT NULL,
   `catid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
-  `minpower` tinyint(2) NOT NULL DEFAULT '0',
-  `minpowerthread` tinyint(2) NOT NULL DEFAULT '0',
-  `minpowerreply` tinyint(2) NOT NULL DEFAULT '0',
   `numthreads` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
   `numposts` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
   `lastpostdate` int(11) NOT NULL DEFAULT '0',
@@ -583,18 +639,17 @@ CREATE TABLE `forums` (
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   `specialtitle` tinytext,
   `pollstyle` tinyint(2) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `forums`
 --
 
-INSERT INTO `forums` (`id`, `title`, `description`, `olddesc`, `catid`, `minpower`, `minpowerthread`, `minpowerreply`, `numthreads`, `numposts`, `lastpostdate`, `lastpostuser`, `lastpostid`, `forder`, `specialscheme`, `hidden`, `specialtitle`, `pollstyle`) VALUES
-(1, 'General Forum', 'For everybody.', '', 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, NULL, 0, '', 0),
-(2, 'General Staff Forum', 'Not for everybody.', '', 2, 1, 1, 1, 0, 0, 0, 0, 0, 2, NULL, 0, '', 0),
-(3, 'Trash Forum', '?', '', 1, 0, 2, 2, 0, 0, 0, 0, 0, 2, NULL, 0, '', 0);
-
-
+INSERT INTO `forums` (`id`, `title`, `description`, `catid`, `forder`) VALUES
+(1, 'General Forum', 'For everybody.', 1, 1),
+(2, 'General Staff Forum', 'Not for everybody.', 1, 2),
+(3, 'Announcements', 'Announcements go here.', 2, 1),
+(4, 'Trash', 'Trashed threads go here.', 3, 1);
 -- --------------------------------------------------------
 
 --
@@ -609,7 +664,7 @@ CREATE TABLE `guests` (
   `lasturl` varchar(100) NOT NULL DEFAULT '',
   `lastforum` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `flags` tinyint(3) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -622,7 +677,9 @@ CREATE TABLE `hits` (
   `user` mediumint(8) NOT NULL DEFAULT '0',
   `ip` varchar(15) NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `ipbans`
@@ -633,8 +690,11 @@ CREATE TABLE `ipbans` (
   `reason` varchar(100) NOT NULL DEFAULT '',
   `perm` tinyint(2) UNSIGNED NOT NULL DEFAULT '0',
   `date` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `banner` smallint(5) UNSIGNED NOT NULL DEFAULT '1'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `itemcateg`
@@ -645,7 +705,7 @@ CREATE TABLE `itemcateg` (
   `corder` tinyint(4) NOT NULL DEFAULT '0',
   `name` varchar(20) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `itemcateg`
@@ -687,14 +747,15 @@ CREATE TABLE `items` (
   `desc` text NOT NULL,
   `user` int(11) NOT NULL,
   `hidden` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `items`
 --
 
 INSERT INTO `items` (`id`, `cat`, `type`, `name`, `stype`, `sHP`, `sMP`, `sAtk`, `sDef`, `sInt`, `sMDf`, `sDex`, `sLck`, `sSpd`, `effect`, `coins`, `gcoins`, `desc`, `user`, `hidden`) VALUES
-(1, 1, 255, 'Obligatory Joke item', 'aamaaamma', 100, -233, 140, -233, 23, 555, 90, 500, 32767, 1, 10, 0, 'NO BONUS', 1, 0);
+(1, 1, 255, 'Obligatory Joke item', 'aamaaamma', 100, -233, 140, -233, 23, 555, 90, 500, 32767, 1, 10, 0, 'NO BONUS', 1, 0),
+(2, 1, 255, '0 ERROR', 'mmmmmmmmm', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'An easy (?) way to glitch your forum software out.', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -706,7 +767,7 @@ CREATE TABLE `itemtypes` (
   `id` tinyint(3) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   `ord` tinyint(4) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -722,7 +783,7 @@ CREATE TABLE `jstrap` (
   `filtered` text NOT NULL,
   `url` varchar(255) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -738,9 +799,10 @@ CREATE TABLE `log` (
   `cookie` text NOT NULL,
   `useragent` text NOT NULL,
   `ref` text,
+  `headers` text NOT NULL,
   `banflags` smallint(5) NOT NULL,
   `defntime` char(19) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -752,7 +814,7 @@ CREATE TABLE `minilog` (
   `ip` varchar(32) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL,
   `banflags` smallint(5) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -778,13 +840,17 @@ CREATE TABLE `misc` (
   `specialtitle` tinytext,
   `regmode` tinyint(2) NOT NULL DEFAULT '0',
   `regcode` varchar(32) DEFAULT NULL,
-  `bigpostersupdate` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+  `bigpostersupdate` int(11) NOT NULL DEFAULT '0',
+  `announcementforum` int(11) NOT NULL DEFAULT '0',
+  `trashforum` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `misc`
 --
-INSERT INTO `misc` () VALUES ();
+
+INSERT INTO `misc` (`announcementforum`, `trashforum`) VALUES
+(3, 4);
 
 -- --------------------------------------------------------
 
@@ -797,7 +863,89 @@ CREATE TABLE `pendingusers` (
   `password` text,
   `ip` varchar(15) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `perm_forums`
+--
+
+CREATE TABLE `perm_forums` (
+  `id` int(11) NOT NULL,
+  `group1` tinyint(3) NOT NULL DEFAULT '0',
+  `group2` tinyint(3) NOT NULL DEFAULT '0',
+  `group3` tinyint(3) NOT NULL DEFAULT '0',
+  `group4` tinyint(3) NOT NULL DEFAULT '0',
+  `group5` tinyint(3) NOT NULL DEFAULT '0',
+  `group6` tinyint(3) NOT NULL DEFAULT '0',
+  `group7` tinyint(3) NOT NULL DEFAULT '0',
+  `group8` tinyint(3) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `perm_forums`
+--
+
+INSERT INTO `perm_forums` (`id`, `group1`, `group2`, `group3`, `group4`, `group5`, `group6`, `group7`, `group8`) VALUES
+(1, 31, 31, 63, 63, 63, 1, 1, 1),
+(2, 0, 31, 63, 63, 63, 0, 0, 0),
+(3, 27, 27, 63, 63, 63, 1, 1, 1),
+(4, 1, 1, 63, 63, 63, 1, 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `perm_forumusers`
+--
+
+CREATE TABLE `perm_forumusers` (
+  `forum` int(11) NOT NULL,
+  `user` int(11) NOT NULL,
+  `permset` tinyint(3) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `perm_groups`
+--
+
+CREATE TABLE `perm_groups` (
+  `id` int(11) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `unremovable` tinyint(1) NOT NULL DEFAULT '0',
+  `ord` smallint(6) NOT NULL DEFAULT '0',
+  `namecolor0` varchar(6) NOT NULL,
+  `namecolor1` varchar(6) DEFAULT NULL,
+  `namecolor2` varchar(6) DEFAULT NULL,
+  `set1` int(10) UNSIGNED NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `perm_groups`
+--
+
+INSERT INTO `perm_groups` (`id`, `name`, `unremovable`, `ord`, `namecolor0`, `namecolor1`, `namecolor2`, `set1`) VALUES
+(1, 'Normal User', 1, 1, '97ACEF', 'F185C9', '7C60B0', 17459200),
+(2, 'Normal+', 1, 2, 'D8E8FE', 'FFB3F3', 'EEB9BA', 51112456),
+(3, 'Moderator', 1, 3, 'AFFABE', 'C762F2', '47B53C', 55310888),
+(4, 'Administrator', 1, 4, 'FFEA95', 'C53A9E', 'F0C413', 67108538),
+(5, 'SysAdmin', 1, 5, 'FFEA95', 'C53A9E', 'F0C413', 134217727),
+(6, 'Guest', 1, 6, 'FFFFFF', 'FFFFFF', 'FFFFFF', 131072),
+(7, 'Banned', 1, 10, '888888', '888888', '888888', 16908288),
+(8, 'Permabanned', 1, 11, '6a6a6a', '767676', '767676', 131072);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `perm_users`
+--
+
+CREATE TABLE `perm_users` (
+  `id` int(11) NOT NULL,
+  `set1` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -815,14 +963,28 @@ CREATE TABLE `pmsgs` (
   `msgread` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `headid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `signid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
-  `folderto` tinyint(3) UNSIGNED NOT NULL DEFAULT '1',
-  `folderfrom` tinyint(3) UNSIGNED NOT NULL DEFAULT '2',
+  `folderto` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `title` varchar(255) NOT NULL,
   `headtext` text NOT NULL,
   `text` mediumtext NOT NULL,
   `signtext` text NOT NULL,
   `tagval` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pmsg_folders`
+--
+
+CREATE TABLE `pmsg_folders` (
+  `id` int(11) NOT NULL,
+  `user` int(11) NOT NULL,
+  `ord` tinyint(4) NOT NULL DEFAULT '0',
+  `title` varchar(64) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `poll`
@@ -834,7 +996,7 @@ CREATE TABLE `poll` (
   `briefing` text NOT NULL,
   `closed` tinyint(1) NOT NULL DEFAULT '0',
   `doublevote` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -846,7 +1008,7 @@ CREATE TABLE `pollvotes` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` int(11) NOT NULL DEFAULT '0',
   `user` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -859,7 +1021,7 @@ CREATE TABLE `poll_choices` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` varchar(255) NOT NULL DEFAULT '',
   `color` varchar(25) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -870,7 +1032,7 @@ CREATE TABLE `poll_choices` (
 CREATE TABLE `postlayouts` (
   `id` mediumint(8) UNSIGNED NOT NULL,
   `text` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -881,7 +1043,7 @@ CREATE TABLE `postlayouts` (
 CREATE TABLE `postradar` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `comp` smallint(5) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -907,7 +1069,9 @@ CREATE TABLE `posts` (
   `options` char(3) NOT NULL DEFAULT '0|0',
   `edited` text,
   `editdate` int(11) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `postsday`
@@ -917,7 +1081,7 @@ CREATE TABLE `postsday` (
   `time` int(11) NOT NULL DEFAULT '0',
   `acmlm2` int(11) NOT NULL DEFAULT '0',
   `justus` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -929,7 +1093,7 @@ CREATE TABLE `ranks` (
   `rset` tinyint(3) UNSIGNED NOT NULL DEFAULT '1',
   `num` mediumint(8) NOT NULL DEFAULT '0',
   `text` varchar(255) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `ranks`
@@ -1063,7 +1227,7 @@ INSERT INTO `ranks` (`rset`, `num`, `text`) VALUES
 CREATE TABLE `ranksets` (
   `id` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(50) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `ranksets`
@@ -1087,7 +1251,7 @@ CREATE TABLE `referer` (
   `url` varchar(255) NOT NULL,
   `ref` varchar(255) NOT NULL,
   `ip` varchar(15) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1103,7 +1267,9 @@ CREATE TABLE `rendertimes` (
   `querytime` double NOT NULL,
   `scripttime` double NOT NULL,
   `rendertime` double NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `rpg_classes`
@@ -1113,7 +1279,7 @@ CREATE TABLE `rpg_classes` (
   `id` int(11) UNSIGNED NOT NULL,
   `name` varchar(32) NOT NULL,
   `sex` tinyint(4) UNSIGNED DEFAULT NULL,
-  `minpowerselect` tinyint(4) DEFAULT NULL,
+  `mingroupselect` tinyint(4) DEFAULT NULL,
   `HP` float UNSIGNED NOT NULL DEFAULT '1',
   `MP` float UNSIGNED NOT NULL DEFAULT '1',
   `Atk` float UNSIGNED NOT NULL DEFAULT '1',
@@ -1123,13 +1289,13 @@ CREATE TABLE `rpg_classes` (
   `Dex` float UNSIGNED NOT NULL DEFAULT '1',
   `Lck` float UNSIGNED NOT NULL DEFAULT '1',
   `Spd` float UNSIGNED NOT NULL DEFAULT '1'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `rpg_classes`
 --
 
-INSERT INTO `rpg_classes` (`id`, `name`, `sex`, `minpowerselect`, `HP`, `MP`, `Atk`, `Def`, `Int`, `MDf`, `Dex`, `Lck`, `Spd`) VALUES
+INSERT INTO `rpg_classes` (`id`, `name`, `sex`, `mingroupselect`, `HP`, `MP`, `Atk`, `Def`, `Int`, `MDf`, `Dex`, `Lck`, `Spd`) VALUES
 (1, 'Tyrant', NULL, NULL, 1, 1, 1, 1, 1, 1, 1, 1, 1);
 
 -- --------------------------------------------------------
@@ -1143,7 +1309,7 @@ CREATE TABLE `rpg_inventory` (
   `user` mediumint(9) NOT NULL,
   `itemid` int(11) NOT NULL,
   `equippedto` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1157,7 +1323,7 @@ CREATE TABLE `schemes` (
   `name` varchar(50) DEFAULT NULL,
   `file` varchar(200) DEFAULT NULL,
   `special` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `schemes`
@@ -1186,7 +1352,7 @@ INSERT INTO `schemes` (`id`, `ord`, `name`, `file`, `special`) VALUES
 (101, 21, 'Hydra''s Blue Thing (V2)', 'hydras_blue_thing_v2.php', 0),
 (150, 150, 'AE Torture', 'aesucks.php', 1),
 (151, 151, 'Daily Cycle', 'dailycycle.php', 1),
-(202, 202, 'Attitude Barn', 'spec-attitude.php', 1), -- I have no idea what the real name of the next schemes are
+(202, 202, 'Attitude Barn', 'spec-attitude.php', 1),
 (203, 203, 'Black Hole', 'spec-blackhole.php', 1),
 (204, 204, 'Subcon', 'spec-subcon.php', 1),
 (205, 205, 'Top Secret', 'spec-topsecret.php', 1),
@@ -1215,8 +1381,9 @@ CREATE TABLE `threads` (
   `lastposter` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `sticky` tinyint(1) UNSIGNED NOT NULL DEFAULT '0',
   `poll` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
-  `locked` tinyint(1) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+  `locked` tinyint(1) UNSIGNED NOT NULL DEFAULT '0',
+  `announcement` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1229,7 +1396,7 @@ CREATE TABLE `threadsread` (
   `tid` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `time` int(11) NOT NULL,
   `read` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1240,7 +1407,7 @@ CREATE TABLE `threadsread` (
 CREATE TABLE `tinapoints` (
   `name` varchar(32) NOT NULL,
   `points` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1253,7 +1420,7 @@ CREATE TABLE `tlayouts` (
   `ord` smallint(5) NOT NULL DEFAULT '0',
   `name` varchar(50) DEFAULT NULL,
   `file` varchar(50) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `tlayouts`
@@ -1275,7 +1442,7 @@ CREATE TABLE `tor` (
   `ip` varchar(15) NOT NULL,
   `allowed` tinyint(4) NOT NULL DEFAULT '0',
   `hits` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1289,7 +1456,7 @@ CREATE TABLE `tournamentplayers` (
   `cmt` varchar(255) NOT NULL,
   `time` int(11) NOT NULL,
   `score` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1308,7 +1475,7 @@ CREATE TABLE `tournaments` (
   `scoretype` tinyint(4) NOT NULL,
   `active` tinyint(4) NOT NULL,
   `organizer` mediumint(9) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1321,7 +1488,7 @@ CREATE TABLE `userpic` (
   `categ` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `url` varchar(250) NOT NULL DEFAULT '',
   `name` varchar(100) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1333,7 +1500,7 @@ CREATE TABLE `userpiccateg` (
   `id` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `page` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(200) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1345,7 +1512,7 @@ CREATE TABLE `userratings` (
   `userfrom` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `userrated` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `rating` smallint(5) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1366,13 +1533,12 @@ CREATE TABLE `users` (
   `postheader` text,
   `signature` text,
   `bio` text,
-  `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
+  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `group` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
-  `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
   `useranks` tinyint(1) UNSIGNED NOT NULL DEFAULT '1',
-  `titleoption` tinyint(1) NOT NULL DEFAULT '1',
   `realname` varchar(60) NOT NULL DEFAULT '',
   `location` varchar(200) NOT NULL DEFAULT '',
   `birthday` int(11) NOT NULL DEFAULT '0',
@@ -1398,15 +1564,12 @@ CREATE TABLE `users` (
   `signsep` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `pagestyle` tinyint(4) NOT NULL DEFAULT '0',
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
-  `profile_locked` tinyint(1) NOT NULL DEFAULT '0',
-  `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) UNSIGNED NOT NULL DEFAULT '1',
-  `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) NOT NULL,
   `dateshort` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -1427,7 +1590,7 @@ CREATE TABLE `users_rpg` (
   `eq5` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `eq6` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `eq7` smallint(6) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Indexes for dumped tables
@@ -1440,11 +1603,10 @@ ALTER TABLE `actionlog`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `announcements`
+-- Indexes for table `announcementread`
 --
-ALTER TABLE `announcements`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `forum` (`forum`);
+ALTER TABLE `announcementread`
+  ADD UNIQUE KEY `userforum` (`user`,`forum`);
 
 --
 -- Indexes for table `biggestposters`
@@ -1513,6 +1675,14 @@ ALTER TABLE `favorites`
   ADD UNIQUE KEY `user` (`user`,`thread`);
 
 --
+-- Indexes for table `filters`
+--
+ALTER TABLE `filters`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `enabled` (`enabled`),
+  ADD KEY `forum` (`forum`);
+
+--
 -- Indexes for table `forumread`
 --
 ALTER TABLE `forumread`
@@ -1523,8 +1693,7 @@ ALTER TABLE `forumread`
 --
 ALTER TABLE `forums`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `catid` (`catid`),
-  ADD KEY `minpower` (`minpower`);
+  ADD KEY `catid` (`catid`);
 
 --
 -- Indexes for table `guests`
@@ -1582,13 +1751,46 @@ ALTER TABLE `pendingusers`
   ADD KEY `time` (`time`);
 
 --
+-- Indexes for table `perm_forums`
+--
+ALTER TABLE `perm_forums`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `perm_forumusers`
+--
+ALTER TABLE `perm_forumusers`
+  ADD PRIMARY KEY (`forum`,`user`) USING BTREE;
+
+--
+-- Indexes for table `perm_groups`
+--
+ALTER TABLE `perm_groups`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `perm_users`
+--
+ALTER TABLE `perm_users`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `pmsgs`
 --
 ALTER TABLE `pmsgs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `userto` (`userto`),
   ADD KEY `userfrom` (`userfrom`),
-  ADD KEY `msgread` (`msgread`);
+  ADD KEY `msgread` (`msgread`),
+  ADD KEY `folderto` (`folderto`);
+
+--
+-- Indexes for table `pmsg_folders`
+--
+ALTER TABLE `pmsg_folders`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user` (`user`),
+  ADD KEY `ord` (`ord`);
 
 --
 -- Indexes for table `poll`
@@ -1684,7 +1886,9 @@ ALTER TABLE `threads`
   ADD KEY `user` (`user`),
   ADD KEY `sticky` (`sticky`),
   ADD KEY `pollid` (`poll`),
-  ADD KEY `lastpostdate` (`lastpostdate`);
+  ADD KEY `lastpostdate` (`lastpostdate`),
+  ADD KEY `firstpostdate` (`firstpostdate`),
+  ADD KEY `announcement` (`announcement`);
 
 --
 -- Indexes for table `threadsread`
@@ -1740,7 +1944,7 @@ ALTER TABLE `users`
   ADD KEY `lastforum` (`lastforum`),
   ADD KEY `lastposttime` (`lastposttime`),
   ADD KEY `lastactivity` (`lastactivity`),
-  ADD KEY `powerlevel` (`powerlevel`),
+  ADD KEY `group` (`group`),
   ADD KEY `sex` (`sex`);
 
 --
@@ -1759,11 +1963,6 @@ ALTER TABLE `users_rpg`
 ALTER TABLE `actionlog`
   MODIFY `id` mediumint(9) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT for table `announcements`
---
-ALTER TABLE `announcements`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
---
 -- AUTO_INCREMENT for table `biggestposters`
 --
 ALTER TABLE `biggestposters`
@@ -1772,12 +1971,17 @@ ALTER TABLE `biggestposters`
 -- AUTO_INCREMENT for table `bots`
 --
 ALTER TABLE `bots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+--
+-- AUTO_INCREMENT for table `dailystats`
+--
+ALTER TABLE `dailystats`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `events`
 --
@@ -1794,10 +1998,15 @@ ALTER TABLE `failedlogins`
 ALTER TABLE `failedregs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `filters`
+--
+ALTER TABLE `filters`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+--
 -- AUTO_INCREMENT for table `forums`
 --
 ALTER TABLE `forums`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 --
 -- AUTO_INCREMENT for table `guests`
 --
@@ -1807,12 +2016,12 @@ ALTER TABLE `guests`
 -- AUTO_INCREMENT for table `itemcateg`
 --
 ALTER TABLE `itemcateg`
-  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 --
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
 -- AUTO_INCREMENT for table `itemtypes`
 --
@@ -1824,10 +2033,20 @@ ALTER TABLE `itemtypes`
 ALTER TABLE `jstrap`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `perm_groups`
+--
+ALTER TABLE `perm_groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+--
 -- AUTO_INCREMENT for table `pmsgs`
 --
 ALTER TABLE `pmsgs`
   MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `pmsg_folders`
+--
+ALTER TABLE `pmsg_folders`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `poll`
 --
@@ -1852,7 +2071,7 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `rpg_classes`
 --
 ALTER TABLE `rpg_classes`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `rpg_inventory`
 --

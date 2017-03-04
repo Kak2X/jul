@@ -29,12 +29,12 @@
 		"5: Shows hidden comments"
 	);
 	
-	if (!$issuper) {
+	if (!has_perm('use-shoped')) {
 		pageheader("nope.avi");
 		errorpage("No.");
 	}
 
-	$hiddeneditok	= ($loguser['id'] == 1); //in_array($loguser['id'], array(1, 18));
+	$hiddeneditok	= has_perm('use-shoped-hidden'); //in_array($loguser['id'], array(1, 18));
 
 
 	if (isset($_POST['edit'])) {
@@ -198,7 +198,7 @@
 	}
 
 	$items	= $sql->query("
-		SELECT `items`.*, `users`.`id` as uid, `users`.`sex` as usex, `users`.`powerlevel` as upow, `users`.`namecolor` as unc, `users`.`name` as uname
+		SELECT `items`.*, `users`.`id` as uid, `users`.`sex` as usex, `users`.`group` as ugroup, `users`.`namecolor` as unc, `users`.`name` as uname
 		FROM `items`
 		LEFT JOIN `users` ON `users`.`id` = `items`.`user`
 		WHERE `cat` = '$cat'". ($_GET['type'] ? "
@@ -250,7 +250,7 @@
 		}
 */
 		if ($item['uname']) {
-			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['upow'], $item['unc']) ."'>". $item['uname'] ."</span></a></nobr>";
+			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['ugroup'], $item['unc']) ."'>". $item['uname'] ."</span></a></nobr>";
 		} else {
 			$item['uname']	= "";
 		}

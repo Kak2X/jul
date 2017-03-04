@@ -2,23 +2,27 @@
 
 	require 'lib/function.php';
 	
+	if (!$config['irc-servers'] || !$config['irc-channels']) {
+		header("Location: index.php");
+		die;
+	}	
+	
 	pageheader("{$config['board-name']} - IRC Chat");
+	
+
 	
 	$_GET['server'] = filter_int($_GET['server']);
 
-	$servers[1]		= "irc.badnik.zone";
-	$servers[2]		= "irc.rustedlogic.net";
-	$servers[3]		= "irc.tcrf.net";
-	if ($_GET['server'] > count($servers) || $_GET['server'] <= -1) $_GET['server'] = 0;
+	if ($_GET['server'] > count($config['irc-servers']) || $_GET['server'] <= -1) $_GET['server'] = 0;
 
 
 ?>	<table class='table'>
-		<tr><td class='tdbgh center'><b>IRC Chat - BadnikZONE, #tcrf, #x</b></td></tr>
+		<tr><td class='tdbgh center'><b>IRC Chat - <?=$config['irc-server-title']?>, <?=implode(",", $config['irc-channels'])?></b></td></tr>
 		<tr>
 			<td class='tdbg1 center'>
 				Server List:
 <?php
-	foreach ($servers as $num => $name) {
+	foreach ($config['irc-servers'] as $num => $name) {
 
 		if ($num != 1) 	print " | ";
 		if ($_GET['server'] == $num) print "<u>";
@@ -30,9 +34,9 @@
 ?>			</td>
 		</tr>
 		<tr>
-			<td class='tdbg2 center'>
+			<td class='tdbg2 center' <?= $_GET['server'] ? "style=\"background: #FFF\"" : "" ?>>
 <?php
-
+//url('images/waitsign.png') no-repeat center
 	if ($_GET['server']) {
 
 		$badchars = array("~", "&", "@", "?", "!", ".", ",", "=", "+", "%", "*");
@@ -45,7 +49,7 @@
 		}
 		
 	?>
-	<iframe src="https://kiwiirc.com/client/<?=$servers[$server]?>/?nick=<?=$name?>|?#tcrf,#x" style="border:0;width:100%;height:500px;"></iframe>
+	<iframe src="https://kiwiirc.com/client/<?=$config['irc-servers'][$_GET['server']]?>/?nick=<?=$name?>|?<?=implode(",", $config['irc-channels'])?>" style="border:0;width:100%;height:500px;"></iframe>
 	<?php
 
 	} else {

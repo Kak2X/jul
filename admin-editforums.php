@@ -306,7 +306,7 @@ else if ($_GET['id']) {
 		}
 		// Leftovers
 		for (; $k < 6; ++$k) {
-			echo "<td class='tdbgh center' colspan=4>&nbsp;</td>";
+			echo "<td class='tdbgh center' colspan=6>&nbsp;</td>";
 		}
 			
 	?>		</tr><tr><?php

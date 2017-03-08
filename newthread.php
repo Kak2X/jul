@@ -22,7 +22,8 @@
 		errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
 	}
 	
-	
+	$ismod = has_forum_perm('mod', $forumperm);
+	$isadmin = has_perm('forum-admin');
 	$windowtitle = "{$config['board-name']} -- {$forum['title']} -- New Thread";
 	
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
@@ -100,6 +101,8 @@
 			$authorized 	= has_forum_perm('post', $forumperm);
 			// does the forum exist?
 			$forumexists 	= $forum['id'];
+			
+			$ismod = has_forum_perm('mod', $forumperm);
 
 			// ---
 			// lol i'm eminem
@@ -107,7 +110,7 @@
 				$authorized = false;
 				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
 				if ($loguser['id']) //if ($_COOKIE['loguserid'] > 0)
-					$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$loguser['id']}");
+					$sql->query("UPDATE `users` SET `group` = '".GROUP_PERMABANNED."' WHERE `id` = {$loguser['id']}");
 				xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 			}
 			// ---
@@ -187,7 +190,7 @@
 					$signid = getpostlayoutid($sign);
 				}
 				
-				if (!has_forum_perm('mod', $forumperm)) {
+				if (!$ismod) {
 					$tclosed = 0;
 					$tsticky = 0;
 					$tannc   = 0;
@@ -282,8 +285,6 @@
 			errorpage("Couldn't post the thread. $reason", "forum.php?id=$id", $forum['title'], 2);
 		}		
 		
-	} else {
-		$ismod = has_forum_perm('mod', $forumperm);
 	}
 	
 	/*

@@ -8,6 +8,7 @@
 	$dd=mktime(0,0,0,substr($vd,0,2),substr($vd,3,2),substr($vd,6,2));
 
 	$days = floor((ctime()-$dd)/86400);
+	if (!$days) die();
 	$pq = $sql->getresultsbykey(
 		"SELECT FROM_UNIXTIME(date, '%Y-%m-%d') day, count(*) c ".
 		"FROM posts WHERE user={$u} GROUP BY day ORDER BY day");
@@ -19,13 +20,6 @@
 	
 	if (!isset($p)) die();
 	
-
-	/*	
-	if(isset($_GET['debugsql'])) {
-		errorpage("");
-	}*/
-
-
 	$m=max($p);
 	$img=ImageCreate($days,$m);
 

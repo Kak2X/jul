@@ -30,16 +30,15 @@
 	$userfields = "u.name, u.aka, u.sex, u.group, u.birthday, u.namecolor, u.minipic, u.id";
 	
 	
-	$errors = array();
-	set_error_handler('error_reporter');
-	
 	require 'lib/defines.php'; // Permission constants definitions
 	require 'lib/config.php';
 	require 'lib/mysql.php';
 	require 'lib/layout.php';
 	require 'lib/rpg.php';
 
-	
+	$errors = array();
+	set_error_handler('error_reporter');
+	set_exception_handler('exception_reporter');	
 	
 	$sql	= new mysql;
 
@@ -1057,7 +1056,13 @@ function create_verification_hash($n,$pw) {
 function generate_token($div = 20, $extra = "") {
 	global $config, $loguser;
 	
-	$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
+	if (substr($_SERVER['REMOTE_ADDR'], 0, 2) == "::") {
+		$ipaddr = array(127,0,0,1);
+	} else if (strpos($_SERVER['REMOTE_ADDR'], ":") !== false) {
+		$ipaddr = explode(':', $_SERVER['REMOTE_ADDR']);
+	} else {
+		$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
+	}
 	
 	$n 		= count($ipaddr) - 2;
 	$orig 	= $ipaddr[$n+1];
@@ -2202,6 +2207,28 @@ function error_reporter($type, $msg, $file, $line, $context) {
 	return true;
 }
 
+function exception_reporter($err) {
+	global $config;
+	// Compatibility layer
+	$type = E_ERROR;
+	$msg = $err->getMessage();
+	$file = $err->getFile();
+	$line = $err->getLine();
+	unset($err);
+	error_reporter($type, $msg, $file, $line, NULL);
+	echo "<!doctype html><html><script>document.body.innerHTML=''</script>";
+	if (!has_perm('view-debugger') && !$config['always-show-debug']) {
+		dialog("Sorry, an unexpected error has occurred.<br><br>Click <a href='?".urlencode(filter_string($_SERVER['QUERY_STRING']))."'>here</a> to try again.", "Oops", "{$config['board-name']} -- Error");
+	} else {
+?>
+<body style='background: #000 !important; color: #fff !important'>
+<pre>Fatal Exception
+<span style='color: #0f0'><?=$file?></span>#<span style='color: #6cf'><?=$line?></span>
+
+<span style='color: #f44'><?=$msg?></span><?php
+	}
+}
+
 function error_printer($trigger, $report, $errors){
 	static $called = false;
 	
@@ -2236,10 +2263,16 @@ function error_printer($trigger, $report, $errors){
 			return $list."</table><br>";
 			
 		}
-		else{
+		else {
 				extract(error_get_last());
 				$ok = error_reporter($type, $message, $file, $line)[0];
-				die("<pre>Fatal Error!\n\nType: $ok[0]\nMessage: $ok[1]\nFile: $ok[2]\nLine: $ok[3]</pre>");				
+?>
+<!doctype html><html><script>document.body.innerHTML=''</script>
+<body style='background: #000 !important; color: #fff !important'>
+<pre>Fatal <?=$ok[0]?>
+<span style='color: #0f0'><?=$ok[2]?></span>#<span style='color: #6cf'><?=$ok[3]?></span>
+
+<span style='color: #f44'><?=$ok[1]?></span><?php		
 		}
 	}
 	

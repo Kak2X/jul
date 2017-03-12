@@ -68,7 +68,7 @@
 	// Selections
 	$reg_sel[$misc['regmode']] = 'selected';
 
-	print adminlinkbar("admin.php");
+	print adminlinkbar();
 	
 	?>
 	<table class='table'>
@@ -115,7 +115,7 @@
 		<tr><td class='tdbg1 center' width='200'><b>Trash forum</b></td>
 			<td class='tdbg2'><?=doforumList($misc['trashforum'], 'trashforum', 'None')?></td>
 		</tr>
-		<tr><td class='tdbgc center' colspan=2>Custom forums [<?=($config['allow-custom-forums'] ? "" : "Disabled")?>]</td></tr>		
+		<tr><td class='tdbgc center' colspan=2>Custom forums<?=($config['allow-custom-forums'] ? "" : " [Disabled]")?></td></tr>		
 		<tr><td class='tdbg1 center' width='200'><b>Account age requirement</b></td>
 			<td class='tdbg2'><input type='text' name='daysforcustomforum' value='<?=$misc['daysforcustomforum']?>' class='right' size=2 maxlength=5> days</td>
 		</tr>

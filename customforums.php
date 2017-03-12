@@ -197,11 +197,11 @@
 				}
 				
 				if ($isadmin) {
-					$editlink = "<span style='float: right'><a href='admin-editforums.php?id={$forum['id']}'>Edit forum</a> - <a href='editcustomfilters.php?u={$forum['uid'][1]}&id={$forum['id']}'>Edit filters</a></span>";
+					$editlink = "<span style='float: right'><a href='admin-editforums.php?id={$forum['id']}'>Edit forum</a> - <a href='editcustomfilters.php?u={$forum['uid'][1]}&id={$forum['id']}'>Edit filters</a> - <a href='forumacl.php?id={$forum['id']}'>Edit access list</a></span>";
 				} else if ($forum['uid'][1] == $loguser['id']) {
-					$editlink = "<span style='float: right'><a href='editcustomforums.php?id={$forum['id']}'>Edit forum</a> - <a href='editcustomfilters.php?id={$forum['id']}'>Edit filters</a></span>";
+					$editlink = "<span style='float: right'><a href='editcustomforums.php?id={$forum['id']}'>Edit forum</a> - <a href='editcustomfilters.php?id={$forum['id']}'>Edit filters</a> - <a href='forumacl.php?id={$forum['id']}'>Edit access list</a></span>";
 				} else {
-					$editlink = "";
+					$editlink = "<span style='float: right'><a href='forumacl.php?id={$forum['id']}'>View access list</a></span>";
 				}
 				
 				// Add the text to the rightmost of the last line without creating a new one.

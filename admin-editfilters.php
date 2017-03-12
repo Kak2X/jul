@@ -67,7 +67,7 @@
 	
 	pageheader("Board Filters");
 	
-	print adminlinkbar("admin-editfilters.php");
+	print adminlinkbar();
 	
 	const FILTER_TYPES = array(
 		1 => "Generic",

@@ -1,3 +1,24 @@
+html, img {image-rendering: -moz-crisp-edges}
+a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold}
+img {border:none}
+pre br {display:none}
+.fonts,.fontt,div.lastpost{font-size:10px}
+body,.table,.font,.fonth,div.lastpost:first-line{font:13px verdana,geneva,sans-serif}
+div.lastpost {white-space:nowrap}
+.sparkline {display:none}
+.center{text-align:center}
+.right{text-align:right}
+.nobr{white-space:nowrap}
+.w,.table{width:100%}
+.b{font-weight:bold}
+.i{font-style:italic}
+.buttonlink {border:none!important;font-weight:bold!important;padding:0px}
+.table{empty-cells:show;border-spacing:0px}
+code {overflow:auto;	width:100%;white-space:pre;display:block}
+code br{display:none}
+.pstspl1 {opacity:0}
+.pstspl1:hover {opacity:1}
+.pstspl2 {background:#000;color:#FFF;display:block}
 textarea,input,select {
 	border: 1px solid #000;
 	background: #000;
@@ -11,28 +32,3 @@ input[type=submit] {
 	border: #000 solid 2px;
 	font: 10pt 'verdana', sans-serif;
 }
-body, table, thead, tbody, span, td, tr, th, a, img, br { padding: 0; margin: 0; border: 0; font-size: 100%; }
-center { text-align: center; }
-.tdbgh, .tbl, .tdbgc, .tdbg1, .tdbg2 { line-height: 1; padding: 1px;}
-table { border-spacing: 0; border-collapse: collapse; }
-a:link,a:visited,a:active,a:hover { text-decoration:none; font-weight: bold; }
-table { padding: 0.5em; }
-span.lastpost { font-size: 90%; padding: 0; margin: 0; }
-div.lastpost { font-size: 90%; text-align: right !important; }
-
-.table { width: 100%; empty-cells: show; border-spacing: 0px;}
-.sparkline { display: none; }
-.center, center { text-align: center; }
-.right { text-align: right; }
-.w  { width: 100%; }
-.b { font-weight: bold; }
-.i { font-style: italic; }
-.nobr { white-space: nowrap; }
-.buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
-
-code { overflow: auto; width: 100%; white-space: pre; display: block; }
-code br { display: none; }
-
-.pstspl1 {opacity:0;}
-.pstspl1:hover {opacity:1;}
-.pstspl2 {background:#000;color:#FFF;display:block;}

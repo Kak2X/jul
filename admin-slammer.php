@@ -6,7 +6,7 @@ pageheader("{$config['board-name']} - EZ Ban Hammer");
 echo "<div style='white-space:pre;'>";
 
 admincheck();
-//print adminlinkbar('admin-slammer.php');
+print adminlinkbar();
 
 $target_id = $sql->resultq('SELECT id FROM users ORDER BY id DESC LIMIT 1');
 $uinfo = $sql->fetchq("SELECT name, lastip FROM users WHERE id = '{$target_id}'");

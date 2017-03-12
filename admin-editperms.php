@@ -3,8 +3,9 @@ require "lib/function.php";
 
 $_GET['id'] 	= filter_int($_GET['id']);
 $_GET['copy'] 	= filter_int($_GET['copy']);	// Copy group ID
-$_GET['mode'] 	= filter_int($_GET['mode']);			
+$_GET['mode'] 	= filter_int($_GET['mode']);	// Editing groups or users?
 $_GET['del']	= isset($_GET['del']);			// Deletion flag
+$_GET['f']		= filter_int($_GET['f']); 		// Show only a forum in the user permission editor. This is a purely visual change.
 
 
 define('PE_EDITGROUP', 	$_GET['mode'] == 0);
@@ -306,6 +307,7 @@ else {
 			LEFT JOIN perm_forums     pf ON f.id    = pf.id
 			LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$user['id']}
 			".($isadmin ? "" : "WHERE f.id IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)")."
+			".($_GET['f'] ? "AND f.id = {$_GET['f']}" : "")."
 		");
 		while ($x = $sql->fetch($perms)) {
 			$pset = filter_int($_POST["fperm{$x['id']}r"]) | filter_int($_POST["fperm{$x['id']}p"]) | filter_int($_POST["fperm{$x['id']}e"]) | filter_int($_POST["fperm{$x['id']}d"]) | filter_int($_POST["fperm{$x['id']}t"]) | filter_int($_POST["fperm{$x['id']}m"]);
@@ -324,13 +326,22 @@ else {
 				$sql->query("UPDATE perm_forumusers SET permset = '$pset' WHERE user = {$_GET['id']} AND forum = {$x['id']}");
 			}
 		}
-		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}");
+		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}&f={$_GET['f']}");
 		die;		
 	}
 	else if (PE_EDITUSER && isset($_POST['resetf'])) {
 		check_token($_POST['auth']);
-		$sql->query("DELETE from perm_forumusers WHERE user = {$_GET['id']}".(has_perm('sysadmin-actions') ? "" : " AND forum IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)"));
-		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}");
+		$sql->query("
+			DELETE from perm_forumusers 
+			WHERE user = {$_GET['id']}".
+			($_GET['f'] ? " AND forum = {$_GET['f']}" : "").
+			(
+				has_perm('sysadmin-actions') ? 
+				"" : 
+				" AND forum IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)"
+			)
+		);
+		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}&f={$_GET['f']}");
 		die;
 	}
 	else {
@@ -410,12 +421,14 @@ else {
 				LEFT JOIN categories      c  ON f.catid = c.id
 				LEFT JOIN perm_forums     pf ON f.id    = pf.id
 				LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$group['id']}
-				".($isadmin ? "" : "WHERE f.id IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)")."
+				WHERE ".($_GET['f'] ? "f.id = {$_GET['f']} AND " : "")."
+				      ".($isadmin ? "1" : "f.id IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)")."
+				      
 				ORDER BY c.corder, f.catid, f.forder, f.id
 			");
 		}
 		
-		$txt = 	"<form method='POST' action='?id={$_GET['id']}&mode={$_GET['mode']}&copy={$_GET['copy']}'>".
+		$txt = 	"<form method='POST' action='?id={$_GET['id']}&mode={$_GET['mode']}&copy={$_GET['copy']}&f={$_GET['f']}'>".
 				"<input type='hidden' name=auth value='".generate_token()."'>";
 		if ($isadmin) {
 		$txt .= 
@@ -470,8 +483,11 @@ else {
 	</td>";
 		}
 		if (PE_EDITUSER) {
-			$txt .= ($isadmin ? "<td style='vertical-align: top'><table class='table'>" : "<center><table class='table' style='width: auto !important'><tr><td class='tdbgc center nobr' colspan=7><b>Editing $editingLabel's custom forum permissions</b></td></tr>")."
-			<tr><td class='tdbgh center nobr' colspan=7><b>User permissions [Read/Post/Edit/Delete/Thread/Mod]</b></td></tr>
+			$txt .= (
+				$isadmin ? 
+				"<td style='vertical-align: top'><table class='table'>" : 
+				"<center><table class='table' style='width: auto !important'><tr><td class='tdbgc center nobr' colspan=7><b>Editing $editingLabel's custom forum permissions</b></td></tr>").
+			"<tr><td class='tdbgh center nobr' colspan=7><b>User permissions [Read/Post/Edit/Delete/Thread/Mod]</b></td></tr>
 			<tr>
 				<td class='tdbgh center ".($isadmin ? "w" : "")."'>&nbsp;</td>
 				<td class='tdbgh center'><b>R</b></td>
@@ -523,7 +539,7 @@ else {
 
 pageheader($windowtitle);
 
-print adminlinkbar('admin-editperms.php');
+print adminlinkbar();
 print $txt;
 
 pagefooter();

@@ -8,7 +8,7 @@
 	
 	$sqldebuggers = array('127.0.0.1'); # IPs allowed to view the SQL Debugger
 	
-	const BOARD_VERSION = '12/07/2017 b004';
+	const BOARD_VERSION = '12/07/2017 b005';
 	
 	$config = array(
 	
@@ -50,6 +50,7 @@
 		'irc-reporting'			=> false, # Left for backwards compatiblity - no IRC reporting is implemented yet.
 		'show-ikachan'			=> false, # Display IkaChan overlay in every page.
 		'allow-custom-forums'	=> false, # Allow users to create their own forums
+		'backup-folder'			=> 'backups', # Directory containing backups. By default located in the board directory.
 		
 		// Debugging
 		'enable-sql-debugger'	=> false, # Enable the SQL Debugger. Note that if enabled it may slow down query calls.

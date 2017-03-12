@@ -221,7 +221,10 @@ if ($_GET['id']) {
 	<br>
 	<!--<?= quick_help("Global moderators and up can access your forum regardless of settings.","A note on group permissions") ?>-->
 	<table class="table">
-		<tr><td class="tdbgh center" colspan=42><b>Group Permissions [Read/Post/Edit/Delete/Thread/Mod]</b></td>
+		<tr>
+			<td class="tdbgh center b" colspan=42>
+				Group Permissions [<u>R</u>ead / <u>P</u>ost / <u>E</u>dit own posts / <u>D</u>elete own posts / Create <u>T</u>hreads / <u>M</u>oderate forum]
+			</td>
 <?php
 	$oneSet = false;
 	while ($perms) {

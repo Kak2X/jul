@@ -10,18 +10,6 @@
 	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 	header('Pragma: no-cache');
 	
-	// Wait for the midnight backup to finish...
-	if ((int)date("Gi") < 5) {
-		header("HTTP/1.1 503 Service Unavailable");
-		$title 		= "{$config['board-name']} -- Temporarily down";
-		$messagetitle = "It's Midnight Backup Time Again";
-		$message 	= "The daily backup is in progress. Check back in about five minutes.".
-					($config['irc-servers'] ? "<br>
-					<br>Feel free to drop by IRC:
-					<br><b>{$config['irc-servers'][1]}</b> &mdash; <b>".implode(", ", $config['irc-channels'])."</b>" : "");
-		dialog($message, $messagetitle, $title);
-	}
-	
 	$startingtime = microtime(true);
 	
 	$errors = array();
@@ -37,6 +25,29 @@
 		} else {
 			dialog("This board is experiencing technical difficulties.<br><br>Click <a href='?".urlencode($_SERVER['QUERY_STRING'])."'>here</a> to try again.", "Oops", $config['board-name']);
 		}
+	}
+	
+	// Just fetch now everything from misc that's going to be used on every page
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup FROM misc");
+
+	// Wait for the midnight backup to finish...
+	if ($miscdata['backup'] || (int)date("Gi") < 5) {
+		header("HTTP/1.1 503 Service Unavailable");
+		$title 		= "{$config['board-name']} -- Temporarily down";
+		
+		if ((int)date("Gi") < 5) {
+			$messagetitle = "It's Midnight Backup Time Again";
+			$message 	  = "The daily backup is in progress. Check back in about five minutes.";
+		} else {
+			$messagetitle = "Backup Time";
+			$message 	  = "A backup is in progress. Please check back in a couple of minutes.";
+		}
+		if ($config['irc-servers']) {
+			$message .= "<br>
+						<br>Feel free to drop by IRC:
+						<br><b>{$config['irc-servers'][1]}</b> &mdash; <b>".implode(", ", $config['irc-channels'])."</b>";
+		}
+		dialog($message, $messagetitle, $title);
 	}
 	
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
@@ -92,10 +103,6 @@
 	}
 
 	
-	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum FROM misc");
-
-
 	// Just making sure.  Don't use this anymore.
 	// (This is backup code to auto update passwords from cookies.)
 	/*

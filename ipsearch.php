@@ -2,7 +2,7 @@
 	require 'lib/function.php';
 	pageheader("IP Address Search");
 	admincheck();
-	print adminlinkbar('ipsearch.php');
+	print adminlinkbar();
 
 	$_POST['ip'] = filter_string($_REQUEST['ip']);
 	if(!filter_string($_POST['su'])) $_POST['su']='n';

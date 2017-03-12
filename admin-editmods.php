@@ -5,7 +5,7 @@ require 'lib/function.php';
 pageheader("{$config['board-name']} - Forum Moderators");
 
 admincheck();
-print adminlinkbar('admin-editmods.php');
+print adminlinkbar();
 
 if (isset($_POST['action'])) {
 	check_token($_POST['auth']);

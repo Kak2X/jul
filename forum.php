@@ -133,7 +133,11 @@
 
 	$newthreadbar = $forumlist = '';
 	if ($id) {
-		$forumlist = doforumlist($id);
+		$forumlist = "
+			<div>
+				<span style='float: left'>".doforumlist($id) . "</span>
+				<span class='fonts' style='float: right'><a href='forumacl.php?id=$id'>View access list</a></span>
+			</div>";
 		
 		// Make sure we can create polls
 		$newthreadbar =

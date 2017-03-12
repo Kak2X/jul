@@ -6,7 +6,7 @@
 
 	admincheck('forum-admin');
   
-	print adminlinkbar("admin-threads2.php");
+	print adminlinkbar();
 
 	if (!isset($_POST['run'])) {
 		?>

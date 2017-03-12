@@ -273,9 +273,15 @@ function sizelimitjs(){
   '; 
 }*/
 
-function adminlinkbar($sel = 'admin.php') {
-
+function adminlinkbar($sel = NULL) {
+	
 	if (!has_perm('admin-actions')) return;
+	
+	if (!$sel) {
+		// If no selection is passed, default to the current script
+		global $scriptname;
+		$sel = $scriptname;
+	}
 
 	$links	= array(
 		array(
@@ -288,9 +294,16 @@ function adminlinkbar($sel = 'admin.php') {
 			'admin-editforums.php'  => "Edit Forum List",
 			'admin-editmods.php'    => "Edit Forum Moderators",
 			'admin-editperms.php'   => "Edit Permissions",
-			'ipsearch.php'          => "IP Search",
+		),
+		array(
 			'admin-threads.php'     => "ThreadFix",
 			'admin-threads2.php'    => "ThreadFix 2",
+			'admin-backup.php'      => "Board Backups",
+			
+		),
+		array(
+			'ipsearch.php'          => "IP Search",
+		//	'admin-slammer.php'     => "EZ Ban Button",
 			'del.php'               => "Delete User",
 		)
 	);

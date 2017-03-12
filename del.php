@@ -12,7 +12,7 @@
   
 	pageheader();
 	
-	print adminlinkbar('del.php');
+	print adminlinkbar();
 	
 	if (filter_array($_POST['deluser'])) { //($loguserid==1 or $loguserid==2)){
 		

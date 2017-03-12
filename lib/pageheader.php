@@ -241,7 +241,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$css = "";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='/css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='/css/$schemefile.css'>";
+		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";

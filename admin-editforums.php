@@ -177,7 +177,7 @@ $windowtitle = "Editing Forum List";
 
 pageheader($windowtitle);
 
-print adminlinkbar('admin-editforums.php');
+print adminlinkbar();
 
 $pollstyles = array(-2 => 'Disallowed',
                     -1 => 'Normal',

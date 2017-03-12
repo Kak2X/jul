@@ -3,7 +3,7 @@
 	require 'lib/function.php';
 	admincheck();
 	pageheader();
-	print adminlinkbar("perfdata.php");
+	print adminlinkbar();
 	
 	
 	

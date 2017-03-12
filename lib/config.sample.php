@@ -8,24 +8,23 @@
 	
 	$sqldebuggers = array('127.0.0.1'); # IPs allowed to view the SQL Debugger
 	
-	const BOARD_VERSION = '08/03/2017 k003';
+	const BOARD_VERSION = '12/07/2017 b004';
 	
 	$config = array(
 	
 		// Layout
-		'board-name'			=> "Not Jul",			# Title of board. Used in the title bar and as link labels.
+		'board-name'			=> "Acmlmboard",			# Title of board. Used in the title bar and as link labels.
 		'board-title'			=> '<img src="images/sampletitle.png" title="The board owner is being lazy.">', 	# HTML code shown in the header. Typically this is an image.
 		'title-submessage'		=> "This is a staff-only message", # Secondary message shown below the title. By default only the staff can see it.
 		'board-url'				=> 'http://localhost/jul',# Non-HTTPS Board URL without last backslash (the origin check depends on this)
 		'admin-email'			=> 'admin@something.com', # Email link shown on support pages (ie: IP Banned page)
 		'admin-name'			=> '(admin name)', # Nickname shown on support pages
 		'irc-servers'			=> array ( # List of selectable IRC servers in the IRC Chat page.
-									1 => "irc.badnik.zone",
-									2 => "irc.rustedlogic.net",
-									3 => "irc.tcrf.net",
+									1 => "irc.something.net",
+									2 => "irc.example.org",
 								),
-		'irc-server-title'		=> "BadnikZONE", # Title given to the IRC Server
-		'irc-channels'			=> array ('#tcrf', '#x'), # Channels to AutoJoin once connected
+		'irc-server-title'		=> "SomeIrcNetwork", # Title given to the IRC Server
+		'irc-channels'			=> array ('#nkout', '#sample'), # Channels to AutoJoin once connected
 		
 		
 		'footer-url'			=> 'http://localhost/', # URL linked in the footer, just above the board version info (or affiliate links, if enabled)
@@ -50,6 +49,7 @@
 		'enable-firewall'		=> false, # Left for backwards compatiblity - a firewall isn't provided	
 		'irc-reporting'			=> false, # Left for backwards compatiblity - no IRC reporting is implemented yet.
 		'show-ikachan'			=> false, # Display IkaChan overlay in every page.
+		'allow-custom-forums'	=> false, # Allow users to create their own forums
 		
 		// Debugging
 		'enable-sql-debugger'	=> false, # Enable the SQL Debugger. Note that if enabled it may slow down query calls.
@@ -76,7 +76,7 @@
 		'host'			=> false,		# Board switch. Some features behave differently if set, but you should normally NEVER enable this.
 		'adminip' 		=> '127.0.0.1',	# This IP is automatically set to Sysadmin group
 		'mmdeath'		=> -1,			# [DISABLED - The code that handles this is commented out] Doomclock timer. (-1 to disable)
-		'rainbownames' 	=> false, 		# Always rainbow usernames (Set internally on new year)
+		'rainbownames' 	=> false, 		# Always have rainbow usernames (Set internally on new year)
 		'superadmin'	=> false,		# Everybody is a Sysadmin
 		'smallbrowse'	=> false,		# Mobile mode (Set internally when a mobile browser is detected)
 	);

@@ -91,7 +91,9 @@
 	}
 
 	// Action links
-	$sneek = "";
+	$sneek  = "";
+	$lastip = "";
+	$permedit = "";
 	if ($loguser['id']) {
 		$token = generate_token(32);
 		$sendpmsg = " | <a href='sendprivate.php?userid=$id'>Send private message</a>".
@@ -99,13 +101,16 @@
 		if (has_perm('admin-actions')) {
 			if($user['lastip'])
 				$lastip = " <br>with IP: <a href='ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
+		
+			$sneek = "<tr><td class='tdbg1 fonts center' colspan=2>"
+					.(has_perm('view-others-pms') ? "<a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |" : "")
+					.(has_perm('admin-actions') ? " <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
+					//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"
+					." <a href='editprofile.php?id={$id}' style='font-style:italic;'>Edit user</a> |"
+					." <a href='admin-editperms.php?mode=1&id={$id}' style='font-style:italic;'>Edit permissions</a>" : "");
+		} else {
+			$permedit = " | <a href='admin-editperms.php?mode=1&id={$id}'>Edit permissions</a>";
 		}
-		$sneek = "<tr><td class='tdbg1 fonts center' colspan=2>"
-				.(has_perm('view-others-pms') ? "<a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |" : "")
-				.(has_perm('admin-actions') ? " <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
-				//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"
-				." <a href='editprofile.php?id={$id}' style='font-style:italic;'>Edit user</a> |"
-				." <a href='admin-editperms.php?mode=1&id={$id}' style='font-style:italic;'>Edit permissions</a>" : "");
 	}
 
 	$aim = str_replace(" ", "+", $user['aim']);
@@ -297,10 +302,12 @@
 	<tr>
 		<td class='tdbg2 fonts center' colspan=2>
 			<a href="thread.php?user=<?=$id?>">Show posts</a> | 
-			<a href="forum.php?user=<?=$id?>">View threads by this user</a>
+			<a href="forum.php?user=<?=$id?>">View threads by this user</a> | 
+			<a href="customforums.php?user=<?=$id?>">View forums by this user</a>
 			<?=$sendpmsg?>
 			<?=$ratelink?>
 			<?=$moodavatar?>
+			<?=$permedit?>
 		</td>
 	</tr>
 	<tr>

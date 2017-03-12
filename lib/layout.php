@@ -1,679 +1,419 @@
 <?php
 	
-	$sepn 	= array('Dashes','Line','Full horizontal line','None');
-	$sep	= array('<br><br>--------------------<br>',
-					'<br><br>____________________<br>',
-					'<br><br><hr>',
-					'<br><br>');
-					
-/*
-	if (!$x_hacks['host']) {
-		if ($loguserid == 1) $config['board-title']	= "";
 
-		$autobancount = $sql->fetchq("SELECT COUNT(*) AS cnt, MAX(`date`) as time FROM `ipbans` WHERE `reason` LIKE 'Autoban'", MYSQL_ASSOC);
-		$totalbancount = $sql->fetchq("SELECT COUNT(*) AS cnt, MAX(`date`) as time FROM `ipbans`", MYSQL_ASSOC);
+require "lib/pageheader.php";
+require "lib/pagefooter.php";
 
-		$config['board-title']	.= "<br><font class=font color=#ff0000><b>If you got banned, PM an admin for a password change</b></font><br><font class=fonts>". $autobancount['cnt'] ." automatic IP bans have been issued, last ". timeunits2(ctime() - $autobancount['time']) ." ago"
-			."<br>". $totalbancount['cnt'] ." IP bans have been issued in total, last ". timeunits2(ctime() - $totalbancount['time']) ." ago";
+function doforumlist($id, $name = '', $shownone = ''){
+	global $loguser, $sql;
 	
-		$config['board-title']= "<span style='font-size: 40pt; font-variant: small-caps; color: #f33;'>The Hivemind Collective</span><br><span style='font-size: 6pt; font-variant: small-caps; color: #c00'>(because a group of friends sharing a similar opinion is totally hivemind, dood!)</span>";
-	}
-*/
-
-#	if (!$x_hacks['host'] && true) {
-#		$config['board-title']	.= "</a><br><a href='/thread.php?id=10372'><span style='font-size: 14px;'>Now with more celebrations!</span></a>";
-#	}
-
-/*
-	if (!$x_hacks['host'])
-		$config['board-title']	.= "</a><br><a href='/thread.php?id=9218'><span style='color: #f00; font-weight: bold;'>Security notice for certain users, please read and see if you are affected</span></a>";
-
-	if ($loguser['id'] >= 1 && false) {
-		$numdir2	= $numdir;
-		$numdir		= "num3/";
-
-		$votetu		= max(0, 1000000 - floor((mktime(15, 0, 0, 7, 22, 2009) - microtime(true)) * (1000000 / 86400)));
-
-		$votetally	= max(0, $votetu / (1000000));
-
-		$votepct2	= floor($votetu * 1);			// no decimal point, so x100 for added precision
-		$votepctm	= 5;									// width of the bar
-		$votepct	= floor($votetally * 100 * $votepctm);
-//		$config['board-title']	.= "</a><br><a href='/thread.php?id=5710'><span style='color: #f22; font-size: 14px;'>". generatenumbergfx($votetu ."/1000000", 2) ." <img src='numgfx/num3/barleft.png'><img src='numgfx/num3/bar-on.png' height='8' width='". ($votepct) ."'><img src='numgfx/num3/bar-off.png' height='8' width='". (100 * $votepctm - $votepct) ."'><img src='numgfx/num3/barright.png'></span></a>";
-		$numdir		= $numdir2;
-		$cycler		= str_replace("color=", "#", getnamecolor(0, 0));
-		$config['board-title']	.= "</a><br><a href='/thread.php?id=5866'><span style='color: $cycler; font-size: 14px;'>Mosts Results posted. Go view.</span></a>";
-	} */
-
-
-function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols, $isChristmas;
-			
-	// Load images right away
-	require 'lib/colors.php';
-	
-	/*
-		META tags & Favicon
-	*/
-	$metatag = '';
-
-	if (filter_bool($meta['noindex']))
-		$metatag .= "<meta name=\"robots\" content=\"noindex,follow\" />";
-
-	if (filter_bool($meta['description']))
-		$metatag .= "<meta name=\"description\" content=\"{$meta['description']}\" />";
-
-	// Why is this disabled?
-	if (filter_bool($x_hacks['smallbrowse']) and false) {
-		$css = "<link rel='stylesheet' href='/mobile.css'>";
-	}
-	
-	$favicon = "favicon";
-	if (!$x_hacks['host']) {
-		$favicon .= rand(1, 8);
-		if ($isChristmas) $favicon .= "x";	// Have a Santa hat
-	}
-
-	/*
-		Board title (and sub titles)
-	*/
-	if (!$windowtitle) $windowtitle = $config['board-name'];
-	
-	// Overriding the default title?
-	if ($miscdata['specialtitle'])
-		$config['board-title'] = $miscdata['specialtitle'];	// Global
-	else if ($forcetitle) 
-		$config['board-title'] = $forcetitle; // Forum specific
-	else 
-		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
-	
-	if (has_perm('view-submessage'))
-		$config['board-title'] .= $config['title-submessage'] ? "<br><b>".$config['title-submessage']."</b>" : "";
-	
-	// Admin-only info
-	// in_array($loguserid,array(1,5,2100))
-	if (has_perm('logs-banner')) {
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `ip`, `banflags` FROM `minilog` ORDER BY `time` DESC LIMIT 1");
-			$config['board-title']	.= "<br><a href='shitbugs.php'><span class=font style='color: #f00'><b>". $xminilog['count'] ."</b> suspicious request(s) logged, last at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ." (". $xminilogip['banflags'] .")</b></span></a>";
-		}
-		
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `pendingusers`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `username`, `ip` FROM `pendingusers` ORDER BY `time` DESC LIMIT 1");
-			$config['board-title']	.= "<br><span class='font' style='color: #ff0'><b>". $xminilog['count'] ."</b> pending user(s), last <b>'". $xminilogip['username'] ."'</b> at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ."</b></span>";
-		}
-	}
-	
-	
-	/*
-		Header links at the top of every page
-	*/
-	$headlinks = '';
-	if ($loguser['id']) {
-		
-		if (has_perm('admin-actions'))
-			$headlinks .= '<a href="admin.php" style="font-style:italic;">Admin</a> - ';
-
-		if (has_perm('use-shoped')) {
-			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
-		}
-		
-		$headlinks .= '<noscript><style>#logoutlink{display: none;}</style></noscript>
-		<span id="logoutlink"><a href="javascript:document.logout.submit()">Logout</a></span>
-		<input type="hidden" name="action" value="logout">
-		<input type="hidden" name="auth" value="'.generate_token(30).'">
-		<noscript><input type="submit" name="njout" class="tdbg1 buttonlink fonts" value="Logout"></noscript>
-		- <a href="editprofile.php">Edit profile</a>
-		- <a href="postradar.php">Post radar</a>
-		- <a href="shop.php">Item shop</a>
-		- <a href="forum.php?fav=1">Favorites</a>';
-		
-		// Page-specific addendums
-		switch ($scriptname) {
-			case 'index.php':
-			case 'latestposts.php':
-				$headlinks .= " - <a href='index.php?action=markallforumsread'>Mark all forums read</a>";
-				break;
-			
-			case 'forum.php':
-			case 'thread.php':
-				// Since we're supposed to have $forum when we browse these pages...
-				if (isset($forum['id']))
-					$headlinks .= " - <a href='index.php?action=markforumread&forumid={$forum['id']}'>Mark forum read</a>";
-				break;
-		}
-		
-	} else {
-		$headlinks.='
-		  <a href="register.php">Register</a>
-		- <a href="login.php">Login</a>';
-	}
-	
-	$headlinks2 = "
-	<a href='index.php'>Main</a>
-	- <a href='memberlist.php'>Memberlist</a>
-	- <a href='activeusers.php'>Active users</a>
-	- <a href='calendar.php'>Calendar</a>
-	<!-- - <a href='http://tcrf.net'>Wiki</a> -->
-	- <a href='irc.php'>IRC Chat</a>
-	- <a href='online.php'>Online users</a><br>
-	<a href='ranks.php'>Ranks</a>
-	- <a href='faq.php'>Rules/FAQ</a>
-	- <a href='acs.php'>JCS</a>
-	- <a href='stats.php'>Stats</a>
-	- <a href='latestposts.php'>Latest Posts</a>
-	- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
-	- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
-	";		
-	
-	
-	/*
-		Unread PMs box
-	*/
-	$new		= '&nbsp;';
-	$privatebox = "";
-	// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
-	// This box only shows up when a new PM is found, so it's optimized for that
-	if ($loguser['id'] && !in_array($scriptname, array("private.php","index.php")) ) {
-
-		
-		$unreadpm = $sql->fetchq("
-			SELECT COUNT(p.id) cnt, p.date, $userfields
-			FROM pmsgs p
-			INNER JOIN users u ON p.userfrom = u.id
-			WHERE p.userto = {$loguser['id']} AND p.msgread = 0
-			ORDER BY p.id DESC
-		");	
-		
-		if ($unreadpm['cnt']) {
-			$privatebox = "
-				<tr>
-					<td colspan=3 class='tdbg2 center fonts'>
-						{$statusicons['new']} <a href=private.php>You have {$unreadpm['cnt']} new private message".($unreadpm['cnt'] == 1 ? 's' : '')."</a> -- Last unread message from ".getuserlink($unreadpm)." on ".date($loguser['dateformat'], $unreadpm['date'] + $loguser['tzoff'])."
-					</td>
-				</tr>";
-		}
-
-	}
-	
-	
-	/*
-		CSS
-	*/
-		
-	// Default values
-	$numcols 	= 60;
-	$nullscheme = 0;
-	$schemetype = 0;
-	$formcss 	= 0;
-	
-	// If a scheme is being forced board-wise, make it override forum-specific schemes
-	// (Special schemes and $specialscheme now pass through $forcescheme)
-	if ($miscdata['scheme'] !== NULL)
-		$forcescheme = $miscdata['scheme'];
-	
-	
-	$schemepre	= false;
-
-	// Just skip all of this if we've forced a scheme
-	if (!$forcescheme) {
-	
-		//	Previewing a scheme?
-		if (isset($_GET['scheme'])) {
-			$loguser['scheme'] = (int) $_GET['scheme'];
-			$schemepre	= true;
-		} 
-
-		// Force Xmas scheme (cue whining, as always)
-		if ($isChristmas && !$x_hacks['host']) {
-			$scheme = 3;
-			$x_hacks['rainbownames'] = true;
-		}
-		
-	} else {
-		$loguser['scheme'] = $forcescheme;
-	}
-
-	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = {$loguser['scheme']}");
-
-	$filename	= "";
-	if ($schemerow) {
-		$filename	= $schemerow['file'];
-	} else {
-		$filename	= "night.php";
-		$schemepre	= false;
-	}
-
-	#	if (!$x_hacks['host'] && true) {
-	#		$filename	= "ymar.php";
-	#	}
-	
-	
-	require "schemes/$filename";
-	
-	// Hide Normal+ to non-admins
-	if (!has_perm('show-super-users')) {
-		$grouplist[GROUP_SUPER]['namecolor0'] = $grouplist[GROUP_NORMAL]['namecolor0'];
-		$grouplist[GROUP_SUPER]['namecolor1'] = $grouplist[GROUP_NORMAL]['namecolor1'];
-		$grouplist[GROUP_SUPER]['namecolor2'] = $grouplist[GROUP_NORMAL]['namecolor2'];
-	}
-
-	if ($schemepre) {
-		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";
-	}
-
-	//$config['board-title'] = "<a href='./'><img src=\"images/christmas-banner-blackroseII.png\" title=\"Not even Christmas in July, no. It's May.\"></a>";
-
-	// PONIES!!!
-	// if($forumid==30) $config['board-title'] = "<a href='./'><img src=\"images/poniecentral.gif\" title=\"YAAAAAAAAAAY\"></a>";
-	// end PONIES!!!
-	
-	
-	// Build post radar
-	$race = $loguser['id'] ? postradar($loguser['id']) : "";
-	
-
-	if (isset($bgimage) && $bgimage != "")
-		$bgimage = " url('$bgimage')";
-	else 
-		$bgimage = '';
-	
-	if ($nullscheme) {
-		// special "null" scheme.
-		$css = "";
-	} else if ($schemetype == 1) {
-		// External CSS
-		$css = "<link rel='stylesheet' href='/css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='/css/$schemefile.css'>";
-		// backwards compat
-		//global $bgcolor, $linkcolor;
-		//$bgcolor = "000";
-		//$linkcolor = "FFF";
-	} else {
-		// Standard
-		$css="
-			<style type='text/css'>
-			html, img { image-rendering: -moz-crisp-edges; }
-/*			
-			body	{
-				cursor:	url('images/ikachanpointer.png'), default;
-				}
-			a:link {
-				cursor:	url('images/ikachanpointer2.png'), pointer;
-				}
-*/			a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
-			a,.buttonlink {
-				color: #$linkcolor;
-			}
-			a:visited,.buttonlink:visited {
-				color: #$linkcolor2;
-			}
-			a:active,.buttonlink:active {
-				color: #$linkcolor3;
-			}
-			a:hover,.buttonlink:hover {
-				color: #$linkcolor4;
-			}
-			img { border:none; }
-			pre br { display: none; }
-			body {
-				scrollbar-face-color:		#$scr3;
-				scrollbar-track-color:		#$scr7;
-				scrollbar-arrow-color:		#$scr6;
-				scrollbar-highlight-color:	#$scr2;
-				scrollbar-3dlight-color:	#$scr1;
-				scrollbar-shadow-color:	#$scr4;
-				scrollbar-darkshadow-color:	#$scr5;
-				color: #$textcolor;
-				font:13px $font;
-				background: #$bgcolor$bgimage;
-			}
-			div.lastpost { font: 10px $font2 !important; white-space: nowrap; }
-			div.lastpost:first-line { font: 13px $font !important; }
-			.sparkline { display: none; }
-			.font 	{font:13px $font}
-			.fonth	{font:13px $font;color:$tableheadtext}	/* this is only used once (!) */
-			.fonts	{font:10px $font2}
-			.fontt	{font:10px $font3}
-			.tdbg1	{background:#$tablebg1}
-			.tdbg2	{background:#$tablebg2}
-			.tdbgc	{background:#$categorybg}
-			.tdbgh	{background:#$tableheadbg;}
-			.center	{text-align:center}
-			.right	{text-align:right}
-			.nobr	{white-space:nowrap}
-			.w		{width:100%}
-			.buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
-			.table	{empty-cells:	show; width: 100%;
-					 border-top:	#$tableborder 1px solid;
-					 border-left:	#$tableborder 1px solid;
-					 border-spacing: 0px;
-					 font:13px 		 $font;}
-			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
-					 border-right:	#$tableborder 1px solid;
-					 border-bottom:	#$tableborder 1px solid}
-			code {
-				overflow:		auto;
-				width:			100%;
-				white-space:	pre;
-				display:		block;
-			}
-			code br { display: none; }
-			input[type=radio] { color: black; background: white; }
-			
-			.pstspl1 {opacity:0;}
-			.pstspl1:hover {opacity:1;}
-			.pstspl2 {background:#000;color:#FFF;display:block;}
+	if (!$name) {
+		$forumlinks = "
+		<table>
+			<tr>
+				<td class='font'>Forum jump: </td>
+				<td>
+					<form>
+						<select onChange='parent.location=\"forum.php?id=\"+this.options[this.selectedIndex].value' style='position:relative;top:8px'>
 		";
+		$showhidden = (int) has_perm('display-hidden-forums');
+		$showcustom = "!f.custom";
+	} else {
+		$forumlinks = "";
+		$showhidden = 1;
+		$showcustom = 1;
 	}
 	
-	//$numcols=(filter_int($numcols) ? $numcols : 60);
-
-	// Is custom CSS defined for form elements?
-	if ($formcss) {
-		$numcols = 80;
+	$forums = $sql->query("
+		SELECT 	f.id, f.title, f.catid, f.hidden, f.custom, c.name catname, c.showalways,
+				pf.group{$loguser['group']} forumperm, pu.permset userperm
+		FROM forums f
 		
-		if (!isset($formtextcolor)) {
-			$formtextcolor = $textcolor; // Only one scheme uses this (!)
-		}
-		if (!isset($inputborder)) {
-			$inputborder   = $tableborder;
-		}
-		$css.="
-		textarea,input,select{
-		  border:	#$inputborder solid 1px;
-		  background:#000000;
-		  color:	#$formtextcolor;
-		  font:	10pt $font;}
-		textarea:focus {
-		  border:	#$inputborder solid 1px;
-		  background:#000000;
-		  color:	#$formtextcolor;
-		  font:	10pt $font;}
-		.radio{
-		  border:	none;
-		  background:none;
-		  color:	#$formtextcolor;
-		  font:	10pt $font;}
-		.submit{
-		  border:	#$inputborder solid 2px;
-		  font:	10pt $font;}
-		";
-	}
-
-	// April 1st page flip
-	/*
-	$css .= "
-		body {
-			transform:			scale(-1, 1);
-			-o-transform:		scale(-1, 1);
-			-moz-transform:		scale(-1, 1);
-			-webkit-transform:	scale(-1, 1);
-		}
-		.tbl {
-			transform:			scale(-1, 1);
-			-o-transform:		scale(-1, 1);
-			-moz-transform:		scale(-1, 1);
-			-webkit-transform:	scale(-1, 1);
-		}
-	";
-	*/
-	
-	// 10/18/08 - hydrapheetz: added a small hack for "extra" css goodies.
-	if (!$nullscheme && !$schemetype) {
-		if (isset($css_extra)) {
-			$css .= $css_extra . "\n";
-		}
-		$css.='</style>';
-	}
-
-	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
-	
-	//No gunbound rankset here (yet), stop futily trying to update it
-	//updategb();
-	
-//$jscripts = '';
-
-	/*
-		Page overlays
-	*/
-	$overlay = '';
-	if ($config['show-ikachan']) { // Ikachan! :D!
-		//$ikachan = 'images/ikachan/vikingikachan.png';
-		//$ikachan = 'images/sankachan.png';
-		//$ikachan = 'images/ikamad.png';
-		$ikachan = 'images/squid.png';
-
-		$ikaquote = 'Capturing turf before it was cool';
-		//$ikaquote = 'Someone stole my hat!';
-		//$ikaquote = 'If you don\'t like Christmas music, well... it\'s time to break out the earplugs.';
-		//$ikaquote = 'This viking helmet is stuck on my head!';
-		//$ikaquote = 'Searching for hats to wear!  If you find any, please let me know...';
-		//$ikaquote = 'What idiot thought celebrating a holiday five months late was a good idea?';
-		//$ikaquote = 'Back to being a fixture now, please stop bitching.';
-		//$ikaquote = 'I just want to let you know that you are getting coal this year. You deserve it.';
-
-		$overlay = "<img id='f_ikachan' src='$ikachan' style='z-index: 999999; position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;' title=\"$ikaquote\">";
-	}
-	
-
-	if (filter_bool($_GET['w'])) {
-		$overlay	= "<img src=images/wave/squid.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"Ikachaaaan!\">";
-		$overlay	.= "<img src=images/wave/cheepcheep.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"cheep tricks\">";
-		$overlay 	.= "<img src=images/wave/chest.png style=\"position: fixed; right: 20px; bottom: 0px;\" title=\"1\">";
-
-		for ($i = rand(0,5); $i < 20; ++$i) {
-			$overlay .= "<img src=images/wave/seaweed.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; bottom: -". mt_rand(24,72) ."px;\" title=\"weed\">";
-		}
-	}
-
-	$dispviews = $miscdata['views'];
-	//if (($views % 1000000 >= 999000) && ($views % 1000000 < 999990))
-	//	$dispviews = substr((string)$views, 0, -3) . "???";
-
-
-	
-?><html>
-	<head>
-		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
-		<?=$metatag?>
-			<title><?=$windowtitle?></title>
-			<link rel='shortcut ico' href='<?=$favicon?>.ico' type='image/x-icon'>
-			<?=$css?>
-	</head>
-	<body>
-	<?php
-
-	if (!$mini) {
-	?>
-		<?=$overlay?>
-		<center>
-			<table class='table'>
-				<tr>
-					<td class='tdbg1 center' colspan=3><?=$config['board-title']?>
-						<span class='fonts'>
-							<br>
-							<form action="login.php" method="post" name="logout" style="display: inline"><?=$headlinks?></form>			
-<?php		
-		if (!$x_hacks['smallbrowse']) {
-				// Desktop header
-?>						</span>
-					</td>
-				</tr>
-				<tr>
-					<td style='width: 120px' class='tdbg2 center fonts nobr'>
-						Views: <?=$dispviews?>
-					</td>
-					<td class='tdbg2 center fonts'>
-						<?=$headlinks2?>
-					</td>
-					<td style='width: 120px' class='tdbg2 center fonts nobr'>
-						<?=printdate()?>
-					</td>
-				</tr>			
-<?php
+		LEFT JOIN categories      c  ON f.catid = c.id
+		LEFT JOIN perm_forums     pf ON f.id    = pf.id
+		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
+		
+		WHERE $showcustom AND (!f.hidden OR $showhidden) AND (f.custom OR !ISNULL(c.id)) OR f.id = $id
 			
-		} else {
-				// Mobile header
-?>
-							<br>
-							<?=$dispviews?> views, <?=printdate()?>
-						</span>
-					</td>
-				</tr>
-				<tr>
-					<td class='tdbg2 center fonts w' colspan=3>
-						<?=$headlinks2?>
-					</td>
-				</tr>
-<?php
-		}
-			// Common
-?>
-				<tr>	
-					<td colspan=3 class='tdbg1 center fonts'>
-						<?=$race?>
-						<?=$privatebox?>
-				</table>
-		</center>
-		<br>
-<?php	
-	}
-	// Forum online users
-	if (isset($forum['id']) && in_array($scriptname, array('forum.php', 'thread.php')))
-		echo "<table class='table'><td class='tdbg1 fonts center'>".fonlineusers($forum['id'])."</table>";
+		ORDER BY f.custom, c.corder, f.catid, f.forder, f.id
+	");
 	
-	define('HEADER_PRINTED', true);
+	$prev      = NULL;	// In case the current forum is in an invalid category, the non-existing category name won't be printed
+	$customsep = NULL;
+	while ($forum = $sql->fetch($forums)) {
+		$canView = has_forum_perm('read', $forum);
+		// New category
+		if ($forum['custom']) {
+			if (!$customsep) {
+				$forumlinks .= "</optgroup><optgroup label=\"".($showcustom === 1 ? "Custom forums" : "Current forum")."\">";
+				$customsep = true;
+			}
+		} else if (!$forum['custom'] && $prev != $forum['catid']) {
+			if ($canView || $forum['showalways']) {
+				$forumlinks .= "</optgroup><optgroup label=\"{$forum['catname']}\">";
+			}
+			$prev = $forum['catid'];
+		}
+		
+		if ($canView) {
+			if ($forum['hidden']) {
+				$forum['title'] = "({$forum['title']})";
+			}
+			$forumlinks .= "<option value={$forum['id']}".($forum['id'] == $id ? ' selected' : '').">".htmlspecialchars($forum['title'])."</option>";
+		}
+	}
+	
+	// Multi-use forum list
+	if ($name) {
+		if ($shownone) $forumlinks = "<option value=0>$shownone</option>$forumlinks";
+		return "<select name='$name'>$forumlinks</select>";
+	}
+	$forumlinks .= "	</optgroup>
+					</select>
+				</form>
+			</td>
+		</tr>
+	</table>";
+	
+	return $forumlinks;
 }
 
-
-
-function pagefooter() {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime;
+// Note: -1 becomes NULL when inserted to a db and vice versa
+function doschemeList($all = false, $sel = 0, $name = 'scheme'){
+	global $sql;
 	
-	if (!$config['affiliate-links']) {
-		$affiliatelinks = "";
-	} else {
-		$affiliatelinks = "<form><select onchange='window.open(this.options[this.selectedIndex].value)'>{$config['affiliate-links']}</select></form>";
+	$schemes = $sql->query("SELECT * FROM schemes ".($all ? "ORDER BY special," : "WHERE special = 0 ORDER BY")." ord, id");
+	
+	if ($sel === NULL) $sel = '-1';
+	$scheme[$sel] = "selected";
+	
+	$input 	= "";
+	$prev	= 1; // Previous special value
+	while($x = $sql->fetch($schemes)){
+		// If we only fetch normal schemes don't bother separating between them.
+		if ($all && $prev != $x['special']){
+			$prev 	= $x['special'];
+			$input .= "</optgroup><optgroup label='".($prev ? "Special" : "Normal")." schemes'>";
+		}
+		$input	.= "<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">{$x['name']}</option>";
 	}
-	
-	$doomnum = ($x_hacks['mmdeath'] >= 0) ? "<div style='position: absolute; top: -100px; left: -100px;'>Hidden preloader for doom numbers:
-	<img src='numgfx/death/0.png'> <img src='numgfx/death/1.png'> <img src='numgfx/death/2.png'> <img src='numgfx/death/3.png'> <img src='numgfx/death/4.png'> <img src='numgfx/death/5.png'> <img src='numgfx/death/6.png'> <img src='numgfx/death/7.png'> <img src='numgfx/death/8.png'> <img src='numgfx/death/9.png'></div>" : "";
+	return "<select name='$name'>".($all ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
+}
 
+// When it comes to this kind of code being repeated across files...
+function dothreadiconlist($iconid = NULL, $customicon = '') {
 	
-	// Acmlmboard - <a href='https://github.com/Xkeeper0/jul'>". (file_exists('version.txt') ? file_get_contents("version.txt") : shell_exec("git log --format='commit %h [%ad]' --date='short' -n 1")) ."</a>
-	// <br>". 	($loguser['id'] && $scriptname != 'index.php' ? adbox() ."<br>" : "") ."
-	/*
-<!-- Piwik -->
-<script type=\"text/javascript\">
-var pkBaseURL = ((\"https:\" == document.location.protocol) ? \"https://stats.tcrf.net/\" : \"http://stats.tcrf.net/\");
-document.write(unescape(\"%3Cscript src='\" + pkBaseURL + \"piwik.js' type='text/javascript'%3E%3C/script%3E\"));
-</script><script type=\"text/javascript\">
-try {
-var piwikTracker = Piwik.getTracker(pkBaseURL + \"piwik.php\", 4);
-piwikTracker.trackPageView();
-piwikTracker.enableLinkTracking();
-} catch( err ) {}
-</script><noscript><p><img src=\"http://stats.tcrf.net/piwik.php?idsite=4\" style=\"border:0\" alt=\"\" /></p></noscript>
-<!-- End Piwik Tag -->
-<!--<script type=\"text/javascript\" src=\"http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.6.min.js\"></script>
-<script type=\"text/javascript\" src=\"js/useful.js\"></script> -->
-	*/
+	// Check if we have selected one of the default thread icons
+	$posticons = file('posticons.dat');
 	
+	if (isset($iconid) && $iconid != -1) {
+		$selected = trim($posticons[$iconid]);
+	} else {
+		$selected = trim($customicon);
+	}
+	$customicon = $selected;
+	$posticonlist = "";
 	
-	
-	?>
-	
-	<br>
-	<br>
-	<center>
-		<!--
-		<img src='adnonsense.php?m=d' title='generous donations to the first national bank of bad jokes and other dumb crap people post' style='margin-left: 44px;'><br>
-		<img src='adnonsense.php' title='hotpod fund' style='margin: 0 22px;'><br>
-		<img src='adnonsense.php?m=v' title='VPS slushie fund' style='margin-right: 44px;'>
-		-->
-		<br>
-	
-		<span class='fonts'>
-		<br>
-		<br>
-		<a href='<?=$config['footer-url']?>'><?=$config['footer-title']?></a>
-		<br>
-		<?=$affiliatelinks?>
-		<br>
+	for ($i = 0; isset($posticons[$i]);) {
 		
-		<table cellpadding=0 border=0 cellspacing=2>
+		$posticons[$i] = trim($posticons[$i]);
+		// Does the icon match?
+		if($selected == $posticons[$i]){
+			$checked    = 'checked=1';
+			$customicon	= '';					// If so, blank out the custom icon
+		} else {
+			$checked    = '';
+		}
+
+		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src='{$posticons[$i]}' HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
+
+		$i++;
+		if($i % 10 == 0) $posticonlist .= '<br>';
+	}
+
+	// Blank or set to None?
+	if (!$selected || $iconid == -1) $checked = 'checked=1';
+	
+	$posticonlist .= 	"<br>".
+						"<input type=radio class='radio' name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
+						"Custom: <input type='text' name=custposticon VALUE=\"".htmlspecialchars($customicon)."\" SIZE=40 MAXLENGTH=100>";
+	
+	return $posticonlist;
+}
+
+function moodlist($sel = 0, $return = false) {
+	global $loguser;
+	$sel		= floor($sel);
+
+	$a	= array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
+	if ($loguser['id'] == 1) $a[99] = "special";
+	if ($return) return $a;
+
+	$c[$sel]	= " checked";
+	$ret		= "";
+
+	if ($loguser['id'] && $loguser['moodurl'])
+		$ret = '
+			<script type="text/javascript">
+				function avatarpreview(uid,pic)
+				{
+					if (pic > 0)
+					{
+						var moodav="'.htmlspecialchars($loguser['moodurl']).'";
+						document.getElementById(\'prev\').src=moodav.replace("$", pic);
+					}
+					else
+					{
+						document.getElementById(\'prev\').src="images/_.gif";
+					}
+				}
+			</script>
+		';
+
+	$ret .= "
+		<b>Mood avatar list:</b><br>
+		<table style='border-spacing: 0px'>
 			<tr>
+				<td style='width: 150px; white-space:nowrap'>";
+
+	foreach($a as $num => $name) {
+		$jsclick = (($loguser['id'] && $loguser['moodurl']) ? "onclick='avatarpreview({$loguser['id']},$num)'" : "");
+		$ret .= "<input type='radio' name='moodid' value='$num'". filter_string($c[$num]) ." id='mood$num' tabindex='". (9000 + $num) ."' style='height: 12px' $jsclick>
+             <label for='mood$num' ". filter_string($c[$sel]) ." style='font-size: 12px'>&nbsp;$num:&nbsp;$name</label><br>\r\n";
+	}
+
+	if (!$sel || !$loguser['id'] || !$loguser['moodurl'])
+		$startimg = 'images/_.gif';
+	else
+		$startimg = htmlspecialchars(str_replace('$', $sel, $loguser['moodurl']));
+
+	$ret .= "	</td>
 				<td>
-					<img src='images/poweredbyacmlm.gif'>
-				</td>
-				<td>
-					<span class='fonts'>
-						Acmlmboard - <?=BOARD_VERSION?><br>
-						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al. 
-					</span>
+					<img src=\"$startimg\" id=prev>
 				</td>
 			</tr>
-		</table>
-		<?=$doomnum?>
-		
-	<?php
-
-	/*
-		( used to be in printtimedif() )
-	*/
-	$exectime = microtime(true) - $startingtime;
-
-	$qseconds = sprintf("%01.6f", mysql::$time);
-	$sseconds = sprintf("%01.6f", $exectime - mysql::$time);
-	$tseconds = sprintf("%01.6f", $exectime);
-
-	$queries = mysql::$queries;
-	$cache   = mysql::$cachehits;
-
-	// Old text
-	//print "<br>{<font class="fonts">} Page rendered in {$tseconds} seconds.</font><br>";
-
-	print "<br>
-		<span class='fonts'>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
-		<table class='fonts' style='border-spacing: 0px'>
-			<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
-			<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
-			<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
 		</table>";
-		
-	$debugPerm = has_perm('view-debugger');
-	// Print errors locally
-	print error_printer(true, ($debugPerm || $config['always-show-debug']), $GLOBALS['errors']);
-
-	// Print mysql queries
-	if ((mysql::$debug_on && (in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $loguser['id'] == 1 || $debugPerm)) || $config['always-show-debug']) {
-		if (!isset($_GET['debugsql']) && !$config['always-show-debug']) // $_SERVER['REQUEST_METHOD'] != 'POST'
-			print "<br><a href='".$_SERVER['REQUEST_URI'].(($_SERVER['QUERY_STRING']) ? "&" : "?")."debugsql=1'>Useless mySQL query debugging shit</a>";
-		else
-			print mysql::debugprinter();
-	}
-	
-
-	if (!$x_hacks['host']) {
-		$pages	= array(
-			"index.php",
-			"thread.php",
-			"forum.php",
-		);
-		if (in_array($scriptname, $pages)) {
-			$sql->queryp("INSERT INTO rendertimes SET page = ?, time = ?, rendertime  = ?", ["/$scriptname", ctime(), $exectime]);
-			$sql->query("DELETE FROM rendertimes WHERE time < '". (ctime() - 86400 * 14) ."'");
-		}
-	}	
-
-	die;
+	return $ret;
 }
 
-	/*
-		Print a full screen error message
-	*/
-	function dialog($message, $messagetitle = 'Board Message', $title = 'Board Message') {
-		require "lib/dialog.php";
+function dopagelist($url, $elements, $div){
+	global $loguser;
+	$pagelinks = '';
+	$page = filter_int($_GET['page']);
+	$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);
+	$maxfromend   = (($loguser['pagestyle']) ? 20 : 10);
+	$totalpages	= ceil($elements / $div);
+	for($k = 0; $k < $totalpages; ++$k) {
+		if ($totalpages >= ($maxfromstart+$maxfromend+1) && $k > $maxfromstart && $k < ($totalpages - $maxfromend)) {
+		  $k = ($totalpages - $maxfromend);
+			$pagelinks .= " ...";
+		}
+		$w = ($_GET['page'] == $k ? 'x' : 'a');
+		$pagelinks.=" <$w href='$url&page=$k'>".($k+1)."</$w>";
 	}
+	return $pagelinks;
+}
+
+/* WIP
+$jspcount = 0;
+function jspageexpand($start, $end) {
+	global $jspcount;
+
+	if (!$jspcount) {
+		echo '
+			<script type="text/javascript">
+				function pageexpand(uid,st,en)
+				{
+					var elem = document.getElementById(uid);
+					var res = "";
+				}
+			</script>
+		';
+	}
+
+	$entityid = "expand" . ++$jspcount;
+
+	$js = "#todo";
+	return $js;
+}
+*/
+
+function errorpage($text, $redirurl = '', $redir = '', $redirtimer = 4) {
+	if (!defined('HEADER_PRINTED')) pageheader();
+
+	print "<table class='table'><tr><td class='tdbg1 center'>$text";
+	if ($redir)
+		print '<br>'.redirect($redirurl, $redir, $redirtimer);
+	print "</table>";
+
+	pagefooter();
+}
+
+function redirect($url, $msg, $delay){
+	if($delay < 1) $delay = 1;
+	return "You will now be redirected to <a href='$url'>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=$delay;URL=$url>";
+}
+
+/*
+function sizelimitjs(){
+	// where the fuck is this used?!
+	return "";
+  return '
+	<script>
+	  function sizelimit(n,x,y){
+		rx=n.width/x;
+		ry=n.height/y;
+		if(rx>1 && ry>1){
+		if(rx>=ry) n.width=x;
+		else n.height=y;
+		}else if(rx>1) n.width=x;
+		else if(ry>1) n.height=y;
+	  }
+	</script>
+  '; 
+}*/
+
+function adminlinkbar($sel = 'admin.php') {
+
+	if (!has_perm('admin-actions')) return;
+
+	$links	= array(
+		array(
+			'admin.php'	=> "Admin Control Panel",
+		),
+		array(
+//			'admin-todo.php'        => "To-do list",
+			'announcement.php'      => "Go to Announcements",
+			'admin-editfilters.php' => "Edit Filters",
+			'admin-editforums.php'  => "Edit Forum List",
+			'admin-editmods.php'    => "Edit Forum Moderators",
+			'admin-editperms.php'   => "Edit Permissions",
+			'ipsearch.php'          => "IP Search",
+			'admin-threads.php'     => "ThreadFix",
+			'admin-threads2.php'    => "ThreadFix 2",
+			'del.php'               => "Delete User",
+		)
+	);
+
+	$r = "<div style='padding:0px;margins:0px;'>
+			<table class='table'>
+				<tr>
+					<td class='tdbgh center' style='border-bottom: 0'>
+						<b>Admin Functions</b>
+					</td>
+				</tr>
+			</table>";
+
+	$total = count($links) - 1;
+    foreach ($links as $rownum => $linkrow) {
+		$c	= count($linkrow);
+		$w	= floor(1 / $c * 100);
+
+		$r .= "<table class='table'><tr>";
+		$nb = ($rownum != $total) ? ";border-bottom: 0" : "";
+
+		foreach($linkrow as $link => $name) {
+			$cell = '1';
+			if ($link == $sel) $cell = 'c';
+			$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px{$nb}' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+		}
+
+		$r .= "</tr></table>";
+	}
+	$r .= "</div><br>";
+
+	return $r;
+}
+
+function include_js($fn, $as_tag = false) {
+	// HANDY JAVASCRIPT INCLUSION FUNCTION
+	if ($as_tag) {
+		// include as a <script src="..."></script> tag
+		return "<script src='$fn' type='text/javascript'></script>";
+	} else {
+		return '<script type="text/javascript">'.file_get_contents("js/$fn").'</script>';
+	}
+}
+
+// JS "Help windows"
+// @TODO: Implement a way to close them with JS disabled.
+function quick_help($message, $title = "Help Window") {
+	static $i = 0;
+	if ($message) {
+		$style = $i ? "" : "<style type='text/css'>.qhtitle{border-bottom: none}.qhmain{margin-bottom: 16px}.qhclose{float: right; padding: 0px 7px}</style>" . include_js("qhelp.js");
+		++$i;
+		return "{$style}<div id='qhmain{$i}' style=''><div class='table tdbgh center qhtitle'><b>$title</b><a href='#' id='qhclose{$i}' class='qhclose' style='display:none' onmousedown='closeHelp({$i})'>X</a></div><div class='table tdbg1 center qhmain'>{$message}</div></div><script>setCloseButton({$i})</script>";
+	} else {
+		return "";
+	}
+	
+}
+
+// @TODO: Implement a toolbar replacement without copying the bad old code
+function replytoolbar() { return; }
+
+function adbox() {
+
+	// no longer needed. RIP
+	return "";
+
+	global $loguser, $bgcolor, $linkcolor;
+
+/*
+	$tagline	= array();
+	$tagline[]	= "Viewing this ad requires<br>ZSNES 1.42 or older!";
+	$tagline[]	= "Celebrating 5 years of<br>ripping off SMAS!";
+	$tagline[]	= "Now with 100% more<br>buggy custom sprites!";
+	$tagline[]	= "Try using AddMusic to give your hack<br>that 1999 homepage feel!";
+	$tagline[]	= "Pipe cutoff? In my SMW hack?<br>It's more likely than you think!";
+	$tagline[]	= "Just keep giving us your money!";
+	$tagline[]	= "Now with 97% more floating munchers!";
+	$tagline[]	= "Tip: If you can beat your level without<br>savestates, it's too easy!";
+	$tagline[]	= "Tip: Leave exits to level 0 for<br>easy access to that fun bonus game!";
+	$tagline[]	= "Now with 100% more Touhou fads!<br>It's like Jul, but three years behind!";
+	$tagline[]	= "Isn't as cool as this<br>witty subtitle!";
+	$tagline[]	= "Finally beta!";
+	$tagline[]	= "If this is blocking other text<br>try disabling AdBlock next time!";
+	$tagline[]	= "bsnes sucks!";
+	$tagline[]	= "Now in raspberry, papaya,<br>and roast beef flavors!";
+	$tagline[]	= "We &lt;3 terrible Japanese hacks!";
+	$tagline[]	= "573 crappy joke hacks and counting!";
+	$tagline[]	= "Don't forget your RATS tag!";
+	$tagline[]	= "Now with exclusive support for<br>127&frac12;Mbit SuperUltraFastHiDereROM!";
+	$tagline[]	= "More SMW sequels than you can<br>shake a dead horse at!";
+	$tagline[]	= "xkas v0.06 or bust!";
+	$tagline[]	= "SMWC is calling for your blood!";
+	$tagline[]	= "You can run,<br>but you can't hide!";
+	$tagline[]	= "Now with 157% more CSS3!";
+	$tagline[]	= "Stickers and cake don't mix!";
+	$tagline[]	= "Better than a 4-star crap cake<br>with garlic topping!";
+	$tagline[]	= "We need some IRC COPS!";
+
+	if (isset($_GET['lolol'])) {
+		$taglinec	= $_GET['lolol'] % count($tagline);
+		$taglinec	= $tagline[$taglinec];
+	}
+	else
+		$taglinec	= pick_any($tagline);
+*/
+
+	return "
+<center>
+<!-- Beginning of Project Wonderful ad code: -->
+<!-- Ad box ID: 48901 -->
+<script type=\"text/javascript\">
+<!--
+var pw_d=document;
+pw_d.projectwonderful_adbox_id = \"48901\";
+pw_d.projectwonderful_adbox_type = \"5\";
+pw_d.projectwonderful_foreground_color = \"#$linkcolor\";
+pw_d.projectwonderful_background_color = \"#$bgcolor\";
+//-->
+</script>
+<script type=\"text/javascript\" src=\"http://www.projectwonderful.com/ad_display.js\"></script>
+<noscript><map name=\"admap48901\" id=\"admap48901\"><area href=\"http://www.projectwonderful.com/out_nojs.php?r=0&amp;c=0&amp;id=48901&amp;type=5\" shape=\"rect\" coords=\"0,0,728,90\" title=\"\" alt=\"\" target=\"_blank\" /></map>
+<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\" width=\"728\" bgcolor=\"#$bgcolor\"><tr><td><img src=\"http://www.projectwonderful.com/nojs.php?id=48901&amp;type=5\" width=\"728\" height=\"90\" usemap=\"#admap48901\" border=\"0\" alt=\"\" /></td></tr><tr><td bgcolor=\"\" colspan=\"1\"><center><a style=\"font-size:10px;color:#$linkcolor;text-decoration:none;line-height:1.2;font-weight:bold;font-family:Tahoma, verdana,arial,helvetica,sans-serif;text-transform: none;letter-spacing:normal;text-shadow:none;white-space:normal;word-spacing:normal;\" href=\"http://www.projectwonderful.com/advertisehere.php?id=48901&amp;type=5\" target=\"_blank\">Ads by Project Wonderful! Your ad could be right here, right now.</a></center></td></tr></table>
+</noscript>
+<!-- End of Project Wonderful ad code. -->
+</center>";
+}

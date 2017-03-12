@@ -58,6 +58,13 @@ const PT_PERMLIST = array(
 	'send-pms'					=> "Can send PMs", // NORMAL
 	'edit-own-events'			=> "Can edit his own events", // NORMAL
 	'has-title'					=> "Custom title status", // NORMAL
+	'create-custom-forums'		=> "Create custom forums",
+	'bypass-custom-forum-limits'=> "Bypass custom forum limits/requirements",
+	
+	
+	'News Engine' => NULL,
+	'post-news' 				=> "Can post news", // ADMIN
+	'news-admin' 				=> "Can moderate the news section", // ADMIN
 	
 
 );
@@ -66,6 +73,8 @@ $txt = "";
 
 $windowtitle = "Permission Editor";
 
+$isadmin = has_perm('admin-actions');
+
 if (PE_EDITGROUP) {
 	$windowtitle .= " - Editing groups";
 	if (!has_perm('sysadmin-actions')) {
@@ -73,8 +82,9 @@ if (PE_EDITGROUP) {
 	}
 } else {
 	$windowtitle .= " - Editing users";
-	// We allow normal admins to edit permissions, as long as they have it set.
-	admincheck();
+	if (!$isadmin && (!has_perm('create-custom-forums') || !$config['allow-custom-forums'])) {
+		errorpage("Sorry, but you aren't allowed to manage custom forums.", 'index.php', 'the index');
+	}
 }
 	
 if (!$_GET['id']) {
@@ -126,7 +136,7 @@ if (!$_GET['id']) {
 else {
 	
 	
-	if (isset($_POST['reset']) && PE_EDITUSER) {
+	if (isset($_POST['reset']) && $isadmin && PE_EDITUSER) {
 		// Resetting user permfields to default by deleting userperm
 		check_token($_POST['auth']);
 		$sql->query("DELETE FROM perm_users WHERE id = {$_GET['id']}");
@@ -185,7 +195,7 @@ else {
 	</form>";
 	
 	}
-	else if (isset($_POST['edit'])) {
+	else if (isset($_POST['edit']) && $isadmin) {
 		check_token($_POST['auth']);
 		unset($_POST['edit'], $_POST['auth'], $_POST['reset']);
 		
@@ -212,12 +222,13 @@ else {
 			$permSet[$i] = 0;
 		}
 		
+		
 		// Account for the number of arguments
 		foreach ($_POST as $permName => $permVal) {
 			$permDef = @constant("PERM_" . str_replace("-", "_", strtoupper($permName)));
 			if ($permDef === NULL) { // Not a perm constant
 				continue; 
-			} else if (PE_EDITUSER && !has_perm($permName)) { // If we can't change it, leave the orignal one
+			} else if (PE_EDITUSER && !$isadmin && !has_perm($permName)) { // If we can't change it, leave the orignal one
 				$permSet[$permDef[0]-1] = $permSet[$permDef[0]-1] | ($permOrig['set'.$permDef[0]] & $permDef[1]);
 			} else if ($permVal) { // Just in case we explicitly check if this permission bit is enabled
 				$permSet[$permDef[0]-1] = $permSet[$permDef[0]-1] | $permDef[1];
@@ -294,6 +305,7 @@ else {
 			FROM forums f
 			LEFT JOIN perm_forums     pf ON f.id    = pf.id
 			LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$user['id']}
+			".($isadmin ? "" : "WHERE f.id IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)")."
 		");
 		while ($x = $sql->fetch($perms)) {
 			$pset = filter_int($_POST["fperm{$x['id']}r"]) | filter_int($_POST["fperm{$x['id']}p"]) | filter_int($_POST["fperm{$x['id']}e"]) | filter_int($_POST["fperm{$x['id']}d"]) | filter_int($_POST["fperm{$x['id']}t"]) | filter_int($_POST["fperm{$x['id']}m"]);
@@ -315,9 +327,9 @@ else {
 		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}");
 		die;		
 	}
-	else if (PE_EDITUSER && isset($_POST['resetf']) && has_perm('sysadmin-actions')) {
+	else if (PE_EDITUSER && isset($_POST['resetf'])) {
 		check_token($_POST['auth']);
-		$sql->query("DELETE from perm_forumusers WHERE user = {$_GET['id']}");
+		$sql->query("DELETE from perm_forumusers WHERE user = {$_GET['id']}".(has_perm('sysadmin-actions') ? "" : " AND forum IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)"));
 		header("Location: ?mode={$_GET['mode']}&id={$_GET['id']}");
 		die;
 	}
@@ -354,7 +366,13 @@ else {
 				$editingLabel = "a new group";
 			}
 		} else {
-			$ptflags = (has_perm('sysadmin-actions') ? 0 : PT_CHECKPERM);
+			if (!has_perm('admin-actions')) {
+				$ptflags = PT_READONLY;
+			} else if (!has_perm('sysadmin-actions')) {
+				$ptflags = PT_CHECKPERM;
+			} else {
+				$ptflags = 0;
+			}
 			// Editing user permissions?
 			// (the perm_users entry is optional)
 			$group = $sql->fetchq("
@@ -392,14 +410,16 @@ else {
 				LEFT JOIN categories      c  ON f.catid = c.id
 				LEFT JOIN perm_forums     pf ON f.id    = pf.id
 				LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$group['id']}
-				
+				".($isadmin ? "" : "WHERE f.id IN (SELECT f.id FROM forums f WHERE f.user = {$loguser['id']} AND f.custom = 1)")."
 				ORDER BY c.corder, f.catid, f.forder, f.id
 			");
 		}
 		
-		$txt = 
-		"<form method='POST' action='?id={$_GET['id']}&mode={$_GET['mode']}&copy={$_GET['copy']}'>
-<table class='w' style='padding: 0px; border-spacing: 0px'>
+		$txt = 	"<form method='POST' action='?id={$_GET['id']}&mode={$_GET['mode']}&copy={$_GET['copy']}'>".
+				"<input type='hidden' name=auth value='".generate_token()."'>";
+		if ($isadmin) {
+		$txt .= 
+"<table class='w' style='padding: 0px; border-spacing: 0px'>
 <tr>
 	<td class='w' style='vertical-align: top'>
 		<table class='table w'>
@@ -444,18 +464,16 @@ else {
 				<td class='tdbg2 center' colspan=8>
 					<input type='submit' class='submit' name='edit' value='Set permissions'>
 					".(PE_EDITUSER && has_perm('sysadmin-actions') ? "<input type='submit' class='submit' name='reset' value='Reset permissions'>" : "")."
-					<input type='hidden' name=auth value='".generate_token()."'>
 				</td>
 			</tr>
 		</table>
 	</td>";
+		}
 		if (PE_EDITUSER) {
-			$txt .= "
-	<td style='vertical-align: top'>
-		<table class='table'>
+			$txt .= ($isadmin ? "<td style='vertical-align: top'><table class='table'>" : "<center><table class='table' style='width: auto !important'><tr><td class='tdbgc center nobr' colspan=7><b>Editing $editingLabel's custom forum permissions</b></td></tr>")."
 			<tr><td class='tdbgh center nobr' colspan=7><b>User permissions [Read/Post/Edit/Delete/Thread/Mod]</b></td></tr>
 			<tr>
-				<td class='tdbgh center w'>&nbsp;</td>
+				<td class='tdbgh center ".($isadmin ? "w" : "")."'>&nbsp;</td>
 				<td class='tdbgh center'><b>R</b></td>
 				<td class='tdbgh center'><b>P</b></td>
 				<td class='tdbgh center'><b>E</b></td>
@@ -489,13 +507,14 @@ else {
 					<input type='submit' class='submit' name='editf' value='Set permissions'>
 					<input type='submit' class='submit' name='resetf' value='Reset permissions'>
 				</td>
-			</tr>
-		</table>
-	</td>";
+			";
+			if ($isadmin) $txt .= "</tr></table></td>";
 		}
+		
 		$txt .= "
 </tr>
 </table>
+</center>
 </form>";
 
 	}
@@ -505,64 +524,14 @@ else {
 pageheader($windowtitle);
 
 print adminlinkbar('admin-editperms.php');
-//print linkbar($_GET['mode']);
 print $txt;
 
 pagefooter();
-
-// I thought I was going to use one here. I guess not.
-// Commented for possible future use.
-/*
-function linkbar($sel){
-	$sets = array(
-		0 => 'Edit groups',
-		1 => 'Edit users',
-	);
-	$width = 100 / count($sets);
-	$output = 
-	"<table class='table w'>
-		<tr>
-			<td class='tdbgh center' colspan=2>
-				<b>Permissions to edit</b>
-			</td>
-		</tr>
-		<tr>";
-	foreach ($sets as $i => $label) {
-		if ($i == $sel) {
-			$cell 	= 'c';
-			//$w		= 'z';
-		} else {
-			$cell 	= '1';
-			//$w		= 'a';
-		}
-		$output .=
-		"<td class='tdbg{$cell} center' style='width: {$width}%'>
-			<a href='?mode={$i}'>{$label}</a>
-		</td>";
-	}
-	return "$output</tr></table>";
-}
-*/
-/*
-	permName -> has_perm constant name
-	varName  -> row of fetched element (containing keys 'set1', 'set2', ...)
-*/
-/*
-function permformat($permName, $varName = 'group', $readOnly = false) {
-	global $$varname;
-	$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($permName))); // [[<set id>, <bit number>]
-	return 
-	"<select name='{$permname}' ".($readOnly ? "disabled readonly" : "").">".
-		"<option value=0 ".($permArray[1] & $$varName['set'.$permArray[0]] ? "" : "selected").">Disabled</option>".
-		"<option value=1 ".($permArray[1] & $$varName['set'.$permArray[0]] ? "selected" : "").">Enabled</option>".
-	"</select>";
-}*/
 
 function permtable($flags = 0) {
 	global $group; // permformat import
 	
 	// In case we need a permission display for non-sysadmins
-	//$readOnly = $flags & PT_READONLY;
 	$readOnly  = ($flags & PT_READONLY) ? "disabled readonly" : "";
 	$checkPerm = (!$readOnly && ($flags & PT_CHECKPERM));
 	
@@ -579,7 +548,6 @@ function permtable($flags = 0) {
 			}
 		}
 		if ($desc !== NULL) {
-			//$txt .= "<td class='tdbg1'>{$name}</td><td class='tdbg2'>".permformat($desc, 'group', $readOnly)."</td>";
 			$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($name)));
 			
 			if ($checkPerm) {

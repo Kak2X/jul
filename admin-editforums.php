@@ -24,7 +24,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	else
 		$_POST['specialscheme'] = filter_int($_POST['specialscheme']);
 	
-	$qadd = $sql->setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle");
+	$qadd = $sql->setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle","custom","user");
 	
 	$values = array(
 		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
@@ -36,7 +36,9 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'specialscheme' 	=> $_POST['specialscheme'],
 		'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 		'hidden' 			=> filter_int($_POST['hideforum']),
-		'pollstyle' 		=> filter_int($_POST['pollstyle'])
+		'pollstyle' 		=> filter_int($_POST['pollstyle']),
+		'custom'			=> filter_int($_POST['custom']),
+		'user'				=> filter_int($_POST['user'])
 	);
 	
 	// Permsets
@@ -54,7 +56,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 			$sql->query("UPDATE perm_forums SET group$i = $val WHERE id = $id", false, $querycheck);
 		}
 		if ($sql->checkTransaction($querycheck)) {
-			trigger_error("Created new forum \"".$values['forumtitle']."\" with ID $id", E_USER_NOTICE);
+			trigger_error("Created new forum \"".$values['title']."\" with ID $id", E_USER_NOTICE);
 		} else {
 			errorpage("Could not add the forum.");
 		}
@@ -221,12 +223,33 @@ else if ($_GET['id']) {
 	$categories = $sql->getresultsbykey("SELECT id, name FROM categories ORDER BY id");
 	$forum      = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
 	$groups     = $sql->getresultsbykey("SELECT id, name FROM perm_groups ORDER BY ord ASC, id ASC");
+	$users[0] 	= "None";
+	$users      += $sql->getresultsbykey("SELECT id, name FROM users WHERE `group` NOT IN (".GROUP_BANNED.",".GROUP_PERMABANNED.")");
+	
 	if (!$forum) {
 		$_GET['id'] = -1;
 		// Initialize group permissions to 0
 		foreach ($groups as $id => $title) {
 			$perms['group'.$id] = 0;
 		}
+		$forum = array(
+			'title' 		=> '',
+			'description' 	=> '',
+			'hidden' 		=> 0,
+			'specialtitle' 	=> '',
+			'specialcss' 	=> '',
+			'pollstyle' 	=> -1,
+			'custom'		=> 0,
+			'user'			=> 0,
+			'catid'			=> 0,
+			'numthreads'	=> 0,
+			'numposts'		=> 0,
+			'forder'		=> 1,
+			'specialscheme' => NULL,
+		);
+		// Load sample permissions from first defined forum
+		$perms = $sql->fetchq("SELECT * FROM `perm_forums` ORDER BY id ASC LIMIT 1");
+		unset($perms['id']);
 	} else {
 		if (!isset($categories[$forum['catid']]))
 			$categories[$forum['catid']] = "Unknown category #" . $forum['catid'];
@@ -253,11 +276,21 @@ else if ($_GET['id']) {
 
 		<tr>
 			<td class='tdbgh center' rowspan=4>Description</td>
-			<td class='tdbg1' rowspan=4 colspan=5><textarea wrap=virtual name=description ROWS=4 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
+			<td class='tdbg1' rowspan=4 colspan=3><textarea wrap=virtual name=description ROWS=4 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
+			<td class='tdbgh center' colspan=2>Custom forum options</td>
 		</tr>
-		<tr></tr>
-		<tr></tr>
-		<tr></tr>
+		<tr>
+			<td class='tdbgh center'>&nbsp;</td>
+			<td class='tdbg1'><input type="checkbox" id="custom" name="custom" value="1"<?=($forum['custom'] ? " checked" : "")?>> <label for="custom">Custom forum</label></td>
+		</tr>
+		<tr>
+			<td class='tdbgh center'>Forum owner</td>
+			<td class='tdbg1'><?=dropdownList($users, $forum['user'], "user")?></td>
+		</tr>
+		<tr>
+			<td class='tdbgc center'>&nbsp;</td>
+			<td class='tdbgc'>&nbsp;</td>
+		</tr>
 
 		<tr>
 			<td class='tdbgh center'  width='10%'>Number of Threads</td>
@@ -416,7 +449,7 @@ else if ($_GET['catid']) {
 <?php
 }
 
-$forumlist="
+$forumlist = "
 	<tr>
 		<td class='tdbgh center' width=90px>Actions</td>
 		<td class='tdbgh center'>Forum</td>
@@ -436,7 +469,7 @@ if (isset($preview)) {
 		LEFT JOIN categories      c  ON f.catid        = c.id
 		LEFT JOIN perm_forums     pf ON f.id           = pf.id
 		
-		WHERE !f.hidden OR ".has_perm('display-hidden-forums')."
+		WHERE !f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
 		ORDER BY c.corder, f.catid, f.forder, f.id
 	");
 	
@@ -446,6 +479,7 @@ if (isset($preview)) {
 		FROM forums f
 		LEFT JOIN users           u  ON f.lastpostuser = u.id
 		LEFT JOIN categories      c  ON f.catid        = c.id
+		WHERE !f.custom
 		ORDER BY c.corder, f.catid, f.forder, f.id
 	");
 }
@@ -460,7 +494,7 @@ $modquery = $sql->query("
 	FROM forums f
 	INNER JOIN perm_forumusers pu ON f.id    = pu.forum
 	INNER JOIN users           u  ON pu.user = u.id
-	WHERE (pu.permset & ".PERM_FORUM_MOD.")
+	WHERE !f.custom AND (pu.permset & ".PERM_FORUM_MOD.")
 	ORDER BY u.name
 ");
 
@@ -468,9 +502,8 @@ $categories	= $sql->fetchAll($catquery);
 $forums 	= $sql->fetchAll($forumquery);
 $mods 		= $sql->fetchAll($modquery);
 
-$forumlist .= "<tr><td class='tdbgc center' colspan=5>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>";
-$prevcat = NULL;
-
+$forumlist  .= "<tr><td class='tdbgc center' colspan=5>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>";
+$prevcat 	= NULL;
 
 
 foreach ($categories as $category) {
@@ -509,12 +542,6 @@ foreach ($categories as $category) {
 			$forumlastpost = getblankdate();
 			$by = '';
 		}
-		/*
-		if($forum['lastpostdate']>$category['lastpostdate']){
-			$category['lastpostdate']=$forum['lastpostdate'];
-			$category['l']=$forumlastpost.$by;
-		}
-		*/
 		
 		$hidden = $forum['hidden'] ? " <small><i>(hidden)</i></small>" : "";
 
@@ -547,10 +574,8 @@ foreach ($categories as $category) {
 	}
 	$forumlist .= $forumin;
 }
-	
 
-
-// Leftover forums
+// Leftover invalid forums
 if (!isset($preview) && count($forums)) {
 	$forumlist .= "<tr><td class='tdbgc center' colspan=5><b><i>These forums are not associated with a valid category ID</i></b></td></tr>";
 
@@ -577,12 +602,6 @@ if (!isset($preview) && count($forums)) {
 			$forumlastpost = getblankdate();
 			$by = '';
 		}
-		/*
-		if($forum['lastpostdate']>$category['lastpostdate']){
-			$category['lastpostdate']=$forum['lastpostdate'];
-			$category['l']=$forumlastpost.$by;
-		}
-		*/
 
 		$hidden = $forum['hidden'] ? " <small><i>(hidden)</i></small>" : "";
 
@@ -609,8 +628,11 @@ if (!isset($preview) && count($forums)) {
 	}
 }
 
-print "<center><b>Preview forums with group:</b> ".previewbox()."</center>\n";
-print "<table class='table'>$forumlist</table>";
+?>
+<center><b>Preview forums with group:</b> <?=previewbox()?></center>
+<table class='table'><?=$forumlist?></table>
+</table>
+<?php
 pagefooter();
 
 function dropdownList($links, $sel, $n) {

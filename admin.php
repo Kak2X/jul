@@ -32,28 +32,31 @@
 		// The rest
 		$sql->queryp("UPDATE misc SET ".$sql->setplaceholders(
 			"views","hotcount","maxpostsday","maxpostshour","maxpostsdaydate","maxpostshourdate","maxusers","maxusersdate",
-			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode","announcementforum","trashforum"),
+			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode",
+			"announcementforum","trashforum","maxcustomforums","daysforcustomforum","postsforcustomforum"),
 			[
-				'views'				=> filter_int($_POST['views']),
-				'hotcount'			=> filter_int($_POST['hotcount']),
-				'maxpostsday' 		=> filter_int($_POST['maxpostsday']),
-				'maxpostshour' 		=> filter_int($_POST['maxpostshour']),
-				'maxpostsdaydate' 	=> fieldstotimestamp('maxpostsday_','_POST'),
-				'maxpostshourdate' 	=> fieldstotimestamp('maxpostshour_','_POST'),
-				'maxusers' 			=> $maxusers,
-				'maxusersdate' 		=> $maxusersdate,
-				'maxuserstext' 		=> $maxuserstext,
-				//'maxuserstext' 	=> filter_string($_POST['maxuserstext']),
-				'disable' 			=> ($sysadmin ? filter_int($_POST['disable']) : $misc['disable']),
-				'donations' 		=> filter_float($_POST['donations']),
-				'ads' 				=> filter_float($_POST['ads']),
-				'valkyrie' 			=> filter_float($_POST['valkyrie']),
-				'scheme' 			=> $scheme,
-				'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
-				'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
-				'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
-				'announcementforum' => filter_int($_POST['announcementforum']),
-				'trashforum' 		=> filter_int($_POST['trashforum']),
+				'views'					=> filter_int($_POST['views']),
+				'hotcount'				=> filter_int($_POST['hotcount']),
+				'maxpostsday' 			=> filter_int($_POST['maxpostsday']),
+				'maxpostshour' 			=> filter_int($_POST['maxpostshour']),
+				'maxpostsdaydate' 		=> fieldstotimestamp('maxpostsday_','_POST'),
+				'maxpostshourdate' 		=> fieldstotimestamp('maxpostshour_','_POST'),
+				'maxusers' 				=> $maxusers,
+				'maxusersdate' 			=> $maxusersdate,
+				'maxuserstext' 			=> $maxuserstext,
+				'disable' 				=> ($sysadmin ? filter_int($_POST['disable']) : $misc['disable']),
+				'donations' 			=> filter_float($_POST['donations']),
+				'ads' 					=> filter_float($_POST['ads']),
+				'valkyrie' 				=> filter_float($_POST['valkyrie']),
+				'scheme' 				=> $scheme,
+				'specialtitle' 			=> xssfilters(filter_string($_POST['specialtitle'], true)),
+				'regmode' 				=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
+				'regcode' 				=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
+				'announcementforum' 	=> filter_int($_POST['announcementforum']),
+				'trashforum' 			=> filter_int($_POST['trashforum']),
+				'maxcustomforums'		=> filter_int($_POST['maxcustomforums']),
+				'daysforcustomforum'	=> filter_int($_POST['daysforcustomforum']),
+				'postsforcustomforum'	=> filter_int($_POST['postsforcustomforum']),
 			]);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
@@ -111,6 +114,17 @@
 		</tr>
 		<tr><td class='tdbg1 center' width='200'><b>Trash forum</b></td>
 			<td class='tdbg2'><?=doforumList($misc['trashforum'], 'trashforum', 'None')?></td>
+		</tr>
+		<tr><td class='tdbgc center' colspan=2>Custom forums [<?=($config['allow-custom-forums'] ? "" : "Disabled")?>]</td></tr>		
+		<tr><td class='tdbg1 center' width='200'><b>Account age requirement</b></td>
+			<td class='tdbg2'><input type='text' name='daysforcustomforum' value='<?=$misc['daysforcustomforum']?>' class='right' size=2 maxlength=5> days</td>
+		</tr>
+		</tr>
+		<tr><td class='tdbg1 center' width='200'><b>Postcount requirement</b></td>
+			<td class='tdbg2'><input type='text' name='postsforcustomforum' value='<?=$misc['postsforcustomforum']?>' class='right' size=3 maxlength=5> posts</td>
+		</tr>
+		<tr><td class='tdbg1 center' width='200'><b>Max forums per user</b></td>
+			<td class='tdbg2'><input type='text' name='maxcustomforums' value='<?=$misc['maxcustomforums']?>' class='right' size=2 maxlength=3></td>
 		</tr>
 		
 		

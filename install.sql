@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 03, 2017 at 11:20 PM
+-- Generation Time: Mar 12, 2017 at 01:09 AM
 -- Server version: 10.1.9-MariaDB
 -- PHP Version: 5.6.15
 
@@ -560,8 +560,8 @@ CREATE TABLE `filters` (
 --
 
 INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `replacement`, `comment`) VALUES
-(3, 3, 2, 1, 0, '''position\\s*:\\s*fixed''si', 'display:none', ''),
-(4, 3, 2, 0, 0, '''position\\s*:\\s*(absolute|fixed)''si', 'display:none', 'Absolute allowed now alongside position:relative div'),
+(3, 3, 2, 1, 0, 'position\\s*:\\s*fixed', 'display:none', ''),
+(4, 3, 2, 0, 0, 'position\\s*:\\s*(absolute|fixed)', 'display:none', 'Absolute allowed now alongside position:relative div'),
 (5, 6, 1, 1, 0, ':facepalm:', '<img src=images/facepalm.jpg>', ''),
 (6, 6, 1, 1, 0, ':facepalm2:', '<img src=images/facepalm2.jpg>', ''),
 (7, 6, 1, 1, 0, ':epicburn:', '<img src=images/epicburn.png>', ''),
@@ -588,12 +588,12 @@ INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `re
 (28, 5, 1, 0, 0, 'touhou', 'Baby''s First Bullet Hell&trade;', NULL),
 (29, 5, 1, 0, 0, 'nintendo', 'grandma', NULL),
 (30, 5, 1, 0, 0, 'card games on motorcycles', 'bard dames on rotorcycles', NULL),
-(31, 2, 2, 0, 0, '''^.*(http://hyperhacker.no-ip.org/b/smilies/lolface.png).*$''im', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
-(32, 2, 2, 0, 0, '''.*?images/smilies/roflx.gif.*?''si', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', NULL),
+(31, 2, 2, 0, 0, '^.*(http://hyperhacker.no-ip.org/b/smilies/lolface.png).*$', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
+(32, 2, 2, 0, 0, '.*?images/smilies/roflx.gif.*?', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
 (33, 2, 0, 1, 0, 'ftp://teconmoon.no-ip.org', 'about:blank', NULL),
 (34, 2, 0, 1, 0, 'http://insectduel.proboards82.com', 'idiotredir.php?', NULL),
 (35, 2, 0, 1, 0, 'http://imageshack.us', 'imageshit', NULL),
-(36, 2, 2, 1, 0, '''http://.{0,3}.?tinypic.com''si', 'tinyshit', NULL),
+(36, 2, 2, 1, 0, 'http://.{0,3}.?tinypic.com', 'tinyshit', ''),
 (37, 2, 0, 1, 0, '<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">', '<!-- -->', NULL),
 (38, 3, 0, 1, 0, 'tabindex="0" ', 'title="the owner of this button is a fucking dumbass" >', NULL),
 (39, 1, 0, 0, 0, '%WIKISTATSFRAME%', '<div id="widgetIframe"><iframe width="600" height="260" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=ifr', NULL),
@@ -601,7 +601,7 @@ INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `re
 (41, 2, 0, 0, 0, 'http://xkeeper.shacknet.nu:5/', 'http://xchan.shacknet.nu:5/', NULL),
 (42, 3, 1, 0, 0, '<style', '&lt;style', NULL),
 (43, 5, 0, 1, 0, '-.-', 'MORONS EVERYWHERE BAN BAN BAN!!!', ''),
-(45, 3, 2, 1, 0, ''' src=("|\\'')[a-z]:(.*?)("|\\'')''si', ' src="images/linkingfail.gif"', ''),
+(45, 3, 2, 1, 0, ' src=("|\\'')[a-z]:(.*?)("|\\'')', ' src="images/linkingfail.gif"', ''),
 (46, 3, 1, 0, 0, '%BZZZ%', 'onclick="bzzz(', NULL),
 (47, 6, 1, 0, 0, ':awesome:', '<small>[unfunny]</small>', ''),
 (48, 3, 2, 0, 0, 'autoplay', 'ap', 'kills autoplay, need to think of a solution for embeds.');
@@ -638,7 +638,9 @@ CREATE TABLE `forums` (
   `specialscheme` smallint(5) DEFAULT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   `specialtitle` tinytext,
-  `pollstyle` tinyint(2) NOT NULL DEFAULT '0'
+  `pollstyle` tinyint(2) NOT NULL DEFAULT '0',
+  `custom` tinyint(1) NOT NULL DEFAULT '0',
+  `user` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -675,7 +677,7 @@ CREATE TABLE `guests` (
 CREATE TABLE `hits` (
   `num` int(11) NOT NULL DEFAULT '0',
   `user` mediumint(8) NOT NULL DEFAULT '0',
-  `ip` varchar(15) NOT NULL DEFAULT '',
+  `ip` varchar(32) NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -686,7 +688,7 @@ CREATE TABLE `hits` (
 --
 
 CREATE TABLE `ipbans` (
-  `ip` varchar(15) NOT NULL DEFAULT '',
+  `ip` varchar(32) NOT NULL DEFAULT '',
   `reason` varchar(100) NOT NULL DEFAULT '',
   `perm` tinyint(2) UNSIGNED NOT NULL DEFAULT '0',
   `date` int(10) UNSIGNED NOT NULL DEFAULT '0',
@@ -861,7 +863,7 @@ INSERT INTO `misc` (`announcementforum`, `trashforum`) VALUES
 CREATE TABLE `pendingusers` (
   `name` varchar(32) NOT NULL,
   `password` text,
-  `ip` varchar(15) NOT NULL,
+  `ip` varchar(32) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -958,7 +960,7 @@ CREATE TABLE `pmsgs` (
   `userto` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `userfrom` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `date` int(10) UNSIGNED NOT NULL DEFAULT '0',
-  `ip` char(15) NOT NULL DEFAULT '',
+  `ip` varchar(32) NOT NULL DEFAULT '',
   `moodid` tinyint(4) NOT NULL DEFAULT '0',
   `msgread` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `headid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
@@ -1056,7 +1058,7 @@ CREATE TABLE `posts` (
   `thread` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `date` int(10) UNSIGNED NOT NULL DEFAULT '0',
-  `ip` char(15) NOT NULL DEFAULT '0.0.0.0',
+  `ip` varchar(32) NOT NULL DEFAULT '0.0.0.0',
   `num` mediumint(8) NOT NULL DEFAULT '0',
   `noob` tinyint(4) NOT NULL DEFAULT '0',
   `moodid` tinyint(4) NOT NULL DEFAULT '0',
@@ -1250,7 +1252,7 @@ CREATE TABLE `referer` (
   `time` int(11) NOT NULL,
   `url` varchar(255) NOT NULL,
   `ref` varchar(255) NOT NULL,
-  `ip` varchar(15) NOT NULL
+  `ip` varchar(32) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -1439,7 +1441,7 @@ INSERT INTO `tlayouts` (`id`, `ord`, `name`, `file`) VALUES
 --
 
 CREATE TABLE `tor` (
-  `ip` varchar(15) NOT NULL,
+  `ip` varchar(32) NOT NULL,
   `allowed` tinyint(4) NOT NULL DEFAULT '0',
   `hits` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -1693,7 +1695,9 @@ ALTER TABLE `forumread`
 --
 ALTER TABLE `forums`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `catid` (`catid`);
+  ADD KEY `catid` (`catid`),
+  ADD KEY `custom` (`custom`),
+  ADD KEY `user` (`user`);
 
 --
 -- Indexes for table `guests`

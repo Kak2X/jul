@@ -1,5 +1,11 @@
 <?php
 
+// NoJS user switch
+if (isset($_GET['go'])) {
+	if (!isset($_GET['usel'])) $_GET['usel'] = 0;
+	return header("Location: avatar.php?id={$_GET['usel']}");
+}
+
 require 'lib/function.php';
 
 pageheader("Mood Avatar Preview", NULL, NULL, true); // Small header
@@ -19,7 +25,7 @@ while ($u = $sql->fetch($users)) {
   }
   //if (strpos($u['moodurl'], '$') === FALSE)
   //  $fails = " (improper URL)";
-  $options .= "\r\n  <option value='avatar.php?id=$u[id]'$selected>$u[id]: $u[name]$fails</option>";
+  $options .= "\r\n  <option value='{$u['id']}'$selected>{$u['id']}: {$u['name']}$fails</option>";
 }
 
 if ($me) {
@@ -35,6 +41,7 @@ if ($me) {
 			}
 		}
 	</script>
+	<noscript><style type="text/css">.hideme{display: none}</noscript></style>
 	<?php
 
 	$ret = "<tr><td class='tdbgh center' colspan=2>{$me['name']}: <i>".htmlspecialchars($me['moodurl'])."</i></td></tr>";
@@ -43,11 +50,15 @@ if ($me) {
 	foreach($a as $num => $name) {
 		$jsclick = "onclick='avatarpreview({$me['id']},$num)'";
 		$selected = (($num == 1) ? ' checked' : '');
-		$ret .= "<input type='radio' name='moodid' value='$num' id='mood$num' tabindex='". (9000 + $num) ."' style=\"height: 12px;\" $jsclick $selected>
-             <label for='mood$num' style=\"font-size: 12px;\">&nbsp;$num:&nbsp;$name</label><br>\r\n";
+		$ret .= "<span class='hideme'><input type='radio' name='moodid' value='$num' id='mood$num' tabindex='". (9000 + $num) ."' style=\"height: 12px;\" $jsclick $selected>
+             <label for='mood$num' style=\"font-size: 12px;\">&nbsp;$num:&nbsp;$name</label></span>
+			 <noscript>&nbsp;$num:&nbsp;<a href='?id={$_GET['id']}&amp;n=$num'>$name</a></noscript><br>\r\n";
 	}
-
-	$startimg = htmlspecialchars(str_replace('$', '1', $me['moodurl']));
+	$startnum = filter_int($_GET['n']);
+	if (!$startnum) {
+		$startnum = '1';
+	}
+	$startimg = htmlspecialchars(str_replace('$', $startnum, $me['moodurl']));
 
   $ret .= "</td><td class='tdbg2 center' width=400px><img src=\"$startimg\" id=prev></td></tr>";
 
@@ -69,10 +80,11 @@ else {
 						<b>Preview mood avatar for user...</b>
 						<br>
 						<form>
-							<select onChange="parent.location=this.options[this.selectedIndex].value" style="width:500px;">
-								<option value=avatar.php>&lt;Select a user&gt;</option>
+							<select name="usel" onChange="parent.location='avatar.php?id='+this.options[this.selectedIndex].value" style="width:500px;">
+								<option value=0>&lt;Select a user&gt;</option>
 								<?=$options?>
 							</select>
+							<noscript><input type="submit" name="go" value="Go"></noscript>
 						</form>
 					</td>
 				</tr>

@@ -55,17 +55,6 @@ function coins($p,$d){
 	return floor(pow($p,1.3) * pow($d,0.4) + $p*10);
 }
 
-/*
-	case 0: return (pow($p,0.21) * pow($d,0.15) * pow($l,1.11) * 1.00) + 20; //HP
-	case 1: return (pow($p,0.10) * pow($d,0.26) * pow($l,1.11) * 0.32) + 10; //MP
-	case 2: return (pow($p,0.16) * pow($d,0.09) * pow($l,1.09) * 0.29) +  2; //Str
-	case 3: return (pow($p,0.15) * pow($d,0.11) * pow($l,1.09) * 0.28) +  2; //Atk
-	case 4: return (pow($p,0.10) * pow($d,0.17) * pow($l,1.09) * 0.29) +  2; //Def
-	case 5: return (pow($p,0.09) * pow($d,0.18) * pow($l,1.09) * 0.29) +  1; //Shl
-	case 6: return (pow($p,0.13) * pow($d,0.13) * pow($l,1.09) * 0.29) +  2; //Lck
-	case 7: return (pow($p,0.07) * pow($d,0.20) * pow($l,1.09) * 0.29) +  1; //Int
-	case 8: return (pow($p,0.19) * pow($d,0.07) * pow($l,1.09) * 0.25) +  1; //Spd
-*/
 function calcexpgainpost($posts,$days)	{return @floor(1.5*@pow($posts*$days,0.5));}
 function calcexpgaintime($posts,$days)	{return sprintf('%01.3f',172800*@(@pow(@($days/$posts),0.5)/$posts));}
 
@@ -98,10 +87,7 @@ function getuseritems($user, $name = false, $extra = 0){
 	foreach($num as $i){
 		$q .= "r.eq$i = i.id OR ";
 	}	
-	//for ($i = 1, $q = ''; $i < 8; ++$i) {
-	//	$q .= "r.eq$i = i.id OR ";
-	//}
-	
+
 	// For our convenience we group this
 	$itemdb = $sql->fetchq("
 		SELECT i.cat, i.sHP, i.sMP, i.sAtk, i.sDef, i.sInt, i.sMDf, i.sDex, i.sLck, i.sSpd, i.effect".($name ? ", i.id, i.name" : "")."

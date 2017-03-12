@@ -48,10 +48,19 @@
 		}
 
 		// Reset the date settings in case they match with the default
-		$eddateformat 	= filter_string($_POST['dateformat'], true);
-		$eddateshort 	= filter_string($_POST['dateshort'], true);
-		if ($eddateformat == $config['default-dateformat']) $eddateformat = '';
-		if ($eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
+		if ($_POST['presetdate']) {
+			$eddateformat 	= filter_string($_POST['presetdate'], true);
+		} else {
+			$eddateformat 	= filter_string($_POST['dateformat'], true);
+		}
+		if ($_POST['presetshort']) {
+			$eddateshort 	= filter_string($_POST['presetshort'], true);
+		} else {
+			$eddateshort 	= filter_string($_POST['dateshort'], true);
+		}
+		
+		if (!$eddateformat || $eddateformat == $config['default-dateformat']) $eddateformat = '';
+		if (!$eddateshort  || $eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
 		
 		
 		// \n -> <br> conversion
@@ -294,7 +303,7 @@
 		
 		if ($titleopt) {
 			table_format("Appareance", array(
-				"Custom title" => [0, "title", "This title will be shown below your rank.", 60, 255],
+				"Custom title" => [0, "title", "This title will be shown below your rank.", 65, 255],
 			));
 		}
 		if (has_perm('change-namecolor')) {
@@ -304,9 +313,9 @@
 		}
 		table_format("Appareance", array(
 			"User rank"		=> [4, "useranks", "You can hide your rank, or choose from different sets."],
-			"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 60, 100],
-			"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
-			"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 60, 100],
+			"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 65, 100],
+			"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 65, 100],
+			"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 65, 100],
 			"Post header" 	=> [1, "postheader", "This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a &lt;font&gt; tag). This should preferably be kept small, and not contain too much text or images."],
 			"Signature" 	=> [1, "signature", "This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size."],
 		));		
@@ -321,18 +330,18 @@
 		));
 
 		table_format("Online services", array(
-			"Email address" 	=> [0, "email", "This is only shown in your profile; you don't have to enter it if you don't want to.", 60, 60],
+			"Email address" 	=> [0, "email", "This is only shown in your profile; you don't have to enter it if you don't want to.", 65, 60],
 			"Email privacy" 	=> [2, "privateemail", "You can select a few privacy options for the email field.", "Public|Hide to guests|Staff only"],
 			"AIM screen name" 	=> [0, "aim", "Your AIM screen name, if you have one.", 30, 30],
 			"ICQ number" 		=> [0, "icq", "Your ICQ number, if you have one.", 10, 10],
-			"imood" 			=> [0, "imood", "If you have a imood account, you can enter the account name (email) for it here.", 60, 100],
-			"Homepage URL" 		=> [0, "homepageurl", "Your homepage URL (must start with the \"http://\") if you have one.", 60, 80],
-			"Homepage Name" 	=> [0, "homepagename", "Your homepage name, if you have a homepage.", 60, 100],
+			"imood" 			=> [0, "imood", "If you have a imood account, you can enter the account name (email) for it here.", 65, 100],
+			"Homepage URL" 		=> [0, "homepageurl", "Your homepage URL (must start with the \"http://\") if you have one.", 65, 80],
+			"Homepage Name" 	=> [0, "homepagename", "Your homepage name, if you have a homepage.", 65, 100],
 		));
 		
 		table_format("Options", array(
-			"Custom date format" 			=> [0, "dateformat", "Edit the date format here to affect how dates are displayed. Leave it blank to return to the default format ({$config['default-dateformat']})<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information.", 16, 32],
-			"Custom short date format" 		=> [0, "dateshort", "A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>{$config['default-dateshort']}</b>).", 8, 16],
+			"Custom date format" 			=> [4, "dateformat", "Edit the date format here to affect how dates are displayed. Leave it blank to return to the default format ({$config['default-dateformat']})<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information."],
+			"Custom short date format" 		=> [4, "dateshort", "A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>{$config['default-dateshort']}</b>)."],
 			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
@@ -358,8 +367,8 @@
 		$name = $userdata['name'];
 		
 		// Password field + confirmation (unless you're editing another user)
-		$password = "<input type='password' name='pass1'>";
-		if (!$edituser)	$password .= " Retype: <input type='password' name='pass2'>";
+		$password = "<input type='password' size=24 name='pass1'>";
+		if (!$edituser)	$password .= " Retype: <input type='password' size=24 name='pass2'>";
 	
 	
 		$birthday = datetofields($userdata['birthday'], 'birth');
@@ -382,6 +391,31 @@
 		<input type=radio class='radio' name=colorspec value='rnbow' ".filter_string($sel_color[3]).">Rainbow";
 	
 		$namecolor = "<input type='text' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=6 MAXLENGTH=6> $colorspec";
+		
+		if (!$userdata['dateformat']) {
+			$userdata['dateformat'] = $config['default-dateformat'];
+		}
+		$dateformat = 	"<span class='nobr'><input type='text' name='dateformat' size=16 maxlength=32 value='{$userdata['dateformat']}'> or preset: ".
+						"<select name='presetdate'><option value=''></option>\n\r";
+		$dateformatlist = array("m-d-y h:i:s A", "m/d/y H:i:s", "d-m-y H:i", "d-m-y h:i:s", "d/m/Y H:i:s",  "Y-m-d H:i:s", "M j Y H:i", "D jS M Y");
+		foreach ($dateformatlist as $fmt) {
+			$dateformat .= "<option value='$fmt'>$fmt (".date($fmt, ctime()).")</option>";
+		}
+		$dateformat .= "</select></span>";
+		
+		if (!$userdata['dateshort']) {
+			$userdata['dateshort'] = $config['default-dateshort'];
+		}		
+		$dateshort = 	"<span class='nobr'><input type='text' name='dateshort' size=16 maxlength=32 value='{$userdata['dateshort']}'> or preset: ".
+						"<select name='presetshort'><option value=''></option>\n\r";
+		$dateshortlist = array("m-d-y", "m/d/y", "m-d-Y", "d-m-y", "d-m-Y", "d/m/Y", "Y-m-d", "M j Y", "D jS M Y");
+		foreach ($dateshortlist as $fmt) {
+			$dateshort .= "<option value='$fmt'>$fmt (".date($fmt, ctime()).")</option>";
+		}
+		$dateshort .= "</select></span>";
+		
+		
+
 		
 		if ($edituser) {
 			// Group selection
@@ -459,12 +493,12 @@
 			foreach($field as $j => $data){
 				$desc = $edituser ? "" : "<br><small>$data[2]</small>";
 				if (!$data[0]) { // text box
-					if (!isset($data[3])) $data[3] = 60;
+					if (!isset($data[3])) $data[3] = 65;
 					if (!isset($data[4])) $data[4] = 100;
 					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".htmlspecialchars($userdata[$data[1]])."\">";
 				}
 				else if ($data[0] == 1) // large
-					$input = "<textarea name='$data[1]' rows=8 cols=60 style='resize:vertical;' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+					$input = "<textarea name='$data[1]' rows=8 cols=65 style='resize:vertical;' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
 				else if ($data[0] == 2){ // radio
 					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]
 					$choices = explode("|", $data[3]);

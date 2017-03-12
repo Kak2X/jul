@@ -32,41 +32,41 @@
 
 	require 'lib/function.php';
 
-	/* 
-	$sql->query("UPDATE `users` SET `name` = 'Xkeeper' WHERE `id` = 1"); # I'm hiding it here too as a 'last resort'. Remove this and I'll make that Z-line a month instead.
-	// You know me, I find it more fun to hide code to replace your name everywhere instead of altering the DB <3
-//	$sql->query("UPDATE `users` SET `sex` = '1' WHERE `id` = 2100");  // Me too <3 ~Ras
-*/
-
 /* heavily unfinished mobile index page
 	if ($x_hacks['smallbrowse'] == 1 and false) {
 		require 'mobile/index.php';
 		die;
 	} */
 	
-	pageheader();
-		
-	
-	if ($loguser['id'] && isset($_GET['action'])) {
+	if (isset($_GET['action'])) {
 		
 		switch ($_GET['action']) {
 			case 'markforumread':
-				$id = filter_int($_GET['forumid']);
-				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']} AND forum = $id");
-				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']} AND tid IN (SELECT `id` FROM `threads` WHERE `forum` = $id)");
-				$sql->query("INSERT INTO forumread (user, forum, readdate) VALUES ({$loguser['id']}, $id, ".ctime().')');
+				if ($loguser['id']) {
+					$id = filter_int($_GET['forumid']);
+					$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']} AND forum = $id");
+					$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']} AND tid IN (SELECT `id` FROM `threads` WHERE `forum` = $id)");
+					$sql->query("INSERT INTO forumread (user, forum, readdate) VALUES ({$loguser['id']}, $id, ".ctime().')');
+				}
 				break;
 			case 'markallforumsread':
-				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']}");
-				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']}");
-				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$loguser['id']}, id, ".ctime()." FROM forums");
+				if ($loguser['id']) {
+					$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']}");
+					$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']}");
+					$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$loguser['id']}, id, ".ctime()." FROM forums");
+				}
+				break;
+			case 'tooglepane':
+				$out = filter_int($_COOKIE['indexpane']);
+				setcookie('indexpane', 1 - $out, 2147483647);
 				break;
 		}
 		
-		header("Location: index.php");
-		die;
+		return header("Location: index.php");
 	}
-
+	
+	pageheader();
+		
 	$postread = readpostread($loguser['id']);
 	
 	/*
@@ -301,8 +301,6 @@
 	/*
 		Global announcements
 	*/
-		
-			
 	$annc = $sql->fetchq("
 		SELECT t.id aid, t.title atitle, t.description adesc, t.firstpostdate date, t.forum, $userfields, r.readdate
 		FROM threads t
@@ -351,7 +349,7 @@
 		LEFT JOIN users            u ON f.lastpostuser = u.id
 		LEFT JOIN perm_forums     pf ON f.id           = pf.id
 		LEFT JOIN perm_forumusers pu ON f.id           = pu.forum AND pu.user = {$loguser['id']}
-		WHERE (!f.hidden OR ".has_perm('display-hidden-forums').")
+		WHERE !f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
 		ORDER BY f.catid, f.forder
 	");
 	$catquery = $sql->query("
@@ -364,7 +362,7 @@
 		FROM forums f
 		INNER JOIN perm_forumusers pu ON f.id    = pu.forum
 		INNER JOIN users           u  ON pu.user = u.id
-		WHERE (pu.permset & ".PERM_FORUM_MOD.")
+		WHERE !f.custom AND (pu.permset & ".PERM_FORUM_MOD.")
 		ORDER BY u.name
 	");
 
@@ -397,6 +395,7 @@
 
 	// Category filtering
 	$cat	= filter_int($_GET['cat']);
+	$custom = isset($_GET['sc']) || filter_int($_COOKIE['indexpane']);
 	
 	foreach ($categories as $category) {
 		
@@ -494,11 +493,177 @@
 		}
 		$forumlist .= $forumin;
 	}
+	
+	
+	if ($config['allow-custom-forums'] && !$cat && $custom) {
+	/*
+		Custom forums with latest posts
+		Now featuring a DUAL PANE INDEX like it has never been tried before.
+		WOW!!!
+	*/
+		$cforumlist="
+			<tr>
+				<td class='tdbgh center'>&nbsp;</td>
+				<td class='tdbgh center'>Forum</td>
+				<td class='tdbgh center' width=15%>Owner</td>
+				<td class='tdbgh center' width=80>Threads</td>
+				<td class='tdbgh center' width=80>Posts</td>
+				<td class='tdbgh center' width=15%>Last post</td>
+			</tr>
+			<tr><td class='tdbgc center b' colspan=6>Custom forums with the latest posts:</td></tr>
+		";
+		$forumquery = $sql->query("
+			SELECT f.*, $userfields uid, ".user_fields("u1")." uid, pf.group{$loguser['group']} forumperm, pu.permset userperm
+			FROM forums f
+			LEFT JOIN users            u ON f.lastpostuser = u.id
+			LEFT JOIN users           u1 ON f.user         = u1.id
+			LEFT JOIN perm_forums     pf ON f.id           = pf.id
+			LEFT JOIN perm_forumusers pu ON f.id           = pu.forum AND pu.user = {$loguser['id']}
+			WHERE f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
+			ORDER BY f.lastpostid DESC
+			LIMIT 15
+		");
+		
+		if ($sql->num_rows($forumquery)) {
+			$forumids = $sql->fetchq("
+				SELECT f.id 
+				FROM forums f
+				WHERE f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
+				ORDER BY f.lastpostid DESC
+				LIMIT 15", PDO::FETCH_COLUMN, false, true);
+			$modquery = $sql->query("
+				SELECT $userfields, f.id forum
+				FROM forums f
+				INNER JOIN perm_forumusers pu ON f.id    = pu.forum
+				INNER JOIN users           u  ON pu.user = u.id
+				WHERE f.custom AND (pu.permset & ".PERM_FORUM_MOD.") AND f.id IN (".implode(",", $forumids).")
+				ORDER BY u.name
+			");
+			$forums		= $sql->fetchAll($forumquery, PDO::FETCH_NAMED);
+			$mods		= $sql->fetchAll($modquery);
+			
+			if ($loguser['id']) {
+				$qadd = array();
+				foreach ($forums as $forum) {
+					if (!isset($postread[$forum['id']])) continue;
+					$qadd[] = "(lastpostdate > '{$postread[$forum['id']]}' AND forum = '{$forum['id']}')\r\n";
+				}
+				
+				if ($qadd)
+					$qadd = "(".implode(' OR ', $qadd).")";
+				else
+					$qadd = "1";
+
+				$forumnew = $sql->getresultsbykey("
+					SELECT forum, COUNT(*) AS unread
+					FROM threads t
+					LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
+					WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
+					GROUP BY forum
+				");
+			}
+			
+			foreach ($forums as $forumplace => $forum) {
+				
+				if (has_forum_perm('read', $forum)) {
+				
+					/*
+						Local mod display
+					*/
+					$m = 0;
+					$modlist = "";
+					foreach ($mods as $modplace => $mod) {
+						if ($mod['forum'] != $forum['id'])
+							continue;
+
+						$modlist .=($m++?', ':'').getuserlink($mod);
+						unset($mods[$modplace]);
+					}
+
+					if ($modlist)
+						$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
+
+					
+					
+					
+					if($forum['numposts']) {
+						$namelink = getuserlink(array_column_by_key($forum, 0), $forum['uid'][0]);
+						$forumlastpost = printdate($forum['lastpostdate']);
+						$by =  "<span class='fonts'>
+									<br>
+									by $namelink". ($forum['lastpostid'] ? " <a href='thread.php?pid={$forum['lastpostid']}#{$forum['lastpostid']}'>{$statusicons['getlast']}</a>" : "")
+							  ."</span>";
+					} else {
+						$forumlastpost = getblankdate();
+						$by = '';
+					}
+
+					$new='&nbsp;';
+
+					if ($forum['numposts']) {
+						// If we're logged in, check the result set
+						if ($loguser['id'] && isset($forumnew[$forum['id']]) && $forumnew[$forum['id']] > 0) {
+							$new = $statusicons['new'] ."<br>". generatenumbergfx((int)$forumnew[$forum['id']]);
+						}
+						// If not, mark posts made in the last hour as new
+						else if (!$loguser['id'] && $forum['lastpostdate'] > ctime() - 3600) {
+							$new = $statusicons['new'];
+						}
+					}
+
+					$cforumlist .= "
+					<tr>
+						<td class='tdbg1 center' style='width: 4%'>$new</td>
+						<td class='tdbg2'>
+							<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
+							<span class='fonts'>
+								{$forum['description']}<br>
+								$modlist
+							</span>
+						</td>
+						<td class='tdbg2 center'>".getuserlink(array_column_by_key($forum, 1), $forum['uid'][1])."</td>
+						<td class='tdbg1 center'>{$forum['numthreads']}</td>
+						<td class='tdbg1 center'>{$forum['numposts']}</td>
+						<td class='tdbg2 center'>
+							<span class='lastpost nobr'>
+								$forumlastpost $by
+							</span>
+						</td>
+					</tr>";
+
+					unset($forums[$forumplace]);
+				}
+				else {
+					unset($forums[$forumplace]);
+					continue;
+				}	
+			}
+			
+		} else {
+			// There's nothing to show. Hide the dual pane view.
+			$config['allow-custom-forums'] = 0;
+		}
+	}
+	
 
 	?>
 	<br>
-	<table class='table'>
-		<?=$forumlist?>
+	<?=($config['allow-custom-forums'] ? "<span class='font table tdbgh'><a href='index.php?action=tooglepane'>Toogle dual pane</a></span>" : "")?>
+	<table class="w" style='border-spacing: 0px; padding: 0px'>
+		<tr>
+			<td style='vertical-align: top; padding: 0px'>
+				<table class='table'>
+					<?=$forumlist?>
+				</table>
+			</td>
+<?php if (!$cat && $custom && $config['allow-custom-forums']) { ?>
+			<td style='vertical-align: top; padding: 0px'>
+				<table class='table'>
+					<?=$cforumlist?>
+				</table>
+			</td>
+<?php } ?>
+		</tr>
 	</table>
 	<?php
 	

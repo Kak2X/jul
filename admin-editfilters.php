@@ -6,6 +6,7 @@
 	
 	$_GET['id'] 	= filter_int($_GET['id']);
 	$_GET['type'] 	= filter_int($_GET['type']);
+	$_GET['sort']	= filter_bool($_GET['sort']); // Sort by type (0) or forum (1). will change type column to forum in preview mode
 	
 	if (isset($_POST['setdel']) && isset($_POST['del'])) {
 		check_token($_POST['auth']);
@@ -21,7 +22,7 @@
 		}
 		header("Location: admin-editfilters.php?type={$_GET['type']}");
 		die;		
-	} else if (isset($_POST['qdel'])) {
+	} else if (isset($_POST['qdelid'])) {
 		check_token($_POST['auth']);
 		$delid = filter_int($_POST['qdelid']);
 		if ($delid > 0) {
@@ -157,17 +158,12 @@
 	</tr>
 	
 	<tr class="rh">
-		<td class="tdbg1" style="border-right: 0" colspan=2>
+		<td class="tdbg1" colspan=3>
 			<input type="checkbox" id="enabled" name="enabled" value=1 <?= ($x['enabled'] ? "checked" : "") ?>>
 			<label for="enabled">Enabled</label>
-		</td>
-		<td class="tdbg1 right">
-		
 <?php	if ($_GET['id'] > 0) {	?>	
-			<input type="submit" class="submit" name="qdel" value="Delete">
-			<input type="hidden" name="qdelid" value="<?= $x['id'] ?>">
+			<span style="float: right"><input type="checkbox" name="qdelid" value="<?= $x['id'] ?>"> Delete&nbsp;</span>
 <?php	} ?>
-
 		</td>
 	</tr>
 	
@@ -252,7 +248,7 @@
 		<td class="tdbg2"><textarea wrap=virtual ROWS=1 style="width: 100%; resize:none" readonly><?= htmlentities($x['source']) ?></textarea></td>
 		<td class="tdbg2"><textarea wrap=virtual ROWS=1 style="width: 100%; resize:none" readonly><?= htmlspecialchars($x['replacement']) ?></textarea></td>
 		<td class="tdbg1 center"><?= ($x['fid'] ? "<a href='forum.php?id={$x['fid']}'>".htmlspecialchars($x['ftitle'])."</a>" : "Global") ?></td>
-		<td class="tdbg1 center"><?= ($x['method'] == 2 ? "RegEx" : "Simple").($x['method'] == 1 ? "<div class='fonts'>Case Insensitive</div>" : "") ?></td>
+		<td class="tdbg1 center"><?= ($x['method'] == 2 ? "RegEx" : "Replace").($x['method'] == 1 ? "<div class='fonts'>Case Insensitive</div>" : "") ?></td>
 		<td class="tdbg2 center">
 			<?= ($x['comment'] 
 			? "<span style='border-bottom: 1px dotted #f00; font-weight: bold' title=\"".str_replace('"', "'", $x['comment'])."\">?</span>"

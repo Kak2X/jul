@@ -16,6 +16,12 @@ $_GET['catdelete'] 	= filter_int($_GET['catdelete']);
 if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	check_token($_POST['auth']);
 	
+	// Duplicate prevention
+	$forumtitle = xssfilters(filter_string($_POST['forumtitle'], true));
+	if ($sql->resultp("SELECT 1 FROM forums WHERE title = ?", [$forumtitle])) {
+		errorpage("Sorry, but a forum named like this already exists.");
+	}
+	
 	$sql->beginTransaction();
 	$querycheck = array();
 	
@@ -27,7 +33,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	$qadd = $sql->setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle","custom","user");
 	
 	$values = array(
-		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
+		'title' 			=> $forumtitle,
 		'description'		=> xssfilters(filter_string($_POST['description'], true)),
 		'catid' 			=> filter_int($_POST['catid']),
 		'numthreads' 		=> filter_int($_POST['numthreads']),
@@ -88,7 +94,7 @@ elseif (isset($_POST['delete'])) {
 
 	if ($id <= 0)
 		errorpage("No forum selected to delete.");
-	if ($mergeid <= 0)
+	if ($mergeid <= 0 || $mergeid == $id)
 		errorpage("No forum selected to merge to.");
 
 	$querycheck = array();
@@ -186,12 +192,9 @@ $pollstyles = array(-2 => 'Disallowed',
 
 
 if ($_GET['delete']) {
-	$forums = $sql->getresultsbykey("SELECT id, title FROM forums ORDER BY catid, forder");
-	$forums[-1] = "Choose a forum to merge into...";
+	$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$_GET['delete']}");
 	
-	if (isset($forums[$_GET['delete']])) {
-		$fname = htmlspecialchars($forums[$_GET['delete']]);
-		unset($forums[$_GET['delete']]);
+	if ($fname) {
 
 	?>
 	<form method="post" action="?delete=<?=$_GET['delete']?><?=$prevtext?>">
@@ -202,7 +205,7 @@ if ($_GET['delete']) {
 				You are about to delete forum ID <b><?=$_GET['delete']?></b>.<br>
 				<br>
 				All announcements and threads will be moved to the forum below.<br>
-				<?= dropdownList($forums, -1, "mergeid") ?>
+				<?= doforumlist(0, 'mergeid', 'Choose a forum to merge into...', $_GET['delete']) ?>
 			</td>
 		</tr>
 		<tr>

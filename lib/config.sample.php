@@ -8,7 +8,7 @@
 	
 	$sqldebuggers = array('127.0.0.1'); # IPs allowed to view the SQL Debugger
 	
-	const BOARD_VERSION = '12/07/2017 b005';
+	const BOARD_VERSION = '13/07/2017 b005.01';
 	
 	$config = array(
 	

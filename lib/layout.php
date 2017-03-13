@@ -4,7 +4,7 @@
 require "lib/pageheader.php";
 require "lib/pagefooter.php";
 
-function doforumlist($id, $name = '', $shownone = ''){
+function doforumlist($id, $name = '', $shownone = '', $skip = 0){
 	global $loguser, $sql;
 	
 	if (!$name) {
@@ -33,7 +33,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 		LEFT JOIN perm_forums     pf ON f.id    = pf.id
 		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 		
-		WHERE $showcustom AND (!f.hidden OR $showhidden) AND (f.custom OR !ISNULL(c.id)) OR f.id = $id
+		WHERE $showcustom AND (!f.hidden OR $showhidden) AND (f.custom OR !ISNULL(c.id)) OR f.id = $id ".($skip ? "AND f.id != $skip" : "")."
 			
 		ORDER BY f.custom, c.corder, f.catid, f.forder, f.id
 	");
@@ -303,6 +303,7 @@ function adminlinkbar($sel = NULL) {
 		),
 		array(
 			'ipsearch.php'          => "IP Search",
+			'admin-ipbans.php'      => "IP Bans",
 		//	'admin-slammer.php'     => "EZ Ban Button",
 			'del.php'               => "Delete User",
 		)

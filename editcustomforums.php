@@ -46,6 +46,12 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		errorpage("Sorry, but you have reached the limit of custom forums per user.<br><br>Ask an administrator via PM if you want to delete or transfer ownership of one of your older forums.");
 	}
 	
+	// Duplicate prevention
+	$forumtitle = xssfilters(filter_string($_POST['forumtitle'], true));
+	if ($sql->resultp("SELECT 1 FROM forums WHERE title = ?", [$forumtitle])) {
+		errorpage("Sorry, but a forum named like this already exists.");
+	}	
+	
 	$sql->beginTransaction();
 	$querycheck = array();
 	
@@ -56,7 +62,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	
 	$qadd = $sql->setplaceholders("title","description","specialtitle","hidden","pollstyle");
 	$values = array(
-		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
+		'title' 			=> $forumtitle,
 		'description'		=> xssfilters(filter_string($_POST['description'], true)),
 		'specialtitle' 		=> $title,
 		'hidden' 			=> filter_int($_POST['hideforum']),

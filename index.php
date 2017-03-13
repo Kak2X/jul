@@ -395,7 +395,6 @@
 
 	// Category filtering
 	$cat	= filter_int($_GET['cat']);
-	$custom = isset($_GET['sc']) || filter_int($_COOKIE['indexpane']);
 	
 	foreach ($categories as $category) {
 		
@@ -494,8 +493,8 @@
 		$forumlist .= $forumin;
 	}
 	
-	
-	if ($config['allow-custom-forums'] && !$cat && $custom) {
+	$showcustom = ($config['allow-custom-forums'] && !$cat && filter_int($_COOKIE['indexpane']));
+	if ($showcustom) {
 	/*
 		Custom forums with latest posts
 		Now featuring a DUAL PANE INDEX like it has never been tried before.
@@ -641,14 +640,14 @@
 			
 		} else {
 			// There's nothing to show. Hide the dual pane view.
-			$config['allow-custom-forums'] = 0;
+			$showcustom = 0;
 		}
 	}
 	
 
 	?>
 	<br>
-	<?=($config['allow-custom-forums'] ? "<span class='font table tdbgh'><a href='index.php?action=tooglepane'>Toogle dual pane</a></span>" : "")?>
+	<?=($showcustom ? "<span class='font table tdbgh'><a href='index.php?action=tooglepane'>Toogle dual pane</a></span>" : "")?>
 	<table class="w" style='border-spacing: 0px; padding: 0px'>
 		<tr>
 			<td style='vertical-align: top; padding: 0px'>
@@ -656,7 +655,7 @@
 					<?=$forumlist?>
 				</table>
 			</td>
-<?php if (!$cat && $custom && $config['allow-custom-forums']) { ?>
+<?php if ($showcustom) { ?>
 			<td style='vertical-align: top; padding: 0px'>
 				<table class='table'>
 					<?=$cforumlist?>

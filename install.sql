@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 12, 2017 at 01:09 AM
+-- Generation Time: Mar 13, 2017 at 08:22 PM
 -- Server version: 10.1.9-MariaDB
 -- PHP Version: 5.6.15
 
@@ -626,7 +626,7 @@ CREATE TABLE `forumread` (
 
 CREATE TABLE `forums` (
   `id` smallint(5) UNSIGNED NOT NULL,
-  `title` varchar(250) DEFAULT NULL,
+  `title` varchar(120) DEFAULT NULL,
   `description` text,
   `catid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `numthreads` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
@@ -844,7 +844,11 @@ CREATE TABLE `misc` (
   `regcode` varchar(32) DEFAULT NULL,
   `bigpostersupdate` int(11) NOT NULL DEFAULT '0',
   `announcementforum` int(11) NOT NULL DEFAULT '0',
-  `trashforum` int(11) NOT NULL DEFAULT '0'
+  `trashforum` int(11) NOT NULL DEFAULT '0',
+  `maxcustomforums` tinyint(4) UNSIGNED NOT NULL DEFAULT '4',
+  `daysforcustomforum` smallint(5) UNSIGNED NOT NULL DEFAULT '30',
+  `postsforcustomforum` smallint(5) UNSIGNED NOT NULL DEFAULT '150',
+  `backup` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -1695,6 +1699,7 @@ ALTER TABLE `forumread`
 --
 ALTER TABLE `forums`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `title` (`title`),
   ADD KEY `catid` (`catid`),
   ADD KEY `custom` (`custom`),
   ADD KEY `user` (`user`);

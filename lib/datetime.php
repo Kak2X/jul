@@ -38,13 +38,18 @@ function is_birthday($timestamp) {
 	return (date('m-d', $timestamp) == date('m-d',ctime() + $loguser['tzoff']));
 }
 
-function printdate($timestamp = NULL, $short = false) {
+function printdate($timestamp = NULL, $flags = PRINT_DATE | PRINT_TIME) {
 	global $loguser;
 	if (!$timestamp) $timestamp = ctime();
-	return date($short ? $loguser['dateshort'] : $loguser['dateformat'], $timestamp + $loguser['tzoff']);
+	return date(
+		($flags & PRINT_DATE ? $loguser['dateformat'] : "").
+		($flags & (PRINT_DATE | PRINT_TIME) ? " " : "").
+		($flags & PRINT_TIME ? $loguser['timeformat'] : ""),
+		$timestamp + $loguser['tzoff']		
+	);
 }
 
-	// I'm picky about this sorta thing
+// I'm picky about this sorta thing
 function getblankdate() {
 	global $loguser;
 
@@ -64,28 +69,27 @@ function getblankdate() {
 }
 
 // Helpful Unix timestamp conversion functions
-function datetofields(&$timestamp, $basename, $date = true, $time = false, $raw = false){
+function datetofields(&$timestamp, $basename, $flags = DTF_DATE){ // $date = true, $time = false, $raw = false
 	
 	if ($timestamp) $val = explode("|", date("n|j|Y|H|i|s", $timestamp));
-	else 			$val = array_fill(0, 6, "");
+	else            $val = array_fill(0, 6, "");
 	
-	if (!$raw) 	$fname = array('Month: ', ' Day: ', ' Year: ', ' Hours: ', ' Minutes: ', ' Seconds: ');
-	else		$fname = array('','-','-',' &nbsp; ',':',':');
+	if ($flags & DTF_NOLABEL) $fname = array('', '-', '-', ' &nbsp; ', ':', ':');
+	else                      $fname = array('Month: ', ' Day: ', ' Year: ', ' Hours: ', ' Minutes: ', ' Seconds: ');
 	
 	$fields = "";
-	
-	if ($date)
+	if ($flags & DTF_DATE) {
 		$fields .= 
-		"$fname[0]<input name='{$basename}month' 	type='text' maxlength='2' size='2' class='right' value='$val[0]'>".
-		"$fname[1]<input name='{$basename}day' 	type='text' maxlength='2' size='2' class='right' value='$val[1]'>".
-		"$fname[2]<input name='{$basename}year' 	type='text' maxlength='4' size='4' class='right' value='$val[2]'>";
-		
-	if ($time)		
+		"$fname[0]<input name='{$basename}month' type='text' maxlength='2' size='2' class='right' value='$val[0]'>".
+		"$fname[1]<input name='{$basename}day'   type='text' maxlength='2' size='2' class='right' value='$val[1]'>".
+		"$fname[2]<input name='{$basename}year'  type='text' maxlength='4' size='4' class='right' value='$val[2]'>";
+	}
+	if ($flags & DTF_TIME) {
 		$fields .= 
-		"$fname[3]<input name='{$basename}hour' 	type='text' maxlength='2' size='2' class='right' value='$val[3]'>".
-		"$fname[4]<input name='{$basename}min' 	type='text' maxlength='2' size='2' class='right' value='$val[4]'>".
-		"$fname[5]<input name='{$basename}sec' 	type='text' maxlength='4' size='4' class='right' value='$val[5]'>";
-		
+		"$fname[3]<input name='{$basename}hour'  type='text' maxlength='2' size='2' class='right' value='$val[3]'>".
+		"$fname[4]<input name='{$basename}min'   type='text' maxlength='2' size='2' class='right' value='$val[4]'>".
+		"$fname[5]<input name='{$basename}sec'   type='text' maxlength='4' size='4' class='right' value='$val[5]'>";
+	}
 	return $fields;
 }
 

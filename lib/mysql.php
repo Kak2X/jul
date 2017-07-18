@@ -2,21 +2,34 @@
 	class mysql {
 		// a 'backport' of my 'static' class in not-as-static form
 		// the statistics remain static so they're global just in case this gets used for >1 connection
-		static $queries   = 0;
-		static $cachehits = 0;
-		static $rowsf     = 0;
-		static $rowst     = 0;
-		static $time      = 0;
+		public static $queries   = 0;
+		public static $cachehits = 0;
+		public static $rowsf     = 0;
+		public static $rowst     = 0;
+		public static $time      = 0;
 
 		// Query debugging functions for admins
-		static $connection_count = 0;
-		static $debug_on   = false;
-		static $debug_list = array(); // [<id>, <function>, <file:line>, <info>, <time taken>, <prepared>]
+		public static $connection_count = 0;
+		public static $debug_on   = false;
+		public static $debug_list = array(); // [<id>, <function>, <file:line>, <info>, <time taken>, <prepared>]
 
-		var $cache = array();
-		var $connection = NULL;
-		var $id = 0;
-		var $error = NULL;
+		// Constant messages for our sanity
+		const MSG_NONE     = 0;
+		const MSG_QUERY    = 0b1;
+		const MSG_PREPARED = 0b10;
+		const MSG_EXECUTE  = 0b100;
+		const MSG_CACHED   = 0b1000;
+		const MSG_ERROR    = 0b10000;
+		
+		// fetchX flags
+		const USE_CACHE = 0b1;
+		const FETCH_ALL = 0b10;
+		
+		public $cache      = array();
+		public $connection = NULL;
+		public $id         = 0;
+		public $error      = NULL;
+		private $server_name = ""; // Marks MySQL or MariaDB
 
 		public function connect($host, $user, $pass, $dbname, $persist = false) {
 			global $config;
@@ -35,7 +48,8 @@
 			}
 			catch (PDOException $x) {
 				$this->error = $x->getMessage();
-				$this->connection = NULL;
+				return NULL;
+				//$this->connection = NULL;
 			}
 			
 			$t 			= microtime(true) - $start;
@@ -45,77 +59,65 @@
 				self::$debug_on = true;
 			}
 			
+			$this->server_name = (
+				strpos($this->connection->getAttribute(PDO::ATTR_SERVER_VERSION), "MariaDB") ? 
+				"MariaDB" :
+				"MySQL");
+			
+			
 			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					"<i>" . (($persist) ? "Persistent c" : "C" ) . "onnection established to mySQL server ($host, $user, using password: ". (($pass!=="") ? "YES" : "NO") . ")</i>",
-					sprintf("%01.6fs", $t)
-				);
+				$message = (($persist) ? "Persistent c" : "C" )."onnection established to {$this->server_name} server ($host, $user, using password: ".(($pass!=="") ? "YES" : "NO").")";
+				$this->log($message, $t, self::MSG_NONE);
 			}
-
+			
 			self::$time += $t;
 			return $this->connection;
 		}
 
 		// $usecache contains hash
 		public function query($query, $hash = false, &$querycheck = array()) {
-			
+			$res = NULL;
 			// Already cached the result?
+			// Just update the stats then.
 			if ($hash && isset($this->cache[$hash])) {
 				$start = microtime(true);
 				++self::$cachehits;
-				
 				$t = microtime(true) - $start;
+				
 				if (self::$debug_on) {
-					$b = self::getbacktrace();
-					self::$debug_list[] = array(
-						$this->id,
-						$b['pfunc'],
-						$b['file'] . ":" . $b['line'],
-						"<font color=#00dd00>" . htmlentities($query) . "</font>",
-						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>"
-					);
+					$this->log($query, $t, self::MSG_QUERY | self::MSG_CACHED);
 				}
-				return NULL; // We don't need to return anything
-			}
-			
-			
-			$start = microtime(true);
-			
-			$res = NULL;
-			try {
-				$res = $this->connection->query($query);
-				++self::$queries;
-				
-				//$type = strtoupper(substr(trim($query), 0, 6));
-				if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
-					self::$rowst += $res->rowCount();
-				
-				$querycheck[] = true;
-			}
-			catch (PDOException $e) {
-				$err = $e->getMessage();
-				// the huge SQL warning text sucks
-				$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use", "SQL syntax error", $err);
-				trigger_error("MySQL error: $err", E_USER_ERROR);
-				$querycheck[] = false;
-			}
+			} else {
+				$start = microtime(true);
+				try {
+					$res = $this->connection->query($query);
+					++self::$queries;
+					
+					if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
+						self::$rowst += $res->rowCount();
+					
+					$querycheck[] = true;
+				}
+				catch (PDOException $e) {
+					$err = $e->getMessage();
+					// the huge SQL warning text sucks
+					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $err);
+					trigger_error("MySQL error: $err", E_USER_ERROR);
+					$querycheck[] = false;
+				}
 
-			$t = microtime(true) - $start;
-			self::$time += $t;
+				$t = microtime(true) - $start;
+				self::$time += $t;
 
-			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? htmlentities($query) : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
-				);
+				if (self::$debug_on) {
+					if (isset($err)) {
+						$error_flag = self::MSG_ERROR;
+					} else {
+						$err        = NULL;
+						$error_flag = 0;
+					}
+					$this->log($query, $t, self::MSG_QUERY | $error_flag, $err);
+				}
 			}
 
 			return $res;
@@ -123,98 +125,89 @@
 		
 		public function prepare($query, $options = array(), $hash = NULL) {
 	
-			// Already cached the result?
-			if ($hash && isset($this->cache[$hash])) {
+			$res = NULL;
+			if ($hash && isset($this->cache[$hash])) { // Already cached the result?
 				$start = microtime(true);
 				++self::$cachehits;
-				
 				$t = microtime(true) - $start;
+				
 				if (self::$debug_on) {
-					$b = self::getbacktrace();
-					self::$debug_list[] = array(
-						$this->id,
-						$b['pfunc'],
-						$b['file'] . ":" . $b['line'],
-						"<font color=#00dd00>".htmlentities($query)."</font>",
-						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>",
-						true
-					);
+					$this->log($query, $t, self::MSG_QUERY | self::MSG_PREPARED | self::MSG_CACHED);
 				}
-				return NULL; // We don't need to return anything
-			}
+			} else {
 			
-			$start = microtime(true);
-			
-			$res = NULL;
-			try {
-				$res = $this->connection->prepare($query, $options);
-				//++self::$queries;  # Don't count prepares
-			}
-			catch (PDOException $e) {
-				$err = $e->getMessage();
-				$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use", "SQL syntax error", $err);
-				trigger_error("MySQL error: $err", E_USER_ERROR);
-			}
+				$start = microtime(true);
+				
+				try {
+					// Prepares don't add towards the query count
+					$res = $this->connection->prepare($query, $options);
+				}
+				catch (PDOException $e) {
+					$err = $e->getMessage();
+					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $err);
+					trigger_error("MySQL error: $err", E_USER_ERROR);
+				}
 
-			$t = microtime(true) - $start;
-			self::$time += $t;
+				$t = microtime(true) - $start;
+				self::$time += $t;
 
-			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? "<span style='color:#ffff44'>".htmlentities($query)."</span>" : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t),
-					true
-				);
+				if (self::$debug_on) {
+					if (isset($err)) {
+						$error_flag = self::MSG_ERROR;
+					} else {
+						$err        = NULL;
+						$error_flag = 0;
+					}
+					$this->log($query, $t, self::MSG_QUERY | self::MSG_PREPARED | $error_flag, $err);
+				}
 			}
 
 			return $res;
 		}
 		
 		public function execute($result, $vals = array()){
-			$start = microtime(true);
-			
-			// This is to prevent an uncatchable fatal error. Thank you PHP!
-			if (!$result) return NULL;
-			
-			$query = $result->queryString;
-			
-			try {
-				$res = $result->execute($vals);
-				// Workaround for the inability to catch certain kinds of errors
-				// Thank you PDO
-				if (!is_numeric($result->errorInfo()[0])) {
-					throw new PDOException("Error code ".$result->errorInfo()[0]);
-				}
-				++self::$queries;
-				
-				if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
-					self::$rowst += $result->rowCount();
-			}
-			catch (PDOException $e){
-				$err = $e->getMessage();
+			if (!$result) {
+				// This happens. And it's not pretty.
+				$err = "Called execute method with a NULL \$result pointer.";
 				trigger_error("MySQL (execute) error: $err", E_USER_ERROR);
-				$res = false;
-			}
-			
-			$t = microtime(true) - $start;
-			self::$time += $t;
+				$this->log("[Invalid execute]", 0, self::MSG_QUERY | self::MSG_EXECUTE | self::MSG_ERROR, $err);
+				$res = NULL;
+			} else {
+				$query = $result->queryString;
+				
+				$start = microtime(true);
+				try {
+					$res = $result->execute($vals);
+					
+					// More uncatchable stupid shit. Not really supposed to throw PDOExceptions but who cares.
+					if (!is_numeric($result->errorInfo()[0])) {
+						throw new PDOException("Error code ".$result->errorInfo()[0]);
+					}
+					++self::$queries;
+					
+					if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
+						self::$rowst += $result->rowCount();
+				}
+				catch (PDOException $e){
+					$err = $e->getMessage();
+					trigger_error("MySQL (execute) error: $err", E_USER_ERROR);
+					$res = false;
+				}
+				
+				$t = microtime(true) - $start;
+				self::$time += $t;
 
-			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				$query .= " | Values: " . implode(",", $vals);
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? "<span style='color:#ffcc44'>".htmlentities($query)."</span>" : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
-				);
+				if (self::$debug_on) {
+					if (isset($err)) {
+						$error_flag = self::MSG_ERROR;
+					} else {
+						$err        = NULL;
+						$error_flag = 0;
+					}
+					$query .= " | Values: <i>" . implode("</i>,<br/><i>", $vals) . "</i>";
+					$this->log($query, $t, self::MSG_QUERY | self::MSG_EXECUTE | $error_flag, $err);
+				}
 			}
-			
 			return $res;
 		}
 
@@ -279,35 +272,35 @@
 			return $q;
 		}
 		
-		public function fetchq($query, $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
-			$hash = (!$cache) ? NULL : md5($query);
-			$res = $this->query($query, $hash);
-			$res = (!$all) ? $this->fetch($res, $flag, $hash) : $this->fetchAll($res, $flag, $hash);
+		public function fetchq($query, $flag = PDO::FETCH_ASSOC, $options = 0){ //$cache = false, $all = false){
+			$hash = self::getQueryHash($query, $options);
+			$res  = $this->query($query, $hash);
+			$res  = ($options & self::FETCH_ALL) ? $this->fetchAll($res, $flag, $hash) : $this->fetch($res, $flag, $hash);
 			return $res;
 		}
 		
-		public function fetchp($query, $values = array(), $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
-			$hash = (!$cache) ? NULL : md5($query);
+		public function fetchp($query, $values = array(), $flag = PDO::FETCH_ASSOC, $options = 0){ //$cache = false, $all = false){
+			$hash = self::getQueryHash($query, $options);
 			$res = $this->prepare($query, array(), $hash);
-			if (!$cache) 
+			if ($hash === NULL) 
 				if (!($this->execute($res, $values)))
 					return false;
 			
-			$res = (!$all) ? $this->fetch($res, $flag, $hash) : $this->fetchAll($res, $flag, $hash);
+			$res = ($options & self::FETCH_ALL) ? $this->fetchAll($res, $flag, $hash) : $this->fetch($res, $flag, $hash);
 			return $res;
 		}
 		
-		public function resultq($query, $row=0, $col=0, $cache = false){
-			$hash = (!$cache) ? NULL : md5($query);
+		public function resultq($query, $row=0, $col=0, $options = 0){
+			$hash = self::getQueryHash($query, $options);
 			$res = $this->query($query, $hash);
 			$res = $this->result($res, $row, $col, $hash);
 			return $res;
 		}
 		
-		public function resultp($query, $values = array(), $row=0, $col=0, $cache = false){
-			$hash = (!$cache) ? NULL : md5($query);
+		public function resultp($query, $values = array(), $row=0, $col=0, $options = 0){
+			$hash = self::getQueryHash($query, $options);
 			$res = $this->prepare($query, array(), $hash);
-			if (!$cache) 
+			if ($hash === NULL) 
 				if (!($this->execute($res, $values)))
 					return false;
 			
@@ -315,9 +308,9 @@
 			return $res;
 		}
 		
-		// Is this even used?
-		public function getmultiresults($query, $key, $wanted='', $cache = false) {
-			$hash = (!$cache) ? NULL : md5($query);
+		// Not used
+		public function getmultiresults($query, $key, $options = 0) {
+			$hash = self::getQueryHash($query, $options);
 			// $tmp[<keyval>] = <serialized array>
 			$q = $this->query($query, $hash);
 			
@@ -334,22 +327,23 @@
 			return $ret;
 		}
 		
-		public function getresultsbykey($query, $key='', $wanted='', $cache = false) {
-			$hash = (!$cache) ? NULL : md5($query);
-			$q = $this->query($query, $cache);
-			$ret = $this->fetchAll($q, PDO::FETCH_KEY_PAIR, $hash);
+		public function getresultsbykey($query, $options = 0) {
+			$hash = self::getQueryHash($query, $options);
+			$q    = $this->query($query, $hash);
+			$ret  = $this->fetchAll($q, PDO::FETCH_KEY_PAIR, $hash);
 			return $ret;
 		}
 		
-		public function getresults($query, $wanted='', $cache = false) {
-			$hash = (!$cache) ? NULL : md5($query);
-			$q = $this->query($query, $cache);
-			$ret = $this->fetchAll($q, PDO::FETCH_COLUMN, $hash);
+		// Not used
+		public function getresults($query, $options = 0) {
+			$hash = self::getQueryHash($query, $options);
+			$q    = $this->query($query, $hash);
+			$ret  = $this->fetchAll($q, PDO::FETCH_COLUMN, $hash);
 			return $ret;
 		}
 		
-		public function getarraybykey($query, $key, $cache = false) {
-			$hash = (!$cache) ? NULL : md5($query);
+		public function getarraybykey($query, $key, $options = false) {
+			$hash = self::getQueryHash($query, $options);
 			// $tmp[<keyval>] = <all values>
 			$q = $this->query($query, $hash);
 			
@@ -365,9 +359,9 @@
 			
 			return $ret;
 		}
-
-		public function getarray($query, $cache = false) {
-			$hash = (!$cache) ? NULL : md5($query);
+		
+		public function getarray($query, $options = 0) {
+			$hash = self::getQueryHash($query, $options);
 			// $ret[<num>] = <entire assoc row>
 			$q = $this->query($query, $hash);
 			$ret = $this->fetchAll($q, PDO::FETCH_ASSOC, $hash);
@@ -379,7 +373,7 @@
 		}
 		
 		public function num_rows($res) {
-			if (!$res || is_bool($res)) return NULL;
+			if ($res === NULL || is_bool($res)) return NULL;
 			return $res->rowCount();
 		}
 		
@@ -422,11 +416,12 @@
 		// Typically it's the same array passed as third argument to $sql->query and $sql->queryp
 		// Here, that array is checked so that the transaction will be committed only if all the queries were successful
 		public function checkTransaction($list){
-			foreach ($list as $queryres)
-				if ($queryres === false && $queryres !== 0){
+			foreach ($list as $queryres) {
+				if ($queryres === false){
 					$this->rollBack();
 					return false;
 				}
+			}
 			$this->commit();
 			return true;
 		}
@@ -449,8 +444,7 @@
 		public static function debugprinter() {
 			if (!self::$debug_on) return "";
 			
-			$out  = "";
-			$out .= "<br>
+			$out = "<br>
 				<table class='table'>
 					<tr>
 						<td class='tdbgh center' colspan=5>
@@ -511,17 +505,13 @@
 			for ($i = 1; strpos($backtrace[$i]['file'], "mysql.php"); ++$i);
 			
 			// And check in what function it comes from
-			if (!isset($backtrace[$i+1]))
-				$backtrace[$i]['pfunc'] = "<i>(main)</i>";
-			else
-				$backtrace[$i]['pfunc'] = $backtrace[$i+1]['function'];
-			
-			$backtrace[$i]['file'] = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
+			$backtrace[$i]['pfunc'] = (isset($backtrace[$i+1]) ? $backtrace[$i+1]['function'] : "<i>(main)</i>");
+			$backtrace[$i]['file']  = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
 			
 			return $backtrace[$i];
 		}
 		
-		public function setplaceholders() {
+		public static function setplaceholders() {
 			$out = "";
 			$fields = func_get_args();
 			$i = false;
@@ -530,6 +520,70 @@
 				$i = true;
 			}
 			return $out;
+		}
+		
+		private function log($msg, $time, $msg_type, $error_text = "") {
+			$time_txt = sprintf("%01.6fs", $time);
+			if (!$msg_type) {
+				$msg = "<i>{$msg}</i>";
+			} else if ($msg_type & self::MSG_QUERY) {
+				$msg = htmlentities($msg);
+				
+				if ($msg_type & self::MSG_ERROR) {
+					$color = "FF0000";
+					$title = $error_text;
+				} else if ($msg_type & self::MSG_CACHED) {
+					$color = "00dd00";
+				} else if ($msg_type & self::MSG_PREPARED) {
+					$color = "ffff44";
+				} else if ($msg_type & self::MSG_EXECUTE) {
+					$color = "ffcc44";
+				}
+				
+				if (isset($color)) {
+					$msg = "<span style='color:#{$color}".(isset($title) ? ";border-bottom:1px dotted {$color}' title=\"{$error_text}\"" : "'").">{$msg}</span>";
+					$time_txt = "<span style='color:#{$color}'>{$time_txt}</span>";
+				}
+			}
+			
+			$b = self::getbacktrace();
+			self::$debug_list[] = array(
+				$this->id,
+				$b['pfunc'],
+				$b['file'] . ":" . $b['line'],
+				$msg,
+				$time_txt,
+				($msg_type & self::MSG_PREPARED ? true : NULL)
+			);
+		}
+		
+		private function transactionError($msg, $time, $msg_type, $error_text = "") {
+			if ($this->connection->inTransaction()) {
+				// An error occurred in one of the queries in a transaction.
+				// Rollback everything and stop the script
+				$this->rollBack();
+				
+				if (self::$debug_on) {
+					$this->log($query, 0, $type, $this->error);
+				}
+				// Just in case
+				require_once "lib/datetime.php";
+				require_once "lib/forumlib.php";
+				echo "</body>";
+				if (!defined('FOOTER_PRINTED')) {
+					errorpage("Sorry, but we couldn't execute the action.");
+				} else {
+					if (has_perm('view-debugger') || $config['always-show-debug']) {
+						die("Transaction error in the footer: " . $this->error);
+					} else {
+						die;
+					}
+				}
+			}
+		}
+		
+		private static function getQueryHash($query, $flags = self::USE_CACHE) {
+			return ($flags & self::USE_CACHE) ? md5($query) : NULL;
 		}
 	}
 ?>

@@ -215,13 +215,11 @@
 	?>
 		<table class='table'>
 			<tr>
-				<td class='tdbg1 fonts center'>
-					<table width=100%>
+				<td class='tdbg1 fonts'>
+					<table class='w'>
 						<tr>
-							<td class='fonts'>
-								<?=$logmsg?>
-							</td>
-							<td align=right class='fonts'>
+							<td><?=$logmsg?></td>
+							<td class='right'>
 								<?=$count['u']?> registered users<br>
 								Latest registered user: <?=$lastuserurl?>
 							</td>
@@ -529,7 +527,7 @@
 				FROM forums f
 				WHERE f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
 				ORDER BY f.lastpostid DESC
-				LIMIT 15", PDO::FETCH_COLUMN, false, true);
+				LIMIT 15", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 			$modquery = $sql->query("
 				SELECT $userfields, f.id forum
 				FROM forums f

@@ -8,6 +8,7 @@ function has_perm($permName) {
 	return $loguser['permflags']['set'.$permArray[0]] & $permArray[1];
 }
 
+// Determines
 function check_perm($permName, $group, $cache = NULL) {
 	if ($cache === NULL) {
 		$cache = load_perm(0, $group);
@@ -19,8 +20,9 @@ function check_perm($permName, $group, $cache = NULL) {
 // Forum permissions are 6 bits long (Read,Post,Edit,Delete,Thread,Mod)
 // $permName can be any of those four words
 // $sourceArr has to contain the key 'forumperm' which defines the bitset to check, and optionally a 'userperm' key as patch data.
-function has_forum_perm($permName, $sourceArr, $noallcheck = false) {
-	if ($noallcheck || !has_perm('all-forum-access')) {
+// $noAllCheck is mostly used in the forum permission editor to display the real permission flags (for those who have all-forum-access perm)
+function has_forum_perm($permName, $sourceArr, $noAllCheck = false) {
+	if ($noAllCheck || !has_perm('all-forum-access')) {
 		$permBit = constant("PERM_FORUM_" . strtoupper($permName));
 		$check = isset($sourceArr['userperm']) ? $sourceArr['userperm'] : $sourceArr['forumperm'];
 		return $check & $permBit;
@@ -29,6 +31,9 @@ function has_forum_perm($permName, $sourceArr, $noallcheck = false) {
 	}
 }
 
+// Gets the forum permission given a $forum ID, $user ID and $group ID
+// For performance reasons (?) this is rarely used,
+// as to save time these fields are directly fetched from most of the queries that get forum data
 function get_forum_perm($forum, $user, $group){
 	global $sql;
 	return $sql->fetchq("
@@ -37,7 +42,7 @@ function get_forum_perm($forum, $user, $group){
 		LEFT JOIN perm_forums     pf ON f.id    = pf.id
 		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$user}
 		WHERE f.id = {$forum}
-	", PDO::FETCH_ASSOC, true);
+	", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 }
 
 // Generate the bitmask field names for a query
@@ -152,7 +157,7 @@ function create_verification_hash($n,$pw) {
 
 function generate_token($div = 20, $extra = "") {
 	global $config, $loguser;
-	
+	/* extra IP mangling not needed
 	if (substr($_SERVER['REMOTE_ADDR'], 0, 2) == "::") {
 		$ipaddr = array(127,0,0,1);
 	} else if (strpos($_SERVER['REMOTE_ADDR'], ":") !== false) {
@@ -169,8 +174,8 @@ function generate_token($div = 20, $extra = "") {
 	$ipaddr[0] = $ipaddr[0] << ($orig / $div);
 	
 	$ipaddr = implode('.', $ipaddr);
-		
-	return hash('sha256', $loguser['name'] . $ipaddr . $config['salt-string'] . $extra . $loguser['password']);
+	*/
+	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $extra . $loguser['password']);
 	
 }
 

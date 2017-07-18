@@ -126,7 +126,7 @@
 		WHERE f.user = $u
 		GROUP BY f.id
 		ORDER BY f.ord, f.id ASC
-	", PDO::FETCH_UNIQUE, false, true);
+	", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	
 	// We already have a total of sent messages if we're viewing them
 	if ($view != 'sent') {

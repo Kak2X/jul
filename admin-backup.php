@@ -48,7 +48,7 @@
 				pageheader("$windowtitle - Manual backup");
 				print adminlinkbar();
 ?>				<table class="table">
-					<tr><td class="tdbgh center">Backup log</td></tr>
+					<tr><td class="tdbgh center b">Backup log</td></tr>
 					<tr>
 						<td class="tdbgh" style='background: #000; color: #fff'>
 <?php			chdir("ext");
@@ -65,9 +65,9 @@
 					$curdate 	 = mktime(0,0,0, substr($x,4,2), substr($x,6,2), substr($x,0,4));
 					if ($ctime - $curdate > B_THRESHOLD * 86400) unlink($f);
 				}				
-				redirect("?");
+				return header ("Location: admin-backup.php");
 		}
-		// exec php
+		
 	}
 	else {
 		pageheader($windowtitle);
@@ -89,7 +89,7 @@
 				$list 	 .= "</optgroup><optgroup label='Old backups'>";
 			}
 			if ($optgroup) $oldbackups++;
-			$list 		.= "<option value='$x'>".printdate($curdate, true)." (".number_format(filesize("{$config['backup-folder']}/$x.zip") / 1024, 1)." KB)</option>"; // To check if it exists, do a file_exists on <name>.zip
+			$list 		.= "<option value='$x'>".printdate($curdate, PRINT_DATE)." (".number_format(filesize("{$config['backup-folder']}/$x.zip") / 1024, 1)." KB)</option>"; // To check if it exists, do a file_exists on <name>.zip
 			
 			$file[] = $x;
 		}
@@ -111,11 +111,11 @@
 		<center>
 		<table class='table' style='width: 600px'>
 		
-			<tr><td class='tdbgh center'>Board backups</td></tr>
+			<tr><td class='tdbgh center b'>Board backups</td></tr>
 			
 			<tr>
 				<td class='tdbg1'><center>
-					<br>There are <?= $numfiles ?> backup archive(s) saved in total<?= $lastdate ? ", last on ".printdate($lastdate, true) : "" ?>
+					<br>There are <?= $numfiles ?> backup archive(s) saved in total<?= $lastdate ? ", last on ".printdate($lastdate, PRINT_DATE) : "" ?>
 					<br><?= $oldbackups ? "$oldbackups of these backups are considered old (older than ".B_THRESHOLD." days)" : "" ?>
 					<br>&nbsp;
 					<table class="font">

@@ -23,7 +23,6 @@ function error_reporter($type, $msg, $file, $line, $context) {
 	}
 
 	// Get the ACTUAL location of error for mysql queries
-	
 	if ($type == E_USER_NOTICE && substr($file, -9) === "mysql.php"){
 		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		for ($i = 1; substr($backtrace[$i]['file'], -9) === "mysql.php"; ++$i);
@@ -56,14 +55,14 @@ function exception_reporter($err) {
 	global $config;
 	// Compatibility layer
 	$type = E_ERROR;
-	$msg = $err->getMessage();
+	$msg  = $err->getMessage();
 	$file = $err->getFile();
 	$line = $err->getLine();
 	unset($err);
 	error_reporter($type, $msg, $file, $line, NULL);
-	echo "<!doctype html><html><script>document.body.innerHTML=''</script>";
+	echo "<div style='position: fixed; left: 0px; top: 0px; width: 100%; height: 100vh; background: #000; padding: 20px'>";
 	if (!has_perm('view-debugger') && !$config['always-show-debug']) {
-		dialog("Sorry, an unexpected error has occurred.<br><br>Click <a href='?".urlencode(filter_string($_SERVER['QUERY_STRING']))."'>here</a> to try again.", "Oops", "{$config['board-name']} -- Error");
+		dialog("Sorry, an unexpected error has occurred.<br><br>Click <a href='?".urlencode(filter_string($_SERVER['QUERY_STRING']))."'>here</a> to try again.", "Technical difficulties II", "{$config['board-name']} -- Technical difficulties");
 	} else {
 		fatal_error('Exception', $msg, $file, $line);
 	}
@@ -82,21 +81,19 @@ function error_printer($trigger, $report, $errors){
 		
 		if ($trigger != false){ // called by pagefooter()
 		
-			$list = "<table class='table' cellspacing=0>
+			$list = "<table class='table'>
+				<tr><td class='tdbgh center' colspan=4>Errors</td></tr>
 				<tr>
-					<td class='tbl tdbgh font center' colspan=4>Errors</td>
-				</tr>
-				<tr>
-					<td class='tbl tdbgc center font'>Type</td>
-					<td class='tbl tdbgc center font'>Message</td>
-					<td class='tbl tdbgc center font'>Location</td>
+					<td class='tdbgc center'>Type</td>
+					<td class='tdbgc center'>Message</td>
+					<td class='tdbgc center'>Location</td>
 				</tr>";
 			foreach ($errors as $error){
 				$list .= "
 					<tr>
-						<td class='tbl tdbg1 font'><nobr>".htmlspecialchars($error[0])."</nobr></td>
-						<td class='tbl tdbg2 font'>".htmlspecialchars($error[1])."</td>
-						<td class='tbl tdbg1 font'>".htmlspecialchars($error[2])."</td>
+						<td class='tdbg1 nobr'>".htmlspecialchars($error[0])."</td>
+						<td class='tdbg2'>".htmlspecialchars($error[1])."</td>
+						<td class='tdbg1'>".htmlspecialchars($error[2])."</td>
 					</tr>";
 			}
 				
@@ -115,11 +112,13 @@ function error_printer($trigger, $report, $errors){
 
 function fatal_error($type, $message, $file, $line) {
 ?>
-<body style='background: #000 !important; color: #fff !important'>
+<div style='background: #000 !important; color: #fff !important'>
 <pre>Fatal <?=$type?>
+
 <span style='color: #0f0'><?=$file?></span>#<span style='color: #6cf'><?=$line?></span>
 
 <span style='color: #f44'><?=$message?></span>
+</pre></div>
 <?php
 	die;
 }

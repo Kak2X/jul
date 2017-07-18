@@ -6,27 +6,22 @@
 	
 	// Quick hack to allow linking other pages to searches here
 	if (isset($_GET['ip'])){
-		$_POST['searchip'] 	= $_GET['ip'];
+		$_POST['searchip'] = $_GET['ip'];
 	}
+	// from IP Ban links
+	$_GET['newip'] = filter_string($_GET['newip']);
 	
 	if (isset($_POST['ipban'])){
 		check_token($_POST['auth']);
 
 		// Here we go
-		if (!filter_string($_POST['newip'])) errorpage("You forgot to enter an IP!");
-		
-		$sql->queryp("INSERT INTO `ipbans` SET `ip`=:ip, `reason`=:reason, `date`=:date, `expire`=:expire, `banner`=:banner", 
-			[
-				'ip'     => $_POST['newip'],
-				'reason' => filter_string($_POST['reason'], true),
-				'expire' => filter_int($_POST['expire']) ? (ctime() + ((int) $_POST['expire']) * 3600) : 0,
-				'date'   => ctime(),
-				'banner' => $loguser['id'],
-			]);
+		$ipaddr = filter_string($_POST['reason'], true);
+		if (!$ipaddr) errorpage("You forgot to enter an IP!");
 		
 		$ircreason 	= filter_string($_POST['ircreason']); // Don't strip out control codes for this!
+		$ircmessage = "1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_POST['newip'] . xk(7) . ($ircreason ? " for this reason: " . xk(8) . $ircreason . xk(7) : "") . ".";
+		ipban($ipaddr, $ircmessage, $_POST['newip'], filter_int($_POST['expire']));
 		
-		xk_ircsend("1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_POST['newip'] . xk(7) . ($ircreason ? " for this reason: " . xk(8) . $ircreason . xk(7) : "") . ".");
 		
 		#setmessage("Added IP ban for {$_POST['newip']}.");
 		return header("Location: ?");	
@@ -159,12 +154,12 @@
 	
 	<br><br>
 	
-	<table class='table'>
+	<table class='table' id='addban'>
 		<tr><td class='tdbgh center b' colspan='2'>Add IP ban</td></tr>
 		
 		<tr>
 			<td class='tdbg1 center' style='width: 120px'><b>IP Address</b></td>
-			<td class='tdbg2'><input type='text' name='newip'></td>
+			<td class='tdbg2'><input type='text' name='newip' value='<?=$_GET['newip']?>'></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Reason</b></td>

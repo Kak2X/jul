@@ -474,15 +474,15 @@
 	if (!$id) {
 		$forumid = -1; // Special value to select all filters regardless of forum.
 		// Precache everything
-		$idcache = $sql->fetchq("SELECT DISTINCT thread FROM posts WHERE {$searchon}", PDO::FETCH_COLUMN, false, true);
-		$threadcache = $sql->fetchq("SELECT t.id tmp, t.id, t.title, t.forum FROM threads t WHERE t.id IN (".implode(",", $idcache).")", PDO::FETCH_UNIQUE, false, true);
+		$idcache = $sql->fetchq("SELECT DISTINCT thread FROM posts WHERE {$searchon}", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
+		$threadcache = $sql->fetchq("SELECT t.id tmp, t.id, t.title, t.forum FROM threads t WHERE t.id IN (".implode(",", $idcache).")", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 		$permcache  = $sql->fetchq("
 			SELECT f.id, pf.group{$loguser['group']} forumperm, pu.permset userperm
 			FROM forums f
 			LEFT JOIN perm_forums     pf ON f.id    = pf.id
 			LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 			WHERE f.id IN (".implode(",", array_unique(array_column($threadcache, 'forum'))).")
-		", PDO::FETCH_UNIQUE, false, true);
+		", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	}	
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		
@@ -506,7 +506,7 @@
 		}
 
 		if ($isadmin)
-			$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 
 
 		$post['act'] = filter_int($act[$post['user']]);

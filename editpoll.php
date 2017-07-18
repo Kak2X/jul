@@ -21,7 +21,7 @@
 		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 			
 		WHERE t.id = $id
-	", PDO::FETCH_ASSOC);
+	");
 	
 	
 	// If the thread is in an invalid forum, don't bother checking if we're a local mod
@@ -99,7 +99,7 @@
 
 	} else {
 		// Get the existing choices and group them
-		$choicelist = $sql->fetchq("SELECT id, choice, color FROM poll_choices WHERE poll = {$thread['poll']}", PDO::FETCH_GROUP | PDO::FETCH_UNIQUE, false, true);
+		$choicelist = $sql->fetchq("SELECT id, choice, color FROM poll_choices WHERE poll = {$thread['poll']}", PDO::FETCH_GROUP | PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 		foreach($choicelist as $i => $x){
 			$chtext[$i] 	= $x['choice'];
 			$chcolor[$i] 	= $x['color'];

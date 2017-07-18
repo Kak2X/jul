@@ -14,7 +14,7 @@ function postcode($post,$set){
 
 	$sincelastpost 	= "";
 	$lastactivity 	= "";
-	$since = 'Since: '.printdate($post['regdate'], true);
+	$since = 'Since: '.printdate($post['regdate'], PRINT_DATE);
 
 	$postdate  =  printdate($post['date']);
 

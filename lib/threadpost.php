@@ -89,7 +89,7 @@
 			$post['headid']=$post['signid']=0;
 		}
 		
-		//$blocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$post['uid']}", 0, 0, true); // Enable caching
+		//$blocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$post['uid']}", 0, 0, mysql::USE_CACHE); // Enable caching
 
 		if(!$loguser['viewsig'] || isset($blockedlayouts[$post['uid']])){ // Disabled
 			$post['headtext']=$post['signtext']='';

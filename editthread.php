@@ -190,7 +190,7 @@
 		
 		$c = array();
 		
-		$sql->queryp("UPDATE `threads` SET ".$sql->setplaceholders("title","description","forum","closed","icon","sticky","announcement")." WHERE `id` = $id",
+		$sql->queryp("UPDATE `threads` SET ".mysql::setplaceholders("title","description","forum","closed","icon","sticky","announcement")." WHERE `id` = $id",
 		[
 			'title'        => htmlspecialchars($title),
 			'description'  => xssfilters(filter_string($_POST['description'], true)),

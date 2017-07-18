@@ -61,11 +61,11 @@ function dotags($msg, $user, &$tags = array()) {
 	return $msg;
 }
 
-
+// prepare_tags()
 function doreplace($msg, $posts, $days, $userid, &$tags = null) {
 	global $tagval, $sql;
 
-	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, true);
+	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 
 	$userdata		= array(
 		'id'		=> $userid,
@@ -139,7 +139,7 @@ function escape_codeblock($text) {
 	
 	return "[quote]<code style='background: #000 !important; color: #fff'>$ret</code>[/quote]";
 }
-
+// format_post()
 function doreplace2($msg, $options='0|0', $nosbr = false){
 	// options will contain smiliesoff|htmloff
 	$options = explode("|", $options);
@@ -299,8 +299,8 @@ function dofilters($p, $f = 0){
 	$p = xssfilters($p);
 	
 	if ($hacks['comments']) {
-		$p = str_replace("<!--", '<font color=#80ff80>&lt;!--', $p);
-		$p = str_replace("-->", '--&gt;</font>', $p);
+		$p = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $p);
+		$p = str_replace("-->", '--&gt;</span>', $p);
 	}
 	
 	if (!isset($filters)) {
@@ -313,7 +313,7 @@ function dofilters($p, $f = 0){
 			FROM filters
 			WHERE enabled = 1 AND (forum = 0{$where})
 			ORDER BY id ASC
-		", PDO::FETCH_ASSOC, false, true);
+		", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 	}
 	foreach($filters as $x) {
 		switch ($x['method']) {

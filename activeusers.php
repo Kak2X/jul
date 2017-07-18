@@ -7,7 +7,7 @@
 	$type 	= filter_string($_GET['type']);
 	
 	if (($type == 'pm' || $type == 'pms') && !$loguser['id'])
-		unset($type);
+		$type = NULL;
 
 	if (!isset($_GET['time']))
 		$time = 86400;

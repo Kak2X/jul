@@ -14,7 +14,7 @@
 	
 	print adminlinkbar();
 	
-	if (filter_array($_POST['deluser'])) { //($loguserid==1 or $loguserid==2)){
+	if (filter_array($_POST['deluser'])) {
 		
 		check_token($_POST['auth'], 65);
 		
@@ -36,7 +36,7 @@
 				$id		= $user['id'];
 				$name 	= $user['name'];
 				
-				$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
+				$namecolor = getnamecolor($user['sex'],$user['group'],$user['namecolor']);
 				$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
 				// Backup the user's data just in case
 				$sql->query("INSERT INTO `delusers` ( SELECT * FROM `users` WHERE `id` = '$id' )", false, $querycheck);
@@ -48,7 +48,10 @@
 				$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
 				$sql->query("UPDATE pmsgs SET userto = {$config['deleted-user-id']} WHERE userto=$id", false, $querycheck);
 				$sql->query("UPDATE users SET posts = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}", false, $querycheck);
-				
+				#$sql->query("UPDATE news SET user = {$config['deleted-user-id']} WHERE user = '{$target_id}'", false, $querycheck);
+				#$sql->query("UPDATE news_comments SET user = {$config['deleted-user-id']} WHERE user = '{$target_id}'", false, $querycheck);
+				#$sql->query("UPDATE user_comments SET user = {$config['deleted-user-id']} WHERE user = '{$target_id}'", false, $querycheck);
+	
 				$sql->query("DELETE FROM forummods WHERE user=$id", false, $querycheck);
 				$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id", false, $querycheck);
 				$sql->query("DELETE FROM pollvotes WHERE user=$id", false, $querycheck);
@@ -68,6 +71,11 @@
 		
 		if (!$sql->checkTransaction($querycheck)) {
 			errorpage("Couldn't delete the specified users.");
+		} else {
+			// Since we're sure the queries have succeeded, now delete the userpic folders
+			foreach($dellist as $id) {
+				deletefolder("userpic/$id");
+			}
 		}
 
 		?>
@@ -89,23 +97,23 @@
 	$_POST['searchip']			= filter_string($_POST['searchip']);
 	$_POST['maxposts']			= filter_int($_POST['maxposts']);
 	
-	if (!isset($_POST['sortpowerlevel'])) {
-		$_POST['sortpowerlevel'] = -1;
+	if (!isset($_POST['sortgroup'])) {
+		$_POST['sortgroup'] = -1;
 	} else {
-		$_POST['sortpowerlevel'] 	= filter_int($_POST['sortpowerlevel']);
+		$_POST['sortgroup'] 	= filter_int($_POST['sortgroup']);
 	}
 	$_POST['sortord'] 			= filter_int($_POST['sortord']);
 	$_POST['sorttype'] 			= filter_int($_POST['sorttype']);
 	// Variable defaults
 	if (!$_POST['sortord']) 		$_POST['sortord']		 = 0;
-	$powerselect[$_POST['sortpowerlevel']]	= 'selected';
+	$powerselect[$_POST['sortgroup']]	= 'selected';
 	$sortsel[$_POST['sorttype']]			= 'selected';
 	$ordsel[$_POST['sortord']]				= 'checked';
  
 	
 	
 ?>
-<form action='del.php' method=post>
+<form action='admin-deluser.php' method=post>
 <table class='table'>
 	<tr><td class='tdbgh center' colspan=2>Sort Options</td></tr>
 	<tr><td class='tdbg1 center' width=300><b>User Search:</b></td>
@@ -116,7 +124,7 @@
 		<td class='tdbg2'><input type='text' name=maxposts size=15 maxlength=9 value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
 	<tr><td class='tdbg1 center'><b>Group:</b></td>
 		<td class='tdbg2'>
-			<select name='sortpowerlevel'>
+			<select name='sortgroup'>
 				<option value=0  <?=filter_string($powerselect[0]) ?>>* Any group</option>
 				<option value='-1'  <?=filter_string($powerselect['-1']) ?>>* All banned (default)</option>
 <?php	foreach ($grouplist as $groupid => $group) {
@@ -169,14 +177,14 @@
 		$values['searchname']	= '%'.$_POST['searchname'].'%';
 	}
 
-	if ($_POST['sortpowerlevel'] != 0) {
+	if ($_POST['sortgroup'] != 0) {
 		if ($sqlquery)	$sqlquery	.= " AND ";
 
-		if ($_POST['sortpowerlevel'] == -1) 
+		if ($_POST['sortgroup'] == -1) 
 			$sqlquery	.= "(`group` = ".GROUP_BANNED." OR `group` = ".GROUP_PERMABANNED.") ";
 		else {
-			$sqlquery	.= "`powerlevel` = :powerlevel";
-			$values['powerlevel'] = $_POST['sortpowerlevel'];
+			$sqlquery	.= "`group` = :group";
+			$values['group'] = $_POST['sortgroup'];
 		}
 	}
 
@@ -214,7 +222,7 @@
 	$users		= $sql->queryp("SELECT * FROM `users` $sqlquery", $values);
 	$usercount	= $sql->num_rows($users);
 	?>
-<form action=del.php method=post>
+<form action=admin-deluser.php method=post>
 <table class='table'>
 	<tr><td class='tbl tdbgc font center' colspan=8><b><?=$usercount?> user(s) found.</b></td></tr>
 	<tr>
@@ -231,11 +239,11 @@
 	while ($user=$sql->fetch($users)) {
 		$userlink = getuserlink($user);
 		
-		if($user['lastposttime']) $lastpost	= printdate($user['lastposttime'], true);
+		if($user['lastposttime']) $lastpost	= printdate($user['lastposttime'], PRINT_DATE);
 			else $lastpost		= '-';
 		if($user['lastactivity'] != $user['regdate']) $lastactivity	= printdate($user['lastactivity']);
 			else $lastactivity	= '-';
-		if($user['regdate']) $regdate = printdate($user['regdate'], true);
+		if($user['regdate']) $regdate = printdate($user['regdate'], PRINT_DATE);
 			else $regdate		= '-';
 
 		$textid	= str_pad($user['id'], 5, "x", STR_PAD_LEFT);

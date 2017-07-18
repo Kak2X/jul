@@ -1,5 +1,4 @@
 <?php
-	
 
 require "lib/pageheader.php";
 require "lib/pagefooter.php";
@@ -33,7 +32,11 @@ function doforumlist($id, $name = '', $shownone = '', $skip = 0){
 		LEFT JOIN perm_forums     pf ON f.id    = pf.id
 		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 		
-		WHERE $showcustom AND (!f.hidden OR $showhidden) AND (f.custom OR !ISNULL(c.id)) OR f.id = $id ".($skip ? "AND f.id != $skip" : "")."
+		WHERE $showcustom 
+		  AND (!f.hidden OR $showhidden) 
+		  AND (f.custom OR !ISNULL(c.id)) 
+		  OR f.id = $id ".
+		  ($skip ? "AND f.id != $skip" : "")."
 			
 		ORDER BY f.custom, c.corder, f.catid, f.forder, f.id
 	");
@@ -95,7 +98,7 @@ function doschemeList($all = false, $sel = 0, $name = 'scheme'){
 			$prev 	= $x['special'];
 			$input .= "</optgroup><optgroup label='".($prev ? "Special" : "Normal")." schemes'>";
 		}
-		$input	.= "<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">{$x['name']}</option>";
+		$input .= "<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">{$x['name']}</option>";
 	}
 	return "<select name='$name'>".($all ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
 }
@@ -127,21 +130,23 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 
 		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src='{$posticons[$i]}' HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
 
-		$i++;
+		++$i;
 		if($i % 10 == 0) $posticonlist .= '<br>';
 	}
 
 	// Blank or set to None?
 	if (!$selected || $iconid == -1) $checked = 'checked=1';
 	
-	$posticonlist .= 	"<br>".
-						"<input type=radio class='radio' name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
-						"Custom: <input type='text' name=custposticon VALUE=\"".htmlspecialchars($customicon)."\" SIZE=40 MAXLENGTH=100>";
+	$posticonlist .= "<br>".
+	                 "<input type=radio class='radio' name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
+	                 "Custom: <input type='text' name=custposticon VALUE=\"".htmlspecialchars($customicon)."\" SIZE=40 MAXLENGTH=100>";
 	
 	return $posticonlist;
 }
 
 function moodlist($sel = 0, $return = false) {
+	//return "The mood avatar system needs to be redone.<input type='hidden' name='moodid' value=0>";
+	
 	global $loguser;
 	$sel		= floor($sel);
 
@@ -194,6 +199,7 @@ function moodlist($sel = 0, $return = false) {
 			</tr>
 		</table>";
 	return $ret;
+	
 }
 
 function dopagelist($url, $elements, $div){
@@ -298,22 +304,24 @@ function adminlinkbar($sel = NULL) {
 		array(
 			'admin-threads.php'     => "ThreadFix",
 			'admin-threads2.php'    => "ThreadFix 2",
+			'admin-forums.php'    	=> "ForumFix",
 			'admin-backup.php'      => "Board Backups",
 			
 		),
 		array(
-			'ipsearch.php'          => "IP Search",
+			'admin-ipsearch.php'    => "IP Search",
 			'admin-ipbans.php'      => "IP Bans",
+			'admin-pendingusers.php'=> "Pending Users",
 		//	'admin-slammer.php'     => "EZ Ban Button",
-			'del.php'               => "Delete User",
+			'admin-deluser.php'     => "Delete User",
 		)
 	);
 
 	$r = "<div style='padding:0px;margins:0px;'>
 			<table class='table'>
 				<tr>
-					<td class='tdbgh center' style='border-bottom: 0'>
-						<b>Admin Functions</b>
+					<td class='tdbgh center b' style='border-bottom: 0'>
+						Admin Functions
 					</td>
 				</tr>
 			</table>";

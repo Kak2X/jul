@@ -187,7 +187,7 @@
 
 			//		$sql->query("INSERT INTO `ipbans` SET `ip` = '$ipaddr', `reason` = 'Automagic ban', `banner` = 'Acmlmboard'");
 
-				errorpage("Thank you, $name, for registering your account.",'index.php','the board', 0);
+				errorpage("Thank you, $name, for requesting your account.<br>Your account will need to be verified by the administration before becoming valid.");
 			} else {
 
 				$ircout = array (
@@ -198,6 +198,9 @@
 				
 				// No longer useful
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
+				
+				$sql->beginTransaction();
+				$querycheck = array();
 
 				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `group` = :group, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
 					[
@@ -209,13 +212,14 @@
 						'regdate'			=> $currenttime,
 						'threadsperpage'	=> $config['default-ppp'],
 						'postsperpage'		=> $config['default-tpp']
-					]);
+					], $querycheck);
 				
 				
 				xk_ircout("user", $ircout['name'], $ircout);
 
-				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
-				
+				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')", false, $querycheck);
+				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, ".ctime()." FROM forums", false, $querycheck);
+			
 				// Automatic registration of deleted user
 				if ($newuserid == $config['deleted-user-id']-1) {
 					$sql->query("INSERT INTO `users` SET 
@@ -226,10 +230,15 @@
 						`lastactivity`   = '$currenttime',
 						`regdate`        = '$currenttime',
 						`postsperpage`   = '{$config['default-ppp']}',
-						`threadsperpage` = '{$config['default-tpp']}'");
+						`threadsperpage` = '{$config['default-tpp']}'", false, $querycheck);
 				}
 				
-				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
+				if ($sql->checkTransaction($querycheck)) {
+					mkdir("userpic/$newuserid");
+					errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
+				} else {
+					errorpage("Couldn't register the account.<br>Unknown reason.");
+				}
 			}
 			
 		} else {

@@ -96,14 +96,18 @@
 	
 	pageheader();
 	
-	// We don't need $grouplist anymore now, so it can be edited directly
+	// Fixed a stupid bug where I accidentaly forgot $grouplist WAS actually going to be used
+	// and I unsetted the groups to be hidden directly there, breaking the namecolor function
+	$allowedgroups = array_keys($grouplist);
 	if (!has_perm('show-super-users')) {
-		unset($grouplist[GROUP_SUPER]);
+		$allowedgroups[GROUP_SUPER - 1] = NULL; // The first group starts at ID 1, so everything is offset by that
 	}
-	unset($grouplist[GROUP_SYSADMIN], $grouplist[GROUP_PERMABANNED], $grouplist[GROUP_GUEST]);
+	$allowedgroups[GROUP_SYSADMIN - 1] = $allowedgroups[GROUP_PERMABANNED - 1] = $allowedgroups[GROUP_GUEST - 1] = NULL;
 	$groupout = "";
-	foreach ($grouplist as $key => $val) {
-		$groupout .= "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=$key'>{$val['name']}</a> | ";
+	for ($i = 0, $cnt = count($allowedgroups); $i < $cnt; $i++) {
+		if ($allowedgroups[$i] !== NULL) {
+			$groupout .= "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow={$allowedgroups[$i]}'>{$grouplist[$allowedgroups[$i]]['name']}</a> | ";
+		}
 	}
 	
 print "

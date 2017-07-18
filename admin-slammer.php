@@ -87,8 +87,8 @@ else if ($_POST['knockout']) {
 }
 else {
 	
-	$threads 	= $sql->getarraybykey("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'",'id');
-	$posts 		= $sql->getarraybykey("SELECT id, thread FROM posts WHERE user = '{$target_id}'",'id');
+	$threads 	= $sql->getarray("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'");
+	$posts 		= $sql->getarray("SELECT id, thread FROM posts WHERE user = '{$target_id}'");
 
 	$ct_threads = count($threads);
 	$ct_posts   = count($posts);
@@ -97,12 +97,12 @@ else {
 	echo "Their last known IP address is \"{$uinfo['lastip']}\".\n\n";
 
 	echo "They have made {$ct_threads} thread(s):\n";
-	foreach ($threads as $th)
-		echo "{$th['id']}: {$th['title']} (in forum {$th['forum']})\n";
+	foreach ($threads as $tid => $th)
+		echo "{$tid}: {$th['title']} (in forum {$th['forum']})\n";
 
 	echo "\nThey have made {$ct_posts} post(s):\n";
-	foreach ($posts as $po)
-		echo "{$po['id']}: in thread {$po['thread']}\n";
+	foreach ($posts as $pid => $po)
+		echo "{$pid}: in thread {$po['thread']}\n";
 
 	?>
 

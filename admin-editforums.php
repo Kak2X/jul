@@ -18,7 +18,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	
 	// Duplicate prevention
 	$forumtitle = xssfilters(filter_string($_POST['forumtitle'], true));
-	if ($sql->resultp("SELECT 1 FROM forums WHERE title = ?", [$forumtitle])) {
+	if ($sql->resultp("SELECT 1 FROM forums WHERE id != ? AND title = ?", [$_GET['id'], $forumtitle])) {
 		errorpage("Sorry, but a forum named like this already exists.");
 	}
 	
@@ -30,7 +30,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	else
 		$_POST['specialscheme'] = filter_int($_POST['specialscheme']);
 	
-	$qadd = $sql->setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle","custom","user");
+	$qadd = mysql::setplaceholders("title","description","catid","numthreads","numposts","forder","specialscheme","specialtitle","hidden","pollstyle","custom","user");
 	
 	$values = array(
 		'title' 			=> $forumtitle,

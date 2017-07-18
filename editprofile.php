@@ -1,5 +1,5 @@
 <?php
-
+	// This file is already fixed. Just remove this comment and go on.
 	require 'lib/function.php';
 	pageheader();
 	
@@ -53,14 +53,14 @@
 		} else {
 			$eddateformat 	= filter_string($_POST['dateformat'], true);
 		}
-		if ($_POST['presetshort']) {
-			$eddateshort 	= filter_string($_POST['presetshort'], true);
+		if ($_POST['presettime']) {
+			$edtimeformat 	= filter_string($_POST['presettime'], true);
 		} else {
-			$eddateshort 	= filter_string($_POST['dateshort'], true);
+			$edtimeformat 	= filter_string($_POST['timeformat'], true);
 		}
 		
 		if (!$eddateformat || $eddateformat == $config['default-dateformat']) $eddateformat = '';
-		if (!$eddateshort  || $eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
+		if (!$edtimeformat || $edtimeformat == $config['default-timeformat']) $edtimeformat  = '';
 		
 		
 		// \n -> <br> conversion
@@ -162,7 +162,7 @@
 			'homepagename'	 	=> filter_string($_POST['homepagename'], true),
 			// Options
 			'dateformat' 		=> $eddateformat,
-			'dateshort' 		=> $eddateshort,
+			'timeformat' 		=> $edtimeformat,
 			'timezone' 			=> filter_int($_POST['timezone']),
 			'postsperpage' 		=> filter_int($_POST['postsperpage']),
 			'threadsperpage'	=> filter_int($_POST['threadsperpage']),
@@ -233,7 +233,7 @@
 		// You are not supposed to look at this.
 		// No, really. These are the same placeholder from the arrays above.
 		$userset = $sql->setplaceholders("password","namecolor","picture","minipic","signature","bio","email","icq","title","useranks","aim","sex",
-		"homepageurl","homepagename","privateemail","timezone","dateformat","dateshort","postsperpage","aka","realname","location","postheader","scheme",
+		"homepageurl","homepagename","privateemail","timezone","dateformat","timeformat","postsperpage","aka","realname","location","postheader","scheme",
 		"threadsperpage","birthday","viewsig","layout","moodurl","imood","signsep","pagestyle","pollstyle","hideactivity");
 		
 		$sql->queryp("UPDATE users SET {$adminset}{$userset} WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
@@ -341,7 +341,7 @@
 		
 		table_format("Options", array(
 			"Custom date format" 			=> [4, "dateformat", "Edit the date format here to affect how dates are displayed. Leave it blank to return to the default format ({$config['default-dateformat']})<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information."],
-			"Custom short date format" 		=> [4, "dateshort", "A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>{$config['default-dateshort']}</b>)."],
+			"Custom time format" 			=> [4, "timeformat", "Edit the time format here to affect how time is displayed. Leave it blank to return to the default format (<b>{$config['default-timeformat']}</b>)."],
 			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
@@ -397,22 +397,22 @@
 		}
 		$dateformat = 	"<span class='nobr'><input type='text' name='dateformat' size=16 maxlength=32 value='{$userdata['dateformat']}'> or preset: ".
 						"<select name='presetdate'><option value=''></option>\n\r";
-		$dateformatlist = array("m-d-y h:i:s A", "m/d/y H:i:s", "d-m-y H:i", "d-m-y h:i:s", "d/m/Y H:i:s",  "Y-m-d H:i:s", "M j Y H:i", "D jS M Y");
+		$dateformatlist = array("m-d-y", "d-m-y", "y-m-d", "Y-m-d", "m/d/Y", "d.m.y", "M j Y", "D jS M Y");
 		foreach ($dateformatlist as $fmt) {
 			$dateformat .= "<option value='$fmt'>$fmt (".date($fmt, ctime()).")</option>";
 		}
 		$dateformat .= "</select></span>";
 		
-		if (!$userdata['dateshort']) {
-			$userdata['dateshort'] = $config['default-dateshort'];
+		if (!$userdata['timeformat']) {
+			$userdata['timeformat'] = $config['default-timeformat'];
 		}		
-		$dateshort = 	"<span class='nobr'><input type='text' name='dateshort' size=16 maxlength=32 value='{$userdata['dateshort']}'> or preset: ".
-						"<select name='presetshort'><option value=''></option>\n\r";
-		$dateshortlist = array("m-d-y", "m/d/y", "m-d-Y", "d-m-y", "d-m-Y", "d/m/Y", "Y-m-d", "M j Y", "D jS M Y");
-		foreach ($dateshortlist as $fmt) {
-			$dateshort .= "<option value='$fmt'>$fmt (".date($fmt, ctime()).")</option>";
+		$timeformat = 	"<span class='nobr'><input type='text' name='timeformat' size=16 maxlength=32 value='{$userdata['timeformat']}'> or preset: ".
+						"<select name='presettime'><option value=''></option>\n\r";
+		$timeformatlist = array("h:i A", "h:i:s A", "H:i", "H:i:s");
+		foreach ($timeformatlist as $fmt) {
+			$timeformat .= "<option value='$fmt'>$fmt (".date($fmt, ctime()).")</option>";
 		}
-		$dateshort .= "</select></span>";
+		$timeformat .= "</select></span>";
 		
 		
 
@@ -422,7 +422,7 @@
 			$group = "";
 			$check1[$userdata['group']] = 'selected';
 			$sysadmin = has_perm('sysadmin-actions');
-			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups", PDO::FETCH_UNIQUE, false, true);
+			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups", PDO::FETCH_UNIQUE, MYSQL::FETCH_ALL);
 			foreach ($grouplist as $groupid => $groupval) {
 				if (check_perm('sysadmin-actions', $groupid, $checkcache[$groupid]) && !$sysadmin) {
 					continue; // Hide groups that would give normal admins sysadmin actions
@@ -432,7 +432,7 @@
 			$group = "<select name=group>{$group}</select>";
 			
 			// Registration time
-			$regdate = datetofields($userdata['regdate'], 'reg', true, true);
+			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);
 			
 			// Hours left before the user is unbanned
 			$ban_val 	= 

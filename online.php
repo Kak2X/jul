@@ -122,7 +122,7 @@
 		else $ipban = "";
 		
 		if($isadmin)
-			print "<td class='tdbg1 center'><a href='ipsearch.php?ip={$user['lastip']}'>{$user['lastip']}</a> $ipban</td>";
+			print "<td class='tdbg1 center'><a href='admin-ipsearch.php?ip={$user['lastip']}'>{$user['lastip']}</a> $ipban</td>";
 //		<td class='tdbg1 right'>". $user['ipmatches'] ." <img src='". ($user['ipmatches'] > 0 ? "images/dot2.gif" : "images/dot5.gif") ."' align='absmiddle'></td>";
 
 		?>
@@ -203,7 +203,7 @@
 
 		if($isadmin)
 			print "</td><td class='tdbg1 center'$marker>
-			<a href=ipsearch.php?ip={$guest['ip']}>{$guest['ip']}</a><span class='fonts'>
+			<a href=admin-ipsearch.php?ip={$guest['ip']}>{$guest['ip']}</a><span class='fonts'>
 			<br>[$ipban<a href='http://google.com/search?q={$guest['ip']}'>G</a>-<a href='http://en.wikipedia.org/wiki/User:{$guest['ip']}'>W</a>-<a href='http://{$guest['ip']}/'>H</a>]</a></span>";
   
 

@@ -1,5 +1,5 @@
 <?php
-
+	
 	require 'lib/function.php';
 	$windowtitle	= "Admin Cruft -- {$config['board-name']}";
 	pageheader($windowtitle);
@@ -30,7 +30,7 @@
 		}
 		
 		// The rest
-		$sql->queryp("UPDATE misc SET ".$sql->setplaceholders(
+		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders(
 			"views","hotcount","maxpostsday","maxpostshour","maxpostsdaydate","maxpostshourdate","maxusers","maxusersdate",
 			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode",
 			"announcementforum","trashforum","maxcustomforums","daysforcustomforum","postsforcustomforum"),
@@ -97,7 +97,7 @@
 		</tr>
 		<tr><td class='tdbg1 center' width='200'><b>Registration mode</b></td>
 			<td class='tdbg2'>
-				<select name='regmode' <?=$sysset?>>
+				<select name='regmode' id='regmode' onchange="enacode()" <?=$sysset?>>
 					<option value='0' <?=filter_string($reg_sel[0])?>>Open registration</option>
 					<option value='1' <?=filter_string($reg_sel[1])?>>Disabled</option>
 					<option value='2' <?=filter_string($reg_sel[2])?>>Pending membership</option>
@@ -105,7 +105,7 @@
 				</select>
 			</td>
 		</tr>
-		<tr><td class='tdbg1 center' width='200'><b>Registration code</b></td>
+		<tr id="regcodetr"><td class='tdbg1 center' width='200'><b>Registration code</b></td>
 			<td class='tdbg2'><input type='text' name='regcode' value="<?=htmlspecialchars($misc['regcode'])?>" <?=$sysset?>></td>
 		</tr>
 		
@@ -145,16 +145,16 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Max posts/day</b></td>
-			<td class='tdbg2'><input type='text' name='maxpostsday' value='<?=$misc['maxpostsday']?>' class='right'> posts, at <?=datetofields($misc['maxpostsdaydate'],'maxpostsday_', true, true , true)?></td>
+			<td class='tdbg2'><input type='text' name='maxpostsday' value='<?=$misc['maxpostsday']?>' class='right'> posts, at <?=datetofields($misc['maxpostsdaydate'],'maxpostsday_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Max posts/hour</b></td>
-			<td class='tdbg2'><input type='text' name='maxpostshour' value='<?=$misc['maxpostshour']?>' class='right'> posts, at <?=datetofields($misc['maxpostshourdate'],'maxpostshour_', true, true , true)?></td>
+			<td class='tdbg2'><input type='text' name='maxpostshour' value='<?=$misc['maxpostshour']?>' class='right'> posts, at <?=datetofields($misc['maxpostshourdate'],'maxpostshour_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Most users online</b></td>
 			<td class='tdbg2'>
-				<input type='text' name='maxusers' value='<?=$misc['maxusers']?>' class='right'> users, at <?=datetofields($misc['maxusersdate'],'maxusers_', true, true , true)?>
+				<input type='text' name='maxusers' value='<?=$misc['maxusers']?>' class='right'> users, at <?=datetofields($misc['maxusersdate'],'maxusers_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?>
 				<br><input type='checkbox' name='maxusersreset' value='1'> Reset user list
 			</td>
 		</tr>
@@ -185,7 +185,13 @@
 		</tr>
 	</table>
 	</form>
-
+	<?php/* Hide the Registration Code row if the respective registration mode isn't selected */?>
+	<script type="text/javascript">
+		function enacode() {
+			document.getElementById("regcodetr").style.display = (document.getElementById("regmode").selectedIndex == 3 ? "" : "none");
+		}
+		enacode();
+	</script>
 	<?php
 
 

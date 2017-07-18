@@ -8,7 +8,7 @@
 	
 	$sqldebuggers = array('127.0.0.1'); # IPs allowed to view the SQL Debugger
 	
-	const BOARD_VERSION = '13/07/2017 b005.01';
+	const BOARD_VERSION = '18/07/2017 b005.02';
 	
 	$config = array(
 	
@@ -60,8 +60,8 @@
 		
 		// Defaults
 		'server-time-offset' 	=> 0 * 3600, # Offset of dates compared to the server date. Change only when the board changes host and the new host is in a different time zone.
-		'default-dateformat'	=> 'm-d-y h:i:s A', # PHP Date format. See the date() function from the PHP Manual for more details.
-		'default-dateshort'		=> 'm-d-y', # PHP Short date format
+		'default-dateformat'	=> 'm-d-y', # PHP Date format. See the date() function from the PHP Manual for more details.
+		'default-timeformat'	=> 'h:i:s A', # PHP Short date format
 		'default-ppp'			=> 20, # Default number of posts shown in a thread page
 		'default-tpp'			=> 50, # Default number of threads shown in a forum page
 		
@@ -82,7 +82,12 @@
 		'smallbrowse'	=> false,		# Mobile mode (Set internally when a mobile browser is detected)
 	);
 	
+	/*
+		Automatically generated variables start here
+	*/
+	
 	// Are we using SSL?
-	if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
+	if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
 		$config['board-url'] = str_replace("http://", "https://", $config['board-url']);
-?>
+	}
+	$config['debug'] = ($config['always-show-debug'] || $x_hacks['superadmin'] || $x_hacks['adminip'] == $_SERVER['REMOTE_ADDR']);

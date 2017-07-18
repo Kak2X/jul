@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 13, 2017 at 08:22 PM
+-- Generation Time: Jul 18, 2017 at 07:40 PM
 -- Server version: 10.1.9-MariaDB
 -- PHP Version: 5.6.15
 
@@ -432,8 +432,8 @@ CREATE TABLE `delusers` (
   `postheader` text,
   `signature` text,
   `bio` text,
-  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `group` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
+  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
   `namecolor` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
@@ -465,7 +465,7 @@ CREATE TABLE `delusers` (
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
   `influence` int(10) UNSIGNED NOT NULL DEFAULT '1',
   `dateformat` varchar(32) NOT NULL,
-  `dateshort` varchar(32) NOT NULL,
+  `timeformat` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -626,7 +626,7 @@ CREATE TABLE `forumread` (
 
 CREATE TABLE `forums` (
   `id` smallint(5) UNSIGNED NOT NULL,
-  `title` varchar(120) DEFAULT NULL,
+  `title` varchar(125) DEFAULT NULL,
   `description` text,
   `catid` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `numthreads` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
@@ -652,6 +652,7 @@ INSERT INTO `forums` (`id`, `title`, `description`, `catid`, `forder`) VALUES
 (2, 'General Staff Forum', 'Not for everybody.', 1, 2),
 (3, 'Announcements', 'Announcements go here.', 2, 1),
 (4, 'Trash', 'Trashed threads go here.', 3, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -840,11 +841,11 @@ CREATE TABLE `misc` (
   `valkyrie` float NOT NULL DEFAULT '0',
   `scheme` smallint(5) DEFAULT NULL,
   `specialtitle` tinytext,
-  `regmode` tinyint(2) NOT NULL DEFAULT '0',
+  `regmode` tinyint(2) UNSIGNED NOT NULL DEFAULT '0',
   `regcode` varchar(32) DEFAULT NULL,
-  `bigpostersupdate` int(11) NOT NULL DEFAULT '0',
-  `announcementforum` int(11) NOT NULL DEFAULT '0',
-  `trashforum` int(11) NOT NULL DEFAULT '0',
+  `bigpostersupdate` int(11) UNSIGNED NOT NULL DEFAULT '0',
+  `announcementforum` int(11) UNSIGNED NOT NULL DEFAULT '0',
+  `trashforum` int(11) UNSIGNED NOT NULL DEFAULT '0',
   `maxcustomforums` tinyint(4) UNSIGNED NOT NULL DEFAULT '4',
   `daysforcustomforum` smallint(5) UNSIGNED NOT NULL DEFAULT '30',
   `postsforcustomforum` smallint(5) UNSIGNED NOT NULL DEFAULT '150',
@@ -865,6 +866,7 @@ INSERT INTO `misc` (`announcementforum`, `trashforum`) VALUES
 --
 
 CREATE TABLE `pendingusers` (
+  `id` int(11) NOT NULL,
   `name` varchar(32) NOT NULL,
   `password` text,
   `ip` varchar(32) NOT NULL,
@@ -1539,8 +1541,8 @@ CREATE TABLE `users` (
   `postheader` text,
   `signature` text,
   `bio` text,
-  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `group` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
+  `ban_expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
   `namecolor` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
@@ -1572,7 +1574,7 @@ CREATE TABLE `users` (
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
   `influence` int(10) UNSIGNED NOT NULL DEFAULT '1',
   `dateformat` varchar(32) NOT NULL,
-  `dateshort` varchar(32) NOT NULL,
+  `timeformat` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -1757,6 +1759,7 @@ ALTER TABLE `minilog`
 -- Indexes for table `pendingusers`
 --
 ALTER TABLE `pendingusers`
+  ADD UNIQUE KEY `id` (`id`) USING BTREE,
   ADD KEY `time` (`time`);
 
 --
@@ -1896,8 +1899,8 @@ ALTER TABLE `threads`
   ADD KEY `sticky` (`sticky`),
   ADD KEY `pollid` (`poll`),
   ADD KEY `lastpostdate` (`lastpostdate`),
-  ADD KEY `firstpostdate` (`firstpostdate`),
-  ADD KEY `announcement` (`announcement`);
+  ADD KEY `announcement` (`announcement`) USING BTREE,
+  ADD KEY `firstpostdate` (`firstpostdate`);
 
 --
 -- Indexes for table `threadsread`
@@ -1953,8 +1956,8 @@ ALTER TABLE `users`
   ADD KEY `lastforum` (`lastforum`),
   ADD KEY `lastposttime` (`lastposttime`),
   ADD KEY `lastactivity` (`lastactivity`),
-  ADD KEY `group` (`group`),
-  ADD KEY `sex` (`sex`);
+  ADD KEY `sex` (`sex`),
+  ADD KEY `group` (`group`);
 
 --
 -- Indexes for table `users_rpg`

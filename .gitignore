@@ -6,3 +6,5 @@ version.txt
 lib/config.php
 lib/firewall.php
 backups/*.zip
+userpic/*
+!userpic/info.txt

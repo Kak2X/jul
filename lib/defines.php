@@ -95,7 +95,12 @@
 	const BPT_BOT 		= 8;
 	
 	
-	//const PDO_CACHE		= 0b1;
-	//const PDO_FETCHALL	= 0b10;
-	
+	// The date display functions had an unreadable mess of FALSE,TRUE,FALSE so it had to be done
+	# printdate
+	const PRINT_TIME = 0b1;
+	const PRINT_DATE = 0b10;
+	# datetofields
+	const DTF_DATE = 0b1;
+	const DTF_TIME = 0b10;
+	const DTF_NOLABEL = 0b100;
 	

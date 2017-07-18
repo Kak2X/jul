@@ -62,7 +62,7 @@ function postcode($post,$set){
 	}
 	
 	$lastactivity	= 'Last activity: '.timeunits(ctime()-$post['lastactivity']);
-	$since			= 'Since: '.printdate($post['regdate'], true);
+	$since			= 'Since: '.printdate($post['regdate'], PRINT_DATE);
 	$postdate		= printdate($post['date']);
 	
 	$threadlink		= "";

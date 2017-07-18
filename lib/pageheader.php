@@ -3,7 +3,7 @@
 function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
 	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols, $isChristmas;
 			
-	// Load images right away
+	// Load images and color settings right away
 	require 'lib/colors.php';
 	
 	/*
@@ -45,7 +45,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$config['board-title'] .= $config['title-submessage'] ? "<br><b>".$config['title-submessage']."</b>" : "";
 	
 	// Admin-only info
-	// in_array($loguserid,array(1,5,2100))
 	if (has_perm('logs-banner')) {
 		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
 		if ($xminilog['count']) {
@@ -55,8 +54,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		
 		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `pendingusers`");
 		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `username`, `ip` FROM `pendingusers` ORDER BY `time` DESC LIMIT 1");
-			$config['board-title']	.= "<br><span class='font' style='color: #ff0'><b>". $xminilog['count'] ."</b> pending user(s), last <b>'". $xminilogip['username'] ."'</b> at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ."</b></span>";
+			$xminilogip	= $sql->fetchq("SELECT `name`, `ip` FROM `pendingusers` ORDER BY `time` DESC LIMIT 1");
+			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>". $xminilog['count'] ."</b> pending user(s), last <b>'". $xminilogip['name'] ."'</b> at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ."</b></span></a>";
 		}
 	}
 	
@@ -347,12 +346,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  background:#000000;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		.radio{
+		input[type=radio]{
 		  border:	none;
 		  background:none;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		.submit{
+		input[type=submit]{
 		  border:	#$inputborder solid 2px;
 		  font:	10pt $font;}
 		";
@@ -430,7 +429,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 
 	
-?><html>
+?>
+<!doctype html>
+<html>
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 		<?=$metatag?>

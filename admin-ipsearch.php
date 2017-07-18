@@ -1,5 +1,27 @@
 <?php
 	require 'lib/function.php';
+	
+	if (isset($_GET['unban'])){
+		checkgettoken();
+		$id = filter_int($_GET['unban']);
+		$sql->query("
+			UPDATE users
+			SET powerlevel = 0, ban_expire = 0
+			WHERE id = $id
+		");
+		setmessage("Removed ban for user #$id");
+		return header("Location: ?");
+		x_die();
+	}
+	else if (isset($_GET['ipban'])){
+		checkgettoken();
+		$ip = filter_string($_GET['ipban']);
+		ipban("online.php ban", "IP Banned $ip (admin-ipsearch.php ban)", $ip, 0, true); 
+		setmessage("Added IP ban for $ip");
+		return header("Location: ?");
+		x_die();
+	}
+	
 	pageheader("IP Address Search");
 	admincheck();
 	print adminlinkbar();
@@ -15,12 +37,15 @@
 	$ch4[$_POST['d']] = ' checked';
 
 ?>
-<form action=ipsearch.php method=post>
+<form action="admin-ipsearch.php" method=post>
 <table class='table'>
 	<tr><td class='tdbgh center' colspan=2>IP search</td></tr>
 	<tr>
 		<td class='tdbg1 center' style="width: 20%"><b>IP to search:</b></td>
-		<td class='tdbg2'><input type='text' name=ip size=15 maxlength=15 value="<?=htmlspecialchars($_POST['ip'])?>"></td>
+		<td class='tdbg2'>
+			<input type='text' name=ip size=15 maxlength=15 value="<?=htmlspecialchars($_POST['ip'])?>">
+			<span class='fonts'>use * as wildcard</span>
+		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center'><b>Sort users by:</b></td>
@@ -68,12 +93,12 @@
 		$_POST['ip'] = str_replace('*', '%', $_POST['ip']);
 		
 		switch ($_POST['su']) {
-			case 'n': $usort='ORDER BY name'; break;
-			case 'p': $usort='ORDER BY posts DESC'; break;
-			case 'r': $usort='ORDER BY regdate'; break;
-			case 's': $usort='ORDER BY lastposttime'; break;
-			case 'a': $usort='ORDER BY lastactivity'; break;
-			case 'i': $usort='ORDER BY lastip'; break;
+			case 'n': $usort='ORDER BY u.name'; break;
+			case 'p': $usort='ORDER BY u.posts DESC'; break;
+			case 'r': $usort='ORDER BY u.regdate'; break;
+			case 's': $usort='ORDER BY u.lastposttime'; break;
+			case 'a': $usort='ORDER BY u.lastactivity'; break;
+			case 'i': $usort='ORDER BY u.lastip'; break;
 		}
 		switch ($_POST['sp']) {
 			case 'u': $psort='ORDER BY u.name'; break;
@@ -91,7 +116,11 @@
 		} else {
 			$pgroup=$mgroup='';
 		}
-		$users = $sql->queryp("SELECT * FROM users WHERE lastip LIKE ? $usort", [$_POST['ip']]);
+		$users = $sql->queryp("
+			SELECT u.*, i.ip ipbanned
+			FROM users u 
+			LEFT JOIN ipbans i ON u.lastip = i.ip
+			WHERE u.lastip LIKE ? $usort", [$_POST['ip']]);
 		$posts = $sql->queryp("
 			SELECT p.*, $userfields uid, t.title
 			FROM posts p
@@ -118,14 +147,14 @@
 <br>
 <table class='table'>
 	<tr>
-		<td class='tdbgh center' colspan=7><b>Users: <?=$sql->num_rows($users)?></b><tr>
+		<td class='tdbgh center' colspan=8><b>Users: <?=$sql->num_rows($users)?></b><tr>
 		<td class='tdbgc center'>id</td>
 		<td class='tdbgc center'>Name</td>
 		<td class='tdbgc center'>Registered on</td>
 		<td class='tdbgc center'>Last post</td>
 		<td class='tdbgc center'>Last activity</td>
 		<td class='tdbgc center'>Posts</td>
-		<td class='tdbgc center'>Last IP</td>
+		<td class='tdbgc center' colspan=2>Last IP</td>
 	</tr>
 <?php
 		for($c=0; $c<500 && $user=$sql->fetch($users); ++$c) {
@@ -139,6 +168,11 @@
 		<td class='tdbg1 center'><?=printdate($user['lastactivity'])?></td>
 		<td class='tdbg1 center'><?=$user['posts']?></td>
 		<td class='tdbg2 center'><?=$user['lastip']?></td>
+		<td class='tdbg2 center'><?=
+			($user['ipbanned'] ? 
+			"<a href='admin-ipbans.php?searchip={$user['lastip']}'>[IP BANNED]</a>" : 
+			"<a href='admin-ipbans.php?newip={$user['lastip']}#addban'>IP Ban</a>")?>
+		</td>
 	</tr>
 <?php
 		}

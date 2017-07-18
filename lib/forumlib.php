@@ -53,7 +53,7 @@ function getrank($rankset, $title, $posts, $group, $bandate = NULL){
 			WHERE num <= $posts	AND rset = $rankset
 			ORDER BY num DESC
 			LIMIT 1
-		", 0, 0, true);
+		", 0, 0, mysql::USE_CACHE);
 	}
 
 	if ($title) {
@@ -64,7 +64,7 @@ function getrank($rankset, $title, $posts, $group, $bandate = NULL){
 	} 
 	// *LIVE* ban expiration date
 	if ($bandate && $group == GROUP_BANNED) {
-		$rank .= (isset($grouplist) ? "" : "<br>Banned")." until ".printdate($bandate, true, false)."<br>Expires in ".timeunits2($bandate-ctime());
+		$rank .= (isset($grouplist) ? "" : "<br>Banned")." until ".printdate($bandate, PRINT_DATE)."<br>Expires in ".timeunits2($bandate-ctime());
 	}
 	return $rank;
 }
@@ -95,16 +95,17 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		if ($id == $loguser['id']) {
 			$u = $loguser;
 		} else {
-			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, true);
+			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 		}
 	}
 	
-	if ($id) $u['id'] = $id;
-	
+	if (!$id && $u['id']) {
+		$id = $u['id'];
+	}
 	// When the username is null it typically means the user has been deleted.
 	// Print this so we don't just end up with a blank link.
 	if ($u['name'] == NULL) {
-		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
+		return "<span style='color: #FF0000' class='b nobr'>[Deleted user]</span>";
 	}
 	
 	if (isset($u['aka']) && $u['aka']) {
@@ -123,14 +124,11 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	} else {
 		$u['namecolor'] = "";
 	}
-	$namecolor		= getnamecolor($u['sex'], $u['group'], $u['namecolor']);
 	
-	$minipic		= ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
+	$namecolor  = getnamecolor($u['sex'], $u['group'], $u['namecolor']);
+	$minipic    = ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
 	
-	$class = $urlclass ? " class='{$urlclass}'" : "";
-	
-	
-	return "$minipic<a style='color:#{$namecolor}'{$class} href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
+	return "$minipic<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
 }
 
 function getnamecolor($sex, $group, $namecolor = ''){
@@ -207,7 +205,7 @@ function postradar($userid){
 		INNER JOIN users u ON p.comp = u.id
 		WHERE p.user = $userid
 		ORDER BY posts DESC
-	", PDO::FETCH_ASSOC);
+	");
 	
 	$rows = $sql->num_rows($postradar);
 	
@@ -227,7 +225,7 @@ function postradar($userid){
 
 			$namelink = getuserlink($b);
 			$t .= " {$namelink}" . (!$hacks['noposts'] ? " ({$b['posts']})" : "");
-			return "<nobr>{$t}</nobr>";
+			return "<span class='nobr'>{$t}</span>";
 		}
 
 		// Save ourselves a query if we're viewing our own post radar
@@ -254,12 +252,14 @@ function fonlineusers($id){
 	else
 		$sql->query("UPDATE guests SET lastforum = $id WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 
-	$forumname		= $sql->resultq("SELECT title FROM forums WHERE id = $id");
-	$onlinetime		= ctime()-300;
-	$onusers		= $sql->query("
+	$forumname      = $sql->resultq("SELECT title FROM forums WHERE id = $id");
+	$onlinetime     = ctime()-300;
+	$onusers        = $sql->query("
 		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
 		FROM users u
-		WHERE lastactivity > $onlinetime AND lastforum = $id AND (".has_perm('show-hidden-user-activity')." OR !hideactivity)
+		WHERE lastactivity > $onlinetime 
+		  AND lastforum = $id 
+		  AND (".has_perm('show-hidden-user-activity')." OR !hideactivity)
 		ORDER BY name
 	");
 	
@@ -268,14 +268,13 @@ function fonlineusers($id){
 
 	for($numon = 0; $onuser = $sql->fetch($onusers); ++$numon){
 		
-		if($numon) $onlineusers .= ', ';
+		if ($numon) $onlineusers .= ', ';
 
 		/* if ((!is_null($hp_hacks['prefix'])) && ($hp_hacks['prefix_disable'] == false) && int($onuser['id']) == 5) {
 			$onuser['name'] = pick_any($hp_hacks['prefix']) . " " . $onuser['name'];
 		} */
 		$onuser['minipic']	 = htmlspecialchars($onuser['minipic'], ENT_QUOTES);
 		$namelink			 = getuserlink($onuser);
-		$onlineusers		.='<nobr>';
 		
 		if($onuser['nologpost']) // Was the user posting without using cookies?
 			$namelink="($namelink)";
@@ -286,8 +285,9 @@ function fonlineusers($id){
 		if ($onuser['minipic'])
 			$namelink = "<img width=16 height=16 src=\"".htmlspecialchars($onuser['minipic'])."\" align='absmiddle'> $namelink";
 			
-		$onlineusers .= "$namelink</nobr>";
+		$onlineusers .= $namelink;
 	}
+	
 	$p = ($numon ? ':' : '.');
 	$s = ($numon != 1 ? 's' : '');
 	
@@ -310,7 +310,7 @@ function fonlineusers($id){
 		for ($i = 0; $i < 4; ++$i)
 			if ($ginfo[$i])
 				$guestcat[] = $ginfo[$i] . " " . $specinfo[$i];
-		$guests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")" : "") : "";
+		$guests = $numguests ? " | <span class='nobr'>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")</span>" : "") : "";
 	}
 	
 	return "$numon user$s currently in $forumname$p $onlineusers $guests";

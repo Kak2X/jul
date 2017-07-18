@@ -156,7 +156,7 @@
 
 	
 				if (has_perm('forum-admin'))
-					$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+					$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 				
 				?>
 				<table class='table'>

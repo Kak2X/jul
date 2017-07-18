@@ -94,7 +94,7 @@
 		$combocount++;
 		
 		if ($combocount == 1) {
-			$tempout	= "<tr><td class='tdbg1 center'>". date("m-d-y H:i:s", $data['time']) ."</td><td class='tdbg1 center'>%%%COMBO%%%</td><td class='tdbg1 center'><a href='ipsearch.php?ip=". $data['ip'] ."'>". $data['ip'] ."</a></td>";
+			$tempout	= "<tr><td class='tdbg1 center'>". date("m-d-y H:i:s", $data['time']) ."</td><td class='tdbg1 center'>%%%COMBO%%%</td><td class='tdbg1 center'><a href='admin-ipsearch.php?ip=". $data['ip'] ."'>". $data['ip'] ."</a></td>";
 
 			if ($data['banned'])
 				$tempout .= "<td class='tdbg1 fonts center'><span style='color: #f88; font-weight: bold;'>Banned</span></td>";

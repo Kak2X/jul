@@ -1,4 +1,6 @@
 <?php
+
+	$startingtime = microtime(true);
 	
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
@@ -9,8 +11,6 @@
 	// cache bad
 	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 	header('Pragma: no-cache');
-	
-	$startingtime = microtime(true);
 	
 	$errors = array();
 	set_error_handler('error_reporter');
@@ -23,7 +23,7 @@
 		if ($config['always-show-debug'] || $x_hacks['superadmin'] || $x_hacks['adminip'] == $_SERVER['REMOTE_ADDR']) {
 			fatal_error("Connection Error", $sql->error, "<!--", "-->");
 		} else {
-			dialog("This board is experiencing technical difficulties.<br><br>Click <a href='?".urlencode($_SERVER['QUERY_STRING'])."'>here</a> to try again.", "Oops", $config['board-name']);
+			dialog("This board is experiencing technical difficulties.<br><br>Click <a href='?".urlencode($_SERVER['QUERY_STRING'])."'>here</a> to try again.", "Technical difficulties ahead", "{$config['board-name']} -- Technical difficulties");
 		}
 	}
 	
@@ -50,10 +50,15 @@
 		dialog($message, $messagetitle, $title);
 	}
 	
+	// Get the filename of the running script
+	$path = explode("/", $_SERVER['SCRIPT_NAME']);
+	$scriptname = end($path);
+	unset($path);
+	
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
 	} else {
-		$die = 0;
+		$die = false;
 	}
 	
 
@@ -82,9 +87,6 @@
 		<?php
 		die;
 	}
-
-
-
 
 	// determine if the current request is an ajax request, currently only a handful of libraries
 	// set the x-http-requested-with header, with the value "XMLHttpRequest"
@@ -142,6 +144,7 @@
 		
 	$loguser = array();
 	
+	// Are we logged in?
 	if(isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
 		$loguserid 	= (int) $_COOKIE['loguserid'];
 		$loguser 	= $sql->fetchq("SELECT * FROM `users` WHERE `id` = $loguserid");
@@ -158,9 +161,9 @@
 		unset($loguserid, $logverify, $verifyid, $verifyhash);
 	}
 	
-	if ($config['force-user-id'])
+	if ($config['force-user-id']) {
 		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
-
+	}
 	
 	if ($loguser) {
 		
@@ -168,8 +171,8 @@
 		
 		if (!$loguser['dateformat'])
 			$loguser['dateformat'] = $config['default-dateformat'];
-		if (!$loguser['dateshort'])
-			$loguser['dateshort'] = $config['default-dateshort'];
+		if (!$loguser['timeformat'])
+			$loguser['timeformat'] = $config['default-timeformat'];
 		
 		// Load inventory
 		$itemdb = getuseritems($loguser['id']);
@@ -196,7 +199,7 @@
 			'group' 		=> GROUP_GUEST,
 			'signsep'		=> 0,
 			'dateformat'	=> $config['default-dateformat'],
-			'dateshort'		=> $config['default-dateshort'],
+			'timeformat'	=> $config['default-timeformat'],
 			'tzoff'			=> 0,
 			'scheme'		=> 0,
 			'title'			=> '',
@@ -204,8 +207,9 @@
 		);	
 	}	
 	
-	if ($x_hacks['superadmin']) $loguser['group'] = GROUP_SYSADMIN;
-	
+	if ($x_hacks['superadmin']) {
+		$loguser['group'] = GROUP_SYSADMIN;
+	}
 	
 	/*
 		Permission setup
@@ -233,6 +237,7 @@
 	
 	$bpt_flags = 0;
 	
+	// These extra variables are in control of the user. Nuke them if they're not valid IPs
 	if (!($clientip    = filter_var(filter_string($_SERVER['HTTP_CLIENT_IP']),       FILTER_VALIDATE_IP))) $clientip    = "";
 	if (!($forwardedip = filter_var(filter_string($_SERVER['HTTP_X_FORWARDED_FOR']), FILTER_VALIDATE_IP))) $forwardedip = "";	
 	
@@ -406,7 +411,7 @@
 	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
 		$loguser['layout']		= 2;
 		$loguser['viewsig']		= 0;
-		$config['board-title']				= "<span style='font-size: 2em'>{$config['board-name']}</span>";
+		$config['board-title']	= "<span style='font-size: 2em'>{$config['board-name']}</span>";
 		$x_hacks['smallbrowse']	= true;
 	}
 	
@@ -414,14 +419,10 @@
 		Other helpful stuff
 	*/
 	
-	// filename of running script
-	$path = explode("/", $_SERVER['SCRIPT_NAME']);
-	$scriptname = end($path);
-	unset($path);
-	
+
 	// group names
 	// we have to do this since they can be added or removed
-	$grouplist = $sql->fetchq("SELECT id, name, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, false, true);
+	$grouplist = $sql->fetchq("SELECT id, name, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	
 
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");
@@ -432,7 +433,7 @@
 //	}
 
 /*
-	// Doom timer setup
+	// Doom timer setup (disabled)
 	$getdoom	= true;
 	require "ext/mmdoom.php";
 */

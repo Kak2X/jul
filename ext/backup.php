@@ -117,7 +117,7 @@
 		$cols 	= $sql->fetchq("
 			SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 			WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$table'
-		", PDO::FETCH_COLUMN, false, true);
+		", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 		fwrite($handle, "INSERT INTO `$table` (`".implode('`,`', $cols)."`) VALUES\n");
 		$cnt = count($cols);
 

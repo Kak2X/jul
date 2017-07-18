@@ -103,7 +103,7 @@
 		$quote = "<a href='sendprivate.php?id=$id'>Reply</a>";
 	else $quote = "";
 	if (has_perm('forum-admin'))
-		$ip = ($quote ? ' | ' : '') . "IP: <a href='ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
+		$ip = ($quote ? ' | ' : '') . "IP: <a href='admin-ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
 
 	
 	pageheader($windowtitle);

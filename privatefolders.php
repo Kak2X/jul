@@ -28,7 +28,7 @@ if (isset($_POST['edit'])) {
 	$querycheck = array();
 
 	
-	$qadd = $sql->setplaceholders("title","ord");
+	$qadd = mysql::setplaceholders("title","ord");
 	$values = array(
 		'title' 			=> xssfilters(filter_string($_POST['foldertitle'], true)),
 		'ord'				=> filter_int($_POST['folderorder']),
@@ -164,7 +164,7 @@ else {
 		WHERE f.user = $u
 		GROUP BY f.id
 		ORDER BY f.ord, f.id ASC
-	", PDO::FETCH_UNIQUE, false, true);
+	", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	
 	if ($u != $loguser['id'])
 		$users_p = $sql->resultq("SELECT `name` FROM `users` WHERE `id` = $u")."'s p";

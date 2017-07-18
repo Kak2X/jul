@@ -76,7 +76,7 @@
 			FROM forums f
 			WHERE f.custom AND (!f.hidden OR ".has_perm('display-hidden-forums').")
 			ORDER BY f.lastpostid DESC
-			LIMIT ".($_GET['page'] * C_LIMIT).", ".C_LIMIT, PDO::FETCH_COLUMN, false, true);
+			LIMIT ".($_GET['page'] * C_LIMIT).", ".C_LIMIT, PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 
 		$modquery = $sql->query("
 			SELECT $userfields, f.id forum

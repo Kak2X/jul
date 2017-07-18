@@ -3,6 +3,8 @@
 function pagefooter() {
 	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime;
 	
+	define('FOOTER_PRINTED', true);
+	
 	if (!$config['affiliate-links']) {
 		$affiliatelinks = "";
 	} else {

@@ -65,7 +65,7 @@
 	$ratingstatus = "";
 	
 	$maxposts 		= $sql->resultq("SELECT posts FROM users ORDER BY posts DESC LIMIT 1");
-	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel'],$user['ban_expire']);
+	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['group'],$user['ban_expire']);
 	$threadsposted 	= $sql->resultq("SELECT COUNT(id) FROM threads WHERE user = $id");
 	if (!$maxposts) $maxposts = 1;
 	//$i = 0;
@@ -100,7 +100,7 @@
 					" | <a href='profile.php?id=$id&action=blocklayout&auth=$token'>".($isblocked ? "Unb" : "B")."lock layout</a>";
 		if (has_perm('admin-actions')) {
 			if($user['lastip'])
-				$lastip = " <br>with IP: <a href='ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
+				$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
 		
 			$sneek = "<tr><td class='tdbg1 fonts center' colspan=2>"
 					.(has_perm('view-others-pms') ? "<a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |" : "")
@@ -136,7 +136,7 @@
 	
 	$tzoffset = $user['timezone'];
 	$tzoffrel = $tzoffset - $loguser['timezone'];
-	$tzdate   = date($loguser['dateformat'],ctime()+$tzoffset*3600);
+	$tzdate   = date($loguser['dateformat']." ".$loguser['timeformat'],ctime()+$tzoffset*3600);
 	if($user['birthday']){
 		$birthday = date("l, F j, Y", $user['birthday']);
 		$age = "(".floor((ctime()-$user['birthday'])/86400/365.2425)." years old)";

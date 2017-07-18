@@ -85,7 +85,7 @@ if (isset($_POST['action'])) {
 		INNER JOIN perm_forumusers pu ON f.id    = pu.forum
 		INNER JOIN users           u  ON pu.user = u.id
 		WHERE (pu.permset & ".PERM_FORUM_MOD.")
-	", PDO::FETCH_GROUP, false, true);
+	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 	
 	$fa = "";
 	$forumselect 		= "<option value=\"0\">Select a forum...</option>\r\n";

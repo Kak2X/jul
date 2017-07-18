@@ -48,7 +48,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	
 	// Duplicate prevention
 	$forumtitle = xssfilters(filter_string($_POST['forumtitle'], true));
-	if ($sql->resultp("SELECT 1 FROM forums WHERE title = ?", [$forumtitle])) {
+	if ($sql->resultp("SELECT 1 FROM forums WHERE id != ? AND title = ?", [$_GET['id'], $forumtitle])) {
 		errorpage("Sorry, but a forum named like this already exists.");
 	}	
 	
@@ -56,11 +56,11 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	$querycheck = array();
 	
 	$title = xssfilters(filter_string($_POST['specialtitle'], true));
-	if (isset($_POST['specialcss'])) {
+	if (isset($_POST['specialcss']) && $_POST['specialcss']) {
 		$title .= "<style type='text/css'>".xssfilters(filter_string($_POST['specialcss'], true))."</style>";
 	}
 	
-	$qadd = $sql->setplaceholders("title","description","specialtitle","hidden","pollstyle");
+	$qadd = mysql::setplaceholders("title","description","specialtitle","hidden","pollstyle");
 	$values = array(
 		'title' 			=> $forumtitle,
 		'description'		=> xssfilters(filter_string($_POST['description'], true)),
@@ -80,7 +80,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	}
 	// Guests and banned are only allowed read access at most 
 	$permSet[GROUP_GUEST] 		= filter_int($_POST['allowguests'])      & PERM_FORUM_READ;
-	$permSet[GROUP_BANNED] 		= filter_int($_POST['allowbanned'])     & PERM_FORUM_READ;
+	$permSet[GROUP_BANNED] 		= filter_int($_POST['allowbanned'])      & PERM_FORUM_READ;
 	$permSet[GROUP_PERMABANNED] = filter_int($_POST['allowpermabanned']) & PERM_FORUM_READ;
 	
 	if ($_GET['id'] <= -1) {
@@ -119,10 +119,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		}
 	}
 	
-	if ($_POST['edit'])
-		header("Location: ?id=$id");
-	else
-		header("Location: ?");
+	header("Location: ?" . ($_POST['edit'] ? "id=$id" : ""));
 
 	die;
 }
@@ -168,7 +165,7 @@ if ($_GET['id']) {
 			$startcss = strpos($forum['specialtitle'], "<style"); //<style type='text/css'>
 			$endcss = strrpos($forum['specialtitle'], "</style>");
 			if ($startcss && $endcss) {
-				$forum['specialcss'] 	= substr($forum['specialtitle'], $startcss + 23, $endcss);
+				$forum['specialcss'] 	= substr($forum['specialtitle'], $startcss + 23, $endcss - ($startcss + 23));
 				$forum['specialtitle'] 	= substr($forum['specialtitle'], 0, $startcss);
 			} else {
 				$forum['specialcss'] = "";
@@ -179,7 +176,10 @@ if ($_GET['id']) {
 	$numGroups = count($groups);
 
 ?>
-	<form method="post" action="?id=<?=$_GET['id']?>">
+<form method="post" action="?id=<?=$_GET['id']?>">
+<table class='w'>
+<tr>
+<td style="width: 70%; min-width: 600px; vertical-align: top">
 	<table class='table'>
 		<tr>
 			<td class='tdbgh center' colspan=6>Editing <b><?=($_GET['id'] > -1 ? htmlspecialchars($forum['title']) : "a new forum")?></b></td>
@@ -213,7 +213,7 @@ if ($_GET['id']) {
 			<td class='tdbg1' colspan=5><textarea wrap=virtual name=specialtitle ROWS=2 COLS=80 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['specialtitle'])?></TEXTAREA></td>
 		</tr>
 		<tr>
-			<td class='tdbgh center'>Custom CSS</td>
+			<td class='tdbgh center'>Custom CSS<div class="fonts">without &lt;style&gt; tag</div></td>
 			<td class='tdbg1' colspan=5><textarea wrap=virtual name=specialcss ROWS=3 COLS=80 style="width: 100%; resize:vertical;"><?=htmlspecialchars($forum['specialcss'])?></TEXTAREA></td>
 		</tr>
 		<tr>
@@ -224,72 +224,55 @@ if ($_GET['id']) {
 		</tr>
 
 	</table>
-	<br>
+</td>
+<td style="min-width: 600px; vertical-align: top">
 	<!--<?= quick_help("Global moderators and up can access your forum regardless of settings.","A note on group permissions") ?>-->
 	<table class="table">
 		<tr>
-			<td class="tdbgh center b" colspan=42>
-				Group Permissions [<u>R</u>ead / <u>P</u>ost / <u>E</u>dit own posts / <u>D</u>elete own posts / Create <u>T</u>hreads / <u>M</u>oderate forum]
+			<td class="tdbgh center b" colspan=7>
+				Group Permissions
+				<div class="fonts">Hover the mouse on the permissions for their description.</div>
 			</td>
+		</tr>
+		<tr>
+			<td class='tdbgc center b'></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows to view the forum">Read</span></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows to reply in threads">Post</span></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows users to edit their own posts">Edit</span></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows users to delete their own posts">Delete</span></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows to create threads">Thread</span></td>
+			<td class='tdbgc center b'><span style="border-bottom: 1px dotted #f00" title="Allows to moderate the forum">Mod</span></td>
+		</tr>
 <?php
 	$oneSet = false;
-	while ($perms) {
-?>		</tr><tr><?php
-		
-		// Divide in rows of 6
-		$k = 0;
-		foreach ($groups as $id => $name) {
-			echo "<td class='tdbgh center' colspan=6><b>{$name}</b></td>".($oneSet ? "" : "<td class='tdbg2' rowspan=9999>&nbsp;</td>");
-			unset($groups[$id]);
-			++$k;
-			if ($k == 6) break;
-		}
-		// Leftovers
-		for (; $k < 6; ++$k) {
-			echo "<td class='tdbgh center' colspan=6>&nbsp;</td>";
-		}
-			
-	?>		</tr><tr><?php
-
-		for ($i = 0; $i < 6; ++$i) {
-	?>			<td class='tdbgc center'><b>R</b></td>
-				<td class='tdbgc center'><b>P</b></td>
-				<td class='tdbgc center'><b>E</b></td>
-				<td class='tdbgc center'><b>D</b></td>
-				<td class='tdbgc center'><b>T</b></td>
-				<td class='tdbgc center'><b>M</b></td>
+	$curGroup = current($groups);
+	$curPerm  = current($perms);
+	$permName = key($perms);
+	while ($curPerm !== false) {
+	?>
+		<tr>
+			<td class='tdbgh center b'><?= $curGroup ?></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'r'?>" value="<?=PERM_FORUM_READ  ?>" <?= ($curPerm & PERM_FORUM_READ   ? "checked" : "") ?>></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'p'?>" value="<?=PERM_FORUM_POST  ?>" <?= ($curPerm & PERM_FORUM_POST   ? "checked" : "") ?>></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'e'?>" value="<?=PERM_FORUM_EDIT  ?>" <?= ($curPerm & PERM_FORUM_EDIT   ? "checked" : "") ?>></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'d'?>" value="<?=PERM_FORUM_DELETE?>" <?= ($curPerm & PERM_FORUM_DELETE ? "checked" : "") ?>></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'t'?>" value="<?=PERM_FORUM_THREAD?>" <?= ($curPerm & PERM_FORUM_THREAD ? "checked" : "") ?>></td>
+			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'m'?>" value="<?=PERM_FORUM_MOD   ?>" <?= ($curPerm & PERM_FORUM_MOD    ? "checked" : "") ?>></td>
+		</tr>
 	<?php
-		}
-		
-	?>		</tr><tr><?php
-
-		$i = 0;
-		foreach ($perms as $permName => $val) {
-	?>			<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'r'?>" value="<?=PERM_FORUM_READ  ?>" <?= ($val & PERM_FORUM_READ   ? "checked" : "") ?>></td>
-				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'p'?>" value="<?=PERM_FORUM_POST  ?>" <?= ($val & PERM_FORUM_POST   ? "checked" : "") ?>></td>
-				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'e'?>" value="<?=PERM_FORUM_EDIT  ?>" <?= ($val & PERM_FORUM_EDIT   ? "checked" : "") ?>></td>
-				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'d'?>" value="<?=PERM_FORUM_DELETE?>" <?= ($val & PERM_FORUM_DELETE ? "checked" : "") ?>></td>
-				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'t'?>" value="<?=PERM_FORUM_THREAD?>" <?= ($val & PERM_FORUM_THREAD ? "checked" : "") ?>></td>
-				<td class='tdbg1 center'><input type="checkbox" name="<?=$permName.'m'?>" value="<?=PERM_FORUM_MOD   ?>" <?= ($val & PERM_FORUM_MOD    ? "checked" : "") ?>></td>
-	<?php	unset($perms[$permName]);
-			++$i;
-			if ($i == 6) break;
-		}
-		for (; $i < 6; ++$i) {
-			echo "<td class='tdbg1 center' colspan=6>&nbsp;</td>";
-		}
-		$oneSet = true;
+		$curGroup = next($groups);
+		$curPerm  = next($perms);
+		$permName = key($perms);
 	}
 	
 	$permSet[GROUP_GUEST] 		= filter_int($_POST['allowguests']);
 	$permSet[GROUP_BANNED] 		= filter_int($_POST['allowbannned']);
 	$permSet[GROUP_PERMABANNED] = filter_int($_POST['allowpermabanned']);
 ?>
-	</tr>
 	</table>
 	<table class='table' style='border-top: none'>
 		<tr>
-			<td class='tdbgh center'>Also assign read permissions to:</td>
+			<td class='tdbgh center b'>Also assign read permissions to:</td>
 			<td class='tdbg1'>
 				<input type="checkbox" name="allowguests" value="<?=     PERM_FORUM_READ?>" <?= ($extraperms[0] & PERM_FORUM_READ ? "checked" : "") ?>> <?=$grouplist[GROUP_GUEST]['name']?>
 				<input type="checkbox" name="allowbanned" value="<?=     PERM_FORUM_READ?>" <?= ($extraperms[1] & PERM_FORUM_READ ? "checked" : "") ?>> <?=$grouplist[GROUP_BANNED]['name']?>
@@ -297,7 +280,10 @@ if ($_GET['id']) {
 			</td>
 		</tr>
 	</table>
-	</form><br>
+</td>
+</tr>
+</table>
+</form><br>
 <?php
 }
 

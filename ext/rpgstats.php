@@ -17,7 +17,7 @@
 	if(!$it)
 		$it=0;
 	if(!$ne) {
-		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, false, true);
+		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 		$q 		= "";
 		foreach($num as $i) $q .= " OR id = ".filter_int($user['eq'.$i]);
 		$items = $sql->getarraybykey("SELECT * FROM items WHERE id=$it$q", 'id');
@@ -26,7 +26,7 @@
 		$class = $sql->fetchq("SELECT * FROM `rpg_classes` WHERE `id` = '{$user['class']}'");
 
 	if($ct) {
-		$GPdif = floor($items[$user['eq'.$ct]][coins]*0.6)-$items[$it][coins];
+		$GPdif = floor($items[$user['eq'.$ct]]['coins']*0.6)-$items[$it]['coins'];
 		$user['eq'.$ct] = $it;
 	}	
 

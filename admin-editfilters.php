@@ -43,9 +43,9 @@
 		}
 		
 		if  ($_GET['id'] <= -1) {
-			$q = "INSERT INTO filters SET ".$sql->setplaceholders('source','replacement','comment','method','forum','enabled','type');
+			$q = "INSERT INTO filters SET ".mysql::setplaceholders('source','replacement','comment','method','forum','enabled','type');
 		} else {
-			$q = "UPDATE filters SET ".$sql->setplaceholders('source','replacement','comment','method','forum','enabled','type')." WHERE id = {$_GET['id']}";
+			$q = "UPDATE filters SET ".mysql::setplaceholders('source','replacement','comment','method','forum','enabled','type')." WHERE id = {$_GET['id']}";
 		}
 		
 		$sql->queryp($q, 

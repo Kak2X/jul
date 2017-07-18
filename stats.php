@@ -28,15 +28,15 @@
 		<tr><td class='tdbgh center'>Records</td><td class='tdbgh center'>&nbsp;</td></tr>
 		<tr>
 			<td class='tdbg1 fonts center'><b>Most posts within 24 hours:</td>
-			<td class='tdbg2 fonts'><?=$misc['maxpostsday']?>, on <?=date($loguser['dateformat'],$misc['maxpostsdaydate'])?></td>
+			<td class='tdbg2 fonts'><?=$misc['maxpostsday']?>, on <?=date($loguser['dateformat']." ".$loguser['timeformat'],$misc['maxpostsdaydate'])?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 fonts center'><b>Most posts within 1 hour:</td>
-			<td class='tdbg2 fonts'><?=$misc['maxpostshour']?>, on <?=date($loguser['dateformat'],$misc['maxpostshourdate'])?></td>
+			<td class='tdbg2 fonts'><?=$misc['maxpostshour']?>, on <?=date($loguser['dateformat']." ".$loguser['timeformat'],$misc['maxpostshourdate'])?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 fonts center'><b>Most users online:</td>
-			<td class='tdbg2 fonts'><?=$misc['maxusers']?>, on <?=date($loguser['dateformat'],$misc['maxusersdate'])?><?=$misc['maxuserstext']?></td>
+			<td class='tdbg2 fonts'><?=$misc['maxusers']?>, on <?=date($loguser['dateformat']." ".$loguser['timeformat'],$misc['maxusersdate'])?><?=$misc['maxuserstext']?></td>
 		</tr>
 	</table>
 	<br>

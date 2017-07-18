@@ -114,3 +114,10 @@ function d($s = '') {
 	var_dump($s);
 	die;
 }
+
+function deletefolder($directory) {
+	if (file_exists($directory)) {
+		foreach(glob("{$directory}/*") as $f) unlink("$f");
+		rmdir($directory);
+	}
+}

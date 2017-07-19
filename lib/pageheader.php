@@ -11,15 +11,14 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	$metatag = '';
 
-	if (filter_bool($meta['noindex']))
-		$metatag .= "<meta name=\"robots\" content=\"noindex,follow\" />";
-
-	if (filter_bool($meta['description']))
-		$metatag .= "<meta name=\"description\" content=\"{$meta['description']}\" />";
-
-	// Why is this disabled?
-	if (filter_bool($x_hacks['smallbrowse']) and false) {
-		$css = "<link rel='stylesheet' href='/mobile.css'>";
+	if (filter_bool($meta['noindex'])) {
+		$metatag 	.= "<meta name=\"robots\" content=\"noindex,follow\" />";
+	}
+	if (filter_bool($meta['description'])) {
+		$metatag 	.= "<meta name=\"description\" content=\"{$meta['description']}\" />";
+	}
+	if (filter_bool($meta['canonical'])) {
+		$metatag	.= "<link rel='canonical' href='{$meta['canonical']}'>";
 	}
 	
 	$favicon = "favicon";
@@ -240,7 +239,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$css = "";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
+		$css = "<link rel='stylesheet' href='css/basics.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
@@ -248,30 +247,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	} else {
 		// Standard
 		$css="
+			<link rel='stylesheet' href='css/base.css' type='text/css'>
 			<style type='text/css'>
-			html, img { image-rendering: -moz-crisp-edges; }
-/*			
-			body	{
-				cursor:	url('images/ikachanpointer.png'), default;
-				}
-			a:link {
-				cursor:	url('images/ikachanpointer2.png'), pointer;
-				}
-*/			a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
-			a,.buttonlink {
-				color: #$linkcolor;
-			}
-			a:visited,.buttonlink:visited {
-				color: #$linkcolor2;
-			}
-			a:active,.buttonlink:active {
-				color: #$linkcolor3;
-			}
-			a:hover,.buttonlink:hover {
-				color: #$linkcolor4;
-			}
-			img { border:none; }
-			pre br { display: none; }
+			a,.buttonlink 					{color: #$linkcolor; }
+			a:visited,.buttonlink:visited 	{ color: #$linkcolor2; }
+			a:active,.buttonlink:active 	{ color: #$linkcolor3; }
+			a:hover,.buttonlink:hover 	{ color: #$linkcolor4; }
 			body {
 				scrollbar-face-color:		#$scr3;
 				scrollbar-track-color:		#$scr7;
@@ -286,7 +267,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			}
 			div.lastpost { font: 10px $font2 !important; white-space: nowrap; }
 			div.lastpost:first-line { font: 13px $font !important; }
-			.sparkline { display: none; }
 			.font 	{font:13px $font}
 			.fonth	{font:13px $font;color:$tableheadtext}	/* this is only used once (!) */
 			.fonts	{font:10px $font2}
@@ -295,13 +275,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.tdbg2	{background:#$tablebg2}
 			.tdbgc	{background:#$categorybg}
 			.tdbgh	{background:#$tableheadbg;}
-			.center	{text-align:center}
-			.right	{text-align:right}
-			.nobr	{white-space:nowrap}
-			.w		{width:100%}
-			.b		{font-weight: bold}
-			.i		{font-style: italic;}
-			.buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
 			.table	{empty-cells:	show; width: 100%;
 					 border-top:	#$tableborder 1px solid;
 					 border-left:	#$tableborder 1px solid;
@@ -310,18 +283,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#$tableborder 1px solid;
 					 border-bottom:	#$tableborder 1px solid}
-			code {
-				overflow:		auto;
-				width:			100%;
-				white-space:	pre;
-				display:		block;
-			}
-			code br { display: none; }
-			input[type=radio] { color: black; background: white; }
-			
-			.pstspl1 {opacity:0;}
-			.pstspl1:hover {opacity:1;}
-			.pstspl2 {background:#000;color:#FFF;display:block;}
 		";
 	}
 	
@@ -434,6 +395,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 <html>
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+		<meta name='viewport' content='width=device-width, initial-scale=1'>
 		<?=$metatag?>
 			<title><?=$windowtitle?></title>
 			<link rel='shortcut ico' href='<?=$favicon?>.ico' type='image/x-icon'>

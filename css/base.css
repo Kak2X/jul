@@ -1,34 +1,64 @@
-html, img {image-rendering: -moz-crisp-edges}
-a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold}
-img {border:none}
-pre br {display:none}
-.fonts,.fontt,div.lastpost{font-size:10px}
-body,.table,.font,.fonth,div.lastpost:first-line{font:13px verdana,geneva,sans-serif}
-div.lastpost {white-space:nowrap}
-.sparkline {display:none}
-.center{text-align:center}
-.right{text-align:right}
-.nobr{white-space:nowrap}
-.w,.table{width:100%}
-.b{font-weight:bold}
-.i{font-style:italic}
-.buttonlink {border:none!important;font-weight:bold!important;padding:0px}
-.table{empty-cells:show;border-spacing:0px}
-code {overflow:auto;	width:100%;white-space:pre;display:block}
-code br{display:none}
-.pstspl1 {opacity:0}
-.pstspl1:hover {opacity:1}
-.pstspl2 {background:#000;color:#FFF;display:block}
-textarea,input,select {
-	border: 1px solid #000;
-	background: #000;
-	color: #EEE;
-	font: 10pt monospace;
+/* Global CSS styles across every theme */
+
+/* Make images upscale crispy */
+* {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -o-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  -ms-interpolation-mode:nearest-neighbor;
+  }
+
+/* Make all links bold and not underlined by default */
+a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
+
+/* Mostly legacy thing from when IE had a blue border around link images */
+img { border:none; }
+
+/* Miscellaneous common attributes */
+.center	{text-align:center}
+.right	{text-align:right}
+.nobr	{white-space:nowrap}
+.w		{width:100%}
+.b		{font-weight: bold}
+.i		{font-style: italic;}
+.buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
+.sparkline { display: none; }
+
+/* Make code blocks scroll instead of stretching the page */
+code {
+	overflow:		auto;
+	width:			100%;
+	white-space:	pre;
+	display:		block;
 }
-input[type=radio] {
-	border: none;
+
+/* "Fix" for auto-generated <br> tags in <code> and <pre> blocks */
+code br, pre br { display: none; }
+
+/* Make radio buttons look not terrible */
+input[type=radio] { color: black; background: white; }
+
+/* Spoiler tag code */
+.pstspl1 {opacity:0;}
+.pstspl1:hover {opacity:1;}
+.pstspl2 {background:#000;color:#FFF;display:block;}
+
+/* Stop avatars from being huge */
+.avatar	{
+	max-width:	200px;
+	}
+
+/* On mobile, make avatars smaller */
+.mobile-avatar {
+	float:	left;
+	height:	50px;
+	width:	50px;
+	padding: 2px;
+	text-align:	center;
 }
-input[type=submit] {
-	border: #000 solid 2px;
-	font: 10pt 'verdana', sans-serif;
+.mobile-avatar > .avatar {
+	max-height:	100%;
+	max-width:	100%;
 }

@@ -31,13 +31,13 @@
 	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup FROM misc");
 
 	// Wait for the midnight backup to finish...
-	if ($miscdata['backup'] || (int)date("Gi") < 5) {
+	if ($miscdata['backup'] || (int)date("Gi") < 1) {
 		header("HTTP/1.1 503 Service Unavailable");
 		$title 		= "{$config['board-name']} -- Temporarily down";
 		
 		if ((int)date("Gi") < 5) {
 			$messagetitle = "It's Midnight Backup Time Again";
-			$message 	  = "The daily backup is in progress. Check back in about five minutes.";
+			$message 	  = "The daily backup is in progress. Check back in about a minute.";
 		} else {
 			$messagetitle = "Backup Time";
 			$message 	  = "A backup is in progress. Please check back in a couple of minutes.";

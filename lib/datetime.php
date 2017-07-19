@@ -10,25 +10,28 @@ function timedelta($array1, $array2) {
 }
 
 function timeunits($sec) {
-	if(!$sec)		return "now";
-	if($sec<60)		return "$sec sec.";
-	if($sec<3600)	return floor($sec/60).' min.';
-	if($sec<7200)	return '1 hour';
-	if($sec<86400)	return floor($sec/3600).' hours';
-	if($sec<172800)	return '1 day';
-	return floor($sec/86400).' days';
+	if ($sec<60)		return "$sec sec.";
+	if ($sec<3600)		return floor($sec/60).' min.';
+	if ($sec<7200)		return '1 hour';
+	if ($sec<86400)		return floor($sec/3600).' hours';
+	if ($sec<172800)	return '1 day';
+	if ($sec<31556926)	return floor($sec/86400).' days';
+	return sprintf("%.1f years", floor($sec/31556926));
 }
 
 function timeunits2($sec) {
+	$y = floor($sec / 31556926);
+	$sec -= $y * 31556926;
 	$d = floor($sec / 86400);
 	$h = floor($sec / 3600) % 24;
 	$m = floor($sec / 60) % 60;
 	$s = $sec % 60;
 	
+	$ys = ($y != 1 ? 's' : '');
 	$ds = ($d != 1 ? 's' : '');
 	$hs = ($h != 1 ? 's' : '');
 	
-	$str = ($d?"$d day$ds ":'').($h?"$h hour$hs ":'').($m?"$m min. ":'').($s?"$s sec.":'');
+	$str = ($y?"$y year$ys ":'').($d?"$d day$ds ":'').($h?"$h hour$hs ":'').($m?"$m min. ":'').($s?"$s sec.":'');
 	if(substr($str,-1)==' ') $str=substr_replace($str,'',-1);
 	return $str;
 }

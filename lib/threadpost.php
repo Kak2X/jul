@@ -34,13 +34,13 @@
 		if($post['picture'] || ($post['moodid'] && $post['moodurl'])) {
 			
 			$post['picture']  = htmlspecialchars($post['picture']);
-			$set['userpic']   = "<img src=\"{$post['picture']}\">";
+			$set['userpic']   = "<img class='avatar' src=\"{$post['picture']}\">";
 			$set['picture']   = $post['picture'];
 			
 			if ($post['moodid'] && $post['moodurl']) {
 				// Replace $ placeholder with the actual image number
 				$set['picture'] = str_replace(array('$', '>', '"'), array($post['moodid'], '%3E', '&quot;'), $post['moodurl']);
-				$set['userpic'] = "<img src=\"{$set['picture']}\">";
+				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
 			}
 			//   $userpicture="<img src=\"$user['picture']\" name=pic$p onload=sizelimit(pic$p,60,100)>";
 		} else {

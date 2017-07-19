@@ -604,7 +604,8 @@ INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `re
 (45, 3, 2, 1, 0, ' src=("|\\'')[a-z]:(.*?)("|\\'')', ' src="images/linkingfail.gif"', ''),
 (46, 3, 1, 0, 0, '%BZZZ%', 'onclick="bzzz(', NULL),
 (47, 6, 1, 0, 0, ':awesome:', '<small>[unfunny]</small>', ''),
-(48, 3, 2, 0, 0, 'autoplay', 'ap', 'kills autoplay, need to think of a solution for embeds.');
+(48, 3, 2, 0, 0, 'autoplay', 'ap', 'kills autoplay, need to think of a solution for embeds.'),
+(49, 2, 2, 1, 0, '(https?://.*?photobucket.com/)', 'images/photobucket.png#\\\\1', 'photobucket replacement image');
 
 -- --------------------------------------------------------
 
@@ -2013,7 +2014,7 @@ ALTER TABLE `failedregs`
 -- AUTO_INCREMENT for table `filters`
 --
 ALTER TABLE `filters`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 --
 -- AUTO_INCREMENT for table `forums`
 --

@@ -36,7 +36,7 @@
 				
 			$start = microtime(true);
 			
-			$dsn = "mysql:dbname=$dbname;host=$host;charset=utf8";
+			$dsn = "mysql:dbname=$dbname;host=$host;charset=utf8mb4";
 			$opt = array(
 				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
 				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

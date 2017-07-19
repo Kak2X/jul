@@ -102,7 +102,7 @@ function escape_codeblock($text) {
 	$text[0] = substr($text[0] , 6, -6);
 	
 	// Hack around the problem of different nested quotes.
-	// TODO: Replace with an appropriate regex.
+	// TODO: Replace with an appropriate regex
 	$len 	= strlen($text[0]);
 	$intext = false;
 	$ret	= "";
@@ -244,7 +244,7 @@ function nuke_js($before, $after) {
 
 }
 
-function xssfilters($p, $validate = false){
+function xssfilters($p, $strict = false){
 	
 	// The filters here should NOT be moved to the database
 	$temp = $p;
@@ -276,7 +276,7 @@ function xssfilters($p, $validate = false){
 	*/
 	if ($temp != $p) {
 		nuke_js($temp, $p);
-		if ($validate) return NULL;
+		if ($strict) return NULL;
 	}
 	
 	

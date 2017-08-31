@@ -1367,7 +1367,8 @@ INSERT INTO `schemes` (`id`, `ord`, `name`, `file`, `special`) VALUES
 (205, 205, 'Top Secret', 'spec-topsecret.php', 1),
 (206, 206, 'Trolldra', 'spec-trolldra.php', 1),
 (207, 207, 'Waffles', 'spec-waffle.php', 1),
-(208, 208, 'The Zen', 'spec-zen.php', 1);
+(208, 208, 'The Zen', 'spec-zen.php', 1),
+(209, 209, 'Unfiction', 'spec-unfiction.php', 1);
 
 -- --------------------------------------------------------
 

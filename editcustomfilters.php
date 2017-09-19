@@ -27,7 +27,7 @@
 		$uparam = "";
 	}
 	
-	$forumlist 	= $sql->getresultsbykey("SELECT id, title FROM forums WHERE custom = 1 AND user = {$user['id']}");
+	$forumlist 	= $sql->fetchq("SELECT id, title FROM forums WHERE custom = 1 AND user = {$user['id']}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$allowed 	= " AND f.custom = 1 AND f.user = {$user['id']}";
 	
 	if (isset($_POST['setdel']) && isset($_POST['del'])) {

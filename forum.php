@@ -11,7 +11,7 @@
 	
 
 	if ($loguser['id']) {
-		$postread = $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}");
+		$postread = $sql->fetchq("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	}
 	
 	$specialscheme = $specialtitle = NULL;
@@ -224,7 +224,7 @@
     }
     else {
 		// Used to display "In <forum name>" under the thread title when viewing threads by an user
-		$forumnames = $sql->getresultsbykey("SELECT id, title FROM forums");
+		$forumnames = $sql->fetchq("SELECT id, title FROM forums", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	}
 	
 	

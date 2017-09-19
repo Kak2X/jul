@@ -7,7 +7,7 @@
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
 			global $sql;
-			$blockedlayouts = $sql->getresultsbykey("SELECT blocked, 1 FROM blockedlayouts WHERE user = {$loguser['id']}");
+			$blockedlayouts = $sql->fetchq("SELECT blocked, 1 FROM blockedlayouts WHERE user = {$loguser['id']}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 			if (!$blockedlayouts)
 				$blockedlayouts = 0;
 		}
@@ -77,7 +77,7 @@
 		}
 
 		if (count($ids)) {
-			$postl = $sql->getresultsbykey("SELECT id, text FROM postlayouts WHERE id IN (".implode(",", array_unique($ids, SORT_NUMERIC)).")");
+			$postl = $sql->fetchq("SELECT id, text FROM postlayouts WHERE id IN (".implode(",", array_unique($ids, SORT_NUMERIC)).")", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		}
 	}
 

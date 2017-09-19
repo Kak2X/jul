@@ -34,7 +34,7 @@
 		Folder select box
 	*/
 	$sel_folder[$msg['folderto']] = 'selected';
-	$folders = $sql->getresultsbykey("SELECT id, title FROM pmsg_folders WHERE user = {$msg['userto']} ORDER BY ord, id ASC");
+	$folders = $sql->fetchq("SELECT id, title FROM pmsg_folders WHERE user = {$msg['userto']} ORDER BY ord, id ASC", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$folderselect = "";
 	foreach ($folders as $fid => $ftitle) {
 		$folderselect .= "<option value='$fid' ".filter_string($sel_folder[$fid]).">".htmlspecialchars($ftitle)."</option>\n\r";

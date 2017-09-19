@@ -26,7 +26,8 @@
 	}
 	
 	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup FROM misc");
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup, perm_fields FROM misc");
+	define('PERM_FIELDS_NUM', $miscdata['perm_fields']); // Compat
 
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int)date("Gi") < 1) {

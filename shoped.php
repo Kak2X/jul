@@ -113,7 +113,7 @@
 		7	=> "Usable",
 		99	=> "Special",
 	);*/
-	$categories = $sql->getresultsbykey("SELECT id, name FROM itemcateg ORDER BY id ASC");
+	$categories = $sql->fetchq("SELECT id, name FROM itemcateg ORDER BY id ASC", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$categories[99] = "Special";
 		
 

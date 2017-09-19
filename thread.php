@@ -296,19 +296,19 @@
 			WHERE poll = {$poll['id']}
 		");
 
-		$pollvotes = $sql->getresultsbykey("
+		$pollvotes = $sql->fetchq("
 			SELECT choice, COUNT(*) cnt
 			FROM pollvotes
 			WHERE poll = {$poll['id']}
 			GROUP BY choice WITH ROLLUP
-		");
-		$pollinflu = $sql->getresultsbykey("
+		", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
+		$pollinflu = $sql->fetchq("
 			SELECT choice, SUM(u.influence) inf
 			FROM pollvotes p
 			LEFT JOIN users u ON p.user = u.id
 			WHERE poll = {$poll['id']}
 			GROUP BY choice WITH ROLLUP
-		");
+		", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 
 		$tvotes_u = (int) $sql->resultq("SELECT COUNT(DISTINCT `user`) FROM pollvotes WHERE poll = {$poll['id']}");
 		$tvotes_c = isset($pollvotes[""]) ? $pollvotes[""] : 0;
@@ -416,7 +416,7 @@
 */
 
 	// Activity in the last day (to determine syndromes)
-	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
+	$act = $sql->fetchq("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	
 	$postlist = "
 		{$polltbl}

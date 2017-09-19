@@ -8,13 +8,19 @@ function has_perm($permName) {
 	return $loguser['permflags']['set'.$permArray[0]] & $permArray[1];
 }
 
-// Determines
+// Determines the permission fields for a different group (used in management pages)
 function check_perm($permName, $group, $cache = NULL) {
 	if ($cache === NULL) {
 		$cache = load_perm(0, $group);
 	}
 	$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($permName)));
 	return $cache['set'.$permArray[0]] & $permArray[1];
+}
+
+// The generic permission fields are now defined in the database (they used to be defined as array constants)
+function load_permlist() {
+	global $sql;
+	return $sql->fetchq("SELECT title, permset, permbit FROM perm_definitions ORDER BY permset ASC, permbit ASC", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 }
 
 // Forum permissions are 6 bits long (Read,Post,Edit,Delete,Thread,Mod)

@@ -223,11 +223,11 @@ if ($_GET['delete']) {
 	}
 }
 else if ($_GET['id']) {
-	$categories = $sql->getresultsbykey("SELECT id, name FROM categories ORDER BY id");
+	$categories = $sql->fetchq("SELECT id, name FROM categories ORDER BY id", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$forum      = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
-	$groups     = $sql->getresultsbykey("SELECT id, name FROM perm_groups ORDER BY ord ASC, id ASC");
+	$groups     = $sql->fetchq("SELECT id, name FROM perm_groups ORDER BY ord ASC, id ASC", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$users[0] 	= "None";
-	$users      += $sql->getresultsbykey("SELECT id, name FROM users WHERE `group` NOT IN (".GROUP_BANNED.",".GROUP_PERMABANNED.")");
+	$users      += $sql->fetchq("SELECT id, name FROM users WHERE `group` NOT IN (".GROUP_BANNED.",".GROUP_PERMABANNED.")", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	
 	if (!$forum) {
 		$_GET['id'] = -1;
@@ -383,7 +383,7 @@ else if ($_GET['id']) {
 <?php
 }
 else if ($_GET['catdelete']) {
-	$categories = $sql->getresultsbykey("SELECT id, name FROM categories ORDER BY corder");
+	$categories = $sql->fetchq("SELECT id, name FROM categories ORDER BY corder", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$categories[-1] = "Choose a category to merge into...";
 	
 	if (isset($categories[$_GET['catdelete']])) {

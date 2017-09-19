@@ -476,7 +476,7 @@
 		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
 		
-		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
+		$used = $sql->fetchq("SELECT signsep, count(*) as cnt FROM users GROUP BY signsep", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		$signsep = "";
 		for($i = 0; isset($sepn[$i]); ++$i){
 				$sel = ($i==$userdata['signsep'] ? ' selected' : '');

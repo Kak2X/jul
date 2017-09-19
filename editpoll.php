@@ -95,7 +95,7 @@
 			unset($chtext[$maxval]);
 		}
 		
-		$origtext = $sql->getresultsbykey("SELECT id, choice FROM poll_choices WHERE poll = {$thread['poll']}");
+		$origtext = $sql->fetchq("SELECT id, choice FROM poll_choices WHERE poll = {$thread['poll']}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 
 	} else {
 		// Get the existing choices and group them

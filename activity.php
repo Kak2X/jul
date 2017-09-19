@@ -9,9 +9,9 @@
 
 	$days = floor((ctime()-$dd)/86400);
 	if (!$days) die();
-	$pq = $sql->getresultsbykey(
+	$pq = $sql->fetchq(
 		"SELECT FROM_UNIXTIME(date, '%Y-%m-%d') day, count(*) c ".
-		"FROM posts WHERE user={$u} GROUP BY day ORDER BY day");
+		"FROM posts WHERE user={$u} GROUP BY day ORDER BY day", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	for($i=0; $i <= $days; ++$i) {
         $dk = date('Y-m-d',$dd+$i*86400);
 		if (!array_key_exists($dk, $pq)) continue;

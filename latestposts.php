@@ -37,7 +37,7 @@
 		pageheader("{$config['board-name']} - A revolution in posting technology&trade;");		
 		
 		if ($loguser['id']) {
-			$forumread = $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}");
+			$forumread = $sql->fetchq("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		}
 		while ($in = $sql->fetch($data)) {
 			

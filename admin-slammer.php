@@ -34,11 +34,11 @@ else if ($_POST['knockout']) {
 
 	
 	// Update forum counters
-	$pcount = $sql->getresultsbykey("SELECT t.forum, COUNT(*) FROM posts p LEFT JOIN threads t ON p.thread = t.id WHERE p.user = '{$target_id}' GROUP BY t.forum");
+	$pcount = $sql->fetchq("SELECT t.forum, COUNT(*) FROM posts p LEFT JOIN threads t ON p.thread = t.id WHERE p.user = '{$target_id}' GROUP BY t.forum", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	foreach ($pcount as $fid => $cnt) {
 		$sql->query("UPDATE forums SET numposts = numposts - {$cnt} WHERE id = '{$fid}'", false, $querycheck);
 	}
-	$tcount = $sql->getresultsbykey("SELECT forum, COUNT(*) FROM threads WHERE user = '{$target_id}' GROUP BY forum");
+	$tcount = $sql->fetchq("SELECT forum, COUNT(*) FROM threads WHERE user = '{$target_id}' GROUP BY forum", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	foreach ($tcount as $fid => $cnt) {
 		$sql->query("UPDATE forums SET numthreads = numthreads - {$cnt} WHERE id = '{$fid}'", false, $querycheck);
 	}
@@ -87,8 +87,8 @@ else if ($_POST['knockout']) {
 }
 else {
 	
-	$threads 	= $sql->getarray("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'");
-	$posts 		= $sql->getarray("SELECT id, thread FROM posts WHERE user = '{$target_id}'");
+	$threads 	= $sql->fetchq("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+	$posts 		= $sql->fetchq("SELECT id, thread FROM posts WHERE user = '{$target_id}'", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 
 	$ct_threads = count($threads);
 	$ct_posts   = count($posts);

@@ -190,13 +190,13 @@
 	
 	// shop/rpg such
 	$eq = $sql->fetchq("SELECT * FROM users_rpg WHERE uid = $id");
-	$shops 	= $sql->getresultsbykey("SELECT id, name FROM itemcateg");
+	$shops 	= $sql->fetchq("SELECT id, name FROM itemcateg", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	$q 		= "";
-	foreach ($shops as $shopid => $shopname) $q .= " OR id = ".filter_int($eq['eq'.$shopid]);
+	foreach ($shops as $shopid => $shopname) $q .= " OR i.id = ".filter_int($eq['eq'.$shopid]);
 	//$shops = $sql->query('SELECT * FROM itemcateg ORDER BY corder');
 	//$itemids = array_unique(array($eq['eq1'], $eq['eq2'], $eq['eq3'], $eq['eq4'], $eq['eq5'], $eq['eq6'], $eq['eq7']));
 	//$itemids = implode(',', $itemids);
-	$items = $sql->getarraybykey("SELECT * FROM items WHERE id=0$q", 'id');
+	$items = $sql->fetchq("SELECT i.id, i.* FROM items i WHERE i.id=0$q", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 	$shoplist = "";
 	foreach ($shops as $shopid => $shopname) {
 		$shoplist.="

@@ -72,7 +72,7 @@ elseif (isset($_POST['del'])) {
 	}
 }
 else if ($_GET['del']) {
-	$folders = $sql->getresultsbykey("SELECT id, title FROM pmsg_folders WHERE user = {$u} ORDER BY ord, id ASC");
+	$folders = $sql->fetchq("SELECT id, title FROM pmsg_folders WHERE user = {$u} ORDER BY ord, id ASC", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	
 	if (isset($folders[$_GET['del']])) {
 		$fname = htmlspecialchars($folders[$_GET['del']]);

@@ -163,8 +163,8 @@ print "
 			<td class='tdbgh center' width=100>EXP</td></tr>
 		";
 	} else {
-		$items   = $sql->getarraybykey("SELECT * FROM items", 'id');
-        $classes = $sql->getarraybykey("SELECT * FROM rpg_classes", 'id');
+		$items   = $sql->fetchq("SELECT i.id, i.* FROM items i", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+        $classes = $sql->fetchq("SELECT r.id, r.* FROM rpg_classes r", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 
 		print "<td class='tdbgh center' width=35>Level</td>";
 		print "<td class='tdbgh center' width=90>Class</td>";

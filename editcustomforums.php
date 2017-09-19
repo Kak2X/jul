@@ -137,7 +137,7 @@ if ($numreq)
 if ($_GET['id']) {
 	$forum      = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "' AND custom = 1 AND user = {$loguser['id']}");
 	// NOTE: This will filter out guests, banned and permabanned (group ids 6,7,8)
-	$groups     = $sql->getresultsbykey("SELECT id, name FROM perm_groups WHERE id < ".GROUP_GUEST." OR id > ".GROUP_PERMABANNED." ORDER BY ord ASC, id ASC");
+	$groups     = $sql->fetchq("SELECT id, name FROM perm_groups WHERE id < ".GROUP_GUEST." OR id > ".GROUP_PERMABANNED." ORDER BY ord ASC, id ASC", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	if (!$forum) {
 		$_GET['id'] = -1;
 		// Load sample permissions from first defined forum

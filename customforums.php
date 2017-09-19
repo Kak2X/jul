@@ -139,13 +139,13 @@
 			else
 				$qadd = "1";
 
-			$forumnew = $sql->getresultsbykey("
+			$forumnew = $sql->fetchq("
 				SELECT forum, COUNT(*) AS unread
 				FROM threads t
 				LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
 				WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
 				GROUP BY forum
-			");
+			", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		}
 		
 		foreach ($forums as $forumplace => $forum) {

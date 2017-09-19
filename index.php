@@ -246,12 +246,12 @@
 	$privatebox = '';
 	if ($loguser['id']) {
 		
-		$pms = $sql->getresultsbykey("
+		$pms = $sql->fetchq("
 			SELECT msgread, COUNT(*) num
 			FROM pmsgs
 			WHERE userto = {$loguser['id']}
 			GROUP BY msgread
-		");
+		", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		
 		// 0 -> unread ; 1 -> read
 		$totalpms = filter_int($pms[0]) + filter_int($pms[1]);
@@ -381,13 +381,13 @@
 		else
 			$qadd = "1";
 
-		$forumnew = $sql->getresultsbykey("
+		$forumnew = $sql->fetchq("
 			SELECT forum, COUNT(*) AS unread
 			FROM threads t
 			LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
 			WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
 			GROUP BY forum
-		");
+		", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 		
 	}
 
@@ -551,13 +551,13 @@
 				else
 					$qadd = "1";
 
-				$forumnew = $sql->getresultsbykey("
+				$forumnew = $sql->fetchq("
 					SELECT forum, COUNT(*) AS unread
 					FROM threads t
 					LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
 					WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
 					GROUP BY forum
-				");
+				", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 			}
 			
 			foreach ($forums as $forumplace => $forum) {

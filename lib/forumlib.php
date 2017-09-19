@@ -15,7 +15,7 @@ function readsmilies($path = 'smilies.dat') {
 function readpostread($userid) {
 	global $sql;
 	if (!$userid) return array();
-	return $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = $userid");
+	return $sql->fetchq("SELECT forum, readdate FROM forumread WHERE user = $userid", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 }
 
 function getrank($rankset, $title, $posts, $group, $bandate = NULL){

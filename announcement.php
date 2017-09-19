@@ -74,7 +74,7 @@
 	}
 	
 	
-	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
+	$act = $sql->fetchq("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	
 	$ufields = userfields();
 	$layouts = $sql->query("

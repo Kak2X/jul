@@ -11,7 +11,8 @@
 					'<br><br>');
 	
 	
-	const PERM_FIELDS_NUM = 1;	// Number of permission fields - needs to be the max bitmask set id (shown below)
+	//const PERM_FIELDS_NUM = 1;	// Number of permission fields - needs to be the max bitmask set id (shown below)
+	
 	
 	/*
 		Permission definitions

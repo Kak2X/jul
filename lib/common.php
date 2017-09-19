@@ -1,7 +1,5 @@
 <?php
 
-	$startingtime = microtime(true);
-	
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
 	
@@ -35,7 +33,7 @@
 		header("HTTP/1.1 503 Service Unavailable");
 		$title 		= "{$config['board-name']} -- Temporarily down";
 		
-		if ((int)date("Gi") < 5) {
+		if ((int)date("Gi") < 1) {
 			$messagetitle = "It's Midnight Backup Time Again";
 			$message 	  = "The daily backup is in progress. Check back in about a minute.";
 		} else {

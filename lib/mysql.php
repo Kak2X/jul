@@ -1,4 +1,15 @@
 <?php
+
+	/*
+		Standard Jul-based mysql class 
+		
+		Changelog:
+		rev0 - original mysql_ version; as present in Xkeeper0/jul
+		rev1 - PDO conversion
+		rev2 - minor bug fixes; adds special case for prepares
+		rev3 - fixes several glaring issues with hash handling; adds uniform logging and base for automatic rollback
+		rev4 - automatic rollback completed; removal of manual querycheck passing; disables extra functions in favour of PDO fetch flags
+	*/
 	class mysql {
 		// a 'backport' of my 'static' class in not-as-static form
 		// the statistics remain static so they're global just in case this gets used for >1 connection
@@ -22,20 +33,23 @@
 		const MSG_ERROR    = 0b10000;
 		
 		// fetchX flags
-		const USE_CACHE = 0b1;
-		const FETCH_ALL = 0b10;
+		const USE_CACHE    = 0b1;
+		const FETCH_ALL    = 0b10;
 		
-		public $cache      = array();
-		public $connection = NULL;
-		public $id         = 0;
-		public $error      = NULL;
+		public  $cache      = array();
+		public  $connection = NULL;
+		public  $id         = 0;
+		public  $error      = NULL;
+		public  $fail_message = "";
 		private $server_name = ""; // Marks MySQL or MariaDB
+		private $in_lock     = false;
 
 		public function connect($host, $user, $pass, $dbname, $persist = false) {
 			global $config;
 				
 			$start = microtime(true);
 			
+			// Connect to the database
 			$dsn = "mysql:dbname=$dbname;host=$host;charset=utf8mb4";
 			$opt = array(
 				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -49,7 +63,6 @@
 			catch (PDOException $x) {
 				$this->error = $x->getMessage();
 				return NULL;
-				//$this->connection = NULL;
 			}
 			
 			$t 			= microtime(true) - $start;
@@ -59,6 +72,7 @@
 				self::$debug_on = true;
 			}
 			
+			// This is very important to make the stupidly long MySQL text shorter
 			$this->server_name = (
 				strpos($this->connection->getAttribute(PDO::ATTR_SERVER_VERSION), "MariaDB") ? 
 				"MariaDB" :
@@ -73,19 +87,19 @@
 			self::$time += $t;
 			return $this->connection;
 		}
-
-		// $usecache contains hash
-		public function query($query, $hash = false, &$querycheck = array()) {
-			$res = NULL;
+		
+		public function query($query, $hash = false) {
+			$res   = NULL;
+			$type  = self::MSG_QUERY;
 			// Already cached the result?
 			// Just update the stats then.
 			if ($hash && isset($this->cache[$hash])) {
-				$start = microtime(true);
+				//$start = microtime(true);
 				++self::$cachehits;
-				$t = microtime(true) - $start;
+				//$t = microtime(true) - $start;
 				
 				if (self::$debug_on) {
-					$this->log($query, $t, self::MSG_QUERY | self::MSG_CACHED);
+					$this->log($query, 0, $type | self::MSG_CACHED);
 				}
 			} else {
 				$start = microtime(true);
@@ -96,14 +110,15 @@
 					if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
 						self::$rowst += $res->rowCount();
 					
-					$querycheck[] = true;
+					//$querycheck[] = true;
 				}
 				catch (PDOException $e) {
-					$err = $e->getMessage();
 					// the huge SQL warning text sucks
-					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $err);
-					trigger_error("MySQL error: $err", E_USER_ERROR);
-					$querycheck[] = false;
+					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $e->getMessage());
+					trigger_error("MySQL error: {$err}", E_USER_ERROR);
+					
+					$this->transactionError($query, $type, $err);
+					//$querycheck[] = false;
 				}
 
 				$t = microtime(true) - $start;
@@ -116,7 +131,7 @@
 						$err        = NULL;
 						$error_flag = 0;
 					}
-					$this->log($query, $t, self::MSG_QUERY | $error_flag, $err);
+					$this->log($query, $t, $type | $error_flag, $err);
 				}
 			}
 
@@ -124,15 +139,15 @@
 		}
 		
 		public function prepare($query, $options = array(), $hash = NULL) {
-	
-			$res = NULL;
+			$res  = NULL;
+			$type = self::MSG_QUERY | self::MSG_PREPARED;
 			if ($hash && isset($this->cache[$hash])) { // Already cached the result?
-				$start = microtime(true);
+				//$start = microtime(true);
 				++self::$cachehits;
-				$t = microtime(true) - $start;
+				//$t = microtime(true) - $start;
 				
 				if (self::$debug_on) {
-					$this->log($query, $t, self::MSG_QUERY | self::MSG_PREPARED | self::MSG_CACHED);
+					$this->log($query, 0, $type | self::MSG_CACHED);
 				}
 			} else {
 			
@@ -143,9 +158,9 @@
 					$res = $this->connection->prepare($query, $options);
 				}
 				catch (PDOException $e) {
-					$err = $e->getMessage();
-					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $err);
+					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $e->getMessage());
 					trigger_error("MySQL error: $err", E_USER_ERROR);
+					$this->transactionError($query, $type, $err);
 				}
 
 				$t = microtime(true) - $start;
@@ -158,7 +173,7 @@
 						$err        = NULL;
 						$error_flag = 0;
 					}
-					$this->log($query, $t, self::MSG_QUERY | self::MSG_PREPARED | $error_flag, $err);
+					$this->log($query, $t, $type | $error_flag, $err);
 				}
 			}
 
@@ -166,11 +181,14 @@
 		}
 		
 		public function execute($result, $vals = array()){
+			$type  = self::MSG_QUERY | self::MSG_EXECUTE;
 			if (!$result) {
 				// This happens. And it's not pretty.
-				$err = "Called execute method with a NULL \$result pointer.";
-				trigger_error("MySQL (execute) error: $err", E_USER_ERROR);
-				$this->log("[Invalid execute]", 0, self::MSG_QUERY | self::MSG_EXECUTE | self::MSG_ERROR, $err);
+				$query = "[No query ref]";
+				$err   = "Called execute method with a NULL \$result pointer.";
+				trigger_error("MySQL (execute) error: {$err}", E_USER_ERROR);
+				$this->transactionError($query, $type, $err);
+				$this->log($query, 0, $type | self::MSG_ERROR, $err);
 				$res = NULL;
 			} else {
 				$query = $result->queryString;
@@ -190,7 +208,8 @@
 				}
 				catch (PDOException $e){
 					$err = $e->getMessage();
-					trigger_error("MySQL (execute) error: $err", E_USER_ERROR);
+					trigger_error("MySQL (execute) error: {$err}", E_USER_ERROR);
+					$this->transactionError($query." | Values: <i>".implode("</i>,<br/><i>", $vals)."</i>", $type, $err);
 					$res = false;
 				}
 				
@@ -205,7 +224,7 @@
 						$error_flag = 0;
 					}
 					$query .= " | Values: <i>" . implode("</i>,<br/><i>", $vals) . "</i>";
-					$this->log($query, $t, self::MSG_QUERY | self::MSG_EXECUTE | $error_flag, $err);
+					$this->log($query, $t, $type | $error_flag, $err);
 				}
 			}
 			return $res;
@@ -213,8 +232,9 @@
 
 		public function fetch($result, $flag = PDO::FETCH_ASSOC, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
+			// if it's cached we just pick the result
 			if ($hash && isset($this->cache[$hash]))
 				$res = $this->cache[$hash];
 				
@@ -229,7 +249,7 @@
 		
 		public function fetchAll($result, $flag = PDO::FETCH_ASSOC, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
 			if ($hash && isset($this->cache[$hash]))
 				$res = $this->cache[$hash];
@@ -245,7 +265,7 @@
 
 		public function result($result, $row=0, $col=0, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
 			if ($row) {
 				trigger_error("Deprecated: passed \$row > 0", E_USER_NOTICE);
@@ -265,10 +285,10 @@
 			return $res;
 		}
 
-		public function queryp($query, $values = array(), &$querycheck = array()) {
+		public function queryp($query, $values = array()) {
 			$q = $this->prepare($query);
 			$result = $this->execute($q, $values);
-			$querycheck[] = $result; // Pass result to query result array
+			//$querycheck[] = $result; // Pass result to query result array
 			return $q;
 		}
 		
@@ -308,8 +328,12 @@
 			return $res;
 		}
 		
+		
+		
 		// Not used
+		/*
 		public function getmultiresults($query, $key, $options = 0) {
+			trigger_error("Deprecated -- getmultiresults()", E_USER_NOTICE);
 			$hash = self::getQueryHash($query, $options);
 			// $tmp[<keyval>] = <serialized array>
 			$q = $this->query($query, $hash);
@@ -328,6 +352,7 @@
 		}
 		
 		public function getresultsbykey($query, $options = 0) {
+			trigger_error("Deprecated -- getresultsbykey()", E_USER_NOTICE);
 			$hash = self::getQueryHash($query, $options);
 			$q    = $this->query($query, $hash);
 			$ret  = $this->fetchAll($q, PDO::FETCH_KEY_PAIR, $hash);
@@ -336,6 +361,7 @@
 		
 		// Not used
 		public function getresults($query, $options = 0) {
+			trigger_error("Deprecated -- getresults()", E_USER_NOTICE);
 			$hash = self::getQueryHash($query, $options);
 			$q    = $this->query($query, $hash);
 			$ret  = $this->fetchAll($q, PDO::FETCH_COLUMN, $hash);
@@ -343,6 +369,7 @@
 		}
 		
 		public function getarraybykey($query, $key, $options = false) {
+			trigger_error("Deprecated -- getarraybykey()", E_USER_NOTICE);
 			$hash = self::getQueryHash($query, $options);
 			// $tmp[<keyval>] = <all values>
 			$q = $this->query($query, $hash);
@@ -361,12 +388,14 @@
 		}
 		
 		public function getarray($query, $options = 0) {
+			trigger_error("Deprecated -- getarray()", E_USER_NOTICE);
 			$hash = self::getQueryHash($query, $options);
 			// $ret[<num>] = <entire assoc row>
 			$q = $this->query($query, $hash);
 			$ret = $this->fetchAll($q, PDO::FETCH_ASSOC, $hash);
 			return $ret;
 		}
+		*/
 
 		public function escape($s) {
 			return $this->connection->quote($s);
@@ -381,37 +410,65 @@
 			return $this->connection->lastInsertId();
 		}
 		
+		public function lock_tables($locks, $read = false) {
+			if ($this->in_lock === false) {
+				$this->connection->exec("LOCK TABLES ".implode(',', $locks).($read ? " READ |" : "")." WRITE");
+				$this->in_lock = true;
+			}
+		}
 		
-		// A port of the transaction system from boardc
-		public function beginTransaction(){
-			$start = microtime(true);
-			try {
-				$result = $this->connection->beginTransaction();
+		public function unlock_tables() {
+			if ($this->in_lock === true) {
+				$this->connection->exec("UNLOCK TABLES");
+				$this->in_lock = false;
 			}
-			catch (PDOException $e){
-				$err = $e->getMessage();
-				trigger_error("Could not begin transaction: $err", E_USER_ERROR);
-				$result = NULL;
+		}
+		
+		public function beginTransaction($locks = NULL){
+			if (!$this->connection->inTransaction()) {
+				$start = microtime(true);
+				try {
+					// Just in case lock before starting a transaction
+					if ($locks !== NULL) {
+						$this->lock_tables($locks);
+					}
+					$result = $this->connection->beginTransaction();
+				}
+				catch (PDOException $e){
+					$this->unlock_tables();
+					$err = $e->getMessage();
+					trigger_error("Could not begin transaction: $err", E_USER_ERROR);
+					$result = NULL;
+				}
+					
+				self::$time += microtime(true) - $start;
+			} else {
+				$result = true; // We *are* in a transaction, so might as well return true
 			}
-				
-			self::$time += microtime(true) - $start;
 			return $result;
 		}
 		
 		public function commit(){
-			$start = microtime(true);
-			try{
-				$result = $this->connection->commit();
+			if ($this->connection->inTransaction()) {
+				$start = microtime(true);
+				try{
+					$result = $this->connection->commit();
+				}
+				catch (PDOException $e){
+					$err = $e->getMessage();
+					trigger_error("Could not commit transaction: $err", E_USER_ERROR);
+					$result = NULL;
+				}
+				$this->unlock_tables();
+				$this->fail_message = "";
+				self::$time += microtime(true) - $start;
+			} else {
+				$result = false;
 			}
-			catch (PDOException $e){
-				$err = $e->getMessage();
-				trigger_error("Could not commit transaction: $err", E_USER_ERROR);
-				$result = NULL;
-			}
-			self::$time += microtime(true) - $start;
 			return $result;
 		}
 		
+		/*
 		// Takes an array with the result of the queries as argument
 		// Typically it's the same array passed as third argument to $sql->query and $sql->queryp
 		// Here, that array is checked so that the transaction will be committed only if all the queries were successful
@@ -424,19 +481,25 @@
 			}
 			$this->commit();
 			return true;
-		}
+		}*/
 		
 		public function rollBack(){
-			$start = microtime(true);
-			try{
-				$result = $this->connection->rollBack(); //false on failure
+			if ($this->connection->inTransaction()) {
+				$start = microtime(true);
+				try{
+					$result = $this->connection->rollBack(); //false on failure
+				}
+				catch (PDOException $e){
+					$err = $e->getMessage();
+					trigger_error("Could not rollback transaction: $err", E_USER_ERROR);
+					$result = NULL;
+				}
+				$this->unlock_tables();
+				$this->fail_message = "";
+				self::$time += microtime(true) - $start;
+			} else {
+				$result = false;
 			}
-			catch (PDOException $e){
-				$err = $e->getMessage();
-				trigger_error("Could not rollback transaction: $err", E_USER_ERROR);
-				$result = NULL;
-			}
-			self::$time += microtime(true) - $start;
 			return $result;
 		}
 		
@@ -447,8 +510,8 @@
 			$out = "<br>
 				<table class='table'>
 					<tr>
-						<td class='tdbgh center' colspan=5>
-							<b>SQL Debug</b>
+						<td class='tdbgh center b' colspan=5>
+							SQL Debug
 						</td>
 					</tr>
 					<tr>
@@ -469,29 +532,28 @@
 					// If so, add a separator
 					$out .= "
 						<tr>
-							<td class='tdbgc center' colspan=5>
-								<img src='images/_.gif' height='4' width='1'>
+							<td class='tdbgc center' style='height: 4px' colspan=5>
 							</td>
 						</tr>";
 				}
 				$oldid = $d[0];
 				if (isset($d[5])) {
-					// Prepared query
+					// Prepared queries don't count towards the query count...
 					$c = "[P]";
 					$offset++;
 				} else {
-					$c = $i - $offset;
+					$c = $i - $offset; //... and as such we need to take that in consideration
 				}
 				$out .= "
 					<tr>
-						<td class='tdbg{$cell} center'>$c</td>
-						<td class='tdbg{$cell} center'>$d[0]</td>
+						<td class='tdbg{$cell} center'>{$c}</td>
+						<td class='tdbg{$cell} center'>{$d[0]}</td>
 						<td class='tdbg{$cell} center'>
-							$d[1]<span class='fonts'><br>
-							$d[2]</span>
+							{$d[1]}<span class='fonts'><br>
+							{$d[2]}</span>
 						</td>
 						<td class='tdbg{$cell}'>".str_replace("\t", "", trim($d[3]))."</td>
-						<td class='tdbg{$cell} center'>$d[4]</td>
+						<td class='tdbg{$cell} center'>{$d[4]}</td>
 					</tr>";
 			}
 			$out .= "</table>";
@@ -557,28 +619,25 @@
 			);
 		}
 		
-		private function transactionError($msg, $time, $msg_type, $error_text = "") {
+		private function transactionError($query, $msg_type, $error_text = "Unknown") {
 			if ($this->connection->inTransaction()) {
+				global $config;
 				// An error occurred in one of the queries in a transaction.
-				// Rollback everything and stop the script
-				$this->rollBack();
+				// (try to) rollback everything and stop the script
+				$res = $this->rollBack();
 				
 				if (self::$debug_on) {
-					$this->log($query, 0, $type, $this->error);
+					$this->log($query, 0, $msg_type | self::MSG_ERROR, $error_text);
 				}
-				// Just in case
-				require_once "lib/datetime.php";
-				require_once "lib/forumlib.php";
-				echo "</body>";
-				if (!defined('FOOTER_PRINTED')) {
-					errorpage("Sorry, but we couldn't execute the action.");
+				
+				// Hide everything else in the page
+				if (has_perm('view-debugger') || $config['always-show-debug']) {
+					$b = self::getbacktrace();
+					fatal_error("error while executing query '<i>{$query}</i>' in transaction", $error_text."<br><span style='color:#fff'>".($this->fail_message ? "Fail message: ".$this->fail_message : "")."<br><br>The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>", $b['file'], $b['line']);
 				} else {
-					if (has_perm('view-debugger') || $config['always-show-debug']) {
-						die("Transaction error in the footer: " . $this->error);
-					} else {
-						die;
-					}
+					dialog("This webpage has stopped working.<br><br>Please return to the <a href='index.php'>index</a> page.");
 				}
+				
 			}
 		}
 		
@@ -586,4 +645,3 @@
 			return ($flags & self::USE_CACHE) ? md5($query) : NULL;
 		}
 	}
-?>

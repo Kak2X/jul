@@ -1,4 +1,6 @@
 <?php
+	$startingtime = microtime(true);
+	
 	require 'lib/helpers.php';	// Global mini functions
 	
 	require 'lib/defines.php'; // Constants and global variables

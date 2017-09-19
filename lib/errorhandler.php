@@ -112,7 +112,8 @@ function error_printer($trigger, $report, $errors){
 
 function fatal_error($type, $message, $file, $line) {
 ?>
-<div style='background: #000 !important; color: #fff !important'>
+<style>body, #w{background: #000 !important; color: #fff !important}#w{padding: 0px !important}</style>
+<div id='w'>
 <pre>Fatal <?=$type?>
 
 <span style='color: #0f0'><?=$file?></span>#<span style='color: #6cf'><?=$line?></span>

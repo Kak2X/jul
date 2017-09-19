@@ -55,6 +55,22 @@
 	$scriptname = end($path);
 	unset($path);
 	
+	// determine if the current request is an ajax request, currently only a handful of libraries
+	// set the x-http-requested-with header, with the value "XMLHttpRequest"
+	if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest") {
+		define("IS_AJAX_REQUEST", true); // ajax request!
+	} else {
+		define("IS_AJAX_REQUEST", false);
+	}
+	
+	// determine the origin of the request
+	$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : filter_string($_SERVER['HTTP_REFERER']);
+	if ($origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST))) {
+		define("SAME_ORIGIN", true);
+	} else {
+		define("SAME_ORIGIN", false);
+	}
+	
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
 	} else {
@@ -86,22 +102,6 @@
 				Suspicious request detected (e.g. bot or malicious tool).
 		<?php
 		die;
-	}
-
-	// determine if the current request is an ajax request, currently only a handful of libraries
-	// set the x-http-requested-with header, with the value "XMLHttpRequest"
-	if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest") {
-		define("IS_AJAX_REQUEST", true); // ajax request!
-	} else {
-		define("IS_AJAX_REQUEST", false);
-	}
-	
-	// determine the origin of the request
-	$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : filter_string($_SERVER['HTTP_REFERER']);
-	if ($origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST))) {
-		define("SAME_ORIGIN", true);
-	} else {
-		define("SAME_ORIGIN", false);
 	}
 
 	

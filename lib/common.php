@@ -21,15 +21,21 @@
 		if ($config['always-show-debug'] || $x_hacks['superadmin'] || $x_hacks['adminip'] == $_SERVER['REMOTE_ADDR']) {
 			fatal_error("Connection Error", $sql->error, "<!--", "-->");
 		} else {
+			if ($x_hacks['super-private']) {
+				cloak_404();
+			}
 			dialog("This board is experiencing technical difficulties.<br><br>Click <a href='?".urlencode($_SERVER['QUERY_STRING'])."'>here</a> to try again.", "Technical difficulties ahead", "{$config['board-name']} -- Technical difficulties");
 		}
 	}
 	
 	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup, perm_fields FROM misc");
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup, perm_fields, private FROM misc");
 	
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int)date("Gi") < 1) {
+		if ($miscdata['private'] == 2) {
+			cloak_404();
+		}
 		header("HTTP/1.1 503 Service Unavailable");
 		$title 		= "{$config['board-name']} -- Temporarily down";
 		
@@ -91,6 +97,10 @@
 
 		}
 		
+		if ($miscdata['private'] == 2) {
+			cloak_404();
+		}
+		
 		header("HTTP/1.1 403 Forbidden");
 
 		?>
@@ -134,7 +144,7 @@
 	// Update timed user bans
 	$sql->query("
 		UPDATE `users`
-		SET `ban_expire` = 0, `group` = ".GROUP_NORMAL."
+		SET `ban_expire` = 0, `group` = group_prev
 		WHERE `ban_expire` != 0 AND `group` = ".GROUP_BANNED." AND `ban_expire` < ".ctime());
 	
 	// Update timed IP Bans before attempting to check if we're IP Banned
@@ -188,7 +198,7 @@
 			$hacks['comments'] = true;
 		}
 	}
-	else {
+	else {		
 		$loguser = array(
 			'id'			=> 0, // This is a much more useful value to default to
 			'name'			=> '',
@@ -209,6 +219,7 @@
 		$loguser['group'] = GROUP_SYSADMIN;
 	}
 	
+	
 	/*
 		Permission setup
 	*/
@@ -222,10 +233,30 @@
 	
 	if ($miscdata['disable']) {
 		if (!has_perm('bypass-lockdown') && $_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
-			http_response_code(500);
-			dialog("We'll be back later.", "Down for maintenance", "{$config['board-name']} is offline for now");
+			if ($miscdata['private'] == 2) {
+				cloak_404();
+			} else {
+				http_response_code(500);
+				dialog("We'll be back later.", "Down for maintenance", "{$config['board-name']} is offline for now");
+			}
 		} else {
 			$config['title-submessage'] .= ($config['title-submessage'] ? "<br>" : "")."(THE BOARD IS DISABLED)";
+		}
+	}
+	
+	/*
+		Main block of private-only checks
+	*/
+	if ($miscdata['private'] && !$loguser['id']){
+		// herp derp welp
+		if ($miscdata['private'] == 2){
+			if (!in_array($scriptname, ['login.php', 'login-h.php'])) {
+				cloak_404();
+			}
+		}
+		if (!in_array($scriptname, ['login.php', 'login-h.php', 'register.php'])){
+			$grouplist = load_grouplist();
+			errorpage("You need to be logged in to access this board.");
 		}
 	}
 	
@@ -420,7 +451,7 @@
 
 	// group names
 	// we have to do this since they can be added or removed
-	$grouplist = $sql->fetchq("SELECT id, name, hidden, subgroup, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+	$grouplist = load_grouplist();
 	
 
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");

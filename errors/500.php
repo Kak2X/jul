@@ -1,0 +1,16 @@
+<?php require "function.php"; ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+ <head>
+  <title> wonderful </title>
+ </head>
+ <body color="#000" bgcolor="#ffffff">
+
+	<center>
+		
+		<strong>Error 500</strong>
+		<br><img src="<?=$path?>/500.png" title="catch hold of server breaking">
+		<br><br>Something exploded. <a href="/">Try again from the start</a>.
+	</center>
+  
+ </body>
+</html>

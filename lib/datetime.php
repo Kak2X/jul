@@ -132,3 +132,9 @@ function fieldstotimestamp($basename, $arrayname = 'GLOBALS'){
 	$res = mktime($v[0],$v[1],$v[2],$v[3],$v[4],$v[5]);
 	return ($res !== FALSE ? $res : NULL); // Return NULL so it can directly go in a prepared query
 }
+
+function getyeardiff($a, $b){
+	$a = new DateTime(date("Y-m-d", $a));
+	$b = new DateTime(date("Y-m-d", $b));
+	return $b->diff($a)->y;
+}

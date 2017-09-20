@@ -121,3 +121,11 @@ function deletefolder($directory) {
 		rmdir($directory);
 	}
 }
+
+function cloak_404() {
+	header("HTTP/1.1 404 Not Found");
+	header("Location: errors/404.php");
+	//chdir('errors');
+	//require "404.php";
+	die;
+}

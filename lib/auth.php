@@ -1,5 +1,9 @@
 <?php
 
+function load_grouplist() {
+	global $sql;
+	return $sql->fetchq("SELECT id, name, hidden, subgroup, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+}
 // Permission names are passed here
 // The correct bitmask to search for is specified in the perm definition, so we do not need to worry about passing the bitmask field id manually.
 function has_perm($permName) {
@@ -217,7 +221,7 @@ function create_verification_hash($n,$pw) {
 	return $n . hash('sha256', $pw . $vstring);
 }
 
-function generate_token($div = TOKEN_MAIN, $extra = "") {
+function generate_token($div = TOKEN_MAIN) {
 	global $config, $loguser;
 	/* extra IP mangling not needed
 	if (substr($_SERVER['REMOTE_ADDR'], 0, 2) == "::") {
@@ -237,12 +241,12 @@ function generate_token($div = TOKEN_MAIN, $extra = "") {
 	
 	$ipaddr = implode('.', $ipaddr);
 	*/
-	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $extra . $loguser['password']);
+	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $div . $loguser['password']);
 	
 }
 
-function check_token(&$var, $div = 20, $extra = "") {
-	$res = (trim($var) == generate_token($div, $extra));
+function check_token(&$var, $div = TOKEN_MAIN) {
+	$res = (trim($var) == generate_token($div));
 	if (!$res) errorpage("Invalid token.");
 }
 

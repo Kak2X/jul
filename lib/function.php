@@ -15,6 +15,7 @@
 	require 'lib/irc.php'; // IRC Reporting...
 	require 'lib/errorhandler.php'; // ... for errors
 	require 'lib/userlib.php';
+	require 'lib/datetime.php';
 	
 	require 'lib/common.php';
 	
@@ -23,4 +24,4 @@
 	require 'lib/graphics.php';
 	require 'lib/threadpost.php';
 // 	require 'lib/replytoolbar.php';
-	require 'lib/datetime.php';
+	require 'lib/uploads.php';

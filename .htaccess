@@ -1,7 +1,7 @@
-
-ErrorDocument 403 /errors/403.html
-ErrorDocument 404 /errors/404.html
-ErrorDocument 500 /errors/500.html
+# TODO: Make the installer write this file.
+ErrorDocument 403 /jul/errors/403.php
+ErrorDocument 404 /jul/errors/404.php
+ErrorDocument 500 /jul/errors/500.php
 
 Order Allow,Deny
 Allow from all

@@ -33,7 +33,7 @@
 		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders(
 			"views","hotcount","maxpostsday","maxpostshour","maxpostsdaydate","maxpostshourdate","maxusers","maxusersdate",
 			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode",
-			"announcementforum","trashforum","maxcustomforums","daysforcustomforum","postsforcustomforum"),
+			"announcementforum","trashforum","maxcustomforums","daysforcustomforum","postsforcustomforum","private"),
 			[
 				'views'					=> filter_int($_POST['views']),
 				'hotcount'				=> filter_int($_POST['hotcount']),
@@ -57,6 +57,7 @@
 				'maxcustomforums'		=> filter_int($_POST['maxcustomforums']),
 				'daysforcustomforum'	=> filter_int($_POST['daysforcustomforum']),
 				'postsforcustomforum'	=> filter_int($_POST['postsforcustomforum']),
+				'private'				=> ($sysadmin ? filter_int($_POST['private']) : $misc['private']),
 			]);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
@@ -67,6 +68,8 @@
 	$sysset = (!$sysadmin) ? "readonly disabled" : "";
 	// Selections
 	$reg_sel[$misc['regmode']] = 'selected';
+	$prv_sel[$misc['private']] = 'selected';
+	
 
 	print adminlinkbar();
 	
@@ -102,6 +105,15 @@
 					<option value='1' <?=filter_string($reg_sel[1])?>>Disabled</option>
 					<option value='2' <?=filter_string($reg_sel[2])?>>Pending membership</option>
 					<option value='3' <?=filter_string($reg_sel[3])?>>Require passkey</option>
+				</select>
+			</td>
+		</tr>
+		<tr><td class='tdbg1 center' width='200'><b>Board access</b></td>
+			<td class='tdbg2'>
+				<select name='private' <?=$sysset?>>
+					<option value='0' <?=filter_string($prv_sel[0])?>>Public</option>
+					<option value='1' <?=filter_string($prv_sel[1])?>>Private</option>
+					<option value='2' <?=filter_string($prv_sel[2])?>>Secret</option>
 				</select>
 			</td>
 		</tr>

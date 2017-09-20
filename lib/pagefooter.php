@@ -1,7 +1,7 @@
 <?php
 
 function pagefooter() {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime;
+	global $x_hacks, $sql, $sqldebuggers, $miscdata, $loguser, $config, $scriptname, $startingtime;
 	
 	define('FOOTER_PRINTED', true);
 	

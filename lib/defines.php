@@ -111,3 +111,9 @@
 	const DTF_TIME = 0b10;
 	const DTF_NOLABEL = 0b100;
 	
+	
+	// Assumptions of orig. xk_ircsend channel IDs based on the context they're used on
+	const IRC_MAIN = 0;
+	const IRC_STAFF = 1;
+	const IRC_ADMIN = 102;
+	

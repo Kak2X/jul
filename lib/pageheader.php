@@ -75,7 +75,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$headlinks .= '<noscript><style>#logoutlink{display: none;}</style></noscript>
 		<span id="logoutlink"><a href="javascript:document.logout.submit()">Logout</a></span>
 		<input type="hidden" name="action" value="logout">
-		<input type="hidden" name="auth" value="'.generate_token(30).'">
+		<input type="hidden" name="auth" value="'.generate_token(TOKEN_LOGIN).'">
 		<noscript><input type="submit" name="njout" class="tdbg1 buttonlink fonts" value="Logout"></noscript>
 		- <a href="editprofile.php">Edit profile</a>
 		'.($config['allow-custom-forums'] ? '- <a href="editcustomforums.php">My forums</a>' : '').'

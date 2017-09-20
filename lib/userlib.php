@@ -1,7 +1,7 @@
 <?php
 
 // Banner 0 = automatic ban
-function ipban($ip, $reason, $ircreason = NULL, $expire = 0, $banner = 0, $destchannel = IRC_STAFF) {
+function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
 	$sql->query("INSERT INTO `ipbans` SET `ip` = '{$ip}', `reason`='{$reason}', `date` = '". ctime() ."', `banner` = '{$banner}', `expire` = '{$expire}'");
 	if ($ircreason !== NULL) {

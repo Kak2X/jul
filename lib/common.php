@@ -286,7 +286,7 @@
 		if ($botinfo['malicious']) {
 			$ipbanned = 1;
 			if (!$sql->resultq("SELECT 1 FROM ipbans WHERE $checkips")) {
-				ipban($_SERVER['REMOTE_ADDR'], "Malicious bot.", "Auto IP Banned malicious bot with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+				ipban($_SERVER['REMOTE_ADDR'], "Malicious bot.", xk(7) . "Auto IP Banned malicious bot with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 			}
 		}
 	}
@@ -323,25 +323,31 @@
 	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(ctime() - 300));
 	
 	if ($loguser['id']) {
-			
-		if (!IS_AJAX_REQUEST) {
-			
-			$influencelv = calclvl(calcexp($loguser['posts'], (ctime() - $loguser['regdate']) / 86400));
+		
+		$influencelv = calclvl(calcexp($loguser['posts'], (ctime() - $loguser['regdate']) / 86400));
 
-			// Alart #defcon?
-			if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
-				// Determine IP block differences
-				$ip1 = explode(".", $loguser['lastip']);
-				$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
-				for ($diff = 0; $diff < 3; ++$diff)
-					if ($ip1[$diff] != $ip2[$diff]) break;
-				if ($diff == 0) $color = xk(4);	// IP completely different
-				else            $color = xk(8); // Not all blocks changed
-				$diff = "/".($diff+1)*8;
+		// Alart #defcon?
+		if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
+			// Determine IP block differences
+			$ip1 = explode(".", $loguser['lastip']);
+			$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
+			for ($diff = 0; $diff < 3; ++$diff)
+				if ($ip1[$diff] != $ip2[$diff]) break;
+			if ($diff == 0) $color = xk(4);	// IP completely different
+			else            $color = xk(8); // Not all blocks changed
+			$diff = "/".($diff+1)*8;
 
-				xk_ircsend("102|". xk(7) ."User {$loguser['name']} (id {$loguser['id']}) changed from IP ". xk(8) . $loguser['lastip'] . xk(7) ." to ". xk(8) . $_SERVER['REMOTE_ADDR'] .xk(7). " ({$color}{$diff}" .xk(7). ")");
+			xk_ircsend(IRC_ADMIN."|". xk(7) ."User {$loguser['name']} (id {$loguser['id']}) changed from IP ". xk(8) . $loguser['lastip'] . xk(7) ." to ". xk(8) . $_SERVER['REMOTE_ADDR'] .xk(7). " ({$color}{$diff}" .xk(7). ")");
+			
+			// As in BoardC, we transfer the IP bans just in case
+			if ($sql->resultq("SELECT 1 FROM ipbans WHERE ip = '{$loguser['lastip']}'")){
+				ipban($_SERVER['REMOTE_ADDR'], "IP Ban Evasion", "Previous IP address was IP banned - updated IP bans list.", IRC_ADMIN);
+				header("Location: index.php");
+				die;
 			}
+		}
 
+		if (!IS_AJAX_REQUEST) {
 
 			$sql->queryp("
 				UPDATE users

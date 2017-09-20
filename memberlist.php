@@ -20,6 +20,9 @@
 
 	if(!$_GET['ppp']) $_GET['ppp']=50;
 	if(!$_GET['page']) $_GET['page']=0;
+	
+	
+	$show_hidden = has_perm('show-super-users');
 
 	
 	// WHERE clause of query
@@ -30,16 +33,47 @@
 		case 'n': $qwhere[] = '(sex=2)'; break;
 	}
 	if ($_GET['pow']) {
-		if (($_GET['pow'] == GROUP_NORMAL || $_GET['pow'] == GROUP_SUPER) && !has_perm('show-super-users'))
-			$sqlpower = "IN (".GROUP_NORMAL.", ".GROUP_SUPER.")";
-		elseif ($_GET['pow'] == GROUP_ADMIN || $_GET['pow'] == GROUP_SYSADMIN) // merge admin + sysadmin (they appear the same)
-			$sqlpower = "IN (".GROUP_ADMIN.", ".GROUP_SYSADMIN.")";
-		elseif ($_GET['pow'] == GROUP_BANNED || $_GET['pow'] == GROUP_PERMABANNED) // merge banned + permabanned
-			$sqlpower = "IN (".GROUP_BANNED.", ".GROUP_PERMABANNED.")";
-		else
-			$sqlpower = "= '{$_GET['pow']}'";
-
-		$qwhere[] = "`group` $sqlpower";
+		
+		// Not hardcoded anymore
+		if (!isset($grouplist[$_GET['pow']])) {
+			$qwhere[] = "`group` = '".GROUP_NORMAL."'";
+		} else if (!$show_hidden) {
+			// If we can't show the hidden groups, group their users in the specified group
+			// 'hidden' as in 'hidden behind group <x>'
+			
+			$subflag = 0;
+			if ($grouplist[$_GET['pow']]['hidden']) {
+				$extlist = group_hidden($grouplist[$_GET['pow']]['hidden'], $subflag);
+			} else {
+				$extlist = group_hidden($_GET['pow'], $subflag);
+			}
+			
+			// for $offset val: 0 -> all subgroups, = count() -> all normal, <everything else> mixed groups, need to check both
+			$offset    = (count($extlist) - $subflag);
+			$checkboth = ($offset != count($extlist) && $offset != 0);
+			
+			//d(['total' => count($extlist), 'subflag' => $subflag, 'offset' => $offset, 'checkboth' => $checkboth]);
+			
+			$ext_txt = implode(',', $extlist);
+			
+			// If we don't need to check both, the original subgroup value is enough
+			$sqlgroup = "";
+			if ($checkboth || !$grouplist[$_GET['pow']]['subgroup']) {
+				$sqlgroup .= "`group` IN ({$ext_txt})";
+			}
+			if ($checkboth || $grouplist[$_GET['pow']]['subgroup']) {
+				$sqlgroup .= ($checkboth ? " OR " : "")."`id` IN (SELECT s.user FROM users_subgroups s WHERE s.group_id IN ({$ext_txt}))";
+			}
+			
+			$qwhere[] = $sqlgroup;
+		} else {
+			// With no grouping involved, the search either goes in the main groups or subgroups
+			if (!$grouplist[$_GET['pow']]['subgroup']) {
+				$qwhere[] = "`group` = '{$_GET['pow']}'";
+			} else {
+				$qwhere[] = "`id` IN (SELECT s.user FROM users_subgroups s WHERE s.group_id = '{$_GET['pow']}')";
+			}
+		}
 	}
 	$where = 'WHERE '.((empty($qwhere)) ? '1' : implode(' AND ', $qwhere));
 	
@@ -65,16 +99,7 @@
 		$sorting $order
 	");
 	
-	/*
-	if (!in_array($sort, array('name','reg','exp','age','posts')))
-		$sort = 'posts';
-	$query='SELECT id,posts,regdate,name,minipic,sex,powerlevel,aka,r.* FROM users LEFT JOIN users_rpg r ON id=uid ';
-	if($sort=='name')  $users1=$sql->query("$query$where ORDER BY name", MYSQL_ASSOC);
-	if($sort=='reg')   $users1=$sql->query("$query$where ORDER BY regdate DESC", MYSQL_ASSOC);
-	if($sort=='exp')   $users1=$sql->query("$query$where", MYSQL_ASSOC);
-	if($sort=='age')   $users1=$sql->query("$query$where AND birthday ORDER BY birthday", MYSQL_ASSOC);
-	if($sort=='posts') $users1=$sql->query("$query$where ORDER BY posts DESC", MYSQL_ASSOC);
-*/
+
 	$numusers = $sql->num_rows($users1);
 
 	for($i = 0; $user = $sql->fetch($users1); ++$i){
@@ -96,17 +121,11 @@
 	
 	pageheader();
 	
-	// Fixed a stupid bug where I accidentaly forgot $grouplist WAS actually going to be used
-	// and I unsetted the groups to be hidden directly there, breaking the namecolor function
-	$allowedgroups = array_keys($grouplist);
-	if (!has_perm('show-super-users')) {
-		$allowedgroups[GROUP_SUPER - 1] = NULL; // The first group starts at ID 1, so everything is offset by that
-	}
-	$allowedgroups[GROUP_SYSADMIN - 1] = $allowedgroups[GROUP_PERMABANNED - 1] = $allowedgroups[GROUP_GUEST - 1] = NULL;
+	// Simplified to use a db value instead of hardcoded shit
 	$groupout = "";
-	for ($i = 0, $cnt = count($allowedgroups); $i < $cnt; $i++) {
-		if ($allowedgroups[$i] !== NULL) {
-			$groupout .= "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow={$allowedgroups[$i]}'>{$grouplist[$allowedgroups[$i]]['name']}</a> | ";
+	foreach ($grouplist as $group => $x) {
+		if ($show_hidden || !$x['hidden']) {
+			$groupout .= "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow={$group}'>{$x['name']}</a> | ";
 		}
 	}
 	
@@ -163,8 +182,8 @@ print "
 			<td class='tdbgh center' width=100>EXP</td></tr>
 		";
 	} else {
-		$items   = $sql->fetchq("SELECT i.id, i.* FROM items i", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
-        $classes = $sql->fetchq("SELECT r.id, r.* FROM rpg_classes r", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+		$items   = $sql->fetchq("SELECT i.id, i.* FROM items i", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+        $classes = $sql->fetchq("SELECT r.id, r.* FROM rpg_classes r", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 
 		print "<td class='tdbgh center' width=35>Level</td>";
 		print "<td class='tdbgh center' width=90>Class</td>";

@@ -196,7 +196,7 @@
 	//$shops = $sql->query('SELECT * FROM itemcateg ORDER BY corder');
 	//$itemids = array_unique(array($eq['eq1'], $eq['eq2'], $eq['eq3'], $eq['eq4'], $eq['eq5'], $eq['eq6'], $eq['eq7']));
 	//$itemids = implode(',', $itemids);
-	$items = $sql->fetchq("SELECT i.id, i.* FROM items i WHERE i.id=0$q", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+	$items = $sql->fetchq("SELECT i.id, i.* FROM items i WHERE i.id=0$q", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	$shoplist = "";
 	foreach ($shops as $shopid => $shopname) {
 		$shoplist.="

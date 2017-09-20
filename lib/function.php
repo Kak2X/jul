@@ -14,6 +14,8 @@
 
 	require 'lib/irc.php'; // IRC Reporting...
 	require 'lib/errorhandler.php'; // ... for errors
+	require 'lib/userlib.php';
+	
 	require 'lib/common.php';
 	
 	require 'lib/forumlib.php';

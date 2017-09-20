@@ -19,7 +19,7 @@
 		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 		$q 		= "";
 		foreach($num as $i) $q .= " OR i.id = ".filter_int($user['eq'.$i]);
-		$items = $sql->fetchq("SELECT i.id, i.* FROM items i WHERE i.id=$it$q", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+		$items = $sql->fetchq("SELECT i.id, i.* FROM items i WHERE i.id=$it$q", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	}
 	if(!$nc)
 		$class = $sql->fetchq("SELECT * FROM `rpg_classes` WHERE `id` = '{$user['class']}'");

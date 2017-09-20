@@ -9,6 +9,10 @@
 					'<br><br>____________________<br>',
 					'<br><br><hr>',
 					'<br><br>');
+					
+	// Token list
+	const TOKEN_MAIN = 20;
+	const TOKEN_LOGIN = 10;
 	
 	
 	//const PERM_FIELDS_NUM = 1;	// Number of permission fields - needs to be the max bitmask set id (shown below)
@@ -18,6 +22,7 @@
 		Permission definitions
 		<permission name> = [<bitmask set>, <flag>]
 	*/
+	/*
 	const PERM_BYPASS_LOCKDOWN 				= [1, 0b1]; // SYSADMIN
 	const PERM_DISPLAY_HIDDEN_FORUMS 		= [1, 0b10]; // ADMIN
 	const PERM_VIEW_DEBUGGER				= [1, 0b100]; // SYSADMIN
@@ -49,6 +54,7 @@
 	const PERM_POST_NEWS					= [1, 0b10000000000000000000000000000]; // SUPER
 	const PERM_NEWS_ADMIN					= [1, 0b100000000000000000000000000000]; // ADMIN
 	const PERM_BYPASS_CUSTOM_FORUM_LIMITS	= [1, 0b1000000000000000000000000000000]; // Whitelisted
+	*/
 //  const PERM__________________			= [1, 0b00000000000000000000000000000000];
 	
 	

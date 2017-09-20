@@ -27,8 +27,7 @@
 	
 	// Just fetch now everything from misc that's going to be used on every page
 	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, announcementforum, backup, perm_fields FROM misc");
-	define('PERM_FIELDS_NUM', $miscdata['perm_fields']); // Compat
-
+	
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int)date("Gi") < 1) {
 		header("HTTP/1.1 503 Service Unavailable");
@@ -204,7 +203,7 @@
 			'title'			=> '',
 			'hideactivity'	=> 0,
 		);	
-	}	
+	}
 	
 	if ($x_hacks['superadmin']) {
 		$loguser['group'] = GROUP_SYSADMIN;
@@ -213,6 +212,7 @@
 	/*
 		Permission setup
 	*/
+	$permlist = load_permlist();
 	$loguser['permflags'] = load_perm($loguser['id'], $loguser['group']);
 	
 	register_shutdown_function('error_printer', false, has_perm('view-debugger'), $GLOBALS['errors']);
@@ -255,8 +255,7 @@
 		if ($botinfo['malicious']) {
 			$ipbanned = 1;
 			if (!$sql->resultq("SELECT 1 FROM ipbans WHERE $checkips")) {
-				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `reason`='Malicious bot.', `date` = '". ctime() ."', `banner` = '1'");
-				xk_ircsend("1|Auto IP Banned malicious bot with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+				ipban($_SERVER['REMOTE_ADDR'], "Malicious bot.", "Auto IP Banned malicious bot with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 			}
 		}
 	}
@@ -421,7 +420,7 @@
 
 	// group names
 	// we have to do this since they can be added or removed
-	$grouplist = $sql->fetchq("SELECT id, name, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+	$grouplist = $sql->fetchq("SELECT id, name, hidden, subgroup, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	
 
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");

@@ -16,6 +16,7 @@ const PT_READONLY  = 0b1;
 const PT_CHECKPERM = 0b10;
 
 
+// TODO: Convert to load_permlist(true);
 // List of permissions on permission table for easy editing
 // <permission name> -> <description>
 const PT_PERMLIST = array(
@@ -219,7 +220,7 @@ else {
 		
 		// Initialize the output array which will be inserted to the database
 		$permSet = array();
-		for ($i = 0; $i < PERM_FIELDS_NUM; ++$i) {
+		for ($i = 0; $i < $miscdata['perm_fields']; ++$i) {
 			$permSet[$i] = 0;
 		}
 		
@@ -242,14 +243,14 @@ else {
 			$fieldText = "";
 			if ($_GET['id'] > -1) {
 				// Update existing
-				for ($i = 1; $i <= PERM_FIELDS_NUM; ++$i) {
+				for ($i = 1; $i <= $miscdata['perm_fields']; ++$i) {
 					$fieldText .= ($i != 1 ? ", " : "")."set{$i} = ?"; // {$permSet[$i]}
 				}
 				// Extra group info we need
 				$setPerms = $sql->prepare("UPDATE perm_groups SET {$fieldText}, name = ?, ord = ?, namecolor0 = ?, namecolor1 = ?,namecolor2 = ? WHERE id = {$_GET['id']}");
 			} else {
 				// Insert new
-				for ($i = 1; $i <= PERM_FIELDS_NUM; ++$i) {
+				for ($i = 1; $i <= $miscdata['perm_fields']; ++$i) {
 					$fieldText .= ($i != 1 ? ", " : "")."?"; // {$permSet[$i]}
 				}
 				$setPerms = $sql->prepare("
@@ -265,7 +266,7 @@ else {
 		} else {
 			// Users
 			$fieldText = "";
-			for ($i = 1; $i <= PERM_FIELDS_NUM; ++$i) {
+			for ($i = 1; $i <= $miscdata['perm_fields']; ++$i) {
 				$fieldText .= ($i != 1 ? ", " : "")."set{$i} = VALUES(set{$i})";
 			}
 			$setPerms = $sql->prepare("
@@ -371,7 +372,7 @@ else {
 					'namecolor2' => '',
 					'ord' => 0,
 				);
-				for ($i = 1; $i <= PERM_FIELDS_NUM; ++$i) {
+				for ($i = 1; $i <= $miscdata['perm_fields']; ++$i) {
 					$group["set$i"] = 0;
 				}
 				$editingLabel = "a new group";
@@ -400,7 +401,7 @@ else {
 			}
 			
 			// Determine to use user permset or group default
-			for ($k = 1; $k <= PERM_FIELDS_NUM; $k++) {
+			for ($k = 1; $k <= $miscdata['perm_fields']; $k++) {
 				if (isset($group["userset$k"])) {
 					$group["set$k"] = $group["userset$k"];
 				} else {

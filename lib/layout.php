@@ -439,3 +439,9 @@ pw_d.projectwonderful_background_color = \"#$bgcolor\";
 <!-- End of Project Wonderful ad code. -->
 </center>";
 }
+
+class msg_holder {
+	private static $message = "";
+	public static function set_message($msg) {self::$message = xss_filters(filter_string($msg, true));}
+	public static function get_message() {return quick_help(self::$message, "Message");}
+}

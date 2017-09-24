@@ -48,17 +48,34 @@ function has_forum_perm($permName, $sourceArr, $noAllCheck = false) {
 }
 
 // Gets the forum permission given a $forum ID, $user ID and $group ID
-// For performance reasons (?) this is rarely used,
-// as to save time these fields are directly fetched from most of the queries that get forum data
-function get_forum_perm($forum, $user, $group){
+function get_forum_perm($forum, $user, $group) {
 	global $sql;
-	return $sql->fetchq("
-		SELECT pf.group{$group} forumperm, pu.permset userperm
-		FROM forums f
-		LEFT JOIN perm_forums     pf ON f.id    = pf.id
-		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$user}
-		WHERE f.id = {$forum}
-	", PDO::FETCH_ASSOC, mysql::USE_CACHE);
+	
+	// Save a query if we're not logged in, since we wouldn't have proper perm_user bitmasks anyway.
+	if ($user) {
+		
+		// include subgroups perms as well
+		$subgroups = $sql->query("SELECT group_id FROM users_subgroups WHERE user = {$user}");
+		$subgroups_txt = "";
+		while ($x = $sql->fetch($subgroups)) {
+			$subgroups_txt .= "pf.group{$x['group_id']}, ";// set{$i}, ";
+		}
+	
+		$pquery = $sql->fetchq("
+			SELECT pf.group{$group}, {$subgroups_txt} pu.permset userperm
+			FROM perm_forums pf
+			LEFT JOIN perm_forumusers pu ON pf.id = pu.forum AND pu.user = {$user}
+			WHERE pf.id = {$forum}");
+		
+		$power = [];
+		foreach ($pquery as $x) {
+			$power = calculate_perms($power, ['set0' => $x], 1);
+		}
+	} else {
+		// If we're not logged in, we inherit the (usually guest) permissions
+		$power      = $sql->fetchq("SELECT pf.group{$group} FROM perm_forums WHERE id = {$group}");
+	}
+	return $power;
 }
 
 // Generate the bitmask field names for a query
@@ -105,13 +122,13 @@ function load_perm($user, $group) {
 		$power = $sql->fetch($pquery);
 		if (is_array($power)) {
 			while ($x = $sql->fetch($pquery)) {
-				$power = calculate_perms($power, $x);
+				$power = calculate_perms($power, $x, $miscdata['perm_fields']);
 			}
 		}
 		
 		$userpower 	= $sql->fetchq("SELECT {$setfields} FROM perm_users WHERE id = {$user}");
 		if (is_array($userpower)) {
-			$power = calculate_perms($power, $userpower);
+			$power = calculate_perms($power, $userpower, $miscdata['perm_fields']);
 		}
 	} else {
 		// If we're not logged in, we inherit the (usually guest) permissions
@@ -120,9 +137,11 @@ function load_perm($user, $group) {
 	return $power;
 }
 
-function calculate_perms($a, $b) {
-	global $miscdata;
-	for ($i = 0; $i < $miscdata['perm_fields']; ++$i) {
+function calculate_perms($a, $b, $limit) {
+	for ($i = 0; $i < $limit; ++$i) {
+		if (!$b["set{$i}"]) {
+			continue; // Don't waste time with empty perms defs
+		}
 		$j = 0b11;
 		while (true) {
 			switch($b["set{$i}"] & $j) {
@@ -130,7 +149,7 @@ function calculate_perms($a, $b) {
 					continue; // 0b00 -> don't change (default deny)
 				case 1:
 					$a["set{$i}"] != $j; // 0b01 -> deny
-				case 2:
+				case 3:
 					$a["set{$i}"] |= $j; // 0b11 -> allow
 			}
 			

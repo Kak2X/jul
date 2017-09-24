@@ -263,8 +263,10 @@
 	// >_>
 	$isChristmas = (date('n') == 12);
 	
+	/*
+		Check if we're IP Banned
+	*/
 	$ipbanned = $torbanned = $isbot = 0;
-	
 	$bpt_flags = 0;
 	
 	// These extra variables are in control of the user. Nuke them if they're not valid IPs
@@ -291,6 +293,9 @@
 		}
 	}
 	
+	/*
+		Set up extra url info for referer/hit logging
+	*/
 	$url = $_SERVER['REQUEST_URI'];
 
 	if ($ipbanned) {
@@ -342,7 +347,7 @@
 			// As in BoardC, we transfer the IP bans just in case
 			if ($sql->resultq("SELECT 1 FROM ipbans WHERE ip = '{$loguser['lastip']}'")){
 				ipban($_SERVER['REMOTE_ADDR'], "IP Ban Evasion", "Previous IP address was IP banned - updated IP bans list.", IRC_ADMIN);
-				header("Location: index.php");
+				//header("Location: index.php");
 				die;
 			}
 		}
@@ -475,4 +480,10 @@
 	// When a post milestone is reached, everybody gets rainbow colors for a day
 	if (!$x_hacks['rainbownames']) {
 		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
+	}
+	
+	// Cookie status message
+	if (isset($_COOKIE['msg'])) {
+		msg_holder::set_message($_COOKIE['msg']); // Will xss_filters(filter_string true))
+		setcookie('msg', NULL);
 	}

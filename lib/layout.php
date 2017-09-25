@@ -450,3 +450,19 @@ class msg_holder {
 	public static function set_message($msg) {self::$message = xss_filters(filter_string($msg, true));}
 	public static function get_message() {return quick_help(self::$message, "Message");}
 }
+
+class infobar {
+	private static $msglist = []; // message, color
+	// Add a new infobar message
+	public static function add($message, $color) {
+		self::$msglist[] = [$message, $color];
+	}
+	public static function showAll() {
+		$out = "";
+		foreach (self::$msglist as $x) {
+			$out .= "<div class='center b' style='color: {$x[1]}; padding: 3px; border: 5px dotted {$x[1]}; background: #000;'>{$x[0]}</div>\n";
+		}
+		return $out;
+	}
+
+}

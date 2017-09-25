@@ -40,8 +40,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
 	
-	if (has_perm('view-submessage'))
+	if (has_perm('view-submessage')) {
 		$config['board-title'] .= $config['title-submessage'] ? "<br><b>".$config['title-submessage']."</b>" : "";
+	}
 	
 	// Admin-only info
 	if (has_perm('sysadmin-actions')) {
@@ -407,6 +408,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			<?=$css?>
 	</head>
 	<body>
+	<?=infobar::showAll()?>
 	<?php
 
 	if (!$mini) {

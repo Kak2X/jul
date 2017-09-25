@@ -55,7 +55,7 @@ function exception_reporter($err) {
 	global $config;
 	// Compatibility layer
 	$type = E_ERROR;
-	$msg  = $err->getMessage();
+	$msg  = $err->getMessage() . "\nStack trace:\n\n". highlight_trace($err->getTrace());
 	$file = $err->getFile();
 	$line = $err->getLine();
 	unset($err);
@@ -66,6 +66,17 @@ function exception_reporter($err) {
 	} else {
 		fatal_error('Exception', $msg, $file, $line);
 	}
+}
+
+function highlight_trace($arr) {
+	$out = "";
+	foreach ($arr as $k => $v) {
+		$out .= "<span style='color: #FFF'>{$k}</span><span style='color: #F44'>#</span> ".
+		        "<span style='color: #0f0'>{$v['file']}</span>#<span style='color: #6cf'>{$v['line']}</span> ".
+		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".print_r($v['args'], true)."\n)</span></span>\n";
+	}
+	//implode("<span style='color: #0F0'>,</span>", $v['args'])
+	return $out;
 }
 
 function error_printer($trigger, $report, $errors){

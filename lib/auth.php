@@ -35,13 +35,12 @@ function load_permlist($desc = false) {
 
 // Forum permissions are 6 bits long (Read,Post,Edit,Delete,Thread,Mod)
 // $permName can be any of those four words
-// $sourceArr has to contain the key 'forumperm' which defines the bitset to check, and optionally a 'userperm' key as patch data.
+// $permSet is the permission set
 // $noAllCheck is mostly used in the forum permission editor to display the real permission flags (for those who have all-forum-access perm)
-function has_forum_perm($permName, $sourceArr, $noAllCheck = false) {
+function has_forum_perm($permName, $permSet, $noAllCheck = false) {
 	if ($noAllCheck || !has_perm('all-forum-access')) {
 		$permBit = constant("PERM_FORUM_" . strtoupper($permName));
-		$check = isset($sourceArr['userperm']) ? $sourceArr['userperm'] : $sourceArr['forumperm'];
-		return $check & $permBit;
+		return $permSet & $permBit;
 	} else {
 		return true;
 	}
@@ -58,7 +57,7 @@ function get_forum_perm($forum, $user, $group) {
 		$subgroups = $sql->query("SELECT group_id FROM users_subgroups WHERE user = {$user}");
 		$subgroups_txt = "";
 		while ($x = $sql->fetch($subgroups)) {
-			$subgroups_txt .= "pf.group{$x['group_id']}, ";// set{$i}, ";
+			$subgroups_txt .= "pf.group{$x['group_id']}, ";
 		}
 	
 		$pquery = $sql->fetchq("
@@ -73,7 +72,43 @@ function get_forum_perm($forum, $user, $group) {
 		}
 	} else {
 		// If we're not logged in, we inherit the (usually guest) permissions
-		$power      = $sql->fetchq("SELECT pf.group{$group} FROM perm_forums WHERE id = {$group}");
+		$power      = $sql->fetchq("SELECT pf.group{$group} FROM perm_forums WHERE id = {$forum}");
+	}
+	return $power;
+}
+
+function get_all_forum_perm($cur_forum, $user, $group, $showall = 0, $skip = 0) {
+	global $sql;
+	
+	// Save a query if we're not logged in, since we wouldn't have proper perm_user bitmasks anyway.
+	if ($user) {
+		
+		// include subgroups perms as well
+		$subgroups = $sql->query("SELECT group_id FROM users_subgroups WHERE user = {$user}");
+		$subgroups_txt = "";
+		while ($x = $sql->fetch($subgroups)) {
+			$subgroups_txt .= "pf.group{$x['group_id']}, ";
+		}
+	
+		$pquery = $sql->fetchq("
+			SELECT pf.id, pf.group{$group}, {$subgroups_txt} pu.permset userperm
+			FROM forums f
+			LEFT JOIN perm_forums     pf ON f.id = pf.id
+			LEFT JOIN perm_forumusers pu ON f.id = pu.forum AND pu.user = {$user}
+			WHERE (f.custom OR !ISNULL(f.catid)) ".($showall ? "" : "AND (!f.custom OR f.id = {$cur_forum}) AND !f.hidden")."  AND f.id != {$skip}
+			ORDER BY pf.id
+		",PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+		
+		$power = [];
+		foreach ($pquery as $key => $pqrow) {
+			$power[$key]['set0'] = 0;
+			foreach ($pqrow as $x) {
+				$power[$key] = calculate_perms($power[$key], ['set0' => $x], 1);
+			}
+		}
+	} else {
+		// If we're not logged in, we inherit the (usually guest) permissions
+		$power      = $sql->fetchq("SELECT pf.id, pf.group{$group} FROM perm_forums ORDER BY pf.id", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL);
 	}
 	return $power;
 }
@@ -141,7 +176,10 @@ function calculate_perms($a, $b, $limit) {
 	for ($i = 0; $i < $limit; ++$i) {
 		if (!$b["set{$i}"]) {
 			continue; // Don't waste time with empty perms defs
+		} else if (!isset($a["set{$i}"])) {
+			$a["set{$i}"] = 0; // Possibly the first call to calculate_perms() from another function
 		}
+		
 		$j = 0b11;
 		while (true) {
 			switch($b["set{$i}"] & $j) {
@@ -149,8 +187,10 @@ function calculate_perms($a, $b, $limit) {
 					continue; // 0b00 -> don't change (default deny)
 				case 1:
 					$a["set{$i}"] != $j; // 0b01 -> deny
+					break;
 				case 3:
 					$a["set{$i}"] |= $j; // 0b11 -> allow
+					break;
 			}
 			
 			if ($j == 0b110000000000000000000000000000) {

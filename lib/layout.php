@@ -1,8 +1,5 @@
 <?php
 
-require "lib/pageheader.php";
-require "lib/pagefooter.php";
-
 function doforumlist($id, $name = '', $shownone = '', $skip = 0){
 	global $loguser, $sql;
 	
@@ -24,38 +21,37 @@ function doforumlist($id, $name = '', $shownone = '', $skip = 0){
 	}
 	
 	$forums = $sql->query("
-		SELECT 	f.id, f.title, f.catid, f.hidden, f.custom, c.name catname, c.showalways,
-				pf.group{$loguser['group']} forumperm, pu.permset userperm
+		SELECT 	f.id, f.title, f.catid, f.hidden, f.custom, c.name catname, c.showalways
 		FROM forums f
+		LEFT JOIN categories c ON f.catid = c.id
 		
-		LEFT JOIN categories      c  ON f.catid = c.id
-		LEFT JOIN perm_forums     pf ON f.id    = pf.id
-		LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
-		
-		WHERE $showcustom 
-		  AND (!f.hidden OR $showhidden) 
-		  AND (f.custom OR !ISNULL(c.id)) 
-		  OR f.id = $id ".
-		  ($skip ? "AND f.id != $skip" : "")."
-			
+		WHERE ($showcustom "./* by default, do not show custom forums*/"
+		  AND (!f.hidden OR $showhidden) "./* by default, do not show hidden forums */"
+		  AND (f.custom OR !ISNULL(c.id)) "./* do not show invalid forums (note that custom forums normally have no category id; so we make sure not to filter those)*/"
+		  ".($skip ? "AND f.id != $skip" : "").") "./* if needed, skip over a specified forum*/"
+		  OR f.id = $id
 		ORDER BY f.custom, c.corder, f.catid, f.forder, f.id
 	");
+	
+	$fperms = get_all_forum_perm($id, $loguser['id'], $loguser['group'], $name, $skip);
 	
 	$prev      = NULL;	// In case the current forum is in an invalid category, the non-existing category name won't be printed
 	$customsep = NULL;
 	while ($forum = $sql->fetch($forums)) {
-		$canView = has_forum_perm('read', $forum);
+		$canView = has_forum_perm('read', $fperms[$forum['id']]['set0']);
 		// New category
 		if ($forum['custom']) {
 			if (!$customsep) {
+				// The custom forums start here. No further categories will be present.
 				$forumlinks .= "</optgroup><optgroup label=\"".($showcustom === 1 ? "Custom forums" : "Current forum")."\">";
 				$customsep = true;
 			}
 		} else if (!$forum['custom'] && $prev != $forum['catid']) {
 			if ($canView || $forum['showalways']) {
 				$forumlinks .= "</optgroup><optgroup label=\"{$forum['catname']}\">";
+				$prev = $forum['catid'];
 			}
-			$prev = $forum['catid'];
+			//$prev = $forum['catid'];
 		}
 		
 		if ($canView) {

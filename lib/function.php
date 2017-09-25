@@ -10,6 +10,9 @@
 	require 'lib/mysql.php';
 	
 	require 'lib/layout.php';
+	require "lib/pageheader.php";
+	require "lib/pagefooter.php";
+
 	require 'lib/rpg.php';
 
 	require 'lib/irc.php'; // IRC Reporting...

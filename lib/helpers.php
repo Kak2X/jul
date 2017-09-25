@@ -89,6 +89,10 @@ function numrange($n, $lo, $hi) {
 	return max(min($hi, $n), $lo);
 }
 
+function in_range($n, $lo, $hi) {
+	return ($lo >= $n && $n <= $hi);
+}
+
 function marqueeshit($str) {
 	return "<marquee scrollamount='". mt_rand(1, 50) ."' scrolldelay='". mt_rand(1, 50) ."' direction='". pick_any(array("left", "right")) ."'>$str</marquee>";
 }

@@ -78,3 +78,65 @@ function logout() {
 	// May as well unset this as well
 	setcookie('logpassword','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
 }
+
+/*
+	iprange() Checks if the IP is in a specific IP range
+	in 		: the IP you want to check
+	left 	: range starts from this IP
+	right	: the range ends with this IP
+	This is used in admin-ipsearch.php.
+*/
+function iprange($in, $left, $right){
+	if (strpos($in, ":") !== false) {
+		$sep = ":";
+		$cnt = 8;
+		$ip_low  = array_fill(0, $cnt, 0);
+		$ip_high = array_fill(0, $cnt, 0xFFFF);
+	} else {
+		$sep = ".";
+		$cnt = 4;
+		$ip_low = array_fill(0, $cnt, 0);
+		$ip_high = array_fill(0, $cnt, 255);
+	}
+	
+	$start 	= explode($sep, $left + $ip_low);
+	$end 	= explode($sep, $right + $ip_high);
+	$ip 	= explode($sep, $in + $ip_low);
+	for ($i = 0; $i < $cnt; $i++){
+		if (in_range($ip[$i], $start[$i], $end[$i])) continue;
+		else return false;
+	}
+	
+	return true;
+}
+
+/*
+	ipmask() also checks for an IP range.
+	ie: ipmask('127.*.0.1');
+*/
+function ipmask($mask, $ip = ''){
+	if (!$ip) $ip = $_SERVER['REMOTE_ADDR'];
+	
+	if (strpos($mask, ":") !== false) {
+		$sep = ":";
+		$cnt = 8;
+	} else {
+		$sep = ".";
+		$cnt = 4;
+	}
+	
+	$mask 	= explode($sep, $mask);
+	$chk 	= explode($sep, $ip);
+	$cnt 	= min(count($mask), count($chk));
+	
+	for($i = 0; $i < $cnt; $i++){
+		/*
+			A star obviously allows every number for the ip sect, otherwise we check if the sectors match
+			If they don't return false
+		*/
+		if ($mask[$i] == "*" || $mask[$i] == $chk[$i]) continue;
+		else return false;
+	}
+	// Everything matches
+	return true;
+}

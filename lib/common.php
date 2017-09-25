@@ -21,7 +21,7 @@
 		if ($config['always-show-debug'] || $x_hacks['superadmin'] || $x_hacks['adminip'] == $_SERVER['REMOTE_ADDR']) {
 			fatal_error("Connection Error", $sql->error, "<!--", "-->");
 		} else {
-			if ($x_hacks['super-private']) {
+			if ($miscdata['private'] == 2) {
 				cloak_404();
 			}
 			dialog("This board is experiencing technical difficulties.<br><br>Click <a href='?".urlencode($_SERVER['QUERY_STRING'])."'>here</a> to try again.", "Technical difficulties ahead", "{$config['board-name']} -- Technical difficulties");
@@ -152,8 +152,13 @@
 		
 	$loguser = array();
 	
-	// Are we logged in?
-	if(isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
+	
+	if ($config['force-user-id']) {
+		// Forcing the user id?
+		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
+		$loguser['lastip'] = $_SERVER['REMOTE_ADDR']; // since these now match, it will not update the lastip value on the db
+	} else if (isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
+		// Are we logged in?
 		$loguserid 	= (int) $_COOKIE['loguserid'];
 		$loguser 	= $sql->fetchq("SELECT * FROM `users` WHERE `id` = $loguserid");
 
@@ -169,9 +174,7 @@
 		unset($loguserid, $logverify, $verifyid, $verifyhash);
 	}
 	
-	if ($config['force-user-id']) {
-		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
-	}
+
 	
 	if ($loguser) {
 		

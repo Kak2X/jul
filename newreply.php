@@ -120,10 +120,10 @@
 
 		$numdays		= (ctime()-$user['regdate'])/86400;
 		$tags			= array();
-		$message		= doreplace($message,$numposts,$numdays,$user['id'], $tags);
+		$message		= prepare_tags($message,$numposts,$numdays,$user['id'], $tags);
 		$tagval			= json_encode($tags);
-		$rsign			= doreplace($sign,$numposts,$numdays,$user['id']);
-		$rhead			= doreplace($head,$numposts,$numdays,$user['id']);
+		$rsign			= prepare_tags($sign,$numposts,$numdays,$user['id']);
+		$rhead			= prepare_tags($head,$numposts,$numdays,$user['id']);
 		$currenttime	= ctime();
 		
 		if (isset($_POST['submit'])) {
@@ -252,7 +252,7 @@
 								</span>
 							</td>
 							<td class='tbl $bg' valign=top>
-								".doreplace2(dofilters($post['text'], $forumid), $post['options'])."
+								".format_post(dofilters($post['text'], $forumid), $post['options'])."
 							</td>
 						</tr>";
 				} else {

@@ -75,7 +75,7 @@
 			$user 		= $sql->fetchq("SELECT posts, regdate FROM users WHERE id = {$loguser['id']}");
 			$numposts 	= $user['posts'];
 			$numdays 	= (ctime()-$user['regdate'])/86400;
-			$message 	= doreplace($message,$numposts,$numdays,$loguser['id']);
+			$message 	= prepare_tags($message,$numposts,$numdays,$loguser['id']);
 
 			$edited 	= getuserlink($loguser);
 			//$edited = str_replace('\'', '\\\'', getuserlink($loguser));

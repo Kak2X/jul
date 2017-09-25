@@ -117,8 +117,8 @@
 	$schname = $sql->resultq("SELECT name FROM schemes WHERE id=$user[scheme]");
 	$numdays = (ctime()-$user['regdate'])/86400;
 
-	$user['signature']  = doreplace($user['signature'],$user['posts'],$numdays, $id);
-	$user['postheader'] = doreplace($user['postheader'],$user['posts'],$numdays, $id);
+	$user['signature']  = prepare_tags($user['signature'],$user['posts'],$numdays, $id);
+	$user['postheader'] = prepare_tags($user['postheader'],$user['posts'],$numdays, $id);
 	
 	$picture = $moodavatar = "";
 	if ($user['picture']) $picture = "<img src=\"".htmlspecialchars($user['picture'])."\">";
@@ -289,7 +289,7 @@
 	<tr><td class='tdbg1' width=150><b>Real name</td>			<td class='tdbg2'><?=$user['realname']?>&nbsp;</td></tr>
 	<tr><td class='tdbg1' width=150><b>Location</td>			<td class='tdbg2'><?=$user['location']?>&nbsp;</td></tr>
 	<tr><td class='tdbg1' width=150><b>Birthday</td>			<td class='tdbg2'><?=$birthday?> <?=$age?>&nbsp;</td></tr>
-	<tr><td class='tdbg1' width=150><b>User bio</td>			<td class='tdbg2'><?=dofilters(doreplace2(doreplace($user['bio'], $user['posts'], (ctime()-$user['regdate'])/86400, $id)))?>&nbsp;</td></tr>
+	<tr><td class='tdbg1' width=150><b>User bio</td>			<td class='tdbg2'><?=dofilters(format_post(prepare_tags($user['bio'], $user['posts'], (ctime()-$user['regdate'])/86400, $id)))?>&nbsp;</td></tr>
 </table>
 <br>
 <table class='table'>

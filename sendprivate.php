@@ -66,10 +66,10 @@
 		
 		$numdays 	 = (ctime()-$loguser['regdate'])/86400;
 		$tags		 = array();
-		$message 	 = doreplace($message,$loguser['posts'],$numdays,$loguser['id'],$tags);
+		$message 	 = prepare_tags($message,$loguser['posts'],$numdays,$loguser['id'],$tags);
 		$tagval		 = json_encode($tags);
-		$rsign 		 = doreplace($sign,$loguser['posts'],$numdays,$loguser['id']);
-		$rhead 		 = doreplace($head,$loguser['posts'],$numdays,$loguser['id']);
+		$rsign 		 = prepare_tags($sign,$loguser['posts'],$numdays,$loguser['id']);
+		$rhead 		 = prepare_tags($head,$loguser['posts'],$numdays,$loguser['id']);
 
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
@@ -157,7 +157,7 @@
 						Posts: {$user['posts']}
 					</td>
 					<td class='tdbg1' valign=top>
-						".doreplace2($msg['text'])."
+						".format_post($msg['text'])."
 					</td>
 				<tr>
 			</table>

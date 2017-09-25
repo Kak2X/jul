@@ -97,7 +97,7 @@
 				</table>
 			</td>
 		</tr>
-		<tr><td class='tdbg1 center' colspan=7>".doreplace2(dofilters($eventdata['text']))."</td></tr>";
+		<tr><td class='tdbg1 center' colspan=7>".format_post(dofilters($eventdata['text']))."</td></tr>";
 	}
 
 	?>

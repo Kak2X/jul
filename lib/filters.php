@@ -61,8 +61,8 @@ function dotags($msg, $user, &$tags = array()) {
 	return $msg;
 }
 
-// prepare_tags()
-function doreplace($msg, $posts, $days, $userid, &$tags = null) {
+// doreplace()
+function prepare_tags($msg, $posts, $days, $userid, &$tags = null) {
 	global $tagval, $sql;
 
 	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, mysql::USE_CACHE);
@@ -139,8 +139,9 @@ function escape_codeblock($text) {
 	
 	return "[quote]<code style='background: #000 !important; color: #fff'>$ret</code>[/quote]";
 }
-// format_post()
-function doreplace2($msg, $options='0|0', $nosbr = false){
+// do_replace2()
+function format_post($msg, $options='0|0', $nosbr = false){
+	global $hacks;
 	// options will contain smiliesoff|htmloff
 	$options = explode("|", $options);
 	$smiliesoff = $options[0];
@@ -164,35 +165,41 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 		}
 	}
 
-	$msg=str_replace('[red]',	'<font color=FFC0C0>',$msg);
-	$msg=str_replace('[green]',	'<font color=C0FFC0>',$msg);
-	$msg=str_replace('[blue]',	'<font color=C0C0FF>',$msg);
-	$msg=str_replace('[orange]','<font color=FFC080>',$msg);
-	$msg=str_replace('[yellow]','<font color=FFEE20>',$msg);
-	$msg=str_replace('[pink]',	'<font color=FFC0FF>',$msg);
-	$msg=str_replace('[white]',	'<font color=white>',$msg);
-	$msg=str_replace('[black]',	'<font color=0>'	,$msg);
-	$msg=str_replace('[/color]','</font>',$msg);
-	$msg=preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
-	$msg=str_replace('[quote]','<blockquote><hr>',$msg);
-	$msg=str_replace('[/quote]','<hr></blockquote>',$msg);
-	$msg=preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
-	$msg=preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
-	$msg=str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">',$msg);
-	$msg=str_replace('[/spoiler]','</div></div>',$msg);
-	$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
-	$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
-	$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
-	$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
-	$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
-	$msg=preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
-
+	// Simple check for skipping BBCode replacements
+	if (strpos($msg, "[") !== false){
+		$msg=str_replace('[red]',	'<font color=FFC0C0>',$msg);
+		$msg=str_replace('[green]',	'<font color=C0FFC0>',$msg);
+		$msg=str_replace('[blue]',	'<font color=C0C0FF>',$msg);
+		$msg=str_replace('[orange]','<font color=FFC080>',$msg);
+		$msg=str_replace('[yellow]','<font color=FFEE20>',$msg);
+		$msg=str_replace('[pink]',	'<font color=FFC0FF>',$msg);
+		$msg=str_replace('[white]',	'<font color=white>',$msg);
+		$msg=str_replace('[black]',	'<font color=0>'	,$msg);
+		$msg=str_replace('[/color]','</font>',$msg);
+		$msg=preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
+		$msg=str_replace('[quote]','<blockquote><hr>',$msg);
+		$msg=str_replace('[/quote]','<hr></blockquote>',$msg);
+		$msg=preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
+		$msg=preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
+		$msg=str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">',$msg);
+		$msg=str_replace('[/spoiler]','</div></div>',$msg);
+		$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
+		$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
+		$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
+		$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
+		$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
+		$msg=preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
+	}
 
 	do {
 		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
 				"<\\1t\\2\\3><\\5t\\6\\7>", $msg, -1, $replaced);
 	} while ($replaced >= 1);
-
+	
+	if ($hacks['comments']) {
+		$p = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $p);
+		$p = str_replace("-->", '--&gt;</span>', $p);
+	}
 
 	if (!$nosbr) sbr(0,$msg);
 
@@ -292,16 +299,12 @@ function xssfilters($p, $strict = false){
 	return $p;
 	
 }
+
+
 function dofilters($p, $f = 0){
-	global $hacks;
 	static $filters = NULL;
 	
 	$p = xssfilters($p);
-	
-	if ($hacks['comments']) {
-		$p = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $p);
-		$p = str_replace("-->", '--&gt;</span>', $p);
-	}
 	
 	if (!isset($filters)) {
 		global $sql;

@@ -130,9 +130,9 @@
 			
 			$tags			= array();
 			
-			$msg 			= doreplace($msg, $numposts, $numdays, $user['id'], $tags);
-			$rsign 			= doreplace($sign, $numposts, $numdays, $user['id']);
-			$rhead 			= doreplace($head, $numposts, $numdays, $user['id']);
+			$msg 			= prepare_tags($msg, $numposts, $numdays, $user['id'], $tags);
+			$rsign 			= prepare_tags($sign, $numposts, $numdays, $user['id']);
+			$rhead 			= prepare_tags($head, $numposts, $numdays, $user['id']);
 			
 			
 			$tagval			= json_encode($tags);

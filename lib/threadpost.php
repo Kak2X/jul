@@ -55,7 +55,7 @@
 			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
 		}
 
-		$post['text'] = doreplace2($post['text'], $post['options']);
+		$post['text'] = format_post($post['text'], $post['options']);
 		
 		if (filter_int($post['editdate'])) {
 			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
@@ -113,8 +113,8 @@
 		$post['signtext']=settags($post['signtext'],filter_string($post['tagval']));
 
 		if($loguser['viewsig']==2){ // Autoupdate
-			$post['headtext']=doreplace($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
-			$post['signtext']=doreplace($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+			$post['headtext']=prepare_tags($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+			$post['signtext']=prepare_tags($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
@@ -123,9 +123,9 @@
 		else
 			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['headtext']);
 		
-		$post['headtext']=doreplace2($post['headtext']);
-		$post['signtext']=doreplace2($post['signtext']);
-		//	$post['text']=doreplace2($post['text'], $post['options']);
+		$post['headtext']=format_post($post['headtext']);
+		$post['signtext']=format_post($post['signtext']);
+		//	$post['text']=format_post($post['text'], $post['options']);
 		return $post;
 	}
 

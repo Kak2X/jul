@@ -198,6 +198,15 @@ function moodlist($sel = 0, $return = false) {
 	
 }
 
+// Forum attachments; have low size limit; do not count for user storage limit (only show on newreply.php)
+function doattachmentslist() {
+	
+}
+
+// Special uploads; have higher size limit, but count towards the storage limit
+function douploadform() {
+}
+
 function dopagelist($url, $elements, $div){
 	global $loguser;
 	$pagelinks = '';

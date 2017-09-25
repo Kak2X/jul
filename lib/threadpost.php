@@ -129,51 +129,62 @@
 		return $post;
 	}
 
-function syndrome($num, $double=false, $bar=true){
-	$bar	= false;
-	$a		= '\'>Affected by';
-	$syn	= "";
-	if($num>=75)  {  $syn="83F3A3$a 'Reinfors Syndrome'";           $last=  75; $next=  25;	}
-	if($num>=100) {  $syn="FFE323$a 'Reinfors Syndrome' +";         $last= 100; $next=  50;	}
-	if($num>=150) {  $syn="FF5353$a 'Reinfors Syndrome' ++";        $last= 150; $next=  50;	}
-	if($num>=200) {  $syn="CE53CE$a 'Reinfors Syndrome' +++";       $last= 200; $next=  50;	}
-	if($num>=250) {  $syn="8E83EE$a 'Reinfors Syndrome' ++++";      $last= 250; $next=  50;	}
-	if($num>=300) {  $syn="BBAAFF$a 'Wooster Syndrome'!!";          $last= 300; $next=  50;	}
-	if($num>=350) {  $syn="FFB0FF$a 'Wooster Syndrome' +!!";        $last= 350; $next=  50;	}
-	if($num>=400) {  $syn="FFB070$a 'Wooster Syndrome' ++!!";       $last= 400; $next=  50;	}
-	if($num>=450) {  $syn="C8C0B8$a 'Wooster Syndrome' +++!!";      $last= 450; $next=  50;	}
-	if($num>=500) {  $syn="A0A0A0$a 'Wooster Syndrome' ++++!!";     $last= 500; $next= 100;	}
-	if($num>=600) {  $syn="C762F2$a 'Anya Syndrome' +++++!!!";      $last= 600; $next= 200;	}
-	if($num>=800) {  $syn="62C7F2$a 'Xkeeper Syndrome' +++++!!";/*  $last= 600; $next= 200;		}
-	if($num>=1000) {  $syn="FFFFFF$a 'Something higher than Xkeeper Syndrome' +++++!!";*/		}
-
-	if($syn) {
-		if ($next && $bar) {
-			$barw1	= min(round(($num - $last) / $next * 150), 150); // Done / Total * Max bar size
-			$barw2	= 150 - $barw1;
-			$barimg	= "red.png";
-
-			if ($double == true) {
-				$hi = 16;
-				$barw1 *= 2;
-				$barw2 *= 2;
-			} else {
-				$hi	= 8;
-			}
-
-			if ($next	>= 100) $barimg	= "special.gif";
-			$bar	= "<br>
-				<nobr>
-					". generatenumbergfx($num, 3, $double) ."
-					<img src='images/num1/barleft.png' height=$hi>
-					<img src='images/num1/bar-on$barimg' width=$barw1 height=$hi>
-					<img src='images/num1/bar-off.png' width=$barw2 height=$hi>
-					<img src='images/num1/barright.png' height=$hi>
-					". generatenumbergfx($next - ($num - $last), 3, $double) ."
-				</nobr>";
+function syndrome($cur_posts, $size_multiplier = 1, $disable_bar = false){
+	global $config, $syndromes;
+	if (!isset($synlist)) {
+		static $synlist, $syncount;
+		$synlist  = array_keys($syndromes);
+		$syncount = count($syndromes);
+	}
+	
+	for ($i = 0; $i < $syncount; ++$i) {
+		if ($i != $syncount - 1 && $cur_posts >= $synlist[$i + 1]) { // just in case we actually reach the last syndrome.
+			continue; // We (somehow) haven't reached the end yet. Simply go on.
+		} else if ($cur_posts >= $synlist[$i]) {
+			$syn = array(
+				'font-color'     => $syndromes[$synlist[$i]][0],
+				'title'          => $syndromes[$synlist[$i]][1],
+				'bar-image'      => $syndromes[$synlist[$i]][2],
+				'posts-required' => $synlist[$i],
+				'length'         => ($i == $syncount-1 ? 0 : $synlist[$i+1] - $synlist[$i]) // On the last syndrome, the bar should be maxed out rather than hidden
+			);
+			break;
+		} else {
+			return ""; // No syndromes awarded. Get out of here immediately.
 		}
-		$syn="<br><i><span style='color: #$syn</span></i>$bar<br>";
 	}
 
-	return $syn;
+	if (!$disable_bar && $config['draw-syndrome-bar']) {
+		
+		$bar_width     = 150 * $size_multiplier;
+		$bar_height    =   8 * $size_multiplier;
+		
+		if ($syn['length']) {
+			$progress   = round(($cur_posts - $syn['posts-required']) / $syn['length'] * 100); // Done / Total * 100
+			$done_posts = $cur_posts;
+			$rest_posts = $syn['length'] - ($cur_posts - $syn['posts-required']);
+		} else {
+			$progress   = 100; // Bar filled
+			$done_posts = "NAN"; // Not needed
+			$rest_posts = "i"; // infinity			
+		}
+		
+		$bar_images = array(
+			'left'  => 'images/num1/barleft.png',
+			'on' => 'images/num1/bar-on'.$syn['bar-image'],
+			'off'    => 'images/num1/bar-off.png',
+			'right'   => 'images/num1/barright.png'
+		);
+
+		$bar	= "<br>
+			<span class='nobr'>
+				". generatenumbergfx($done_posts, 3, $size_multiplier) ."
+				". drawprogressbar($bar_width, $bar_height, $progress, $bar_images)."
+				". generatenumbergfx($rest_posts, 3, $size_multiplier) ."
+			</span>";
+	} else {
+		$bar = "";
+	}
+	
+	return "<br><i><span style='color: #{$syn['font-color']}'>Affected by {$syn['title']}</span></i>$bar<br>";
 }

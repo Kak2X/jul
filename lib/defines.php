@@ -3,6 +3,23 @@
 	// Fields necessary to generate userlinks
 	$userfields = "u.name, u.displayname, u.aka, u.sex, u.group, u.birthday, u.namecolor, u.minipic, u.id";
 	
+	// <posts required> => <color>, <text>, <bar image>
+	$syndromes = array(
+		75      => ['83F3A3', "'Reinfors Syndrome' ",                             'red.png'], // bar-onred.png
+		100     => ['FFE323', "'Reinfors Syndrome' +",                            'red.png'],
+		150     => ['FF5353', "'Reinfors Syndrome' ++",                           'red.png'],
+		200     => ['CE53CE', "'Reinfors Syndrome' +++",                          'red.png'],
+		250     => ['8E83EE', "'Reinfors Syndrome' ++++",                         'red.png'],
+		300     => ['BBAAFF', "'Wooster Syndrome'!!",                             'red.png'],
+		350     => ['FFB0FF', "'Wooster Syndrome' +!!",                           'red.png'],
+		400     => ['FFB070', "'Wooster Syndrome' ++!!",                          'red.png'],
+		450     => ['C8C0B8', "'Wooster Syndrome' +++!!",                         'red.png'],
+		500     => ['A0A0A0', "'Wooster Syndrome' ++++!!",                        'special.gif'], // bar-onspecial.gif
+		600     => ['C762F2', "'Anya Syndrome'!!!",                               'special.gif'],
+		800     => ['62C7F2', "'Xkeeper Syndrome' +++++!!",                       'special.gif'],
+		1000    => ['FFFFFF', "'Something higher than Xkeeper Syndrome' +++++!!", 'special.gif']
+	);
+	
 	// Signature separators
 	$sepn 	= array('Dashes','Line','Full horizontal line','None');
 	$sep	= array('<br><br>--------------------<br>',

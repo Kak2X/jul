@@ -243,7 +243,7 @@
 				dialog("We'll be back later.", "Down for maintenance", "{$config['board-name']} is offline for now");
 			}
 		} else {
-			$config['title-submessage'] .= ($config['title-submessage'] ? "<br>" : "")."(THE BOARD IS DISABLED)";
+			infobar::add("Notice: the board is disabled","#f00");
 		}
 	}
 	

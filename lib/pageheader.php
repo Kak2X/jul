@@ -1,7 +1,7 @@
 <?php
 
 function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols, $isChristmas;
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols, $isChristmas, $grouplist;
 			
 	// Load images and color settings right away
 	require 'lib/colors.php';
@@ -63,6 +63,15 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>". $xminilog['count'] ."</b> pending user(s), last <b>'". $xminilogip['name'] ."'</b> at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ."</b></span></a>";
 		}
 	}
+	
+	/*
+		Make me a local mod!
+	*/
+	$lolz = $sql->resultq("SELECT group_dest FROM powerups WHERE user = {$loguser['id']}");
+	if ($lolz) {
+		$config['board-title'].= "<br><a href='powerup.php'>Make me a {$grouplist[$lolz]['name']}!</a>";
+	}
+			
 	
 	
 	/*
@@ -393,7 +402,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$dispviews = $miscdata['views'];
 	//if (($views % 1000000 >= 999000) && ($views % 1000000 < 999990))
 	//	$dispviews = substr((string)$views, 0, -3) . "???";
-
 
 	
 ?>

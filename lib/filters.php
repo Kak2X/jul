@@ -189,8 +189,16 @@ function format_post($msg, $options='0|0', $nosbr = false){
 		$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 		$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 		$msg=preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
+		
+		// Userlinks
+		$msg = preg_replace_callback("'\[user=(\d+)\]'si", 'userlink_from_id', $msg);
 	}
-
+	
+	if (strpos($msg, "@") !== false){
+		// Userlinks
+		$msg = preg_replace_callback("'\\@\"(.*?)\"'si", 'userlink_from_name', $msg);
+	}
+	
 	do {
 		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
 				"<\\1t\\2\\3><\\5t\\6\\7>", $msg, -1, $replaced);

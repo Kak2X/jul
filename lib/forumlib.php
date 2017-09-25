@@ -193,6 +193,15 @@ function getnamecolor($sex, $group, $namecolor = ''){
 	return $output;
 }
 
+// Intended to be used with preg_replace_callback
+function userlink_from_id($id){return getuserlink(NULL, $id[1], '', true);}
+function userlink_from_name($set){
+	global $userfields;
+	// Might as well fetch all fields here
+	$data = $sql->fetchp("SELECT $userfields FROM users u WHERE u.name = ?", [$set[1]], PDO::FETCH_ASSOC, mysql::USE_CACHE);
+	return makeuserlink($data, $data['id'], '', true);
+}
+
 function postradar($userid){
 	global $sql, $loguser, $userfields;
 	if (!$userid) return "";

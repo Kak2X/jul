@@ -486,7 +486,7 @@
 	}
 	
 	// Cookie status message
-	if (isset($_COOKIE['msg'])) {
-		msg_holder::set_message($_COOKIE['msg']); // Will xss_filters(filter_string true))
-		setcookie('msg', NULL);
+	if ($msg_cookie = msg_holder::get_cookie()) {
+		msg_holder::set_message($msg_cookie); // Will xss_filters(filter_string true))
+		msg_holder::del_cookie();
 	}

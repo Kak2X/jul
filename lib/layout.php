@@ -447,6 +447,11 @@ pw_d.projectwonderful_background_color = \"#$bgcolor\";
 
 class msg_holder {
 	private static $message = "";
+	// A cookie message can be set here
+	public static function get_cookie() {return filter_string($_COOKIE['msg']);}
+	public static function set_cookie($msg) {setcookie('msg', $msg);}
+	public static function del_cookie() {setcookie('msg', NULL);}
+	// but we can also just use it to keep a message for the current page
 	public static function set_message($msg) {self::$message = xss_filters(filter_string($msg, true));}
 	public static function get_message() {return quick_help(self::$message, "Message");}
 }

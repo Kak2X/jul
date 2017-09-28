@@ -1,7 +1,7 @@
 <?php
 
 	// Fields necessary to generate userlinks
-	$userfields = "u.name, u.displayname, u.aka, u.sex, u.group, u.birthday, u.namecolor, u.minipic, u.id";
+	$userfields = "u.name, u.displayname, u.aka, u.sex, u.group, u.birthday, u.namecolor, u.id";
 	
 	// <posts required> => <color>, <text>, <bar image>
 	$syndromes = array(

@@ -155,7 +155,7 @@
 		}
 	}
 
-	$maxsize_txt = "<small>Max size: {$config['max-avatar-size-x']}x{$config['max-avatar-size-y']} | ".($config['max-avatar-size-bytes']/1024)." KB</small>";
+	$maxsize_txt = "<small>Max size: {$config['max-avatar-size-x']}x{$config['max-avatar-size-y']} | ".sizeunits($config['max-avatar-size-bytes'])."</small>";
 	
 	// Always show default avatar table, so you can upload one
 	if (isset($usermood[0])) {

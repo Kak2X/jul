@@ -106,9 +106,7 @@
 	while($onuser = $sql->fetch($onusers)) {
 		$namelink = getuserlink($onuser);
 
-		if($onuser['minipic']) {
-			$onuser['minipic'] = '<img width="16" height="16" src="'.str_replace('"','%22',$onuser['minipic']).'" align="absmiddle"> ';
-		}
+		$minipic = has_minipic($onuser['id']) ? get_minipic($onuser['id'], true)." " : "";
 		
 		// Posted using alternate credentials / without using cookies?
 		if($onuser['nologpost']) {
@@ -117,7 +115,7 @@
 		
 		if($onuser['hideactivity'])
 			$namelink="[$namelink]";	
-		$onlineusersa[] = "{$onuser['minipic']}$namelink";
+		$onlineusersa[] = $minipic.$namelink;
 	}
 
 	$onlineusers = $onlineusersa ? ': '. implode(", ", $onlineusersa) : '';

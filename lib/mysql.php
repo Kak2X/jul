@@ -576,7 +576,7 @@
 				echo "<div style='position: fixed; left: 0px; top: 0px; width: 100%; height: 100vh; background: #000; padding: 20px'>";
 				if (has_perm('view-debugger') || $config['always-show-debug']) {
 					$b = self::getbacktrace();
-					fatal_error("error while executing query '<i>{$query}</i>' in transaction", $error_text."<br><span style='color:#fff'>".($this->fail_message ? "Fail message: ".$this->fail_message : "")."<br><br>The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>", $b['file'], $b['line']);
+					fatal_error("error while executing query '<i>{$query}</i>' in transaction", $error_text."<br><span style='color:#fff'>".($this->fail_message ? "Fail message: ".$this->fail_message : "")."<br>\n<br>\nThe transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>", $b['file'], $b['line']);
 				} else {
 					dialog("This webpage has stopped working.<br><br>Please return to the <a href='index.php'>index</a> page.");
 				}

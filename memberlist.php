@@ -201,11 +201,11 @@ print "
 		$ulist .= "<tr style='height:24px'>";
 		$user = $users[$i];
 		
-		$userpicture = $user['minipic'] ? "<img width=16 height=16 src=\"".htmlspecialchars($user['minipic'])."\">" : '&nbsp;';
+		$userpicture = get_minipic($user['id']);
 		$userlink = getuserlink($user);
 		$ulist.="
 			<td class='tdbg2 center'>".($i+1).".</td>
-			<td class='tdbg1'>{$userpicture}</td>
+			<td class='tdbg1 center'>{$userpicture}</td>
 			<td class='tdbg2'>{$userlink}</td>
 		";
 

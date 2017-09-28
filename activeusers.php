@@ -135,7 +135,7 @@
 		print "
 			<tr>
 				<td class='tdbg1 center'>$rank</td>
-				<td class='tdbg1 center' width=16>". ($user['minipic'] ? "<img src=\"". htmlspecialchars($user['minipic']) ."\" width=16 height=16>" : "&nbsp;") ."</td>
+				<td class='tdbg1 center' width=16>". get_minipic($user['id']) ."</td>
 				<td class='tdbg2'>{$ulink}</td>
 				<td class='tdbg1 center'>".printdate($user['regdate'])."</td>
 				<td class='tdbg2 center' width=30><b>". $user['cnt'] ."</b></td>

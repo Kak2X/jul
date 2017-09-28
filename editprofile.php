@@ -1,5 +1,4 @@
 <?php
-	// This file is already fixed. Just remove this comment and go on.
 	require 'lib/function.php';
 	pageheader();
 	
@@ -11,7 +10,7 @@
 		$titleopt	= 1;
 		$id_q		= "?id=$id";
 		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
-		if (!has_perm('sysadmin-actions') && check_perm('sysadmin-actions', $userdata['group'])) {
+		if (!has_perm('sysadmin-actions') && check_perm('sysadmin-actions', $userdata['id'], $userdata['group'])) {
 			errorpage("You cannot edit a root admin's profile.");
 		}
 	} else {
@@ -38,6 +37,7 @@
 	
 
 	if (isset($_POST['submit'])) {
+		$sql->fail_message = "Could not edit the profile.";
 		check_token($_POST['auth']);
 		
 		// Reinforce "Force male / female" gender item effects
@@ -112,10 +112,14 @@
 			$passwordenc = $userdata['password'];
 		}
 		
+		// No permission but trying anyway? Restore the previous data.
 		if (has_perm('change-namecolor')) {
 			$namecolor = $_POST['colorspec'] ? $_POST['colorspec'] : $_POST['namecolor'];
 		} else {
 			$namecolor = $userdata['namecolor'];
+		}
+		if (!has_perm('change-displayname')) {
+			$_POST['displayname'] = $userdata['displayname'];
 		}
 		
 		
@@ -129,6 +133,21 @@
 			$scheme = 0; // Night theme
 		}
 		
+		// Erase minipic
+		if (filter_int($_POST['del_minipic'])){
+			del_minipic($id); // will check on its own
+		}		
+		// Upload a new minipic
+		else if (filter_int($_FILES['minipic']['size']) && $config['allow-image-uploads']){
+			imageupload(
+				$_FILES['minipic'], 
+				$config['max-minipic-size-bytes'], 
+				$config['max-minipic-size-x'], 
+				$config['max-minipic-size-y'], 
+				avatarpath($id, 'm') // minipic path
+			);
+		}
+		
 		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
 		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
 		
@@ -139,10 +158,8 @@
 			// Appareance
 			'title'				=> $titleopt ? xssfilters(filter_string($_POST['title'], true)) : $userdata['title'],
 			'namecolor'			=> htmlspecialchars($namecolor, ENT_QUOTES),
+			'displayname' 		=> filter_string($_POST['displayname'], true),
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
-			'picture' 			=> filter_string($_POST['picture'], true),
-			'minipic' 			=> filter_string($_POST['minipic'], true),
-			'moodurl' 			=> filter_string($_POST['moodurl'], true),
 			'postheader' 		=> xssfilters($postheader),
 			'signature' 		=> xssfilters($signature),
 			// Personal information
@@ -179,11 +196,7 @@
 		
 		
 		if ($edituser) {
-			/*
-			if ($sex == -378) {
-			$sex = $sexn;
-			}
-*/
+
 			if ($id == 1 && $loguser['id'] != 1) {
 				xk_ircsend("1|". xk(7) ."Someone (*cough* {$loguser['id']} *cough*) is trying to be funny...");
 			}
@@ -204,9 +217,10 @@
 			}
 			 
 			// No "Imma become a root admin" bullshit
-			$group = filter_int($_POST['group']);
-			if (check_perm('sysadmin-actions', $group) && !has_perm('sysadmin-actions')) {
-				$group = GROUP_NORMAL;
+			$group = filter_int($_POST['group']); // we can just check a single group permset for this
+			if (check_perm('sysadmin-actions', 0, $group) && !has_perm('sysadmin-actions')) {
+				//$group = GROUP_NORMAL;
+				errorpage("No.");
 			}				
 			 
 			
@@ -224,7 +238,7 @@
 			$adminset = $sql->setplaceholders("`group`","name","regdate","posts","ban_expire").",";
 			
 			$gcoins = filter_int($_POST['gcoins']);
-			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id", false, $querycheck);
+			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id");
 		} else {
 			$adminval = array();
 			$adminset = "";
@@ -232,19 +246,18 @@
 		
 		// You are not supposed to look at this.
 		// No, really. These are the same placeholder from the arrays above.
-		$userset = $sql->setplaceholders("password","namecolor","picture","minipic","signature","bio","email","icq","title","useranks","aim","sex",
+		$userset = $sql->setplaceholders("password","namecolor","displayname","signature","bio","email","icq","title","useranks","aim","sex",
 		"homepageurl","homepagename","privateemail","timezone","dateformat","timeformat","postsperpage","aka","realname","location","postheader","scheme",
-		"threadsperpage","birthday","viewsig","layout","moodurl","imood","signsep","pagestyle","pollstyle","hideactivity");
+		"threadsperpage","birthday","viewsig","layout","imood","signsep","pagestyle","pollstyle","hideactivity");
 		
-		$sql->queryp("UPDATE users SET {$adminset}{$userset} WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
-		
-		if ($sql->checkTransaction($querycheck)) {
-			if (!$edituser)	errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
-			else errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
+		$sql->queryp("UPDATE users SET {$adminset}{$userset} WHERE id = :id", array_merge($adminval, $mainval));
+
+		$sql->commit();
+		if (!$edituser)	{
+			errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
 		} else {
-			errorpage("Could not edit the profile due to an error.");
+			errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
 		}
-		
 	}
 	else {
 		
@@ -293,7 +306,7 @@
 			
 			// ... and also gets the extra "Administrative bells and whistles"
 			table_format("Administrative bells and whistles", array(
-				"Group"		 				=> [4, "group", ""], // Custom listbox with negative values.
+				"Primary group"		 		=> [4, "group", ""], // Custom listbox with negative values.
 				"Ban duration"				=> [4, "ban_hours", ""],
 				"Number of posts"			=> [0, "posts", "", 6, 10],
 				"Registration time"			=> [4, "regdate", ""],
@@ -311,14 +324,26 @@
 				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color (leave this blank to return to the default color). This is an hexadecimal number.<br>You can use the <a href='hex.php' target='_blank'>Color Chart</a> to select a color to enter here."],
 			));
 		}
+		if (has_perm('change-displayname')) {
+			table_format("Login information", array(
+				"Display name" 	=> [0, "displayname", "This will be shown instead of the real handle.", 20],
+			));
+		}
+		
 		table_format("Appareance", array(
 			"User rank"		=> [4, "useranks", "You can hide your rank, or choose from different sets."],
-			"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 65, 100],
-			"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 65, 100],
-			"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 65, 100],
+			//"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 65, 100],
+			//"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 65, 100],
+			//"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 65, 100],
 			"Post header" 	=> [1, "postheader", "This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a &lt;font&gt; tag). This should preferably be kept small, and not contain too much text or images."],
 			"Signature" 	=> [1, "signature", "This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size."],
-		));		
+		));	
+		
+		if ($config['allow-image-uploads']){
+			table_format("Appareance", array(
+				"Minipic"	 => [4, "minipic", "This picture will appear next to your username. Select an image to upload."],
+			));
+		}		
 		
 		table_format("Personal information", array(
 			"Sex" 		=> [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
@@ -392,6 +417,19 @@
 	
 		$namecolor = "<input type='text' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=6 MAXLENGTH=6> $colorspec";
 		
+		
+		// Upload a new minipic / Remove the existing one
+		$minipic = "
+			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-minipic-size-bytes']}'>
+			<input name='minipic' type='file'>
+			<input type='checkbox' id='del_minipic' name='del_minipic' value=1><label for='del_minipic'>Remove minipic</label><br>
+			<small>
+				Max size: {$config['max-minipic-size-x']}x{$config['max-minipic-size-y']} | ".sizeunits($config['max-minipic-size-bytes'])."
+			</small>
+		";
+		
+		// Date - time formats
+		// Loop through default values with their preview for the select lists
 		if (!$userdata['dateformat']) {
 			$userdata['dateformat'] = $config['default-dateformat'];
 		}
@@ -422,10 +460,11 @@
 			$group = "";
 			$check1[$userdata['group']] = 'selected';
 			$sysadmin = has_perm('sysadmin-actions');
-			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups", PDO::FETCH_UNIQUE, MYSQL::FETCH_ALL);
+			// @TODO: is $checkcache even needed now?
+			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups WHERE subgroup = 0", PDO::FETCH_UNIQUE, MYSQL::FETCH_ALL);
 			foreach ($grouplist as $groupid => $groupval) {
-				if (check_perm('sysadmin-actions', $groupid, $checkcache[$groupid]) && !$sysadmin) {
-					continue; // Hide groups that would give normal admins sysadmin actions
+				if ($groupval['subgroup'] || check_perm('sysadmin-actions', $groupid, $checkcache[$groupid]) && !$sysadmin) {
+					continue; // Hide subgroups or groups that would give normal admins sysadmin actions
 				}
 				$group .= "<option value={$groupid} ".filter_string($check1[$groupid]).">{$groupval['name']}</option>";
 			}
@@ -532,7 +571,7 @@
 
 	?>
 	
-	<FORM ACTION="editprofile.php<?=$id_q?>" NAME=REPLIER METHOD=POST autocomplete=off>
+	<form method='POST' action="editprofile.php<?=$id_q?>" enctype='multipart/form-data' autocomplete=off>
 	<table class='table'>
 		<?=$finput?>
 		<?=$t?>
@@ -547,7 +586,7 @@
 		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
 		</td>
 	</table>
-	</FORM>
+	</form>
 	<?php
 	
 	pagefooter();

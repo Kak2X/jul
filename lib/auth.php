@@ -18,9 +18,9 @@ function has_perm($permName) {
 }
 
 // Determines the permission fields for a different group (used in management pages)
-function check_perm($permName, $group, $cache = NULL) {
+function check_perm($permName, $user, $group, $cache = NULL) {
 	if ($cache === NULL) {
-		$cache = load_perm(0, $group);
+		$cache = load_perm($user, $group);
 	}
 	//$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($permName)));
 	if (isset($permlist[$permName])) {

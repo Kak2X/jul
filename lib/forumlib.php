@@ -111,32 +111,56 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		return "<span style='color: #FF0000' class='b nobr'>[Deleted user]</span>";
 	}
 	
-	// displaynames + aka = overkill
-	if (isset($u['displayname']) && $u['displayname']) {
-		$u['name'] = $u['displayname'];
-	}
+	// don't htmlspecialchar it yet (for the aka check)
+	$name = $u['displayname'] ? $u['displayname'] : $u['name'];
 	
-	if (isset($u['aka']) && $u['aka']) {
-		$akafield		= htmlspecialchars($u['aka']);
-		$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: {$akafield}\"" : '';
+	if ($u['displayname'] && !$u['aka']) {
+		// If no aka is specified but we have a display name, by default it will use the login name
+		$alsoKnownAs = " title=\"Also known as: ".htmlspecialchars($u['name'])."\"";
+	} else if ($u['aka'] && $u['aka'] != $name) {
+		// If it's specified and it's different from the displayed name, print it normally
+		$alsoKnownAs	= " title=\"Also known as: ".htmlspecialchars($u['aka'])."\"";
 	} else {
 		$alsoKnownAs 	= "";
 	}
 	
-	$u['name'] 		= htmlspecialchars($u['name'], ENT_QUOTES);
-	// Don't calculate birthday effect again
-	if (isset($u['namecolor']) && $u['namecolor']) {
-		if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) {
-			$u['namecolor'] = 'rnbow';
+	$name = htmlspecialchars($name, ENT_QUOTES);
+	
+	
+	if ($u['namecolor']) {
+		if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) { // // Don't calculate birthday effect again
+			$namecolor = 'rnbow';
+		} else {
+			$namecolor = $u['namecolor'];
 		}
 	} else {
-		$u['namecolor'] = "";
+		$namecolor = "";
 	}
 	
-	$namecolor  = getnamecolor($u['sex'], $u['group'], $u['namecolor']);
-	$minipic    = ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
+	$namecolor  = getnamecolor($u['sex'], $u['group'], $namecolor);
+	$minipic    = ($useicon && has_minipic($u['id'])) ? get_minipic($u['id'], true)." " : "";
 	
-	return "$minipic<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
+	return "$minipic<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$name}</a>";
+}
+
+// hopefully this will result in some consistency when asking just the minipic
+// now using max-???? properties so it won't stretch when it's less than the minimum
+function get_minipic($user, $skipcheck = false) {
+	if ($skipcheck || has_minipic($user)) {
+		global $config;
+		return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src='".avatarpath($user, 'm')."' align='absmiddle'>";
+	} else {
+		return "";
+	}
+}
+
+function has_minipic($user) { return is_file(avatarpath($user, 'm')); }
+function del_minipic($user) {
+	if (has_minipic($user)) {
+		return unlink(avatarpath($user, 'm'));
+	} else {
+		return false;
+	}
 }
 
 function getnamecolor($sex, $group, $namecolor = ''){
@@ -309,19 +333,16 @@ function fonlineusers($id){
 		/* if ((!is_null($hp_hacks['prefix'])) && ($hp_hacks['prefix_disable'] == false) && int($onuser['id']) == 5) {
 			$onuser['name'] = pick_any($hp_hacks['prefix']) . " " . $onuser['name'];
 		} */
-		$onuser['minipic']	 = htmlspecialchars($onuser['minipic'], ENT_QUOTES);
-		$namelink			 = getuserlink($onuser);
+		$namelink     = getuserlink($onuser);
+		$minipic      = has_minipic($onuser['id']) ? get_minipic($onuser['id'], true)." " : "";
 		
 		if($onuser['nologpost']) // Was the user posting without using cookies?
 			$namelink="($namelink)";
 			
 		if($onuser['hideactivity'])
 			$namelink="[$namelink]";		
-			
-		if ($onuser['minipic'])
-			$namelink = "<img width=16 height=16 src=\"".htmlspecialchars($onuser['minipic'])."\" align='absmiddle'> $namelink";
-			
-		$onlineusers .= $namelink;
+		
+		$onlineusers .= $minipic.$namelink;
 	}
 	
 	$p = ($numon ? ':' : '.');

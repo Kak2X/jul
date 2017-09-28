@@ -11,7 +11,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	$metatag = '';
 
-	if (filter_bool($meta['noindex'])) {
+	if (filter_bool($meta['noindex']) || $miscdata['private']) {
 		$metatag 	.= "<meta name=\"robots\" content=\"noindex,follow\" />";
 	}
 	if (filter_bool($meta['description'])) {

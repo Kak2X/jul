@@ -211,7 +211,7 @@ function userlink_from_name($set){
 }
 
 function postradar($userid){
-	global $sql, $loguser, $userfields;
+	global $sql, $loguser, $userfields, $hacks;
 	if (!$userid) return "";
 	
 	$race = '';
@@ -228,23 +228,7 @@ function postradar($userid){
 	
 	if ($rows) {
 		$race = 'You are ';
-
-		function cu($a,$b) {
-			global $hacks;
-
-			$dif = $a-$b['posts'];
-			if ($dif < 0)
-				$t = (!$hacks['noposts'] ? -$dif : "") ." behind";
-			else if ($dif > 0)
-				$t = (!$hacks['noposts'] ?  $dif : "") ." ahead of";
-			else
-				$t = ' tied with';
-
-			$namelink = getuserlink($b);
-			$t .= " {$namelink}" . (!$hacks['noposts'] ? " ({$b['posts']})" : "");
-			return "<span class='nobr'>{$t}</span>";
-		}
-
+		
 		// Save ourselves a query if we're viewing our own post radar
 		// since we already fetch all user fields for $loguser
 		if ($userid == $loguser['id'])
@@ -252,10 +236,23 @@ function postradar($userid){
 		else
 			$myposts = $sql->resultq("SELECT posts FROM users WHERE id = $userid");
 
-		for($i = 0; $user2 = $sql->fetch($postradar); ++$i) {
-			if ($i) 					$race .= ', ';
-			if ($i && $i == $rows - 1) 	$race .= 'and ';
-			$race .= cu($myposts, $user2);
+		for($i = 0; $user = $sql->fetch($postradar); ++$i) {
+			if ($i)                     $race .= ', ';
+			if ($i && $i == $rows - 1)  $race .= 'and ';
+			
+			// get the string for comparision, which looks off when noposts is set
+			$diff = $myposts - $user['posts'];
+			if ($diff < 0)
+				$comp_txt = (!$hacks['noposts'] ? -$diff : "") ." behind";
+			else if ($diff > 0)
+				$comp_txt = (!$hacks['noposts'] ?  $diff : "") ." ahead of";
+			else
+				$comp_txt = ' tied with';
+			
+			$race .= 
+			"<span class='nobr'>".
+				"{$comp_txt} ". getuserlink($user) . (!$hacks['noposts'] ? " ({$user['posts']})" : "").
+			"</span>";
 		}
 	}
 	return $race;

@@ -33,7 +33,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	if (!$windowtitle) $windowtitle = $config['board-name'];
 	
 	// Overriding the default title?
-	if ($miscdata['specialtitle'])
+	if ($x_hacks['hide-title-to-guests'] && !$loguser['id'])
+		$config['board-title'] = "<h1>?</h1>";
+	else if ($miscdata['specialtitle'])
 		$config['board-title'] = $miscdata['specialtitle'];	// Global
 	else if ($forcetitle) 
 		$config['board-title'] = $forcetitle; // Forum specific

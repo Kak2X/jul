@@ -154,14 +154,27 @@ function avatarlist($user, $sel = 0) {
 	return "Avatar: <select name='moodid'><option value='0'>-Normal avatar-</option>\n{$txt}</select>".include_js('avatars.js');	
 }
 
-// Forum attachments; have low size limit; do not count for user storage limit (only show on newreply.php)
-function attachmentslist() {
+// Forum attachments; have low size limit (1MB); do not count for user storage limit (only show on newreply.php)
+function attachmentslist($attachments) {
 	//@TODO: add this
-}
-
-// Special uploads; have higher size limit, but count towards the storage limit
-function uploadform() {
-	//@TODO: add this
+	// attachments => [<id>, <name>, <size>, <downloads>, <image_data> = NULL]
+	// where if image_data is set it contains [<x>, <y>]
+	
+	// Mostly cloning off the quik-attach for this
+	$out_img = $out_file = "";
+	foreach ($attachments as $x) {
+		$filename = htmlspecialchars($x['name']);
+		$size     = sizeunits($x['size']);
+		if ($x['image_data'] !== NULL) {
+			$out_img .= 
+			"<a href='download.php?id={$x['id']}'>".
+				"<img src='attachments/t/{$x['id']}.png' title=\"{$filename} - {$size}, downloads: {$x['downloads']}\">".
+			"</a> ";
+		} else {
+			$out_file .= "<a href='download.php?id={$x['id']}'>{$filename}</a> ({$size}) - downloads: {$x['downloads']}<br>";	
+		}
+	}
+	return "<fieldset><legend>Attachments</legend>{$out_img}<br><br>{$out_file}</fieldset>";
 }
 
 function dopagelist($url, $elements, $div){

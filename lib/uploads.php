@@ -45,3 +45,13 @@ function fileupload($file, $filename, $private, $dest) {
 function file_hash($filename, $logdata) {
 	return hash('sha256', $filename . $loguser['password'] . $loguser['name']);
 }
+
+function sizeunits($bytes) {
+	static $sizes = ['B', 'KB', 'MB', 'GB'];
+	for ($i = $sbar = 1; $i < 5; ++$i, $sbar *= 1024) { // $sbar defines the size multiplier
+		if ($bytes < $sbar * 1024) {
+			// only .00 is really worthless to know so cut that out
+			return $qseconds = str_replace('.00', '', sprintf("%04.2f", $bytes / $sbar)).' '.$sizes[$i-1];
+		}
+	}
+}

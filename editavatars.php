@@ -280,8 +280,7 @@
 		$data['title'] = htmlspecialchars($data['title']);
 		$sel_hidden = $data['hidden'] ? "checked" : "";
 		return "
-			<table class='table sect' style='display: inline-block;'>
-			
+			<table class='table sect left' style='display: inline-block;'>
 				<!-- <tr><td class='tdbgh center' colspan=2>{$data['title']}</td></tr> -->
 				
 				<tr>
@@ -310,7 +309,6 @@
 				</tr>
 				
 				<tr><td class='tdbgc center' colspan=2>{$commands}</td></tr>
-					
 			</table>
 		";
 	}

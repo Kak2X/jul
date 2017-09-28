@@ -124,7 +124,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	// It doesn't make sense to show these links if we're not logged in
 	// we would receive the same "this is a private board" message anyway
-	if ($loguser['id'] && $miscdata['private']) {
+	if ($loguser['id'] || !$miscdata['private']) {
 		$headlinks2 = "
 		<a href='index.php'>Main</a>
 		".($config['allow-custom-forums'] ? "- <a href='customforums.php'>Browse forums</a>" : "")."
@@ -142,6 +142,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
 		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
 		";
+	} else {
+		$headlinks2 = "";
 	}
 	
 	

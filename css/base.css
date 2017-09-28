@@ -17,6 +17,7 @@ a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
 img { border:none; }
 
 /* Miscellaneous common attributes */
+.left   {text-align:left}
 .center	{text-align:center}
 .right	{text-align:right}
 .nobr	{white-space:nowrap}

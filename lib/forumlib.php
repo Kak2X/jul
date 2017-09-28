@@ -212,29 +212,51 @@ function userlink_from_name($set){
 
 function postradar($userid){
 	global $sql, $loguser, $userfields, $hacks;
-	if (!$userid) return "";
+	
+	// Save ourselves a query if we're viewing our own post radar
+	// since we already fetch all user fields for $loguser
+	if (!$userid) {
+		return ""; // Very likely we're not logged in. Get out.
+	} else if ($userid == $loguser['id']) {
+		$userdata = $loguser;
+	} else {
+		$userdata = $sql->fetchq("SELECT posts, radar_mode FROM users WHERE id = $userid");
+	}
 	
 	$race = '';
 
-	$postradar = $sql->query("
-		SELECT u.posts, $userfields
-		FROM postradar p
-		INNER JOIN users u ON p.comp = u.id
-		WHERE p.user = $userid
-		ORDER BY posts DESC
-	");
+	if (!$userdata['radar_mode']) {
+		// Standard post radar
+		$postradar = $sql->query("
+			SELECT u.posts, $userfields
+			FROM postradar p
+			INNER JOIN users u ON p.comp = u.id
+			WHERE p.user = $userid
+			ORDER BY posts DESC
+		");
+	} else {
+		// Automatic post radar
+		// might as well give high priority to the user for simplicity's sake
+		$rank = $sql->resultq("
+			SELECT COUNT(*)
+			FROM users u1
+			LEFT JOIN users u2 ON u2.posts > u1.posts
+			WHERE u1.id = $userid
+		");
+		$postradar = $sql->query("
+			SELECT u.posts, $userfields
+			FROM users u
+			ORDER BY u.posts DESC
+			LIMIT ".($rank > 1 ? $rank - 2 : 0).", 5
+		");
+	}
 	
 	$rows = $sql->num_rows($postradar);
 	
 	if ($rows) {
 		$race = 'You are ';
 		
-		// Save ourselves a query if we're viewing our own post radar
-		// since we already fetch all user fields for $loguser
-		if ($userid == $loguser['id'])
-			$myposts = $loguser['posts'];
-		else
-			$myposts = $sql->resultq("SELECT posts FROM users WHERE id = $userid");
+		$myposts = $userdata['posts'];
 
 		for($i = 0; $user = $sql->fetch($postradar); ++$i) {
 			if ($i)                     $race .= ', ';

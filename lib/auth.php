@@ -9,8 +9,12 @@ function load_grouplist() {
 function has_perm($permName) {
 	global $loguser, $permlist;
 	//$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($permName)));
-	$permArray = $permlist[$permName];
-	return $loguser['permflags']['set'.$permArray[0]] & $permArray[1];
+	if (isset($permlist[$permName])) {
+		$permArray = $permlist[$permName];
+		return $loguser['permflags']['set'.$permArray[0]] & $permArray[1];
+	} else {
+		trigger_error("Missing permission key: {$permName}", E_USER_WARNING);
+	}
 }
 
 // Determines the permission fields for a different group (used in management pages)
@@ -19,8 +23,12 @@ function check_perm($permName, $group, $cache = NULL) {
 		$cache = load_perm(0, $group);
 	}
 	//$permArray = constant("PERM_" . str_replace("-", "_", strtoupper($permName)));
-	$permArray = $permlist[$permName];
-	return $cache['set'.$permArray[0]] & $permArray[1];
+	if (isset($permlist[$permName])) {
+		$permArray = $permlist[$permName];
+		return $cache['set'.$permArray[0]] & $permArray[1];
+	} else {
+		trigger_error("Missing permission key: {$permName}", E_USER_WARNING);
+	}
 }
 
 // The generic permission fields are now defined in the database (they used to be defined as array constants)

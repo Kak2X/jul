@@ -117,7 +117,7 @@
 					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $e->getMessage());
 					trigger_error("MySQL error: {$err}", E_USER_ERROR);
 					
-					$this->transactionError($query, $type, $err);
+					$this->transactionError($e, $query, $type, $err);
 					//$querycheck[] = false;
 				}
 
@@ -160,7 +160,7 @@
 				catch (PDOException $e) {
 					$err = str_replace("You have an error in your SQL syntax; check the manual that corresponds to your {$this->server_name} server version for the right syntax to use", "SQL syntax error", $e->getMessage());
 					trigger_error("MySQL error: $err", E_USER_ERROR);
-					$this->transactionError($query, $type, $err);
+					$this->transactionError($e, $query, $type, $err);
 				}
 
 				$t = microtime(true) - $start;
@@ -187,7 +187,7 @@
 				$query = "[No query ref]";
 				$err   = "Called execute method with a NULL \$result pointer.";
 				trigger_error("MySQL (execute) error: {$err}", E_USER_ERROR);
-				$this->transactionError($query, $type, $err);
+				$this->transactionError($e, $query, $type, $err);
 				$this->log($query, 0, $type | self::MSG_ERROR, $err);
 				$res = NULL;
 			} else {
@@ -209,7 +209,7 @@
 				catch (PDOException $e){
 					$err = $e->getMessage();
 					trigger_error("MySQL (execute) error: {$err}", E_USER_ERROR);
-					$this->transactionError($query." | Values: <i>".implode("</i>,<br/><i>", $vals)."</i>", $type, $err);
+					$this->transactionError($e, $query." | Values: <i>".implode("</i>,<br/><i>", $vals)."</i>", $type, $err);
 					$res = false;
 				}
 				
@@ -550,7 +550,7 @@
 			);
 		}
 		
-		private function transactionError($query, $msg_type, $error_text = "Unknown") {
+		private function transactionError($err, $query, $msg_type, $error_text = "Unknown") {
 			if ($this->connection->inTransaction()) {
 				global $config;
 				// An error occurred in one of the queries in a transaction.
@@ -560,8 +560,20 @@
 				if (self::$debug_on) {
 					$this->log($query, 0, $msg_type | self::MSG_ERROR, $error_text);
 				}
+				/*
+				$title = "error while executing query '<i>{$query}</i>' in transaction";
+				$message = $error_text."<br>".
+							"<span style='color:#fff'>".
+								($this->fail_message ? "Fail message: ".$this->fail_message : "")."<br>".
+								"<br>".
+								"The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.".
+							"</span>";
+				
+				$b = self::getbacktrace();
+				throw new mysqlException($err, $message, $b['file'], $b['line'], $title);*/
 				
 				// Hide everything else in the page
+				echo "<div style='position: fixed; left: 0px; top: 0px; width: 100%; height: 100vh; background: #000; padding: 20px'>";
 				if (has_perm('view-debugger') || $config['always-show-debug']) {
 					$b = self::getbacktrace();
 					fatal_error("error while executing query '<i>{$query}</i>' in transaction", $error_text."<br><span style='color:#fff'>".($this->fail_message ? "Fail message: ".$this->fail_message : "")."<br><br>The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>", $b['file'], $b['line']);
@@ -576,3 +588,23 @@
 			return ($flags & self::USE_CACHE) ? md5($query) : NULL;
 		}
 	}
+	
+	// Cannot preserve file/line data otherwise
+	class mysqlException extends Exception {
+		protected $file = "";
+		protected $line = "";
+		protected $title = "";
+		public function __construct($ex, $message, $file, $line, $title) {
+			parent::__construct($message);
+			$this->file = $file;
+			$this->line = $line;
+			$this->title = $title;
+		}
+		/*
+		public function getMessage() {
+			return parent::getMessage($message);
+		}*/
+		public function getQueryFile()  { return $this->file;  }
+		public function getQueryLine()  { return $this->line;  }
+		public function getTitle() { return $this->title; }
+	}		

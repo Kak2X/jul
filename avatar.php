@@ -8,62 +8,81 @@ if (isset($_GET['go'])) {
 
 require 'lib/function.php';
 
+
+
+
 pageheader("Mood Avatar Preview", NULL, NULL, true); // Small header
 
-$_GET['id'] = filter_int($_GET['id']);
-$a	= array(1 => "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
 
 $me = false;
 
-$options = '';
-$users = $sql->query("SELECT id, name, moodurl FROM users WHERE moodurl != '' ORDER BY id ASC");
+$isadmin = has_perm('admin-actions');
+
+// Build the select box options for the user selection
+$users = $sql->query("
+	SELECT u.id, u.name, COUNT(*) avcount
+	FROM users u
+	LEFT JOIN user_avatars a ON u.id = a.user
+	".($isadmin ? "" : "WHERE a.hidden = 0")."
+	GROUP BY u.id
+");
+
+$options = "";
 while ($u = $sql->fetch($users)) {
-  $selected = $fails = '';
-  if ($u['id'] == $_GET['id']) {
-    $me = $u;
-    $selected = ' selected';
-  }
-  //if (strpos($u['moodurl'], '$') === FALSE)
-  //  $fails = " (improper URL)";
-  $options .= "\r\n  <option value='{$u['id']}'$selected>{$u['id']}: {$u['name']}$fails</option>";
+	if ($u['id'] == $_GET['id']) {
+		$selected = ' selected';
+		$me       = $u;
+	} else {
+		$selected = "";
+	}
+	$options .= "<option value='{$u['id']}'$selected>{$u['id']}: {$u['name']} ({$u['avcount']})</option>";
 }
 
-if ($me) {
-	?>
-	<script type="text/javascript">
-		function avatarpreview(uid,pic) {
-			if (pic > 0) {
-						var moodav="<?=htmlspecialchars($me['moodurl'])?>";
-						document.getElementById('prev').src=moodav.replace("$", pic);
-			}
-			else {
-				document.getElementById('prev').src="images/_.gif";
-			}
-		}
-	</script>
-	<noscript><style type="text/css">.hideme{display: none}</noscript></style>
-	<?php
-
-	$ret = "<tr><td class='tdbgh center' colspan=2>{$me['name']}: <i>".htmlspecialchars($me['moodurl'])."</i></td></tr>";
-	$ret .= "<tr height=400px><td class='tdbg1' width=200px><b>Mood avatar list:</b><br>";
-
-	foreach($a as $num => $name) {
-		$jsclick = "onclick='avatarpreview({$me['id']},$num)'";
-		$selected = (($num == 1) ? ' checked' : '');
-		$ret .= "<span class='hideme'><input type='radio' name='moodid' value='$num' id='mood$num' tabindex='". (9000 + $num) ."' style=\"height: 12px;\" $jsclick $selected>
-             <label for='mood$num' style=\"font-size: 12px;\">&nbsp;$num:&nbsp;$name</label></span>
-			 <noscript>&nbsp;$num:&nbsp;<a href='?id={$_GET['id']}&amp;n=$num'>$name</a></noscript><br>\r\n";
-	}
-	$startnum = filter_int($_GET['n']);
-	if (!$startnum) {
-		$startnum = '1';
-	}
-	$startimg = htmlspecialchars(str_replace('$', $startnum, $me['moodurl']));
-
-  $ret .= "</td><td class='tdbg2 center' width=400px><img src=\"$startimg\" id=prev></td></tr>";
-
+$_GET['id'] = filter_int($_GET['id']);
+if ($_GET['id']) {
+	$avlist = getavatars($_GET['id'], true);
+} else {
+	$avlist = false;
 }
-else {
+
+
+// This user has no avatars (or no user was defined)
+if ($avlist) {
+	
+	// Output the javascript right away
+	echo include_js('avatars.js');
+	?><noscript><style type="text/css">.hideme{display: none}</style></noscript><?php
+
+	$ret = "
+	<tr>
+		<td class='tdbgh center' colspan=2>
+			".getuserlink(NULL, $me['id'])."
+		</td>
+	</tr>
+	<tr style='height: 400px'>
+		<td class='tdbg1 b' style='width:200px'><div style='height: 400px; overflow-y: scroll'>Mood avatar list:<br>";
+		
+	$_GET['startnum'] = filter_int($_GET['startnum']);
+	//if (!$_GET['startnum']) $_GET['startnum'] = 1;
+	
+	foreach($avlist as $file => $data) {
+		if (!$isadmin && $data['hidden']) continue;
+		
+		
+		$jsclick = "onclick='avatarpreview({$me['id']},{$file})'";
+		$selected = (($file == $_GET['startnum']) ? ' checked' : '');
+		$ret .= "
+			<span class='hideme'>
+				<input type='radio' name='moodid' value='{$file}' id='mood{$file}' tabindex='". (9000 + $file) ."' style=\"height: 12px;\" {$jsclick} {$selected}>
+				<label for='mood{$file}' style=\"font-size: 12px;\">
+					&nbsp;{$file}:&nbsp;{$data['title']}
+				</label>
+			</span>
+			<noscript>&nbsp;{$file}:&nbsp;<a href='?id={$_GET['id']}&amp;startnum={$file}'>{$data['title']}</a></noscript><br>";
+	}
+	
+	$ret .= "</div></td><td class='tdbg2 center' width=400px><img src=\"".avatarpath($_GET['id'], $_GET['startnum'])."\" id=prev></td></tr>";
+} else {
 	$ret = '';
 }
 
@@ -75,7 +94,7 @@ else {
 		<td>
 		
 			<table class='table'>
-				<tr height=50px>
+				<tr style='height: 50px'>
 					<td class='tdbgh center' colspan=2>
 						<b>Preview mood avatar for user...</b>
 						<br>

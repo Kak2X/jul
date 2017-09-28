@@ -1,12 +1,20 @@
 <?php
 
+require "lib/function.php";
+/*
+echo "djiofejfewjklfeljfkeljwk";
+$sql->beginTransaction();
+$sql->lock_tables(['users']);
+$sql->query("kdsjfckjdfjkfkjs");
+*/
+/*
 require_once "lib/function.php";
 require_once "lib/colors.php";
 echo "<!doctype html><style>body{background: #000; color: #fff;}</style>";
 for ($i = 980; $i < 1002; $i += 2) {
 	echo syndrome($i);
 }
-die;
+die;*/
 
 //echo 0b111111111111111111111111111111;
 /*

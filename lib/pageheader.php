@@ -93,6 +93,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<input type="hidden" name="auth" value="'.generate_token(TOKEN_LOGIN).'">
 		<noscript><input type="submit" name="njout" class="tdbg1 buttonlink fonts" value="Logout"></noscript>
 		- <a href="editprofile.php">Edit profile</a>
+		- <a href="editavatars.php">Edit avatars</a>
 		'.($config['allow-custom-forums'] ? '- <a href="editcustomforums.php">My forums</a>' : '').'
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
@@ -404,8 +405,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	//	$dispviews = substr((string)$views, 0, -3) . "???";
 
 	
+	if (!$mini) {
+		echo "<!doctype html>"; // For compatibility with full screen pages (which require valign)
+	} else {
+		$css .= "<style type='text/css'>body{height: 90vh}</style>";
+	}
 ?>
-<!doctype html>
 <html>
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>

@@ -168,8 +168,10 @@
 		$verifyhash = create_verification_hash($verifyid, $loguser['password']);
 
 		// Compare what we just created with what the cookie says, assume something is wrong if it doesn't match
-		if ($verifyhash !== $logverify)
+		if ($verifyhash !== $logverify) {
 			$loguser = NULL;
+			logout();
+		}
 		
 		unset($loguserid, $logverify, $verifyid, $verifyhash);
 	}

@@ -140,71 +140,28 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 	return $posticonlist;
 }
 
-function moodlist($sel = 0, $return = false) {
-	//return "The mood avatar system needs to be redone.<input type='hidden' name='moodid' value=0>";
+// moodlist(return -> false)
+function avatarlist($user, $sel = 0) {
+	$moods = getavatars($user);
+
+	$c[$sel] = "selected";
 	
-	global $loguser;
-	$sel		= floor($sel);
-
-	$a	= array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-	if ($loguser['id'] == 1) $a[99] = "special";
-	if ($return) return $a;
-
-	$c[$sel]	= " checked";
-	$ret		= "";
-
-	if ($loguser['id'] && $loguser['moodurl'])
-		$ret = '
-			<script type="text/javascript">
-				function avatarpreview(uid,pic)
-				{
-					if (pic > 0)
-					{
-						var moodav="'.htmlspecialchars($loguser['moodurl']).'";
-						document.getElementById(\'prev\').src=moodav.replace("$", pic);
-					}
-					else
-					{
-						document.getElementById(\'prev\').src="images/_.gif";
-					}
-				}
-			</script>
-		';
-
-	$ret .= "
-		<b>Mood avatar list:</b><br>
-		<table style='border-spacing: 0px'>
-			<tr>
-				<td style='width: 150px; white-space:nowrap'>";
-
-	foreach($a as $num => $name) {
-		$jsclick = (($loguser['id'] && $loguser['moodurl']) ? "onclick='avatarpreview({$loguser['id']},$num)'" : "");
-		$ret .= "<input type='radio' name='moodid' value='$num'". filter_string($c[$num]) ." id='mood$num' tabindex='". (9000 + $num) ."' style='height: 12px' $jsclick>
-             <label for='mood$num' ". filter_string($c[$sel]) ." style='font-size: 12px'>&nbsp;$num:&nbsp;$name</label><br>\r\n";
+	$txt = "";
+	foreach ($moods as $file => $data) {
+		$txt .= "<option value='{$file}' ".filter_string($c[$file]).">".htmlspecialchars($data['title'])."</option>\n";
 	}
-
-	if (!$sel || !$loguser['id'] || !$loguser['moodurl'])
-		$startimg = 'images/_.gif';
-	else
-		$startimg = htmlspecialchars(str_replace('$', $sel, $loguser['moodurl']));
-
-	$ret .= "	</td>
-				<td>
-					<img src=\"$startimg\" id=prev>
-				</td>
-			</tr>
-		</table>";
-	return $ret;
 	
+	return "Avatar: <select name='moodid'><option value='0'>-Normal avatar-</option>\n{$txt}</select>".include_js('avatars.js');	
 }
 
 // Forum attachments; have low size limit; do not count for user storage limit (only show on newreply.php)
-function doattachmentslist() {
-	
+function attachmentslist() {
+	//@TODO: add this
 }
 
 // Special uploads; have higher size limit, but count towards the storage limit
-function douploadform() {
+function uploadform() {
+	//@TODO: add this
 }
 
 function dopagelist($url, $elements, $div){
@@ -363,13 +320,20 @@ function include_js($fn, $as_tag = false) {
 }
 
 // JS "Help windows"
-// @TODO: Implement a way to close them with JS disabled.
 function quick_help($message, $title = "Help Window") {
 	static $i = 0;
 	if ($message) {
-		$style = $i ? "" : "<style type='text/css'>.qhtitle{border-bottom: none}.qhmain{margin-bottom: 16px}.qhclose{float: right; padding: 0px 7px}</style>" . include_js("qhelp.js");
+		$style = $i ? "" : "<style type='text/css'>.qhclose{float: right; padding: 0px 7px}</style>" . include_js("qhelp.js");
 		++$i;
-		return "{$style}<div id='qhmain{$i}' style=''><div class='table tdbgh center qhtitle'><b>$title</b><a href='#' id='qhclose{$i}' class='qhclose' style='display:none' onmousedown='closeHelp({$i})'>X</a></div><div class='table tdbg1 center qhmain'>{$message}</div></div><script>setCloseButton({$i})</script>";
+		
+		return $style .
+		"<table class='table' id='qhmain{$i}'>".
+			"<tr><td class='tdbgh center b'>".
+				"{$title}".
+				"<a href='#' id='qhclose{$i}' class='qhclose' style='display:none' onmousedown='closeHelp({$i})'>X</a>".
+			"</td></tr>".
+			"<tr><td class='tdbg1 center'>{$message}</td></tr>".
+		"</table><script>setCloseButton({$i})</script>";
 	} else {
 		return "";
 	}
@@ -452,7 +416,7 @@ class msg_holder {
 	public static function set_cookie($msg) {setcookie('msg', $msg);}
 	public static function del_cookie() {setcookie('msg', NULL);}
 	// but we can also just use it to keep a message for the current page
-	public static function set_message($msg) {self::$message = xss_filters(filter_string($msg, true));}
+	public static function set_message($msg) {self::$message = xssfilters(filter_string($msg, true));}
 	public static function get_message() {return quick_help(self::$message, "Message");}
 }
 

@@ -37,34 +37,43 @@ function error_reporter($type, $msg, $file, $line, $context) {
 		$line = $backtrace[2]['line'];
 	}
 
-	$errorlocation = str_replace($_SERVER['DOCUMENT_ROOT'], "", $file) ." #$line";
+	$errorlocation = str_replace($_SERVER['DOCUMENT_ROOT'], "", $file) .":$line";
 	
 	// Without $irctypetext the error is marked as "local reporting only"
 	if (isset($irctypetext)) {
-		xk_ircsend("102|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
+		xk_ircsend(IRC_ADMIN."|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
 				   " $irctypetext: ".xk()."($errorlocation) $msg");
 	}
 
 	// Local reporting
-	$errors[] = array($typetext, $msg, $errorlocation);
+	$errors[] = array($type, $typetext, $msg, $errorlocation);
 	
 	return true;
 }
 
 function exception_reporter($err) {
 	global $config;
-	// Compatibility layer
 	$type = E_ERROR;
 	$msg  = $err->getMessage() . "\nStack trace:\n\n". highlight_trace($err->getTrace());
 	$file = $err->getFile();
 	$line = $err->getLine();
+	
+	/*
+	// A special title goes with mysql exceptions.
+	if (is_a($err, 'mysqlException')) {
+		$title = $err->getTitle();
+	} else {
+		$title = 'Exception';
+	}*/
+	$title = 'Exception';
+	
 	unset($err);
 	error_reporter($type, $msg, $file, $line, NULL);
 	echo "<div style='position: fixed; left: 0px; top: 0px; width: 100%; height: 100vh; background: #000; padding: 20px'>";
 	if (!has_perm('view-debugger') && !$config['always-show-debug']) {
 		dialog("Sorry, an unexpected error has occurred.<br><br>Click <a href='?".urlencode(filter_string($_SERVER['QUERY_STRING']))."'>here</a> to try again.", "Technical difficulties II", "{$config['board-name']} -- Technical difficulties");
 	} else {
-		fatal_error('Exception', $msg, $file, $line);
+		fatal_error($title, $msg, $file, $line);
 	}
 }
 
@@ -91,20 +100,37 @@ function error_printer($trigger, $report, $errors){
 		}
 		
 		if ($trigger != false){ // called by pagefooter()
+			
+			// would you have a prettier view now?
+			$err_colors = array(
+				E_USER_ERROR         => 'FC0',
+				E_USER_WARNING       => 'FD6',
+				E_USER_NOTICE        => 'FFC',
+				E_ERROR              => 'F90',
+				E_WARNING            => 'FC6',
+				E_NOTICE             => 'FFF',
+				E_STRICT             => 'FFF',
+				E_RECOVERABLE_ERROR  => 'F90',
+				E_DEPRECATED         => 'FFF',
+				E_USER_DEPRECATED  	 => 'FFF'
+			);
 		
 			$list = "<table class='table'>
-				<tr><td class='tdbgh center' colspan=4>Errors</td></tr>
+				<tr><td class='tdbgh center b' colspan=4>Errors</td></tr>
 				<tr>
-					<td class='tdbgc center'>Type</td>
-					<td class='tdbgc center'>Message</td>
-					<td class='tdbgc center'>Location</td>
+					<td style='width: 20px'class='tdbgh center'>&nbsp;</td>
+					<td class='tdbgh center'>Type</td>
+					<td class='tdbgh center'>Message</td>
+					<td class='tdbgh center'>Location</td>
 				</tr>";
-			foreach ($errors as $error){
+			foreach ($errors as $id => $error){
+				
 				$list .= "
 					<tr>
-						<td class='tdbg1 nobr'>".htmlspecialchars($error[0])."</td>
-						<td class='tdbg2'>".htmlspecialchars($error[1])."</td>
-						<td class='tdbg1'>".htmlspecialchars($error[2])."</td>
+						<td class='tdbg1 center' style='color: #{$err_colors[$error[0]]}'>{$id}</td>
+						<td class='tdbg1 center nobr b' style='color: #{$err_colors[$error[0]]}'>".htmlspecialchars($error[1])."</td>
+						<td class='tdbg2' style='color: #{$err_colors[$error[0]]}'>".htmlspecialchars($error[2])."</td>
+						<td class='tdbg1' style='color: #{$err_colors[$error[0]]}'>".htmlspecialchars($error[3])."</td>
 					</tr>";
 			}
 				

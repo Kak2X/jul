@@ -1,0 +1,10 @@
+				</div>
+				<table class='main c news-container new-post' style='padding: 5px 50px'>
+					<tr>
+						<td>
+							News Engine ".NEWS_VERSION."<br>
+							&copy 2016 Kak
+						</td>
+					</tr>
+				</table>
+				<div class='fonts'>

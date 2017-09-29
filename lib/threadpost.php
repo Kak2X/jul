@@ -24,7 +24,8 @@
 		//unset($postuser);
 		
 		//$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel']);
-		$set['userrank'] = getrank($post['useranks'], $post['title'], $post['posts'], $post['group'], $post['ban_expire']);
+		// $post['group'] -> get_usergroup($post)
+		$set['userrank'] = getrank($post['useranks'], $post['title'], $post['posts'], get_usergroup($post), $post['ban_expire']); 
 		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);

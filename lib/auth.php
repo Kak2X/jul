@@ -15,7 +15,8 @@ function set_subgroups($user, $new_groups) {
 	global $sql, $grouplist;
 	$add = $sql->prepare("INSERT INTO users_subgroups (user, group_id) VALUES({$user},?)");
 	$rem = $sql->prepare("DELETE FROM users_subgroups WHERE user = {$user} AND group_id = ?");
-	$current = get_subgroups($user);
+	$current  = get_subgroups($user);
+	$priority = [-1, 0];
 	
 	foreach ($grouplist as $id => $data) {
 		if (!$data['subgroup']) {
@@ -24,12 +25,21 @@ function set_subgroups($user, $new_groups) {
 			if (!isset($current[$id])) { // and hasn't been already added...
 				$sql->execute($add, [$id]); // add it now
 			}
+			// we also check the max priority value for later (subgroup field doubles as a priority value)
+			if ($data['subgroup'] > $priority[0]) {
+				$priority = [$data['subgroup'], $id];
+			}
+			
 		} else { // remove the group
 			if (isset($current[$id])) {
 				$sql->execute($rem, [$id]);
 			}
 		}
 	}
+	
+	// Subgroups are only ever updated here
+	// this makes sure the cached "primary subgroup" value is always updated
+	$sql->query("UPDATE users SET main_subgroup = {$priority[1]} WHERE id = {$user}");
 }
 
 // Permission names are passed here

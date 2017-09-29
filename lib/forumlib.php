@@ -92,7 +92,7 @@ function updategb() {
 */
 
 function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
-	global $sql, $loguser, $userfields;
+	global $sql, $loguser, $grouplist, $userfields;
 	
 	if (!$u) {
 		if ($id == $loguser['id']) {
@@ -137,10 +137,23 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		$namecolor = "";
 	}
 	
-	$namecolor  = getnamecolor($u['sex'], $u['group'], $namecolor);
+	$namecolor  = getnamecolor($u['sex'], get_usergroup($u), $namecolor);
 	$minipic    = ($useicon && has_minipic($u['id'])) ? get_minipic($u['id'], true)." " : "";
 	
 	return "$minipic<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$name}</a>";
+}
+
+// Handle subgroups
+// Note this does mean if the subgroup with higher priority is hidden, it won't be shown
+function get_usergroup($u) {
+	global $grouplist;
+	return (
+		$u['main_subgroup'] && 
+		(
+			!$grouplist[$u['main_subgroup']]['hidden'] || 
+			has_perm('show-super-users')
+		)
+	) ? $u['main_subgroup'] : $u['group'];
 }
 
 // hopefully this will result in some consistency when asking just the minipic

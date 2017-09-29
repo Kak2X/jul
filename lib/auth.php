@@ -2,8 +2,36 @@
 
 function load_grouplist() {
 	global $sql;
-	return $sql->fetchq("SELECT id, name, hidden, subgroup, namecolor0, namecolor1, namecolor2 FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+	return $sql->fetchq("SELECT id, name, hidden, subgroup, namecolor0, namecolor1, namecolor2, ".perm_fields()." FROM perm_groups", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 }
+
+function get_subgroups($user) {
+	global $sql;
+	return $sql->fetchq("SELECT group_id, 1 FROM users_subgroups WHERE user = {$user}", PDO::FETCH_KEY_PAIR, mysql::FETCH_ALL | mysql::USE_CACHE);
+}
+
+// $new_groups is an array
+function set_subgroups($user, $new_groups) {
+	global $sql, $grouplist;
+	$add = $sql->prepare("INSERT INTO users_subgroups (user, group_id) VALUES({$user},?)");
+	$rem = $sql->prepare("DELETE FROM users_subgroups WHERE user = {$user} AND group_id = ?");
+	$current = get_subgroups($user);
+	
+	foreach ($grouplist as $id => $data) {
+		if (!$data['subgroup']) {
+			continue;
+		} else if (isset($new_groups[$id])) { // If the subgroup is present...
+			if (!isset($current[$id])) { // and hasn't been already added...
+				$sql->execute($add, [$id]); // add it now
+			}
+		} else { // remove the group
+			if (isset($current[$id])) {
+				$sql->execute($rem, [$id]);
+			}
+		}
+	}
+}
+
 // Permission names are passed here
 // The correct bitmask to search for is specified in the perm definition, so we do not need to worry about passing the bitmask field id manually.
 function has_perm($permName) {
@@ -13,12 +41,13 @@ function has_perm($permName) {
 		$permArray = $permlist[$permName];
 		return $loguser['permflags']['set'.$permArray[0]] & $permArray[1];
 	} else {
-		trigger_error("Missing permission key: {$permName}", E_USER_WARNING);
+		trigger_error("has_perm - Missing permission key: {$permName}", E_USER_WARNING);
 	}
 }
 
 // Determines the permission fields for a different group (used in management pages)
 function check_perm($permName, $user, $group, $cache = NULL) {
+	global $permlist;
 	if ($cache === NULL) {
 		$cache = load_perm($user, $group);
 	}
@@ -27,7 +56,7 @@ function check_perm($permName, $user, $group, $cache = NULL) {
 		$permArray = $permlist[$permName];
 		return $cache['set'.$permArray[0]] & $permArray[1];
 	} else {
-		trigger_error("Missing permission key: {$permName}", E_USER_WARNING);
+		trigger_error("check_perm - Missing permission key: {$permName}", E_USER_WARNING);
 	}
 }
 

@@ -2,14 +2,14 @@
 	require 'lib/function.php';
 	pageheader();
 	
-	$id = filter_int($_GET['id']);
+	$_GET['id'] = filter_int($_GET['id']);
 	
-	if ($id) {
+	if ($_GET['id']) {
 		admincheck();
 		$edituser 	= true;
 		$titleopt	= 1;
-		$id_q		= "?id=$id";
-		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+		$id_q		= "?id={$_GET['id']}";
+		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = {$_GET['id']}");
 		if (!has_perm('sysadmin-actions') && check_perm('sysadmin-actions', $userdata['id'], $userdata['group'])) {
 			errorpage("You cannot edit a root admin's profile.");
 		}
@@ -27,7 +27,7 @@
 		else if	(!has_perm('has-title')) 		$titleopt = 0;
 		else $titleopt=($loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
 		
-		$id 		= $loguser['id'];
+		$_GET['id'] = $loguser['id'];
 		$id_q		= "";
 		$userdata 	= $loguser;
 		$edituser 	= false;
@@ -41,7 +41,7 @@
 		check_token($_POST['auth']);
 		
 		// Reinforce "Force male / female" gender item effects
-		$itemdb = getuseritems($id);
+		$itemdb = getuseritems($_GET['id']);
 		foreach ($itemdb as $item){
 			if 		($item['effect'] == 1) $_POST['sex'] = 1;	// Force female
 			else if ($item['effect'] == 2) $_POST['sex'] = 0;	// Force male
@@ -102,8 +102,8 @@
 		$password 	= filter_string($_POST['pass1']);
 		$passchk 	= filter_string($_POST['pass2']);
 		if ($password && ($edituser || $password == $passchk)) {	// Make sure we enter the correct password
-			$passwordenc = getpwhash($password, $id);
-			if ($loguser['id'] == $id) {
+			$passwordenc = getpwhash($password, $_GET['id']);
+			if ($loguser['id'] == $_GET['id']) {
 				$verifyid = intval(substr($_COOKIE['logverify'], 0, 1));
 				$verify = create_verification_hash($verifyid, $hash);
 				setcookie('logverify',$verify,2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
@@ -124,7 +124,6 @@
 		
 		
 		$sql->beginTransaction();
-		$querycheck = array();
 		
 		// Using extra schemes is locked behind a permission now
 		$scheme = filter_int($_POST['scheme']);
@@ -135,7 +134,7 @@
 		
 		// Erase minipic
 		if (filter_int($_POST['del_minipic'])){
-			del_minipic($id); // will check on its own
+			del_minipic($_GET['id']); // will check on its own
 		}		
 		// Upload a new minipic
 		else if (filter_int($_FILES['minipic']['size']) && $config['allow-image-uploads']){
@@ -144,7 +143,7 @@
 				$config['max-minipic-size-bytes'], 
 				$config['max-minipic-size-x'], 
 				$config['max-minipic-size-y'], 
-				avatarpath($id, 'm') // minipic path
+				avatarpath($_GET['id'], 'm') // minipic path
 			);
 		}
 		
@@ -191,13 +190,13 @@
 			'scheme' 			=> $scheme,
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			// What user?
-			'id'				=> $id,
+			'id'				=> $_GET['id'],
 		);
 		
 		
 		if ($edituser) {
 
-			if ($id == 1 && $loguser['id'] != 1) {
+			if ($_GET['id'] == 1 && $loguser['id'] != 1) {
 				xk_ircsend("1|". xk(7) ."Someone (*cough* {$loguser['id']} *cough*) is trying to be funny...");
 			}
 		
@@ -218,10 +217,21 @@
 			 
 			// No "Imma become a root admin" bullshit
 			$group = filter_int($_POST['group']); // we can just check a single group permset for this
-			if (check_perm('sysadmin-actions', 0, $group) && !has_perm('sysadmin-actions')) {
+			$sysadmin = has_perm('sysadmin-actions');
+			if ($grouplist[$group]['subgroup'] || (check_perm('sysadmin-actions', 0, $group) && !$sysadmin)) {
 				//$group = GROUP_NORMAL;
 				errorpage("No.");
-			}				
+			}
+
+			// same for the subgroups
+			$subgroups = array_map('intval', filter_array($_POST['subgroup']));
+			foreach ($subgroups as $subgroup) {
+				if (!$grouplist[$subgroup]['subgroup'] || (check_perm('sysadmin-actions', 0, $subgroup) && !$sysadmin)) {
+					errorpage("No.");
+				}
+			}
+			
+			set_subgroups($_GET['id'], array_flip($subgroups));
 			 
 			
 			// Extra edituser fields
@@ -238,7 +248,7 @@
 			$adminset = $sql->setplaceholders("`group`","name","regdate","posts","ban_expire").",";
 			
 			$gcoins = filter_int($_POST['gcoins']);
-			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id");
+			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = {$_GET['id']}");
 		} else {
 			$adminval = array();
 			$adminset = "";
@@ -254,9 +264,9 @@
 
 		$sql->commit();
 		if (!$edituser)	{
-			errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
+			errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id={$_GET['id']}",'view your profile',0);
 		} else {
-			errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
+			errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id={$_GET['id']}","view {$userdata['name']}'s profile",0);
 		}
 	}
 	else {
@@ -307,6 +317,7 @@
 			// ... and also gets the extra "Administrative bells and whistles"
 			table_format("Administrative bells and whistles", array(
 				"Primary group"		 		=> [4, "group", ""], // Custom listbox with negative values.
+				"Secondary groups"			=> [4, "subgroup", ""], // TODO! multi Select box with this
 				"Ban duration"				=> [4, "ban_hours", ""],
 				"Number of posts"			=> [0, "posts", "", 6, 10],
 				"Registration time"			=> [4, "regdate", ""],
@@ -332,9 +343,6 @@
 		
 		table_format("Appareance", array(
 			"User rank"		=> [4, "useranks", "You can hide your rank, or choose from different sets."],
-			//"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 65, 100],
-			//"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 65, 100],
-			//"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 65, 100],
 			"Post header" 	=> [1, "postheader", "This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a &lt;font&gt; tag). This should preferably be kept small, and not contain too much text or images."],
 			"Signature" 	=> [1, "signature", "This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size."],
 		));	
@@ -457,18 +465,25 @@
 		
 		if ($edituser) {
 			// Group selection
-			$group = "";
+			$group = $subgroup = "";
 			$check1[$userdata['group']] = 'selected';
+			$check1b = get_subgroups($_GET['id']);
 			$sysadmin = has_perm('sysadmin-actions');
-			// @TODO: is $checkcache even needed now?
-			$checkcache = $sql->fetchq("SELECT id, ".perm_fields()." FROM perm_groups WHERE subgroup = 0", PDO::FETCH_UNIQUE, MYSQL::FETCH_ALL);
 			foreach ($grouplist as $groupid => $groupval) {
-				if ($groupval['subgroup'] || check_perm('sysadmin-actions', $groupid, $checkcache[$groupid]) && !$sysadmin) {
-					continue; // Hide subgroups or groups that would give normal admins sysadmin actions
+				// If this group gives out sysadmin power but we're not it, hide it
+				if (check_perm('sysadmin-actions', 0, $groupid, $groupval) && !$sysadmin) {
+					continue;
 				}
-				$group .= "<option value={$groupid} ".filter_string($check1[$groupid]).">{$groupval['name']}</option>";
+				
+				if (!$groupval['subgroup']) {
+					$group    .= "<option value={$groupid} ".filter_string($check1[$groupid]).">{$groupval['name']}</option>";
+				} else {
+					$subgroup .= "<input type='checkbox' name='subgroup[]' value={$groupid} ".(isset($check1b[$groupid]) ? "checked" : "")."> {$groupval['name']}<br>";
+				}
 			}
-			$group = "<select name=group>{$group}</select>";
+			$group    = "<select name=group>{$group}</select>";
+			//$subgroup = "<select name=subgroup>{$subgroup}</select>";
+			
 			
 			// Registration time
 			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);
@@ -503,7 +518,7 @@
 			$ban_hours .= "</select> (has effect only for '".$grouplist[GROUP_BANNED]['name']."' users)";
 			
 			// Link to edit user permissions
-			$permlink = "You can edit them <a href='admin-editperms.php?mode=1&id=$id'>here</a>. Make sure to save the settings on this page if you don't want to lose them.";
+			$permlink = "You can edit them <a href='admin-editperms.php?mode=1&id={$_GET['id']}'>here</a>. Make sure to save the settings on this page if you don't want to lose them.";
 		}
 
 		

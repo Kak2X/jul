@@ -162,7 +162,7 @@
 			'postheader' 		=> xssfilters($postheader),
 			'signature' 		=> xssfilters($signature),
 			// Personal information
-			'sex' 				=> forcerange($_POST['sex'], 0, 2, 0),	// x >= 0 && x <= 2, default to 0 otherwise 
+			'sex' 				=> numrange(filter_int($_POST['sex']), 0, 2),
 			'aka' 				=> filter_string($_POST['aka'], true),
 			'realname' 			=> filter_string($_POST['realname'], true),
 			'location' 			=> xssfilters(filter_string($_POST['location'], true)),
@@ -182,11 +182,11 @@
 			'timezone' 			=> filter_int($_POST['timezone']),
 			'postsperpage' 		=> filter_int($_POST['postsperpage']),
 			'threadsperpage'	=> filter_int($_POST['threadsperpage']),
-			'viewsig'			=> forcerange($_POST['viewsig'], 0, 2, 0),
-			'pagestyle' 		=> forcerange($_POST['pagestyle'], 0, 1, 0),
-			'pollstyle' 		=> forcerange($_POST['pollstyle'], 0, 1, 0),
+			'viewsig'			=> numrange(filter_int($_POST['viewsig']), 0, 2),
+			'pagestyle' 		=> numrange(filter_int($_POST['pagestyle']), 0, 1),
+			'pollstyle' 		=> numrange(filter_int($_POST['pollstyle']), 0, 1),
 			'layout' 			=> $tlayout,
-			'signsep' 			=> forcerange($_POST['signsep'], 0, 3, 0),
+			'signsep' 			=> numrange(filter_int($_POST['signsep']), 0, 3),
 			'scheme' 			=> $scheme,
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			// What user?
@@ -605,11 +605,6 @@
 	<?php
 	
 	pagefooter();
-	
-	function forcerange(&$var, $low, $high, $default) {
-		$var = (int) $var;
-		return ($var < $low || $var > $high) ? $default: $var;
-	}
 	
 	function table_format($name, $array){
 		global $fields;

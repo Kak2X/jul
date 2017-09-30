@@ -316,7 +316,7 @@ function postradar($userid){
 	}
 	return $race;
 }
-
+// TODO: Convert to be global function as in boardc
 function fonlineusers($id){
 	global $loguser, $sql, $userfields;
 

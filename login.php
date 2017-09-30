@@ -6,7 +6,7 @@
 
 	$_POST['username'] = filter_string($_POST['username'], true);
 	$_POST['userpass'] = filter_string($_POST['userpass']);
-	$_POST['verify']   = filter_int($_POST['verify']);
+	$_POST['verify']   = $config['force-lastip-match'] ? 0 : filter_int($_POST['verify']);
 	
 	$_POST['action']   = filter_string($_POST['action']);
 	
@@ -60,7 +60,7 @@
 				<td class='tdbg2'>
 					<input type='text' name=username MAXLENGTH=25 style='width:280px;'>
 				</td>
-				
+				".($config['force-lastip-match'] ? "<td class='tdbg2' colspan=2 rowspan=2>&nbsp;" : "
 				<td class='tdbg1 center' rowspan=2><b>IP Verification:</b></td>
 				<td class='tdbg2' rowspan=2>
 					<select name=verify>
@@ -73,7 +73,7 @@
 					<br>
 					<small>
 						You can require your IP address to match your current IP, to an extent, to remain logged in.
-					</small>
+					</small>")."
 				</td>
 			</tr>
 			<tr>

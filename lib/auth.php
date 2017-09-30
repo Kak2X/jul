@@ -101,10 +101,10 @@ function get_forum_perm($forum, $user, $group) {
 	if ($user) {
 		
 		// include subgroups perms as well
-		$subgroups = $sql->query("SELECT group_id FROM users_subgroups WHERE user = {$user}");
+		$subgroups = get_subgroups($user);
 		$subgroups_txt = "";
-		while ($x = $sql->fetch($subgroups)) {
-			$subgroups_txt .= "pf.group{$x['group_id']}, ";
+		foreach ($subgroups as $subgroup_id => $dummy) {
+			$subgroups_txt .= "pf.group{$subgroup_id}, ";
 		}
 	
 		$pquery = $sql->fetchq("
@@ -113,9 +113,14 @@ function get_forum_perm($forum, $user, $group) {
 			LEFT JOIN perm_forumusers pu ON pf.id = pu.forum AND pu.user = {$user}
 			WHERE pf.id = {$forum}");
 		
+		// to allow calculate_perms to work on both global and forum permissions
+		// the forum permission have to follow the global perm name conventions
+		// (an array with keys 'set0', 'set1', 'set2', ...)
+		// since there is only one permset for forum permissions, only set0 is filled
 		$power = [];
+		$power['set0'] = 0;
 		foreach ($pquery as $x) {
-			$power = calculate_perms($power, ['set0' => $x], 1);
+			$power = calculate_perms($power, ['set0' => $x], 1); // there's only one permset, hence the 1
 		}
 	} else {
 		// If we're not logged in, we inherit the (usually guest) permissions
@@ -131,10 +136,10 @@ function get_all_forum_perm($cur_forum, $user, $group, $showall = 0, $skip = 0) 
 	if ($user) {
 		
 		// include subgroups perms as well
-		$subgroups = $sql->query("SELECT group_id FROM users_subgroups WHERE user = {$user}");
+		$subgroups = get_subgroups($user);
 		$subgroups_txt = "";
-		while ($x = $sql->fetch($subgroups)) {
-			$subgroups_txt .= "pf.group{$x['group_id']}, ";
+		foreach ($subgroups as $subgroup_id => $dummy) {
+			$subgroups_txt .= "pf.group{$subgroup_id}, ";
 		}
 	
 		$pquery = $sql->fetchq("
@@ -142,10 +147,15 @@ function get_all_forum_perm($cur_forum, $user, $group, $showall = 0, $skip = 0) 
 			FROM forums f
 			LEFT JOIN perm_forums     pf ON f.id = pf.id
 			LEFT JOIN perm_forumusers pu ON f.id = pu.forum AND pu.user = {$user}
-			WHERE (f.custom OR !ISNULL(f.catid)) ".($showall ? "" : "AND (!f.custom OR f.id = {$cur_forum}) AND !f.hidden")."  AND f.id != {$skip}
+			WHERE (f.custom OR !ISNULL(f.catid)) 
+			".($showall ? "" : "AND (!f.custom OR f.id = {$cur_forum}) AND !f.hidden")."
+			  AND f.id != {$skip}
 			ORDER BY pf.id
 		",PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 		
+		// For each forum requested ($key is forum id), 
+		// calculate the respective permissions (everything else in the row)
+		// each column is its own permission set
 		$power = [];
 		foreach ($pquery as $key => $pqrow) {
 			$power[$key]['set0'] = 0;
@@ -189,34 +199,41 @@ function perm_fields($talias = "", $falias = "", $fakevalue = NULL) {
 	These can be overridden by the bitmasks in perm_user if they aren't NULL.
 */
 function load_perm($user, $group) {
-	global $sql, $miscdata;
-	
-	$setfields = perm_fields();
-	
-	// Save a query if we're not logged in, since we wouldn't have proper perm_user bitmasks anyway.
 	if ($user) {
-		$pquery = $sql->query("
-			SELECT {$setfields} 
-			FROM perm_groups 
-			WHERE id = {$group} 
-			   OR id IN (SELECT group_id FROM users_subgroups WHERE user = {$user})");
+		global $sql, $grouplist, $miscdata;
 		
-		$power = $sql->fetch($pquery);
-		if (is_array($power)) {
-			while ($x = $sql->fetch($pquery)) {
-				$power = calculate_perms($power, $x, $miscdata['perm_fields']);
-			}
+		// First pass -> primary group
+		$power = get_perms_from_grouplist($group);
+		
+		// Second pass -> secondary groups
+		$groups = get_subgroups($user);
+		foreach ($groups as $id => $dummy) {
+			$power = calculate_perms($power, $grouplist[$id], $miscdata['perm_fields']); 
 		}
 		
-		$userpower 	= $sql->fetchq("SELECT {$setfields} FROM perm_users WHERE id = {$user}");
+		// Third pass -> user specific overrides
+		$userpower 	= $sql->fetchq("SELECT ".perm_fields()." FROM perm_users WHERE id = {$user}");
 		if (is_array($userpower)) {
 			$power = calculate_perms($power, $userpower, $miscdata['perm_fields']);
 		}
+		
+		
 	} else {
 		// If we're not logged in, we inherit the (usually guest) permissions
-		$power      = $sql->fetchq("SELECT {$setfields} FROM perm_groups WHERE id = {$group}");
+		// the permission fields are always the last columns of $grouplist
+		$power = get_perms_from_grouplist($group);
 	}
 	return $power;
+}
+
+// get the last n columns for a group (which are reserved for permission fields)
+function get_perms_from_grouplist($group) {
+	global $grouplist, $miscdata;
+	return array_slice(
+		$grouplist[$group], 
+		count($grouplist[$group]) - $miscdata['perm_fields'],
+		$miscdata['perm_fields']
+	);
 }
 
 function calculate_perms($a, $b, $limit) {
@@ -250,14 +267,21 @@ function calculate_perms($a, $b, $limit) {
 	return $a;
 }
 
-// A permission can be set to be hidden behind another one
+// Returns an array of group IDs with groups hidden behind $group
+// since a group can be set to be hidden behind another one
+// (for example, by default the Normal+/Super group is displayed as Normal)
+// $group -> a non-hidden group
+// $subgroup -> counter to mark the number of subgroups. should be initialized to 0 beforehand
+//              compare it to count($out) to check if there's a mix of groups & subgroups
 function group_hidden($group, &$subgroup) {
 	global $grouplist;
 	// Add the element we're checking too (just in case)
 	$out = array($group);
 	if ($grouplist[$group]['subgroup']) $subgroup++;
+	
 	foreach ($grouplist as $id => $x) {
 		if ($x['hidden'] == $group) {
+			// We found a group taking the appearance of what we're checking
 			$out[] = $id;
 			if ($x['subgroup']) $subgroup++;
 		}

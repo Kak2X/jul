@@ -228,7 +228,8 @@
 	/*
 		Permission setup
 	*/
-	$permlist = load_permlist();
+	$grouplist  = load_grouplist();
+	$permlist   = load_permlist();
 	$loguser['permflags'] = load_perm($loguser['id'], $loguser['group']);
 	
 	register_shutdown_function('error_printer', false, has_perm('view-debugger'), $GLOBALS['errors']);
@@ -260,7 +261,6 @@
 			}
 		}
 		if (!in_array($scriptname, ['login.php', 'login-h.php', 'register.php'])){
-			$grouplist = load_grouplist();
 			errorpage("You need to be logged in to access this board.");
 		}
 	}
@@ -354,6 +354,12 @@
 				ipban($_SERVER['REMOTE_ADDR'], "IP Ban Evasion", "Previous IP address was IP banned - updated IP bans list.", IRC_ADMIN);
 				//header("Location: index.php");
 				die;
+			}
+			
+			// optionally force log out
+			if ($config['force-lastip-match']) {
+				logout();
+				die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
 			}
 		}
 
@@ -463,11 +469,6 @@
 	/*
 		Other helpful stuff
 	*/
-	
-
-	// group names
-	// we have to do this since they can be added or removed
-	$grouplist = load_grouplist();
 	
 
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");

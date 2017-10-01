@@ -123,21 +123,23 @@
 			$pagelinks	.= " <a href='announcement.php?f=$forum&page=$i'>".($i + 1)."</a>";
 	}
 
+	$controls['quote'] = ''; // Quoting disabled for announcement page
+	$controls['ip']    = '';
 	$annclist = "<table class='table'><tr><td class='tdbgh center' style='width: 200px'>User</td><td class='tdbgh center' colspan=2>Announcement</td></tr>";
 	for ($i = 0; $annc = $sql->fetch($anncs); ++$i) {
 		$annclist .= '<tr>';
 		$bg = $i % 2 + 1;
 		
-		$edit = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
+		$controls['edit'] = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
 		if ($ismod) {
-		  $edit .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(35)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
-		  if ($isadmin) $ip = " | IP: {$annc['ip']}";
+		  $controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(35)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+		  if ($isadmin) $controls['ip'] = " | IP: {$annc['ip']}";
 		}
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		$annclist .= threadpost($annc,$bg,$forum);
+		$annclist .= threadpost($annc,$bg,$controls,$forum);
 		
 	}
 	

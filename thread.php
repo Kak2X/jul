@@ -84,6 +84,7 @@
 	$specialscheme = $specialtitle = NULL;
 	$thread	= array();
 	
+	$sysadmin = has_perm('sysadmin-actions');
 	$isadmin = has_perm('forum-admin');
 	// set as global mod perm until we're sure the thread isn't invalid
 	$ismod = has_perm('all-forum-access');
@@ -466,7 +467,7 @@
 		
 	// heh
 	$posts = $sql->query("
-		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
+		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.deleted, p.moodid, p.headid, p.signid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval,
 				u.id uid, u.name, $ufields, u.regdate
 		FROM posts p
@@ -489,7 +490,11 @@
 			LEFT JOIN perm_forumusers pu ON f.id    = pu.forum AND pu.user = {$loguser['id']}
 			WHERE f.id IN (".implode(",", array_unique(array_column($threadcache, 'forum'))).")
 		", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
-	}	
+	}
+	$controls['ip']    = '';
+	$controls['quote'] = '';
+	$controls['edit']  = '';
+	
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		
 		// Post controls
@@ -497,28 +502,40 @@
 
 		$bg = $i % 2 + 1;
 
-		$quote = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
+		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
 		if ($id && ! $thread['closed'])
-			$quote	.= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
+			$controls['quote'].= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
 
-		$edit = '';
-		if ($ismod || ($post['user'] == $loguser['id'] && (has_perm('edit-own-posts') || (!$id && has_forum_perm('edit', $permcache))))) {
-        	if ($ismod || ($id && !$thread['closed']))
-				$edit = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
-			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
-			if ($ismod)
-				$edit .= " | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(35)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
-			
+		$controls['edit'] = '';
+		
+		if ($ismod && $post['deleted']) {
+			// Only mods can make actions on deleted posts
+			$controls['edit'] = "
+				<a href='thread.php?id={$post['thread']}&pin={$post['id']}'>Peek</a> |
+				<a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+		} else if ($ismod || ($post['user'] == $loguser['id'] && (has_perm('edit-own-posts') || (!$id && has_forum_perm('edit', $permcache))))) {
+        	if ($ismod || ($id && !$thread['closed'])) {
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+			}
+			// permanently removing from the db?
+			if ($sysadmin) {
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";
+			}
+			if ($ismod) {
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(35)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
+				//$post['sel_rev'] = <@todo>
+			}
 		}
 
 		if ($isadmin)
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 
 
 		$post['act'] = filter_int($act[$post['user']]);
 
 		if ($id || has_forum_perm('read', $permcache[$threadcache[$post['thread']]['forum']])) {
-			$postlist .= threadpost($post, $bg, $forumid, filter_int($threadcache[$post['thread']]));
+			$postlist .= threadpost($post, $bg, $controls, $forumid, filter_int($threadcache[$post['thread']]));
 		} else {
 			$postlist .=
 				"<table class='table'>

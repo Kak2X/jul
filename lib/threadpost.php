@@ -1,8 +1,8 @@
 <?php
 	
-	function threadpost($post,$bg,$forum=0,$pthread='') {
+	function threadpost($post, $bg, $controls, $forum = 0, $pthread = '') {
 		
-		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts; //${"tablebg$bg"};
+		global $loguser, $sep, $tlayout, $blockedlayouts;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -14,56 +14,75 @@
 		
 		$post = setlayout($post);
 		
-		//$p = $post['id'];
-		//$u = $post['uid'];
-		
-		$set['bg']    = $bg; //${"tablebg$bg"};
-		//$set['tdbg']  = "<td class='tbl font tdbg$bg' valign=top";
+		$set['bg']    = $bg;
 
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
-		//unset($postuser);
-		
-		//$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel']);
-		// $post['group'] -> get_usergroup($post)
-		$set['userrank'] = getrank($post['useranks'], $post['title'], $post['posts'], get_usergroup($post), $post['ban_expire']); 
-		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);
-
-		$set['location'] = $post['location'] ? "<br>From: {$post['location']}" : "";
-
-		if($post['picture'] || ($post['moodid'] && $post['moodurl'])) {
 			
-			$post['picture']  = htmlspecialchars($post['picture']);
-			$set['userpic']   = "<img class='avatar' src=\"{$post['picture']}\">";
-			$set['picture']   = $post['picture'];
-			
-			if ($post['moodid'] && $post['moodurl']) {
-				// Replace $ placeholder with the actual image number
-				$set['picture'] = str_replace(array('$', '>', '"'), array($post['moodid'], '%3E', '&quot;'), $post['moodurl']);
-				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
-			}
-			//   $userpicture="<img src=\"$user['picture']\" name=pic$p onload=sizelimit(pic$p,60,100)>";
+		if (!isset($post['deleted'])) {
+			trigger_error("threadpost - \$post['deleted'] key not sent", E_USER_WARNING);
+			$post['deleted'] = 0;
+		}
+		
+		if ($post['deleted']) {
+			// Peeking a post temporarily sets $post['deleted'] to false
+			$set['userrank'] = "";
+			$set['location'] = "";
+			$post['signtext'] = "";
+			$post['headtext'] = "";
+			$post['text'] = "(Post deleted)";
 		} else {
-			$set['userpic'] = "";
-		}
+			
+			// $post['group'] -> get_usergroup($post)
+			$set['userrank'] = getrank($post['useranks'], $post['title'], $post['posts'], get_usergroup($post), $post['ban_expire']); 
 
-		if($post['signtext']) {
-			$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
-		}
+			$set['location'] = $post['location'] ? "<br>From: {$post['location']}" : "";
 
-		if($pthread) { 
-			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
-		}
+			$set['userpic'] = "<img class='avatar' src='".avatarpath($post['uid'], $post['moodid'])."'>";
 
-		$post['text'] = format_post($post['text'], $post['options']);
-		
-		if (filter_int($post['editdate'])) {
-			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
+			if($post['signtext']) {
+				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
+			}
+			
+			// thread link for for threads by user mode
+			if($pthread) { 
+				$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
+			}
+
+			$post['text'] = format_post($post['text'], $post['options']);
+			
+			if (filter_int($post['editdate'])) {
+				$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']);
+				
+				// If multiple revisions are supported, display revision info / selector
+				if (isset($post['rev'])) {
+					if (!isset($post['sel_rev'])) { // No post revision explicitly specified (from _GET['rev'])
+						$post['sel_rev'] = filter_int($post['rev']); // Imply max revision
+					} else if ($post['sel_rev'] != $post['rev']) { // peeking at old revision
+						$post['edited'] .= " | Revision {$post['sel_rev']} by ".getuserlink(NULL, $post['old_user'])." at ".printdate($post['old_date']).")";
+					}
+					/*
+						Post revision jump
+					*/
+					global $ismod; // ok right
+					if ($ismod) {
+						$revjump = "Revision: ";
+						for ($i = 0; $i <= $post['rev']; ++$i) {
+							$a 		  = ($post['sel_rev'] == $i) ? "z" : "a"; 
+							$revjump .= "<{$a} href='?pid={$post['id']}&pin={$post['id']}&rev={$i}#{$post['id']}'>".($i+1)."</{$a}> ";
+						}
+					}
+				} else {
+					$revjump = "";
+				}
+				
+				$post['edited'] .= ") {$revjump}";
+			}
 		}
 		
 		
-		return dofilters(postcode($post,$set), $forum);
+		return dofilters(postcode($post, $set, $controls), $forum);
 	}
 
 	function preplayouts($posts) {
@@ -90,8 +109,6 @@
 			$post['headid']=$post['signid']=0;
 		}
 		
-		//$blocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$post['uid']}", 0, 0, mysql::USE_CACHE); // Enable caching
-
 		if(!$loguser['viewsig'] || isset($blockedlayouts[$post['uid']])){ // Disabled
 			$post['headtext']=$post['signtext']='';
 			return $post;
@@ -124,7 +141,8 @@
 		else
 			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['headtext']);
 		
-		$post['headtext']=format_post($post['headtext']);
+		// fuck plain text headers, CSS is supposed to be here
+		$post['headtext']=format_post($post['headtext'], '0|0', true);
 		$post['signtext']=format_post($post['signtext']);
 		//	$post['text']=format_post($post['text'], $post['options']);
 		return $post;

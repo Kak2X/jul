@@ -119,13 +119,19 @@
 			$ppost['noob'] 		= 0;
 			
 			$ppost['act'] 		= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$userid}");
-			if (has_perm('admin-actions'))
-				$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 			
+			// Post controls
+			$controls['quote']  = '';
+			$controls['edit']   = '';
+			$controls['ip']     = '';
+
+			if (has_perm('admin-actions'))
+				$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+		
 			?>
 			<table class='table'><tr><td class='tdbgh center'>Message preview</td></tr></table>
 			<table class='table'><tr><td class='tdbg2'><b><?=$subject?></b></td></tr></table>
-			<table class='table'><?=threadpost($ppost,1)?></table>
+			<table class='table'><?=threadpost($ppost,1,$controls)?></table>
 			<?php
 		}
 

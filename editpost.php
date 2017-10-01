@@ -153,10 +153,15 @@
 				// Edited notice
 				$ppost['edited']	= $edited;
 				$ppost['editdate'] 	= ctime();
+				
+				// Post controls
+				$controls['quote']  = '';
+				$controls['edit']   = '';
+				$controls['ip']     = '';
 
-	
 				if (has_perm('forum-admin'))
-					$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+					$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			
 				
 				?>
 				<table class='table'>
@@ -167,7 +172,7 @@
 					</tr>
 				</table>
 				<table class='table'>
-				<?=threadpost($ppost,1,$forum['id'])?>
+				<?=threadpost($ppost, 1, $controls, $forum['id'])?>
 				</table>
 				<br>
 				<?php

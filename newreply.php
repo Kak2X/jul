@@ -315,8 +315,15 @@
 		$ppost['text']			= $message;
 		$ppost['options']		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		
+		// Post controls
+		$controls['quote']  = '';
+		$controls['edit']   = '';
+		$controls['ip']     = '';
+
 		if (has_perm('forum-admin'))
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+	
 	/*	
 		$chks = array("", "", "");
 		if ($nosmilies) $chks[0] = "checked";
@@ -332,7 +339,7 @@
 			</tr>
 		</table>
 		<table class='table'>
-			<?=threadpost($ppost,1,$forumid)?>
+			<?=threadpost($ppost,1, $controls, $forumid)?>
 		</table>
 		<br>
 		<?php

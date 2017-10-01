@@ -1,6 +1,8 @@
 <?php
 	require 'lib/function.php';
 	
+	admin_check();
+	
 	if (isset($_GET['unban'])){
 		checkgettoken();
 		$id = filter_int($_GET['unban']);
@@ -23,7 +25,7 @@
 	}
 	
 	pageheader("IP Address Search");
-	admin_check();
+
 	print adminlinkbar();
 
 	$_POST['ip'] = filter_string($_REQUEST['ip']);

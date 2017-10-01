@@ -5,8 +5,8 @@ function userfields(){
 }
 
 
-function postcode($post,$set){
-	global $config, $ip, $quote, $edit, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
+function postcode($post, $set, $controls){
+	global $config, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 	
 	$exp		= calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
 	$lvl		= calclvl($exp);
@@ -51,35 +51,52 @@ function postcode($post,$set){
 	}
 
 	
-	
-	$syndrome = syndrome($post['act']);
-	
-	// Other stats
-	if ($post['lastposttime']) {
-		$sincelastpost	= 'Since last post: '.timeunits(ctime()-$post['lastposttime']);
-	} else {
-		$sincelastpost = "";
-	}
-	
-	$lastactivity	= 'Last activity: '.timeunits(ctime()-$post['lastactivity']);
-	$since			= 'Since: '.printdate($post['regdate'], PRINT_DATE);
-	$postdate		= printdate($post['date']);
-	
 	$threadlink		= "";
 	if (filter_string($set['threadlink'])) {
-		$threadlink	= ", in $set[threadlink]";
+		$threadlink	= ", in {$set['threadlink']}";
 	}
 
 	$post['edited']	= filter_string($post['edited']);
+	$postdate		= printdate($post['date']);
 	//if ($post['edited']) {
 		// Old post edited marker
 		// $post['text'] .= "<hr><font class='fonts'>{$post['edited']}";
 	//}
 	
+	
 	// Deleted user has its own layout
 	// RIP to all the others since we're not Jul
-	
-	if ($post['uid'] == $config['deleted-user-id']) {
+	if ($post['deleted']) {
+		return 
+		"<div style='position:relative'>
+			<table class='table' id='{$post['id']}'>
+				<tr>
+					<td class='tbl tdbg{$set['bg']}' style='border-bottom: none; vertical-align: top; min-width: 200px'>
+						{$set['userlink']}</span>
+					</td>
+					<td class='tbl tdbg{$set['bg']} w' style='height: 1px; vertical-align: top'>
+						<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
+							<tr>
+								<td>
+									Posted on $postdate$threadlink{$post['edited']}
+								</td>
+								<td class='nobr' style='width: 255px'>
+									{$controls['quote']}{$controls['edit']}{$controls['ip']}
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td class='tbl tdbg{$set['bg']} fonts' style='vertical-align: top'>
+					</td>
+					<td class='tbl tdbg{$set['bg']}' style='vertical-align: top' id='post{$post['id']}'>
+						{$post['text']}
+					</td>
+				</tr>
+			</table>
+		</div>";
+	} else if ($post['uid'] == $config['deleted-user-id']) {
 		$fcol1			= "#bbbbbb";
 		$fcol2			= "#555555";
 		$fcol3			= "#181818";
@@ -87,26 +104,25 @@ function postcode($post,$set){
 		return 
 		"<table class='table' id='{$post['id']}'>
 			<tr>
-				<td class='tbl tdbg{$set['bg']}' valign=top rowspan=2 style='text-align: center; background: $fcol3; font-size: 14px; color: $fcol1; font-family: Verdana, sans-serif; padding-top: .5em'>
+				<td class='tbl tdbg{$set['bg']}' rowspan=2 style='text-align: center; background: $fcol3; font-size: 14px; color: $fcol1; font-family: Verdana, sans-serif; padding-top: .5em; min-width: 200px; vertical-align: top'>
 					{$set['userlink']}
 					<br><span style='letter-spacing: 0px; color: $fcol2; font-size: 10px;'>Collection of nobodies</span>
-					<br><img src='images/_.gif' width=200 height=200>
 				</td>
 				<td class='tbl tdbg{$set['bg']}' valign=top height=1 style='width: 100%; background: $fcol3; font-size: 12px; color: $fcol1; font-family: Verdana, sans-serif'>
-					<table cellspacing=0 cellpadding=2 width=100% class=fonts>
+					<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
 						<tr>
 							<td>
 								Posted on $postdate$threadlink{$post['edited']}
 							</td>
-							<td style='width: 255px' class='nobr'>
-								$quote$edit$ip
+							<td class='nobr' style='width: 255px'>
+								{$controls['quote']}{$controls['edit']}{$controls['ip']}
 							</td>
 						</tr>
 					</table>
 				</td>
 			</tr>
 			<tr>
-				<td class='tbl tdbg{$set['bg']}' valign=top style='background: $fcol3; padding: 0;'>
+				<td class='tbl tdbg{$set['bg']}' style='background: $fcol3; height: 220px; vertical-align: top' id='post{$post['id']}'>
 					{$post['headtext']}
 					{$post['text']}
 					{$post['signtext']}
@@ -116,11 +132,21 @@ function postcode($post,$set){
 
 		
 	} else { // else if (!(in_array($post['uid'], $sidebars) && !$x_hacks['host']) || $loguser['viewsig'] == 0)
-	
-		//str_ireplace("&lt;br&gt;", "<br>", substr(htmlspecialchars($set['location']),10)).
 		
 		// Default layout
+			$syndrome = syndrome($post['act']);
+	
+		// Other stats
+		if ($post['lastposttime']) {
+			$sincelastpost	= 'Since last post: '.timeunits(ctime()-$post['lastposttime']);
+		} else {
+			$sincelastpost = "";
+		}
 		
+		$lastactivity	= 'Last activity: '.timeunits(ctime()-$post['lastactivity']);
+		$since			= 'Since: '.printdate($post['regdate'], PRINT_DATE);
+		
+		// Each topbar override silently adds its own id to prevent CSS conflicts
 		if (!$post['headid'])
 			$csskey = "_x".$post['id'];
 		else
@@ -132,40 +158,39 @@ function postcode($post,$set){
 		"<div style='position:relative'>
 			<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
-					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
+					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' style='border-bottom: none; vertical-align: top; min-width: 200px'>
 						{$noobspan}{$set['userlink']}</span>
 					</td>
-					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2' valign=top height=1 width=100%>
-						<table cellspacing=0 cellpadding=2 width=100% class=fonts>
+					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2 w' style='height: 1px; vertical-align: top'>
+						<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
 							<tr>
 								<td>
 									Posted on $postdate$threadlink{$post['edited']}
 								</td>
 								<td class='nobr' style='width: 255px'>
-									$quote$edit$ip
+									{$controls['quote']}{$controls['edit']}{$controls['ip']}
 								</td>
 							</tr>
 						</table>
 					</td>
 				</tr>
 				<tr>
-					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} fonts' valign=top>
+					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} fonts' style='vertical-align: top'>
 						{$set['userrank']}
 						$syndrome<br>
 						$level$bar<br>
 						{$set['userpic']}<br>
-						". (filter_bool($hacks['noposts']) ? "" : "$poststext$postnum$posttotal<br>") ."
+						". ($hacks['noposts'] ? "" : "$poststext$postnum$posttotal<br>") ."
 						$experience<br>
 						<br>
 						$since<br>
-						".str_replace("&lt;br&gt;", "<br>", htmlspecialchars($set['location']))."<br>
+						{$set['location']}<br>
 						<br>
 						$sincelastpost<br>
 						$lastactivity<br>
 						<br>
-						<img src='images/_.gif' width=200 height=1>
 					</td>
-					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' valign=top height=220 id='post{$post['id']}'>
+					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' style='height: 220px; vertical-align: top' id='post{$post['id']}'>
 						{$post['headtext']}
 						{$post['text']}
 						{$post['signtext']}
@@ -173,54 +198,6 @@ function postcode($post,$set){
 				</tr>
 			</table>
 		</div>";
-		/* 
-		return 
-		"<div style='position:relative'>
-			<table class='table contbar{$post['uid']}'>
-				<tr>
-					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}' valign=top rowspan=2>
-						{$set['userlink']}
-						<span class='fonts'>
-							<br>
-							{$set['userrank']}
-							$syndrome<br>
-							$level$bar<br>
-							{$set['userpic']}<br>
-							". (filter_bool($hacks['noposts']) ? "" : "$poststext$postnum$posttotal<br>") ."
-							$experience<br>
-							<br>
-							$since<br>
-							".str_replace("&lt;br&gt;", "<br>", htmlspecialchars($set['location']))."<br>
-							<br>
-							$sincelastpost<br>
-							$lastactivity<br>
-						</span>
-						<br>
-						<img src='images/_.gif' width=200 height=1>
-				</td>
-				<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}_2' valign=top height=1 width=100%>
-					<table cellspacing=0 cellpadding=2 width=100% class=fonts>
-						<tr>
-							<td>
-								Posted on $postdate$threadlink{$post['edited']}
-							</td>
-							<td class='nobr' style='width: 255px'>
-								$quote$edit$ip
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}' valign=top height=220 id='post{$post['id']}'>
-					{$post['headtext']}
-					{$post['text']}
-					{$post['signtext']}
-				</td>
-			</tr>
-		</table>
-	</div>";
-	*/
 	}
 	
 }

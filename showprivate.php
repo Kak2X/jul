@@ -99,14 +99,21 @@
 		$post['signtext'] = $msg['signtext'];
 	}
 
-	if ($msg['userto'] == $loguser['id'])
-		$quote = "<a href='sendprivate.php?id=$id'>Reply</a>";
-	else $quote = "";
-	if (has_perm('forum-admin'))
-		$ip = ($quote ? ' | ' : '') . "IP: <a href='admin-ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
+			
+	// Post controls
+	
+	
 
+	if ($msg['userto'] == $loguser['id'])
+		$controls['quote'] = "<a href='sendprivate.php?id=$id'>Reply</a>";
+	else $controls['quote'] = '';
+	if (has_perm('forum-admin')) {
+		$controls['ip'] = ($controls['quote'] ? ' | ' : '') . "IP: <a href='admin-ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
+	} else {
+		$controls['ip'] = '';
+	}
 	
 	pageheader($windowtitle);
-	print "{$top}<table class='table'>".threadpost($post,1)."</table>{$bottom}";
+	print "{$top}<table class='table'>".threadpost($post,1,$controls)."</table>{$bottom}";
 	pagefooter();
 ?>

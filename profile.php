@@ -233,8 +233,12 @@
 	}
 	//($user['powerlevel']<0 ? ($user['ban_expire'] ? ." (".sprintf("%d",()." days remaining)" : "Never") : "")
 
-	
-	
+		
+	// Post controls
+	$controls['quote']  = '';
+	$controls['edit']   = '';
+	$controls['ip']     = '';
+
 ?>
 <div>Profile for <?=$userlink?></div>
 <table cellpadding=0 cellspacing=0 border=0>
@@ -294,7 +298,7 @@
 <br>
 <table class='table'>
 <tr><td class='tdbgh center' colspan=2><center>Sample post</td></tr>
-	<?=threadpost($user, 1)?>
+	<?=threadpost($user, 1, $controls)?>
 </table>
 <br>
 <table class='table'>

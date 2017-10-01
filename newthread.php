@@ -420,8 +420,15 @@
 		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
 		
-		if ($isadmin)
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+				
+		// Post controls
+		$controls['quote']  = '';
+		$controls['edit']   = '';
+		$controls['ip']     = '';
+
+		if ($isadmin) // 'forum-admin'
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+
 		$threadtype = ($poll ? 'poll' : 'thread');
 			
 			?>
@@ -445,7 +452,7 @@
 		</tr>
 	</table>
 	<table class='table'>
-		<?=threadpost($ppost,1,$id)?>
+		<?=threadpost($ppost,1,$controls,$id)?>
 	</table>
 			<?php
 			$focuson = 'message';

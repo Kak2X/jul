@@ -5,7 +5,7 @@
 	$_GET['id'] = filter_int($_GET['id']);
 	
 	if ($_GET['id']) {
-		admincheck();
+		admin_check();
 		$edituser 	= true;
 		$titleopt	= 1;
 		$id_q		= "?id={$_GET['id']}";
@@ -102,7 +102,7 @@
 		$password 	= filter_string($_POST['pass1']);
 		$passchk 	= filter_string($_POST['pass2']);
 		if ($password && ($edituser || $password == $passchk)) {	// Make sure we enter the correct password
-			$passwordenc = getpwhash($password, $_GET['id']);
+			$passwordenc = get_password_hash($password, $_GET['id']);
 			if ($loguser['id'] == $_GET['id']) {
 				$verifyid = intval(substr($_COOKIE['logverify'], 0, 1));
 				$verify = create_verification_hash($verifyid, $hash);

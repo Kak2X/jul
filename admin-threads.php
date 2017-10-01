@@ -4,7 +4,7 @@
 
 	pageheader("Thread Repair System");
 	
-	admincheck('forum-admin');
+	admin_check('forum-admin');
 	
 	print adminlinkbar();
 

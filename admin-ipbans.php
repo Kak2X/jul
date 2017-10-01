@@ -2,7 +2,7 @@
 
 	require "lib/function.php";
 	
-	admincheck();
+	admin_check();
 	
 	// Quick hack to allow linking other pages to searches here
 	if (isset($_GET['ip'])){

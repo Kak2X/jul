@@ -23,7 +23,7 @@
 	}
 	
 	pageheader("IP Address Search");
-	admincheck();
+	admin_check();
 	print adminlinkbar();
 
 	$_POST['ip'] = filter_string($_REQUEST['ip']);

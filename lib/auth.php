@@ -295,16 +295,16 @@ function user_fields($alias) {
 	return str_replace('u.', $alias.'.', $userfields);
 }
 
-function ismod($fdata) {return ($fdata && has_forum_perm('mod', $fdata));}
+function is_mod($fdata) {return ($fdata && has_forum_perm('mod', $fdata));}
 
-function admincheck($perm = 'admin-actions') {
+function admin_check($perm = 'admin-actions') {
 	if (!has_perm($perm)) {
 		errorpage("This feature is restricted to administrators.<br>You aren't one, so go away.",'index.php','return to the board',0);
 	}
 }
 	
 // Only used to check if an user exists
-function checkusername($name){
+function check_username($name){
 	global $sql;
 	if (!$name) return -1;
 	$u = $sql->resultp("SELECT id FROM users WHERE name = ?", [$name]);
@@ -312,11 +312,11 @@ function checkusername($name){
 	return $u;
 }
 
-function checkuser($name, $pass){
+function check_user($name, $pass){
 	global $hacks, $sql;
 
 	if (!$name) return -1;
-	// DEBUG LOGIN: $sql->query("UPDATE users SET password = '".getpwhash($pass, 1)."' WHERE id = 1");
+	// DEBUG LOGIN: $sql->query("UPDATE users SET password = '".get_password_hash($pass, 1)."' WHERE id = 1");
 	$user = $sql->fetchp("SELECT id, password FROM users WHERE name = ?", [$name]);
 
 	if (!$user) return -1;
@@ -329,7 +329,7 @@ function checkuser($name, $pass){
 			return -1;
 		else {
 			if ($user['password'] === md5($pass)) { // Uncomment the lines below to update password hashes
-				$sql->query("UPDATE users SET `password` = '".getpwhash($pass, $user['id'])."' WHERE `id` = '{$user['id']}'");
+				$sql->query("UPDATE users SET `password` = '".get_password_hash($pass, $user['id'])."' WHERE `id` = '{$user['id']}'");
 				xk_ircsend("102|".xk(3)."Password hash for ".xk(9).$name.xk(3)." (uid ".xk(9).$user['id'].xk(3).") has been automatically updated.");
 			}
 			else return -1;
@@ -380,7 +380,7 @@ function check_token(&$var, $div = TOKEN_MAIN) {
 	if (!$res) errorpage("Invalid token.");
 }
 
-function getpwhash($pass, $id) {
+function get_password_hash($pass, $id) {
 	return password_hash(sha1($id).$pass, PASSWORD_BCRYPT);
 }
 /*

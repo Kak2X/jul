@@ -2,7 +2,7 @@
 
 require 'lib/function.php';
 
-admincheck('forum-admin');
+admin_check('forum-admin');
 
 $preview  = isset($_GET['preview']) ? ((int) $_GET['preview']) : NULL;
 $prevtext = isset($preview) ? "&preview=$preview" : "";

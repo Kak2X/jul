@@ -180,7 +180,7 @@
 					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `time` = :time",
 					[
 						'name'		=> $name,
-						'password'	=> getpwhash($pass, $newuserid),
+						'password'	=> get_password_hash($pass, $newuserid),
 						'ip'		=> $_SERVER['REMOTE_ADDR'],
 						'time'		=> $currenttime,
 					]);
@@ -205,7 +205,7 @@
 				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `group` = :group, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
 					[
 						'name'				=> $name,
-						'password'			=> getpwhash($pass, $newuserid),
+						'password'			=> get_password_hash($pass, $newuserid),
 						'group'				=> $userlevel,
 						'ip'				=> $_SERVER['REMOTE_ADDR'],
 						'lastactivity'		=> $currenttime,

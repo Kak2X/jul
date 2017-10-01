@@ -2,7 +2,7 @@
 	
 	require "lib/function.php";
 	
-	admincheck();
+	admin_check();
 	
 	pageheader("retarded forum owners");
 	print adminlinkbar('admin-stupidforums');

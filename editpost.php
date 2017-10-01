@@ -41,7 +41,7 @@
 		WHERE f.id = {$thread['forum']}
 	");
 
-	$ismod = ismod($forum);
+	$ismod = is_mod($forum);
 	
 	if (!$ismod && !has_forum_perm('read', $forum))
 		errorpage("Sorry, but you are not allowed to do this in this restricted forum.", 'index.php' ,'return to the board', 0);

@@ -4,7 +4,7 @@ require 'lib/function.php';
 
 pageheader("{$config['board-name']} - Forum Moderators");
 
-admincheck();
+admin_check();
 print adminlinkbar();
 
 if (isset($_POST['action'])) {

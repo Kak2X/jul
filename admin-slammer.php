@@ -5,7 +5,7 @@ require 'lib/function.php';
 pageheader("{$config['board-name']} - EZ Ban Hammer");
 echo "<div style='white-space:pre;'>";
 
-admincheck();
+admin_check();
 print adminlinkbar();
 
 $target_id = $sql->resultq('SELECT id FROM users ORDER BY id DESC LIMIT 1');

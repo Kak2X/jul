@@ -2,7 +2,7 @@
 
 	require "lib/function.php";
 	
-	admincheck('forum-admin');
+	admin_check('forum-admin');
 
 	if (isset($_POST['go'])){
 		check_token($_POST['auth']);

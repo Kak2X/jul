@@ -16,7 +16,7 @@
 		WHERE t.id = $id
 	");
 	
-	$ismod = ismod($thread);
+	$ismod = is_mod($thread);
 	
 	if (!$thread || (!$ismod && !$thread['valid']))
 		$message = "This thread doesn't exist."; // or is in an invalid forum

@@ -8,7 +8,7 @@
 	
 	$windowtitle = "{$config['board-name']} -- Board Backups";
 	
-	admincheck('sysadmin-actions');
+	admin_check('sysadmin-actions');
 	
 	if (!file_exists($config['backup-folder'])) {
 		errorpage("Cannot use the backup function.<br><br>The 'backup-folder' setting in the configuration file points to a nonexisting folder.");

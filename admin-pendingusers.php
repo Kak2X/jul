@@ -2,7 +2,7 @@
 
 require "lib/function.php";
 
-admincheck();
+admin_check();
 
 if (isset($_POST['act'])){
 	check_token($_POST['auth']);

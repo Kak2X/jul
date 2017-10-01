@@ -451,7 +451,7 @@ function login($username, $password, $verifyid) {
 	else {
 		
 		$username 	= trim($username);
-		$userid 	= checkuser($username, $password);
+		$userid 	= check_user($username, $password);
 
 		if ($userid != -1) {
 			// Login successful

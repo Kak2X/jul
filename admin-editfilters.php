@@ -2,7 +2,7 @@
 
 	require "lib/function.php";
 	
-	admincheck();	
+	admin_check();	
 	
 	$_GET['id'] 	= filter_int($_GET['id']);
 	$_GET['type'] 	= filter_int($_GET['type']);

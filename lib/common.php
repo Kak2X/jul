@@ -124,7 +124,7 @@
 
 		// Passwords match
 		if ($passinfo['password'] === md5($logpassword)) {
-			$logpwenc = getpwhash($logpassword, $loguserid);
+			$logpwenc = get_password_hash($logpassword, $loguserid);
 			$sql->query("UPDATE users SET `password` = '{$logpwenc}' WHERE `id` = '{$loguserid}'");
 			xk_ircsend("102|".xk(3)."Password hash for ".xk(9).$passinfo['name'].xk(3)." (uid ".xk(9).$loguserid.xk(3).") has been automatically updated (from cookie).");
 

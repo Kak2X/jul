@@ -47,7 +47,7 @@
 		// Does the user actually exist?
 		$username = filter_string($_POST['username'], true);
 		
-		$userid = checkusername($username);
+		$userid = check_username($username);
 
 		if ($userid == -1)
 			errorpage("Couldn't send the message. You didn't enter an existing username to send the message to.",'private.php','your private message box',2);

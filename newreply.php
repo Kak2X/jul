@@ -76,7 +76,7 @@
 			$userid = $loguser['id'];
 			$user	= $loguser;
 		} else {
-			$userid 	= checkuser($username,$password);
+			$userid 	= check_user($username,$password);
 			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
 		}
 		

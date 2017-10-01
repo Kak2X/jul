@@ -487,9 +487,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<br>
 <?php	
 	}
-	// Forum online users
-	if (isset($forum['id']) && in_array($scriptname, array('forum.php', 'thread.php')))
-		echo "<table class='table'><td class='tdbg1 fonts center'>".fonlineusers($forum['id'])."</table>";
 	
 	define('HEADER_PRINTED', true);
 }

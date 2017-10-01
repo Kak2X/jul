@@ -370,6 +370,13 @@
 	$nohtmlchk      = $nohtml    ? "checked" : "";
 	
 	?>
+	<table class='table'>
+		<tr>
+			<td class='tdbg1 fonts center'>
+				<?=onlineusers($forum, $thread)?>
+			</td>
+		</tr>
+	</table>
 	<?=$barlinks?>
 	<form action="newreply.php?id=<?=$id?>" name=replier method=post autocomplete=off>
 	<body onload=window.document.REPLIER.message.focus()>
@@ -402,7 +409,7 @@
 				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message, ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
-				<?=moodlist($moodid)?>
+				<?=avatarlist($loguser['id'], $moodid)?>
 			</td>
 		</tr>
 		

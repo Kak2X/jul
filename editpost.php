@@ -203,6 +203,13 @@
 		$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a> - <a href='thread.php?pid=$id#$id'>".htmlspecialchars($thread['title'])."</a> - Edit post";
 
 		?>
+	<table class='table'>
+		<tr>
+			<td class='tdbg1 fonts center'>
+				<?=onlineusers($forum, $thread)?>
+			</td>
+		</tr>
+	</table>
 		<?=$barlinks?>
 	<table class='table'>
 		<body onload=window.document.REPLIER.message.focus()>
@@ -217,7 +224,7 @@
 				<td class='tdbg2' width=800px valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
 				<td class='tdbg2' width=* rowspan=3>
-					<?=moodlist($moodid)?>
+					<?=avatarlist($post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>

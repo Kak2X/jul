@@ -16,8 +16,8 @@
 	
 	$specialscheme = $specialtitle = NULL;
 		
-	$forumlist  = "";
-	$fonline    = "";
+	$forumlist   = "";
+	$onlineusers = "";
 
 	// Add/remove favorites
 	if ($act == 'add' || $act == 'rem') {
@@ -99,6 +99,10 @@
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 			notAuthorizedError();
 		}
+		
+		$onlineusers    = "<table class='table'><td class='tdbg1 fonts center'>".
+		                      onlineusers($forum).
+		                  "</td></table>";
 		
 		$threadcount 	= $forum['numthreads'];
 		$specialscheme 	= $forum['specialscheme'];
@@ -473,6 +477,7 @@
 	
 	
 	print "
+		{$onlineusers}
 		{$infotable}
 		{$forumpagelinks}
 		{$threadlist}

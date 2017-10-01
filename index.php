@@ -233,7 +233,7 @@
 				</td>
 			<tr>
 				<td class='tdbg1 fonts center'>
-					<?=$numonline?> user<?=$tnumonline?> currently online<?=$onlineusers?><?=$onlineguests?> 
+					<?=onlineusers()?>
 				</td>
 			</tr>
 		</table>

@@ -199,7 +199,7 @@
 				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
-				<?=moodlist($moodid)?>
+				<?=avatarlist($loguser['id'], $moodid)?>
 			</td>
 		</tr>
 			

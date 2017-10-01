@@ -191,6 +191,9 @@
 			$sql->query("UPDATE threads SET views = views + 1 WHERE id = $id");
 
 		$windowtitle = "{$forum['title']}: {$thread['title']}";
+		$onlineusers    = "<table class='table'><td class='tdbg1 fonts center'>".
+                              onlineusers($forum, $thread).
+                          "</td></table>";
 		
 	} while (false);
 	else if ($user) {
@@ -204,7 +207,7 @@
 		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$user}") - 1;
 		$thread['title'] = "Posts by {$uname}";
 		$windowtitle = "Posts by {$uname}";
-		$tlinks = '';
+		$tlinks = $onlineusers = '';
 	}
 	else {
 		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
@@ -565,7 +568,7 @@
 	//print $header.sizelimitjs()."
 	
 	print "
-		$threadforumlinks
+		{$onlineusers}{$threadforumlinks}
 		<table width=100%><td align=left class='fonts'>$pagelinks</td><td align=right class='fonts'>$tlinks</table>
 		{$postlist}
 		<table class='table'>

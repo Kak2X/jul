@@ -317,32 +317,51 @@ function postradar($userid){
 	return $race;
 }
 // TODO: Convert to be global function as in boardc
-function fonlineusers($id){
+// $id becomes $forum['id']
+function onlineusers($forum = NULL, $thread = NULL){
 	global $loguser, $sql, $userfields;
+	
+	// Start off by determining what extra checks have to be made
+	if ($thread) {
+		$check_and = "AND lastforum = {$forum['id']} AND lastthread = {$thread['id']}";
+		$update    = "lastforum = {$forum['id']}, lastthread = {$thread['id']}"; // For online users update
+		$location  = "reading '<i>" . htmlspecialchars($thread['title']) . "<i>'"; // "users currently in <thread>"
+	} else if ($forum) {
+		$check_and = "AND lastforum = {$forum['id']}";
+		$update    = "lastforum = {$forum['id']}, lastthread = 0";
+		$location  = "in '<i>" . htmlspecialchars($forum['title']) . "<i>'";  // "users currently in <forum>"
+	} else {
+		$check_and = "";
+		$update    = "lastforum = 0, lastthread = 0";
+		$location  = "online"; // "users currently online"
+	}
 
-	if($loguser['id'])
-		$sql->query("UPDATE users  SET lastforum = $id WHERE id = {$loguser['id']}");
+	// Update lastforum/lastthread information
+	if ($loguser['id'])
+		$sql->query("UPDATE users  SET {$update} WHERE id = {$loguser['id']}");
 	else
-		$sql->query("UPDATE guests SET lastforum = $id WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
+		$sql->query("UPDATE guests SET {$update} WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 
-	$forumname      = $sql->resultq("SELECT title FROM forums WHERE id = $id");
-	$onlinetime     = ctime()-300;
+	$onlinetime     = ctime() - 300; // 5 minutes
+	
+	/*
+		Online users
+	*/
 	$onusers        = $sql->query("
-		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
+		SELECT {$userfields}, hideactivity, (lastactivity <= {$onlinetime}) nologpost
 		FROM users u
-		WHERE lastactivity > $onlinetime 
-		  AND lastforum = $id 
+		WHERE lastactivity > {$onlinetime} 
+		  {$check_and} 
 		  AND (".has_perm('show-hidden-user-activity')." OR !hideactivity)
-		ORDER BY name
+		ORDER BY u.name
 	");
 	
-	
 	$onlineusers	= "";
-
 	for($numon = 0; $onuser = $sql->fetch($onusers); ++$numon){
 		
 		if ($numon) $onlineusers .= ', ';
-
+		
+		// hardcoded name randomizer?
 		/* if ((!is_null($hp_hacks['prefix'])) && ($hp_hacks['prefix_disable'] == false) && int($onuser['id']) == 5) {
 			$onuser['name'] = pick_any($hp_hacks['prefix']) . " " . $onuser['name'];
 		} */
@@ -352,38 +371,67 @@ function fonlineusers($id){
 		if($onuser['nologpost']) // Was the user posting without using cookies?
 			$namelink="($namelink)";
 			
-		if($onuser['hideactivity'])
+		if($onuser['hideactivity']) // is the user trying to be a sneaky asshole?
 			$namelink="[$namelink]";		
 		
 		$onlineusers .= $minipic.$namelink;
 	}
 	
-	$p = ($numon ? ':' : '.');
-	$s = ($numon != 1 ? 's' : '');
+
+	$users = "{$numon} user".($numon != 1 ? 's' : '').
+	         " currently {$location}".($numon ? ': ' : '.').
+			 "{$onlineusers}";
 	
-	$guests = "";
+	/*
+		Online guests
+	*/
+	$guests    = "";
+	$bpt_info  = "";
 	if (!has_perm('view-bpt-info')) {
-		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > $onlinetime AND lastforum = $id");
-		if($numguests) $guests = "| $numguests guest" . ($numguests > 1 ? 's' : '');
+		// Standard guest counter view
+		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > {$onlinetime} {$check_and}");
 	} else {
-		// Detailed view of tor/proxy/bots
-		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
+		// Detailed view of BPT (Bot/Proxy/Tor) flags
+		$onguests = $sql->query("SELECT flags FROM guests WHERE date > {$onlinetime} {$check_and}");
+		// Fill in the proper flag counters with the proper priority
+		// - tor & ipbanned at the top since they are blocked (includes malicious bots, as they are ipbanned on sight)
+		// - bot & proxy not globally blocked have less priority
 		$ginfo = array_fill(0, 4, 0);
 		for ($numguests = 0; $onguest = $sql->fetch($onguests); ++$numguests) {
-			if      ($onguest['flags'] & BPT_TOR) 		$ginfo[2]++;
-			else if ($onguest['flags'] & BPT_IPBANNED) 	$ginfo[0]++;
-			else if ($onguest['flags'] & BPT_BOT) 		$ginfo[3]++;
-			//if ($onguest['flags'] & BPT_PROXY) 		$ginfo[1]++;
+			if      ($onguest['flags'] & BPT_TOR)       $ginfo[2]++;
+			else if ($onguest['flags'] & BPT_IPBANNED)  $ginfo[0]++;
+			else if ($onguest['flags'] & BPT_BOT)       $ginfo[3]++;
+			else if ($onguest['flags'] & BPT_PROXY)     $ginfo[1]++;
 		}
-		$specinfo = array('IP banned', 'Proxy', 'Tor banned', 'bots');
-		$guestcat = array();
-		for ($i = 0; $i < 4; ++$i)
-			if ($ginfo[$i])
-				$guestcat[] = $ginfo[$i] . " " . $specinfo[$i];
-		$guests = $numguests ? " | <span class='nobr'>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")</span>" : "") : "";
+		if ($numguests) {
+			// Print out those BPT flags...
+			$specinfo = array(
+				'IP banned', 
+				'Prox'.($ginfo[1] == 1 ? 'ies' : 'y'), 
+				'Tor banned', 
+				'bot'.($ginfo[1] == 1 ? '' : 's')
+			);
+			$guestcat = "";
+			for ($i = 0; $i < 4; ++$i) {
+				if ($ginfo[$i]) { // <cnt> IP banned, <cnt> Proxies, ...
+					if ($guestcat) $guestcat .= ', ';
+					$guestcat .= $ginfo[$i] . " " . $specinfo[$i]; 
+				}
+			}
+			
+			if ($guestcat) {
+				$bpt_info = "({$guestcat})";
+			}
+			
+		}
 	}
 	
-	return "$numon user$s currently in $forumname$p $onlineusers $guests";
+	// The guest part is optional, according to tradition.
+	if ($numguests) {
+		$guests = "| {$numguests} guest" . ($numguests == 1 ? '' : 's') . "{$bpt_info}";
+	}
+	
+	return "{$users} {$guests}";
 }
 
 function getpostlayoutid($text){

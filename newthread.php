@@ -476,6 +476,13 @@
 	}
 	
 		?>
+	<table class='table'>
+		<tr>
+			<td class='tdbg1 fonts center'>
+				<?=onlineusers($forum)?>
+			</td>
+		</tr>
+	</table>
 	<?=$forumlink?>
 	<form action="<?=$formlink?>" name=replier method=post autocomplete=off>
 	<table class='table'>
@@ -536,7 +543,7 @@
 					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
-					<?=moodlist($moodid)?>
+					<?=avatarlist($loguser['id'], $moodid)?>
 				</td>
 			</tr>
 			
@@ -612,7 +619,7 @@
 					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
-					<?=moodlist($moodid)?>
+					<?=avatarlist($loguser['id'], $moodid)?>
 				</td>
 			</tr>
 

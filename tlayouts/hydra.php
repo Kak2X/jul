@@ -1,24 +1,24 @@
 <?php
-function userfields(){return 'u.posts,u.sex,u.`group`,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity';}
+function userfields(){return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity';}
 
-function postcode($post,$set){
-	global  $ip, $quote, $edit, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
+function postcode($post, $set, $controls){
+	global $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 
 	
-	$exp     = calcexp($post['posts'],(ctime()-$post['regdate'])/86400);
-	$lvl     = calclvl($exp);
-	$expleft = calcexpleft($exp);
+	$exp        = calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
+	$lvl        = calclvl($exp);
+	$expleft    = calcexpleft($exp);
 
 	// Not used?
 	//$reinf=syndrome($post['act']);
 
-	$sincelastpost 	= "";
-	$lastactivity 	= "";
+	$sincelastpost  = "";
+	$lastactivity   = "";
 	$since = 'Since: '.printdate($post['regdate'], PRINT_DATE);
 
 	$postdate  =  printdate($post['date']);
 
-	if(filter_string($set['threadlink'])) 
+	if (filter_string($set['threadlink'])) 
 		$threadlink = ", in {$set['threadlink']}";
 
 	/* if($post['edited']){
@@ -31,7 +31,7 @@ function postcode($post,$set){
 	return 
 	"<table class='table'>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top rowspan=2 style='width: 20% !important;'>
+			<td class='tbl tdbg{$set['bg']} vatop' rowspan=2 style='width: 20% !important'>
 				{$noobspan}{$set['userlink']}</span>
 				<span class='fonts'>
 					<br>
@@ -40,21 +40,21 @@ function postcode($post,$set){
 					<br>
 				</span>
 			</td>
-			<td class='tbl tdbg{$set['bg']}' valign=top height=1>
-				<table class='fonts' style='clear: both; width: 100%;'>
+			<td class='tbl tdbg{$set['bg']} vatop' style='height: 1px'>
+				<table class='fonts w' style='clear: both'>
 					<tr>
 						<td>
-							Posted on $postdate$threadline{$post['edited']}
+							Posted on {$postdate}{$post['edited']}
 						</td>
-						<td style='float: right;'>
-							$quote$edit$ip
+						<td style='float: right'>
+							{$controls['quote']}{$controls['edit']}{$controls['ip']}
 						</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top style='overflow: visible; width: 70%;' height=220 id='post{$post['id']}'>
+			<td class='tbl tdbg{$set['bg']} vatop' style='overflow: visible; width: 70%; height: 220px' id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
 				{$post['signtext']}
@@ -70,5 +70,3 @@ function postcode($post,$set){
 	}
 	*/
 }
-
-?>

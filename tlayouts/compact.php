@@ -1,9 +1,8 @@
 <?php
 
-function userfields(){return 'u.posts,u.sex,u.`group`,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture';}
+function userfields(){return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture';}
 
-function postcode($post,$set){
-	global $ip, $quote, $edit;
+function postcode($post, $set, $controls){
 
 	$postnum = ($post['num'] ? " {$post['num']}/":'').$post['posts'];
 
@@ -17,25 +16,28 @@ function postcode($post,$set){
 	return 
 	"<table class='table'>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top>
-				<div class='mobile-avatar'>{$set['userpic']}</div>
+			<td class='tbl tdbg{$set['bg']} vatop'>
+				".($post['deleted'] ? 
+				"{$noobspan}{$set['userlink']}</span>" : // Hide post & avatar when deleted, but still show the mark of shame
+				"<div class='mobile-avatar'>{$set['userpic']}</div>
 				{$noobspan}{$set['userlink']}</span><br>
-				<span class='fonts'> Posts: $postnum</span>
+				<span class='fonts'> Posts: $postnum</span>".)."
 			</td>
-			<td class='tbl tdbg{$set['bg']}' valign=top width=50% align=right>
+			<td class='tbl tdbg{$set['bg']} vatop right' style='width: 50%'>
 				<span class='fonts'> Posted on {$set['date']}$threadlink</span>
-				<br>$quote$edit
-				<br>$ip
+				<br>{$controls['quote']}{$controls['edit']}
+				<br>{$controls['ip']}
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top height=60 colspan=2 id='post{$post['id']}'>
+			<td class='tbl tdbg{$set['bg']} vatop' style='height: 60px' colspan=2 id='post{$post['id']}'>
+				".($post['deleted'] ? $post['text'] : "
 				{$post['headtext']}
 				{$post['text']}
 				{$post['signtext']}
-				{$set['edited']}
+				{$set['edited']}"
+			.)."
 			</td>
 		</tr>
 	</table><br>";
 }
-?>

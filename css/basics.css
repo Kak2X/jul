@@ -12,6 +12,7 @@ div.lastpost {white-space:nowrap}
 .w,.table{width:100%}
 .b{font-weight:bold !important}
 .i{font-style:italic !important}
+.vatop{vertical-align:top}
 .buttonlink {border:none!important;font-weight:bold!important;padding:0px}
 .table{empty-cells:show;border-spacing:0px}
 code {overflow:auto;	width:100%;white-space:pre;display:block}

@@ -1,16 +1,16 @@
 <?php
 
 function userfields(){
-	return 'u.posts,u.sex,u.`group`,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
+	return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
 }
 
 
 function postcode($post, $set, $controls){
 	global $config, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 	
-	$exp		= calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
-	$lvl		= calclvl($exp);
-	$expleft	= calcexpleft($exp);
+	$exp        = calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
+	$lvl        = calclvl($exp);
+	$expleft    = calcexpleft($exp);
 	
 	if ($tlayout == 1) {
 		// Without numgfx (standard)
@@ -57,7 +57,9 @@ function postcode($post, $set, $controls){
 	}
 
 	$post['edited']	= filter_string($post['edited']);
-	$postdate		= printdate($post['date']);
+	$postdate       = printdate($post['date']);
+	$noobspan       = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
+		
 	//if ($post['edited']) {
 		// Old post edited marker
 		// $post['text'] .= "<hr><font class='fonts'>{$post['edited']}";
@@ -71,10 +73,10 @@ function postcode($post, $set, $controls){
 		"<div style='position:relative'>
 			<table class='table' id='{$post['id']}'>
 				<tr>
-					<td class='tbl tdbg{$set['bg']}' style='border-bottom: none; vertical-align: top; min-width: 200px'>
+					<td class='tbl tdbg{$set['bg']} vatop' style='border-bottom: none; min-width: 200px'>
 						{$set['userlink']}</span>
 					</td>
-					<td class='tbl tdbg{$set['bg']} w' style='height: 1px; vertical-align: top'>
+					<td class='tbl tdbg{$set['bg']} vatop w' style='height: 1px'>
 						<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
 							<tr>
 								<td>
@@ -88,27 +90,60 @@ function postcode($post, $set, $controls){
 					</td>
 				</tr>
 				<tr>
-					<td class='tbl tdbg{$set['bg']} fonts' style='vertical-align: top'>
+					<td class='tbl tdbg{$set['bg']} vatop fonts'>
 					</td>
-					<td class='tbl tdbg{$set['bg']}' style='vertical-align: top' id='post{$post['id']}'>
+					<td class='tbl tdbg{$set['bg']} vatop' id='post{$post['id']}'>
 						{$post['text']}
 					</td>
 				</tr>
 			</table>
 		</div>";
 	} else if ($post['uid'] == $config['deleted-user-id']) {
-		$fcol1			= "#bbbbbb";
-		$fcol2			= "#555555";
-		$fcol3			= "#181818";
+		$fcol1			= "#bbbbbb"; // Font color
+		$fcol2			= "#555555"; // Desc color
+		$fcol3			= "#181818"; // BG   color
+		
+		// CSS for the unified left bar
+		$sidebar_css = 
+			"vertical-align: top;".
+			"text-align: center;".
+			"background: $fcol3;".
+			"font-size: 14px;".
+			"color: $fcol1;".
+			"font-family: Verdana, sans-serif;".
+			"padding-top: .5em;".
+			"min-width: 200px;";
+			
+		// CSS for the description text "Collection of nobodies"
+		$desc_css = 
+			"letter-spacing: 0px;".
+			"color: $fcol2;"
+			"font-size: 10px;";
+		
+		// CSS for post title bar
+		$topbar_css = 
+			"vertical-align: top;".
+			"width: 100%;".
+			"background: $fcol3;"
+			"font-size: 12px;".
+			"color: $fcol1;".
+			"font-family: Verdana, sans-serif;".
+			"height: 1px;";
+		
+		// CSS for post content
+		$mainbar_css =
+			"vertical-align: top;".
+			"background: $fcol3;".
+			"height: 220px;";
 
 		return 
 		"<table class='table' id='{$post['id']}'>
 			<tr>
-				<td class='tbl tdbg{$set['bg']}' rowspan=2 style='text-align: center; background: $fcol3; font-size: 14px; color: $fcol1; font-family: Verdana, sans-serif; padding-top: .5em; min-width: 200px; vertical-align: top'>
+				<td class='tbl tdbg{$set['bg']}' rowspan=2 style='{$sidebar_css}'>
 					{$set['userlink']}
-					<br><span style='letter-spacing: 0px; color: $fcol2; font-size: 10px;'>Collection of nobodies</span>
+					<br><span style='{$desc_css}'>Collection of nobodies</span>
 				</td>
-				<td class='tbl tdbg{$set['bg']}' valign=top height=1 style='width: 100%; background: $fcol3; font-size: 12px; color: $fcol1; font-family: Verdana, sans-serif'>
+				<td class='tbl tdbg{$set['bg']}' style='{$topbar_css}'>
 					<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
 						<tr>
 							<td>
@@ -122,7 +157,7 @@ function postcode($post, $set, $controls){
 				</td>
 			</tr>
 			<tr>
-				<td class='tbl tdbg{$set['bg']}' style='background: $fcol3; height: 220px; vertical-align: top' id='post{$post['id']}'>
+				<td class='tbl tdbg{$set['bg']}' style='{$mainbar_css}' id='post{$post['id']}'>
 					{$post['headtext']}
 					{$post['text']}
 					{$post['signtext']}
@@ -152,16 +187,14 @@ function postcode($post, $set, $controls){
 		else
 			$csskey = "_".$post['headid'];
 		
-		$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
-		
 		return 
 		"<div style='position:relative'>
 			<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
-					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' style='border-bottom: none; vertical-align: top; min-width: 200px'>
+					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1 vatop' style='border-bottom: none; min-width: 200px'>
 						{$noobspan}{$set['userlink']}</span>
 					</td>
-					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2 w' style='height: 1px; vertical-align: top'>
+					<td class='tbl tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2 vatop w' style='height: 1px'>
 						<table class='w fonts' style='border-spacing: 0px; padding: 2px'>
 							<tr>
 								<td>
@@ -175,7 +208,7 @@ function postcode($post, $set, $controls){
 					</td>
 				</tr>
 				<tr>
-					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} fonts' style='vertical-align: top'>
+					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop fonts'>
 						{$set['userrank']}
 						$syndrome<br>
 						$level$bar<br>
@@ -190,7 +223,7 @@ function postcode($post, $set, $controls){
 						$lastactivity<br>
 						<br>
 					</td>
-					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' style='height: 220px; vertical-align: top' id='post{$post['id']}'>
+					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} vatop' style='height: 220px' id='post{$post['id']}'>
 						{$post['headtext']}
 						{$post['text']}
 						{$post['signtext']}
@@ -230,5 +263,3 @@ function kittynekomeowmeow($p) {
 	// if ($loguser['id'] == 1)
 	return $m ." :3";
 }
-
-?>

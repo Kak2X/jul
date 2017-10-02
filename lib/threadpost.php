@@ -39,7 +39,7 @@
 
 			$set['location'] = $post['location'] ? "<br>From: {$post['location']}" : "";
 
-			$set['userpic'] = "<img class='avatar' src='".avatarpath($post['uid'], $post['moodid'])."'>";
+			$set['userpic'] = file_exists(avatarpath($post['uid'], $post['moodid'])) ? "<img class='avatar' src='".avatarpath($post['uid'], $post['moodid'])."'>" : "";
 
 			if($post['signtext']) {
 				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];

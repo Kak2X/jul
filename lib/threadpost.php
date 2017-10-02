@@ -1,6 +1,6 @@
 <?php
 	
-	function threadpost($post, $bg, $controls, $forum = 0, $pthread = '') {
+	function threadpost($post, $bg, $controls, $forum = 0, $pthread = '', $showrevs = false) {
 		
 		global $loguser, $sep, $blockedlayouts;
 		
@@ -65,8 +65,7 @@
 					/*
 						Post revision jump
 					*/
-					global $ismod; // ok right
-					if ($ismod) {
+					if ($showrev) {
 						$revjump = "Revision: ";
 						for ($i = 0; $i <= $post['rev']; ++$i) {
 							$a 		  = ($post['sel_rev'] == $i) ? "z" : "a"; 

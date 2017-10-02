@@ -539,7 +539,7 @@
 		$post['act'] = filter_int($act[$post['user']]);
 
 		if ($id || has_forum_perm('read', $permcache[$threadcache[$post['thread']]['forum']])) {
-			$postlist .= threadpost($post, $bg, $controls, $forumid, filter_int($threadcache[$post['thread']]));
+			$postlist .= threadpost($post, $bg, $controls, $forumid, filter_int($threadcache[$post['thread']]), $ismod);
 		} else {
 			$postlist .=
 				"<table class='table'>

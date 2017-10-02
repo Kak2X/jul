@@ -1,7 +1,7 @@
 <?php
 
 function userfields(){
-	return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
+	return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood';
 }
 
 
@@ -117,14 +117,14 @@ function postcode($post, $set, $controls){
 		// CSS for the description text "Collection of nobodies"
 		$desc_css = 
 			"letter-spacing: 0px;".
-			"color: $fcol2;"
+			"color: $fcol2;".
 			"font-size: 10px;";
 		
 		// CSS for post title bar
 		$topbar_css = 
 			"vertical-align: top;".
 			"width: 100%;".
-			"background: $fcol3;"
+			"background: $fcol3;".
 			"font-size: 12px;".
 			"color: $fcol1;".
 			"font-family: Verdana, sans-serif;".

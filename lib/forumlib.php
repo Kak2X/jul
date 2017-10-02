@@ -450,9 +450,13 @@ function getpostlayoutid($text){
 }
 
 function loadtlayout(){
-	global $loguser, $tlayout, $sql;
-	$tlayout    = $loguser['layout'] ? $loguser['layout'] : 1;
-	$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id = $tlayout");
+	global $loguser, $tlayout, $sql, $x_hacks;
+	if ($x_hacks['irc-simulation']) {
+		$layoutfile = 'bcirc';
+	} else {
+		$tlayout    = $loguser['layout'] ? $loguser['layout'] : 1;
+		$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id = $tlayout");
+	}
 	require "tlayouts/$layoutfile.php";
 }
 

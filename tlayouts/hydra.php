@@ -1,8 +1,8 @@
 <?php
-function userfields(){return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.picture,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity';}
+function userfields(){return 'u.posts,u.sex,u.`group`,u.displayname,u.main_subgroup,u.ban_expire,u.birthday,u.aka,u.namecolor,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity';}
 
 function postcode($post, $set, $controls){
-	global $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
+	global $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 
 	
 	$exp        = calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);

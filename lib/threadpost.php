@@ -2,7 +2,7 @@
 	
 	function threadpost($post, $bg, $controls, $forum = 0, $pthread = '') {
 		
-		global $loguser, $sep, $tlayout, $blockedlayouts;
+		global $loguser, $sep, $blockedlayouts;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {

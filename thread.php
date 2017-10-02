@@ -195,6 +195,10 @@
 		$onlineusers    = "<table class='table'><td class='tdbg1 fonts center'>".
                               onlineusers($forum, $thread).
                           "</td></table>";
+						  
+		if (filter_bool($_GET['lol'])) {
+			$x_hacks['irc-simulation'] = true;
+		}
 		
 	} while (false);
 	else if ($user) {

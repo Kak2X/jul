@@ -1,6 +1,6 @@
 <?php
 	
-function generatenumbergfx($num, $minlen=0, $size = 1) {
+function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;
 
 	$nw			= 8 * $size; //($double ? 2 : 1);
@@ -31,6 +31,7 @@ function generatenumbergfx($num, $minlen=0, $size = 1) {
 	return $gfxcode;
 }
 
+// Progress bar (for RPG levels, syndromes)
 function drawprogressbar($width, $height, $progress, $images) {
 	$on = floor($progress / 100 * $width);
 	$off = $width - $on;
@@ -38,4 +39,9 @@ function drawprogressbar($width, $height, $progress, $images) {
 			"<img src='{$images['on']}' style='height:{$height}px;width:{$on}px'>".
 			"<img src='{$images['off']}' style='height:{$height}px;width:{$off}px'>".
 			"<img src='{$images['right']}' style='height:{$height}px'>";
+}
+
+// Single image progress bar (for comparisions like in activeusers.php)
+function drawminibar($progress, $image = 'images/minibar.png') {
+	return "<img src='{$image}' style='float: left; width: ". round($progress) ."%; height: 3px'>";
 }

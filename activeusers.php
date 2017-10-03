@@ -1,94 +1,121 @@
 <?php
 	require 'lib/function.php';
 
-	$windowtitle	= "{$config['board-name']} -- Active users";
+	$windowtitle    = "{$config['board-name']} -- Active users";
 	
-	$tid	= filter_int($_GET['tid']); // Thread ID filtering 
-	$type 	= filter_string($_GET['type']);
+	$_GET['tid']    = filter_int($_GET['tid']); // Thread ID filtering for 'post' type 
+	$_GET['time']   = filter_int($_GET['time']);
+	$_GET['type']   = filter_string($_GET['type']);
 	
-	if (($type == 'pm' || $type == 'pms') && !$loguser['id'])
-		$type = NULL;
+	// Pick defaults!
+	if (!$_GET['time']) $_GET['time'] = 86400; // 1 day
+	if (!$_GET['type']) $_GET['type'] = 'post';
+	
+	// Can't view sent/received PMs if we're not logged in
+	if (($_GET['type'] == 'pm' || $_GET['type'] == 'pms') && !$loguser['id'])
+		$_GET['type'] = 'post';
 
-	if (!isset($_GET['time']))
-		$time = 86400;
-	else
-		$time = (int) $_GET['time'];
-
-	$query 	= "SELECT $userfields, u.regdate, COUNT(*) AS cnt FROM users u";
-	$endp 	= " GROUP BY u.id ORDER BY cnt DESC";
-
-	$linklist[0] = "<a href=\"?time=$time\">posts made</a>";
-	$linklist[1] = "<a href=\"?type=thread&time=$time\">new threads</a>";
+	// Activity type selection
+	$linklist[0] = "<a href=\"?type=post&time={$_GET['time']}\">posts made</a>";
+	$linklist[1] = "<a href=\"?type=thread&time={$_GET['time']}\">new threads</a>";
 	if ($loguser['id']) {
-		$linklist[2] = "<a href=\"?type=pms&time=$time\">PMs sent by you</a>";
-		$linklist[3] = "<a href=\"?type=pm&time=$time\">PMs sent to you</a>";
+		$linklist[2] = "<a href=\"?type=pms&time={$_GET['time']}\">PMs sent by you</a>";
+		$linklist[3] = "<a href=\"?type=pm&time={$_GET['time']}\">PMs sent to you</a>";
 	}
-
-	if ($type == 'thread')	{
-		$posters	= $sql->query("$query LEFT JOIN threads t ON t.user = u.id"
-			.($time ? " WHERE t.firstpostdate > '". (ctime() - $time) ."'" : '')
-			.$endp);
-		$desc		= "Most active thread posters";
-		$column		= "Threads";
-		$column2	= "threads";
-		$stat = "most thread creators";
-		$linklist[1] = "new threads";
-
-	} elseif ($type == 'pm') {
-		$posters	= $sql->query("$query LEFT JOIN pmsgs p ON p.userto = {$loguser['id']}"
-			.($time ? " AND p.date> '". (ctime() - $time) ."' AND" : ' WHERE')
-			." p.userfrom = u.id$endp");
-		$desc		= "PMs recieved from";
-		$column		= "PMs";
-		$column2	= "PMs";
-		$stat = "most message senders";
-		$linklist[3] = "PMs sent to you";
-
-	} elseif ($type == 'pms') {
-		$posters	= $sql->query("$query LEFT JOIN pmsgs p ON p.userfrom = {$loguser['id']}"
-			.($time ? " WHERE p.date> '". (ctime() - $time) ."' AND" : ' WHERE')
-			." p.userto = u.id$endp");
-		$desc		= "PMs sent to";
-		$column		= "PMs";
-		$column2	= "PMs";
-		$stat = "who you've sent the most messages to";
-		$linklist[2] = "PMs sent by you";
-
-	} else {
-		$posters	= $sql->query("$query LEFT JOIN posts p ON u.id = p.user WHERE 1"
-			.($tid ? " AND p.thread='$tid'" : '')
-			.($time ? " AND p.date> '". (ctime() - $time) ."'" : '')
-			.$endp);
-		$desc		= "Most active posters";
-		$column		= "Posts";
-		$column2	= "posts";
-		$stat = "most active posters";
-		$linklist[0] = "posts made";
-		$type = '';
-	}
-
-	$link = '<a href='.(($type) ? "?type={$type}&" : '?').'time';
 	
+	// Time boundary
+	$qtime  = ctime() - $_GET['time'];
+	
+	$query 	= "SELECT $userfields, u.regdate, COUNT(*) AS cnt FROM users u";
+	$endp   = "GROUP BY u.id ORDER BY cnt DESC";
+
+	// Type-specific query & strings
+	switch ($_GET['type']) {
+		case 'post':
+			$posters = $sql->query("
+				{$query}
+				LEFT JOIN posts p ON u.id = p.user 
+				WHERE 1 ".
+				($_GET['tid']  ? " AND p.thread = {$_GET['tid']}" : '').
+				($_GET['time'] ? " AND p.date   > {$qtime}" : '')." 
+				{$endp}
+			");
+			$desc        = "Most active posters"; // Table title
+			$column      = "Posts"; // Column title for progress bar
+			$column2     = "posts"; // Describes what the total is for in the table footer
+			$stat        = "most active posters"; // Type description (top-left)
+			$linklist[0] = "posts made"; // disallow selection of selected type
+			break;
+			
+		case 'thread':
+			$posters = $sql->query("
+				{$query} 
+				LEFT JOIN threads t ON t.user = u.id ".
+				($_GET['time'] ? "WHERE t.firstpostdate > {$qtime}" : '')." 
+				{$endp}
+			");
+			$desc        = "Most active thread posters"; // Table title
+			$column      = "Threads"; // Column title for progress bar
+			$column2     = "threads"; // Describes what the total is for in the table footer
+			$stat        = "most thread creators"; // Type description (top-left)
+			$linklist[1] = "new threads"; // disallow selection of selected type
+			break;
+
+		case 'pms':
+			$posters = $sql->query("
+				{$query} 
+				LEFT JOIN pmsgs p ON p.userfrom = {$loguser['id']}
+				WHERE p.userto = u.id ".
+				($_GET['time'] ? "AND p.date > {$qtime}" : "")." 
+				{$endp}
+			");
+			$desc        = "PMs sent to"; // Table title
+			$column      = "PMs"; // Column title for progress bar
+			$column2     = "PMs"; // Describes what the total is for in the table footer
+			$stat        = "who you've sent the most messages to"; // Type description (top-left)
+			$linklist[2] = "PMs sent by you"; // disallow selection of selected type
+			break;
+			
+		case 'pm':
+			$posters = $sql->query("
+				{$query} 
+				LEFT JOIN pmsgs p ON p.userto = {$loguser['id']}
+				WHERE p.userfrom = u.id ".
+				($_GET['time'] ? "AND p.date > {$qtime}" : "")." 
+				{$endp}
+			");
+			$desc        = "PMs recieved from"; // Table title
+			$column      = "PMs"; // Column title for progress bar
+			$column2     = "PMs"; // Describes what the total is for in the table footer
+			$stat        = "most message senders"; // Type description (top-left)
+			$linklist[3] = "PMs sent to you"; // disallow selection of selected type
+			break;
+			
+		default: // No bonus!
+			errorpage("Good job, you selected a nonexisting type.");
+	}
+
 	pageheader($windowtitle);
+	
+	// Time / Type selection
 	?>
-	<table style='width: 100%'>
+	<table class='w'>
 		<tr>
-			<td class='fonts' width=50%>
+			<td class='fonts' style='width: 50%'>
 				Show <?=$stat?> in the:<br>
-				<?=$link?>=3600>last hour</a> - <?=$link?>=86400>last day</a> - <?=$link?>=604800>last week</a> - <?=$link?>=2592000>last 30 days</a> - <?=$link?>=0>from the beginning</a>
+				<a href='?type=<?=$_GET['type']?>&time=3600'>last hour</a> - 
+				<a href='?type=<?=$_GET['type']?>&time=86400'>last day</a> - 
+				<a href='?type=<?=$_GET['type']?>&time=604800'>last week</a> - 
+				<a href='?type=<?=$_GET['type']?>&time=2592000'>last 30 days</a> - 
+				<a href='?type=<?=$_GET['type']?>&time=0'>from the beginning</a>
 			</td>
-			<td width=50% class='fonts right'>
+			<td class='fonts right'>
 				Most active users by:<br>
 				<?=implode(" - ", $linklist)?>
 			</td>
 		</tr>
 	</table>
 	<?php 
-
-	if ($time)
-		$timespan = " during the last ". timeunits2($time);
-	else
-		$timespan = "";
 
 /*
 	if ($loguser["powerlevel"] >= 1) {
@@ -114,33 +141,47 @@
 		";
 	}
 */
+	
+	// An infinite time span doesn't require its own description
+	$timespan = $_GET['time'] ? " during the last ". timeunits2($_GET['time']) : "";
 
+	// Table title and column desc
 	?>
 	<table class='table'>
 		<tr><td class='tdbgc center' colspan=6><b><?=$desc?><?=$timespan?></b></td></tr>
 		<tr>
-			<td class='tdbgh center' width=30>#</td>
+			<td class='tdbgh center' style='width: 30px'>#</td>
 			<td class='tdbgh center' colspan=2>Username</td>
-			<td class='tdbgh center' width=200>Registered on</td>
-			<td class='tdbgh center' width=130 colspan=2>$column</td>
+			<td class='tdbgh center' style='width: 200px'>Registered on</td>
+			<td class='tdbgh center' style='width: 130px' colspan=2><?=$column?></td>
 	<?php
 
-	$total = 0;
+	$total  = 0;
 	$oldcnt = NULL;
 	for ($i = 1; $user = $sql->fetch($posters); ++$i) {
 		if ($i == 1) $max = $user['cnt'];
+		
+		// If two people share <post/thread/..> count, they share rank
+		// The rank jumps down once the count no longer matches
 		if ($user['cnt'] != $oldcnt) $rank = $i;
+
 		$oldcnt	= $user['cnt'];
-		$ulink = getuserlink($user);
+		$ratio  = $user['cnt'] / $max * 100;
+		
 		print "
-			<tr>
-				<td class='tdbg1 center'>$rank</td>
-				<td class='tdbg1 center' width=16>". get_minipic($user['id']) ."</td>
-				<td class='tdbg2'>{$ulink}</td>
-				<td class='tdbg1 center'>".printdate($user['regdate'])."</td>
-				<td class='tdbg2 center' width=30><b>". $user['cnt'] ."</b></td>
-				<td class='tdbg2 center' width=100>". number_format($user['cnt'] / $max * 100, 1) ."%<br><img src=images/minibar.png width=\"". number_format($user['cnt'] / $max * 100) ."%\" align=left height=3> </td>
-			</tr>";
+		<tr>
+			<td class='tdbg1 center'>{$rank}</td>
+			<td class='tdbg1 center' style='max-width: {$config['max-minipic-size-x']}px'>
+				". get_minipic($user['id']) ."
+			</td>
+			<td class='tdbg2'>". getuserlink($user) ."</td>
+			<td class='tdbg1 center'>". printdate($user['regdate']) ."</td>
+			<td class='tdbg2 center b' style='width: 30px'>{$user['cnt']}</td>
+			<td class='tdbg2 center' style='width: 100px'>
+				". number_format($ratio, 1) ."%<br>
+				". drawminibar($ratio) ."
+			</td>
+		</tr>";
 
 		$total	+= $user['cnt'];
 	}

@@ -6,6 +6,7 @@ pre br {display:none}
 body,.table,.font,.fonth,div.lastpost:first-line{font:13px verdana,geneva,sans-serif}
 div.lastpost {white-space:nowrap}
 .sparkline {display:none}
+.left {text-align:left}
 .center{text-align:center}
 .right{text-align:right}
 .nobr{white-space:nowrap}

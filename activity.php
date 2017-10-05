@@ -54,8 +54,8 @@
 	}
 	
 	// Draw the horizontal rulers (in offsets of Y 50px; alternate lines between 2 colors)
-	for ($y = 50; $y <= $maxposts; $y += 50) {
-		ImageLine($img, 0, $maxposts - $y, $days, $maxposts - $y, $c['mk'.($y%100+1)]);
+	for ($y = 50, $ct = 1; $y <= $maxposts; $y += 50, $ct++) {
+		ImageLine($img, 0, $maxposts - $y, $days, $maxposts - $y, (($ct & 1) ? $c['mk2'] : $c['mk1']));
 	}
 	
 	$total = 0;

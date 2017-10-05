@@ -1,112 +1,136 @@
 <?php
+
+	const SCALE_X = 2;
+	const SCALE_Y = 20; // 1px to 20 posts
+	const SECTOR_H = 50; // Height of a horizontal sector
+	
+	// Legend box with usernames (easily configurable just in case)
+	const BOX_X = 60;
+	const BOX_Y = 10;
+	const BOX_W = 113;
+	
+	const USER_COUNT = 10; // Number of users to show
+	
 	require 'lib/function.php';
- 	$user['regdate']	= $sql -> resultq("SELECT MIN(`regdate`) FROM users WHERE regdate > 0") or die();
-	$max				= ceil(($sql -> resultq("SELECT MAX(`posts`) FROM users") + 1) / 50) * 50;
+ 	
+	// Get the first real registration date (cut down to days)
+	$regdate = $sql->resultq("SELECT MIN(regdate) FROM users WHERE regdate > 0") or die("No users registered.");
+	$regday     = floor($regdate / 86400);
+	$regdate_ts = $regday * 86400; // Remove hour/min/sec info
+	
+	$days = floor((ctime() - $regdate_ts) / 86400); // Days the board has been opened
 
-	$vd = date('m-d-y', $user['regdate']);
-	$dd = mktime(0,0,0,substr($vd,0,2),substr($vd,3,2),substr($vd,6,2));
+	// Base the maximum
+	$max = ceil(($sql->resultq("SELECT MAX(posts) FROM users") + 1) / SECTOR_H) * SECTOR_H;
+	define('IMAGE_Y', $max / SCALE_Y);
+	define('IMAGE_X', $days * SCALE_X);
 
-	$days = floor((ctime()-$dd)/86400);
-	$scalex	= 2;
-	$scaley	= 20;
-	$m = $max / $scaley;
+	$img = ImageCreateTrueColor(IMAGE_X, IMAGE_Y);
+	$c['bg']  = ImageColorAllocate($img,  0,  0,  0); // Shadows
+	$c['bg1'] = ImageColorAllocate($img,  0,  0, 60); // Month background
+	$c['bg2'] = ImageColorAllocate($img,  0,  0, 80); // 
+	$c['bg3'] = ImageColorAllocate($img, 40, 40,100); // New year vert. line
+	$c['mk1'] = ImageColorAllocate($img, 60, 60,130); // Border (postcount indicator)
+	$c['mk2'] = ImageColorAllocate($img, 80, 80,150); // Border (postcount indicator/legend box)
+	
+	//$c['bar'] = ImageColorAllocate($img,250,190, 40); // Not used?
+	//$c['pt']  = ImageColorAllocate($img,250,250,250); //
 
-	$img = ImageCreateTrueColor($days * $scalex,$m);
-	$c['bg']  = ImageColorAllocate($img,  0,  0,  0);
-	$c['bg1'] = ImageColorAllocate($img,  0,  0, 60);
-	$c['bg2'] = ImageColorAllocate($img,  0,  0, 80);
-	$c['bg3'] = ImageColorAllocate($img, 40, 40,100);
-	$c['mk1'] = ImageColorAllocate($img, 60, 60,130);
-	$c['mk2'] = ImageColorAllocate($img, 80, 80,150);
-	$c['bar'] = ImageColorAllocate($img,250,190, 40);
-	$c['pt']  = ImageColorAllocate($img,250,250,250);
-
-	for($i=0;$i<$days;++$i){
-		$num=date('m',$dd+$i*86400)%2+1;
-		if(date('m-d',$dd+$i*86400)=='01-01') $num=3;
-		ImageFilledRectangle($img,$i * $scalex,$m,($i + 1) * $scalex - 2,0,$c["bg$num"]);
+	// Draw background
+	for ($i = 0; $i < $days; ++$i) {
+		$md = date('m-d', $regdate_ts + $i * 86400);
+		if ($md == '01-01') { // New year?
+			$num = 3;
+		} else {
+			$num = substr($md, 0, 2) % 2 + 1; // Alternate between months
+		}
+		ImageFilledRectangle($img, $i * SCALE_X, IMAGE_Y, ($i + 1) * SCALE_X - 2, 0, $c["bg$num"]);
 	}
 
-	for($i=0;$i<=($m / 50);++$i){
-		ImageLine($img,0,$m-$i*100+50,($days + 1) * $scalex - 1, $m-$i*100+50, $c['mk1']);
-		ImageLine($img,0,$m-$i*100,   ($days + 1) * $scalex - 1, $m-$i*100,    $c['mk2']);
-		imagestring($img, 3, 3, $m-$i*100+1,  ($i * 100)      * $scaley, $c['bg']);
-		imagestring($img, 3, 3, $m-$i*100+51, ($i * 100 - 50) * $scaley, $c['bg']);
-		imagestring($img, 3, 2, $m-$i*100,    ($i * 100)      * $scaley, $c['mk2']);
-		imagestring($img, 3, 2, $m-$i*100+50, ($i * 100 - 50) * $scaley, $c['mk1']);
+	// Postcount indicator for each sector; with separator lines
+	$sect_x2 = SECTOR_H * 2; // yeah
+	for ($y = IMAGE_Y - SECTOR_H; $y >= 0; $y -= SECTOR_H) {
+		$color = ($y % $sect_x2) ? $c['mk1'] : $c['mk2']; // Start from mk1 and loop back and forth for each limit
+		$posts = (IMAGE_Y - $y) * SCALE_Y;
+		
+		ImageLine($img, 0, $y, IMAGE_X, $y, $color);
+		ImageString($img, 3, 3, $y + 1, $posts, $c['bg']);
+		ImageString($img, 3, 2,     $y, $posts, $color);
 	}
 
-	$users	= array();
-	$userq	= $sql -> query("SELECT id, name FROM `users` ORDER BY `posts` DESC LIMIT 0, 10");
-	while ($u = $sql -> fetch($userq))
-		$users[$u['id']]	= array('name' => $u['name'], 'color' => imagecolorallocate($img, rand(100,255), rand(100,255), rand(100,255)));
+	// Get the 10 users with the most posts and assign each its own color
+	$users  = array();
+	$userq  = $sql->query("SELECT id, name FROM `users` ORDER BY `posts` DESC LIMIT 0, ".USER_COUNT);
+	while ($u = $sql->fetch($userq))
+		$users[$u['id']]     = array('name' => $u['name'], 'color' => imagecolorallocate($img, rand(100,255), rand(100,255), rand(100,255)));
 
 	$z = count($users);
-	$namespace = 12;
-
-	imagerectangle(      $img, 61, 11, 174, 15 + $z * $namespace, $c['bg']);
-	imagefilledrectangle($img, 60, 10, 173, 14 + $z * $namespace, $c['bg2']);
-	imagerectangle(      $img, 60, 10, 173, 14 + $z * $namespace, $c['mk2']);
-
+	const NAME_HEIGHT = 12;
+	// Draw the legend background box
+	imagerectangle(      $img, BOX_X + 1, BOX_Y + 1, BOX_X + BOX_W + 1, BOX_Y + 5 + $z * NAME_HEIGHT, $c['bg']);  // Shadow
+	imagefilledrectangle($img, BOX_X    , BOX_Y    , BOX_X + BOX_W    , BOX_Y + 4 + $z * NAME_HEIGHT, $c['bg2']); // Background
+	imagerectangle(      $img, BOX_X    , BOX_Y    , BOX_X + BOX_W    , BOX_Y + 4 + $z * NAME_HEIGHT, $c['mk2']); // Border
+	
 	$z	= 0;
-
 	$data = getdata(array_keys($users));
 	foreach($users as $uid => $userx) {
+		// Draw the post total as a line
 		drawdata($data[$uid], $userx['color']);
-		imageline($img, 66, $z * $namespace + 19, 76, $z * $namespace + 19, $c['bg']);
-		imageline($img, 65, $z * $namespace + 18, 75, $z * $namespace + 18, $userx['color']);
-		imagestring($img, 2, 80 + 1, $z * $namespace + 12, $userx['name'], $c['bg']);
-		imagestring($img, 2, 80,     $z * $namespace + 11, $userx['name'], $userx['color']);
+		// 10px Dash next to the name...
+		imageline($img, BOX_X + 6, BOX_Y + 9 + $z * NAME_HEIGHT, BOX_X + 6 + 10, BOX_Y + 9 + $z * NAME_HEIGHT, $c['bg']);
+		imageline($img, BOX_X + 5, BOX_Y + 8 + $z * NAME_HEIGHT, BOX_X + 5 + 10, BOX_Y + 8 + $z * NAME_HEIGHT, $userx['color']);
+		// And the name proper...
+		imagestring($img, 2, BOX_X + 21, BOX_Y + 2 + $z * NAME_HEIGHT, $userx['name'], $c['bg']);
+		imagestring($img, 2, BOX_X + 20, BOX_Y + 1 + $z * NAME_HEIGHT, $userx['name'], $userx['color']);
 		$z++;
 	}
-
-/*	if($_GET['debugsql']) {
-		require 'lib/layout.php';
-		print $header.$footer;
-		printtimedif(time());
-		die(1);
-	} */
-
+	
 	Header('Content-type:image/png');
 	ImagePNG($img);
 	ImageDestroy($img);
 
+// Draw progression of user's postcount
 function drawdata($p, $color) {
-	global $days, $scalex, $m, $img;
-	$oldy = $m;
-	for ($i=0;$i<$days;$i++){
-		$y		= $m-$p[$i];
-		$x		= $i * $scalex;
-		if (!$p[$i]) {
-			$y	 = $oldy;
+	global $days, $img;
+	$oldy = IMAGE_Y; // We start from the bottom
+	for ($i = 0; $i < $days; ++$i){
+		if (!$p[$i]) { // If nothing was posted, we keep the previous value
+			$y	= $oldy;
+		} else {
+			$y  = IMAGE_Y - $p[$i];
 		}
-		imageline($img, $x, $oldy, $x + $scalex - 1, $y, $color);
-		$oldy	= $y;
+		$x      = $i * SCALE_X;
+		imageline($img, $x, $oldy, $x + SCALE_X - 1, $y, $color);
+		$oldy   = $y;
 	}
 }
 
 function getdata($users) {
-	global $sql, $dd, $scaley, $days;
+	global $sql, $regday;
+	
+	
+	// Initialize user total
+	$ucount = count($users);
+	$total  = array();
+	for ($i = 0; $i < $ucount; ++$i) {
+		$total[$users[$i]] = 0;
+	}
+	
+	$postdays = $sql->query("
+		SELECT user, FLOOR(date / 86400) day, count(*) c
+		FROM posts 
+		WHERE user IN (".implode(',',$users).") 
+		GROUP BY user, day 
+		ORDER BY user, day
+	");
+	
 
-	$q = $sql->query(
-		"SELECT user, FROM_UNIXTIME(date, '%Y-%m-%d') day, count(*) c ".
-		"FROM posts WHERE user IN (".implode(',',$users).") GROUP BY user, day ORDER BY user, day",
-		'day');
-
-	$tmp = array();
-	$y = array();
-
-	while ($r = $sql->fetch($q, MYSQL_ASSOC))
-		$tmp[$r['user']][$r['day']] = $r;
-
-	for($i=0; $i < $days; ++$i) {
-		$dk = date('Y-m-d',$dd+$i*86400);
-		foreach ($tmp as $uid => $qdata) {
-			if (!array_key_exists($dk, $qdata)) continue;
-
-			$y[$uid] += $qdata[$dk]['c'];
-			$resp[$uid][$i] = $y[$uid] / $scaley;
-		}
+	$resp  = array();
+	// For every user, return the total
+	// Since it's ordered already by day we can safely add to the total without issues
+	while ($x = $sql->fetch($postdays)) {
+		$total[$x['user']] += $x['c'];
+		$resp[$x['user']][$x['day'] - $regday] = $total[$x['user']] / SCALE_Y;
 	}
 	return $resp;
 }

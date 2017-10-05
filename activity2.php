@@ -82,8 +82,10 @@
 		// And the name proper...
 		imagestring($img, 2, BOX_X + 21, BOX_Y + 2 + $z * NAME_HEIGHT, $userx['name'], $c['bg']);
 		imagestring($img, 2, BOX_X + 20, BOX_Y + 1 + $z * NAME_HEIGHT, $userx['name'], $userx['color']);
-		$z++;
+		++$z;
 	}
+	
+	// errorpage("check the error log");
 	
 	Header('Content-type:image/png');
 	ImagePNG($img);
@@ -94,7 +96,7 @@ function drawdata($p, $color) {
 	global $days, $img;
 	$oldy = IMAGE_Y; // We start from the bottom
 	for ($i = 0; $i < $days; ++$i){
-		if (!$p[$i]) { // If nothing was posted, we keep the previous value
+		if (!isset($p[$i])) { // If nothing was posted, we keep the previous value
 			$y	= $oldy;
 		} else {
 			$y  = IMAGE_Y - $p[$i];

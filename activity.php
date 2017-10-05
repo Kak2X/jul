@@ -72,6 +72,8 @@
 		ImageSetPixel($img, $i, $maxposts - $avg, (($postdb[$i] >= $avg) ? $c['pt2'] : $c['pt1']));
 	}
 
+	//errorpage("check the error log");
+	
 	Header('Content-type:image/png');
 	ImagePNG($img);
 	ImageDestroy($img);

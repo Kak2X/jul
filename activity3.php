@@ -1,11 +1,11 @@
 <?php
 
-	const SCALE_X   = 1; // 1;
-	const SCALE_Y   = 1;//200;
+	const SCALE_X   = 1;
+	const SCALE_Y   = 200;
 	
 	const SECTOR_H  = 50;
 	
-	const THRESHOLD = 300; // 5000;
+	const THRESHOLD = 5000;
 	
 	//const HIGHLIGHT = '08-05-2009';
 	

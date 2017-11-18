@@ -343,7 +343,8 @@
 		
 		public function lock_tables($locks, $read = false) {
 			if ($this->in_lock === false) {
-				$this->connection->exec("LOCK TABLES ".implode(',', $locks).($read ? " READ |" : "")." WRITE");
+				$type = ($read ? "READ | " : "" )."WRITE";
+				$this->connection->exec("LOCK TABLES ".implode(" {$type}, ", $locks)." {$type}");
 				$this->in_lock = true;
 			}
 		}

@@ -91,53 +91,12 @@ function prepare_tags($msg, $posts, $days, $userid, &$tags = null) {
 }
 
 function escape_codeblock($text) {
-	/* Old code formatting
 	$list  = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
 	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 
-	// @TODO why not just use htmlspecialchars() or htmlentities()
 	return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
-	*/
-	// Slightly less insane code block parser.
-	$text[0] = substr($text[0] , 6, -6);
 	
-	// Hack around the problem of different nested quotes.
-	// TODO: Replace with an appropriate regex
-	$len 	= strlen($text[0]);
-	$intext = false;
-	$ret	= "";
-	for ($i = 0; $i < $len; ++$i) {
-		
-		if ($text[0][$i] == '"' || $text[0][$i] == "'") {
-			if ($i && $text[0][$i-1] != '\\') {
-				if (!$intext) {
-					$intext = $text[0][$i];
-				} else if ($intext != $text[0][$i]) {
-					$ret .= htmlentities($text[0][$i], ENT_QUOTES); // Escape badly opened quotes inside other quotes so that the regex below won't break
-					continue;
-				} else {
-					$intext = false;
-				}
-			}
-		}
-		$ret .= $text[0][$i];
-	}
-	
-	// Horrible hacks on top of horrible hacks to prevent regex overlapping
-	// Other symbols
-	$ret = preg_replace_callback("'(\(|\)|\[|\]|\{|\}|\=|\<|\>|\:)'", function($x){return "<span style=color:#007700>".htmlspecialchars($x[1])."</span>";}, $ret);
-	// Operators
-	$ret = preg_replace_callback("'(\+|\-|\||\!)'", function($x){return "<span style=color:#C0C0FF>".htmlspecialchars($x[0])."</span>";}, $ret);
-	
-	// Strings
-	$ret = preg_replace("'([^\\\])(\')(.*?)([^\\\]\')'si", "$1<span style='color: #ff6666 !important'>$2$3$4</span>", $ret);
-	$ret = preg_replace("'([^\\\])(\")(.*?)([^\\\]\")'si", "$1<span style='color: #ff6666 !important'>$2$3$4</span>", $ret);
-	
-	//	Comment lines
-	$ret = preg_replace("'\/\*(.*?)\*\/'si", "<span style='color: #FF8000 !important'>/*$1*/</span>",$ret); /* */
-	$ret = preg_replace("'\/\/(.*?)\r?\n'i", "<span style='color: #FF8000 !important'>//$1</span>\r\n",$ret); //
-	
-	return "[quote]<code style='background: #000 !important; color: #fff'>$ret</code>[/quote]";
+	//TODO: Write a proper code parser which isn't insane (or at least attempt to not reinvent the wheel)
 }
 // do_replace2()
 function format_post($msg, $options='0|0', $nosbr = false){

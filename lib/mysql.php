@@ -505,14 +505,22 @@
 			return $backtrace[$i];
 		}
 		
-		public static function setplaceholders() {
+		public static function setplaceholders($arraySet) {
 			$out = "";
-			$fields = func_get_args();
+			
+			if (is_array($arraySet)) {
+				// Parameters passed via array
+				$fields = array_keys($arraySet);
+			} else {
+				// Parameters passed via different arguments
+				$fields = func_get_args();
+			}
 			$i = false;
 			foreach ($fields as $field) {
 				$out .= ($i ? "," : "")."$field=:".str_replace("`","",$field);
 				$i = true;
 			}
+			
 			return $out;
 		}
 		

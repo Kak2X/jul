@@ -10,12 +10,11 @@
 	
 	admin_check('sysadmin-actions');
 	
+	const MANUAL_BACKUP = true; // Signal to the backup script to ignore the sapi restriction
+	
 	if (!file_exists($config['backup-folder'])) {
 		errorpage("Cannot use the backup function.<br><br>The 'backup-folder' setting in the configuration file points to a nonexisting folder.");
 	}
-	
-	const B_THRESHOLD =	15; // Days before a backup is considered old
-		
 
 	if (isset($_POST['go'])){
 		check_token($_POST['auth']);
@@ -63,7 +62,7 @@
 				foreach($allbackups as $f) {
 					$x 			 = substr($f, 11, 8); //YYYYMMDD.ZIP
 					$curdate 	 = mktime(0,0,0, substr($x,4,2), substr($x,6,2), substr($x,0,4));
-					if ($ctime - $curdate > B_THRESHOLD * 86400) unlink($f);
+					if ($ctime - $curdate > $config['backup-threshold'] * 86400) unlink($f);
 				}				
 				return header ("Location: admin-backup.php");
 		}
@@ -84,7 +83,7 @@
 		foreach($allbackups as $f) {
 			$x 			 = substr($f, $offset, 8); //YYYYMMDD.ZIP
 			$curdate 	 = mktime(0,0,0, substr($x,4,2), substr($x,6,2), substr($x,0,4));
-			if (!$optgroup && $ctime - $curdate > B_THRESHOLD * 86400) {
+			if (!$optgroup && $ctime - $curdate > $config['backup-threshold'] * 86400) {
 				$optgroup = true;
 				$list 	 .= "</optgroup><optgroup label='Old backups'>";
 			}
@@ -107,7 +106,6 @@
 			?>
 		<br>
 		<form method='POST' action='?'>
-		<input type='hidden' name='auth' value="<?= generate_token() ?>">
 		<center>
 		<table class='table' style='width: 600px'>
 		
@@ -116,17 +114,17 @@
 			<tr>
 				<td class='tdbg1'><center>
 					<br>There are <?= $numfiles ?> backup archive(s) saved in total<?= $lastdate ? ", last on ".printdate($lastdate, PRINT_DATE) : "" ?>
-					<br><?= $oldbackups ? "$oldbackups of these backups are considered old (older than ".B_THRESHOLD." days)" : "" ?>
+					<br><?= $oldbackups ? "$oldbackups of these backups are considered old (older than {$config['backup-threshold']} days)" : "" ?>
 					<br>&nbsp;
 					<table class="font">
 						<tr><td class="center" colspan=2>What do you want to do?</td></tr>
-<?php					if ($numfiles) {
-?>						<tr>
+<?php				if ($numfiles) { ?>
+						<tr>
 							<td><input type='radio' name='actid' value=0 checked></td>
 							<td>Download this backup: <?= $list ?></td>
 						</tr>
-<?php					} 
-?>						<tr>
+<?php				} ?>
+						<tr>
 							<td><input type='radio' name='actid' value=1></td>
 							<td>Manually execute a backup (will overwrite today's backup)</td>
 						</tr>
@@ -137,7 +135,7 @@
 					</table>
 					
 					<br><input type='submit' class='submit' value='Execute action' name='go'>
-					<br>&nbsp;
+					<br><input type='hidden' name='auth' value="<?= generate_token() ?>">&nbsp;
 				</center></td>
 			</tr>
 			

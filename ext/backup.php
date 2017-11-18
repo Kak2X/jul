@@ -4,17 +4,20 @@
 		Run this in a cron job at midnight (or manually through admin-backup.php)
 	*/
 	
-	const DEBUG_BACKUP = true;
-	
 	if (substr(php_sapi_name(), 0, 3) != 'cli') {
-		if (!DEBUG_BACKUP) die("No.");
+		if (!defined('MANUAL_BACKUP')) die("No."); // If not called from cli or admin-backup, die instantly
+		// $startingtime is already defined in lib/common.php
 		echo "<pre>";
 		set_time_limit(0);
+	} else {
+		$startingtime = microtime(true);
+		echo "Board Backup Script";
+		echo "\n=====================\n\n";
 	}
 	
 	chdir("..");
 	
-	$startingtime = microtime(true);
+	
 	
 	$tables = array(
 		//'actionlog', # Not used (yet?)
@@ -32,6 +35,7 @@
 		'favorites',
 		'filters',
 		'forums',
+		'irc',
 		'items',
 		'itemcateg',
 		'itemtypes',
@@ -40,9 +44,11 @@
 		//'news',#boardc
 		//'news_comments',#boardc
 		'pendingusers',
+		'perm_definitions',
 		'perm_forums',
 		'perm_forumusers',
 		'perm_groups',
+		'perm_types_definitions',
 		'perm_users',
 		'pmsgs',
 		'pmsg_folders',
@@ -52,7 +58,7 @@
 		'postlayouts',
 		'postradar',
 		'posts',
-		//'posts_old',#boardc
+		'posts_old',
 		'ranks',
 		'ranksets',
 		'rpg_classes',
@@ -65,18 +71,17 @@
 		'tournaments',
 		//'userpic',
 		//'userpiccateg',
+		'userratings',
 		'users',
 		'users_rpg',
-		//'user_avatars',#boardc
+		'users_subgroups',
+		'user_avatars',
 		//'user_comments'#boardc
 	);
 	
 	// We don't need everything
 	require_once "lib/config.php";
 	require_once "lib/mysql.php";
-	
-	//echo "Board Backup Script";
-	//echo "\n=====================\n\n";
 	
 	echo "Connecting to database...";
 	$sql 			= new mysql;
@@ -91,15 +96,16 @@
 	
 	// Can't trust the script to not blow up
 	register_shutdown_function('remove_lock');
-	
-	// We need to return the entire contents of the tables
+
+	// We need to return the entire contents of the tables; so mark the backup flag as true to prevent interference from other users
 	$sql->query("UPDATE misc SET backup = 1");
 	
 	echo "\nBacking up database...";
 	// Board status things (to check which tables are empty)
-	$status  = $sql->query("SHOW TABLE STATUS IN $dbname WHERE Name IN ('".implode("','", $tables)."')");
+	$status  = $sql->query("SHOW TABLE STATUS IN $dbname WHERE Name IN ('".implode("',\n'", $tables)."')");
 	foreach($status as $x) $stat[$x['Name']] = $x['Rows'];
 	
+	// Use unbuffered query in an attempt to speed up the query fetching
 	$sql->connection->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 	
 	foreach ($tables as $tid => $table) {
@@ -151,6 +157,8 @@
 	
 	print "\nTime taken: ".number_format(microtime(true)-$startingtime, 6)." seconds.";
 	
+	remove_lock();
+	
 	function remove_lock(){
 		global $sql, $zip, $data;
 		if ($data) foreach ($data as $x); // Clear any existing table buffer
@@ -160,4 +168,9 @@
 		//$sql->query("TRUNCATE ipinfo");
 		//$sql->query("INSERT INTO ipinfo (ip, bot, proxy, tor) VALUES ('127.0.0.1', 0,0,0)");
 	}
-?>
+	/*
+	function backup_error($string) {
+		echo $string;
+		remove_lock();
+		die;
+	}*/

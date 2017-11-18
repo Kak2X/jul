@@ -29,12 +29,8 @@
 			$maxuserstext 	= $misc['maxuserstext'];
 		}
 		
-		// The rest
-		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders(
-			"views","hotcount","maxpostsday","maxpostshour","maxpostsdaydate","maxpostshourdate","maxusers","maxusersdate",
-			"maxuserstext","disable","donations","ads","valkyrie","scheme","specialtitle","regmode","regcode",
-			"announcementforum","trashforum","maxcustomforums","daysforcustomforum","postsforcustomforum","private"),
-			[
+		// What we will be sending in
+		$values = array(
 				'views'					=> filter_int($_POST['views']),
 				'hotcount'				=> filter_int($_POST['hotcount']),
 				'maxpostsday' 			=> filter_int($_POST['maxpostsday']),
@@ -58,7 +54,10 @@
 				'daysforcustomforum'	=> filter_int($_POST['daysforcustomforum']),
 				'postsforcustomforum'	=> filter_int($_POST['postsforcustomforum']),
 				'private'				=> ($sysadmin ? filter_int($_POST['private']) : $misc['private']),
-			]);
+		);
+		
+		// The rest
+		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders($values), $values);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
 	}

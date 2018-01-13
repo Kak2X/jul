@@ -22,8 +22,8 @@ img { border:none; }
 .right	{text-align:right}
 .nobr	{white-space:nowrap}
 .w		{width:100%}
-.b		{font-weight:bold}
-.i		{font-style:italic}
+.b		{font-weight:bold !important}
+.i		{font-style:italic !important}
 .vatop    {vertical-align:top}
 .buttonlink {border:none !important;font-weight:bold!important; padding: 0px;}
 .sparkline { display: none; }

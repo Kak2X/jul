@@ -277,9 +277,10 @@ function adminlinkbar($sel = NULL) {
 			'admin-editperms.php'   => "Edit Permissions",
 		),
 		array(
-			'admin-threads.php'     => "ThreadFix",
-			'admin-threads2.php'    => "ThreadFix 2",
-			'admin-forums.php'    	=> "ForumFix",
+			//'admin-threads.php'     => "ThreadFix",
+			//'admin-threads2.php'    => "ThreadFix 2",
+			//'admin-forums.php'      => "ForumFix",
+			'admin-counters.php'    => "Fix Forum Counters",
 			'admin-backup.php'      => "Board Backups",
 			
 		),

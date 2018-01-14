@@ -8,6 +8,7 @@ class FixThreads extends Counter {
 		$this->title       = "Thread Repair System";
 		$this->description = "This page is intended to repair threads with broken reply counts. Please don't flood it with requests.\n".
 		                     "This problem causes \"phantom pages\" (e.g., too few or too many pages displayed).";
+		$this->locks       = ['threads', 'posts'];
 	}
 	
 	public function launch() {

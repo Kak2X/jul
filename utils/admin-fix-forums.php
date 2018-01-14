@@ -8,6 +8,7 @@ class FixForums extends Counter {
 		$this->title       = "Forum Repair System";
 		$this->description = "This page is intended to repair forums with broken posts and thread counts.\n".
 		                     "This process assumes the thread reply counts are correct. If not sure, fix them before proceeding.";
+		$this->locks       = ['forums', 'threads'];
 	}
 	
 	public function launch() {

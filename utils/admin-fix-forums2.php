@@ -8,6 +8,7 @@ class FixForums extends Counter {
 		$this->title       = "Forum Repair System II";
 		$this->description = "This page is intended to repair forums with broken 'last reply' times/users.\n".
 		                     "This problem could cause a <span style='color: #FF0000' class='nobr fonts b'>[Deleted user]</span> tag to appear rather than the correct user.";
+		$this->locks       = ['forums', 'threads'];
 	}
 	
 	public function launch() {

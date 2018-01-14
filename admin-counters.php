@@ -30,7 +30,9 @@
 				</table>
 				<br>
 <?php
+				$sql->beginTransaction($util->get_locks());
 				$count = $util->launch();
+				$sql->commit();
 ?>
 				<table class="table" style="border-top: none">
 					<tr><td class="tdbgc center">

@@ -8,6 +8,7 @@ class FixThreads2 extends Counter {
 		$this->title       = "Thread Repair System II";
 		$this->description = "This page is intended to repair threads with broken 'last reply' times/users.\n".
 		                     "This problem causes bumped threads that shouldn't be, especially with badly deleted posts.";
+		$this->locks       = ['threads', 'posts'];
 	}
 	
 	public function launch() {

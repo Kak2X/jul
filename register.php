@@ -201,8 +201,9 @@
 				
 				$sql->beginTransaction();
 
-				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `group` = :group, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
+				$sql->queryp("INSERT INTO `users` SET `id` = :id, `name` = :name, `password` = :password, `group` = :group, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
 					[
+						'id'				=> $newuserid,
 						'name'				=> $name,
 						'password'			=> get_password_hash($pass, $newuserid),
 						'group'				=> $userlevel,

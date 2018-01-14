@@ -28,9 +28,10 @@
 					'<br><br>');
 					
 	// Token list
-	const TOKEN_MAIN     = 20;
-	const TOKEN_LOGIN    = 10;
-	const TOKEN_REGISTER = 30;
+	const TOKEN_MAIN         = 20;
+	const TOKEN_LOGIN        = 10;
+	const TOKEN_REGISTER     = 30;
+	const TOKEN_USERDEL      = 65;
 	
 	
 	//const PERM_FIELDS_NUM = 1;	// Number of permission fields - needs to be the max bitmask set id (shown below)

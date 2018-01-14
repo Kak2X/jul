@@ -365,6 +365,7 @@
 						$this->lock_tables($locks);
 					}
 					$result = $this->connection->beginTransaction();
+					
 				}
 				catch (PDOException $e){
 					$this->unlock_tables();
@@ -372,8 +373,22 @@
 					trigger_error("Could not begin transaction: $err", E_USER_ERROR);
 					$result = NULL;
 				}
-					
-				self::$time += microtime(true) - $start;
+				$t = microtime(true) - $start;
+				self::$time += $t;
+				
+				if (self::$debug_on) {
+					$lock_msg   = "";
+					if ($locks !== NULL) {
+						$lock_msg = " with locks to (".implode(', ', $locks).")";
+					}
+					if (isset($err)) {
+						$error_flag = self::MSG_ERROR;
+					} else {
+						$err        = NULL;
+						$error_flag = 0;
+					}
+					$this->log("Begin Transaction{$lock_msg}", $t, self::MSG_NONE | $error_flag, $err);
+				}
 			} else {
 				$result = true; // We *are* in a transaction, so might as well return true
 			}
@@ -393,7 +408,19 @@
 				}
 				$this->unlock_tables();
 				$this->fail_message = "";
-				self::$time += microtime(true) - $start;
+				
+				$t = microtime(true) - $start;
+				self::$time += $t;
+				
+				if (self::$debug_on) {
+					if (isset($err)) {
+						$error_flag = self::MSG_ERROR;
+					} else {
+						$err        = NULL;
+						$error_flag = 0;
+					}
+					$this->log("End of transaction", $t, self::MSG_NONE | $error_flag, $err);
+				}
 			} else {
 				$result = false;
 			}
@@ -470,11 +497,11 @@
 				}
 				$oldid = $d[0];
 				if (isset($d[5])) {
-					// Prepared queries don't count towards the query count...
-					$c = "[P]";
+					// Prepared queries or informative messages don't count towards the query count...
+					$c = "-";
 					$offset++;
 				} else {
-					$c = $i - $offset; //... and as such we need to take that in consideration
+					$c = $i + 1 - $offset; //... and as such we need to take that in consideration
 				}
 				$out .= "
 					<tr>
@@ -555,7 +582,7 @@
 				$b['file'] . ":" . $b['line'],
 				$msg,
 				$time_txt,
-				($msg_type & self::MSG_PREPARED ? true : NULL)
+				($msg_type & self::MSG_PREPARED || !$msg_type ? true : NULL)
 			);
 		}
 		

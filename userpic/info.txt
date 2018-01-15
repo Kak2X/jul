@@ -1,1 +1,1 @@
-This folder contains the uploaded userpics (except the new userpic format isn't actually implemented yet)
+This folder contains the uploaded userpics.

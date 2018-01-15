@@ -282,6 +282,7 @@ function adminlinkbar($sel = NULL) {
 			//'admin-forums.php'      => "ForumFix",
 			'admin-counters.php'    => "Fix Forum Counters",
 			'admin-backup.php'      => "Board Backups",
+			'admin-downloader.php'      => "SFS Lists",
 			
 		),
 		array(

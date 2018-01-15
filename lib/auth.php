@@ -352,7 +352,7 @@ function create_verification_hash($n,$pw) {
 }
 
 function auth_tag($div = TOKEN_MAIN) {
-	return '<input type="hidden" name="auth" value="'.generate_token(TOKEN_USERDEL).'">';
+	return '<input type="hidden" name="auth" value="'.generate_token($div).'">';
 }
 function generate_token($div = TOKEN_MAIN) {
 	global $config, $loguser;

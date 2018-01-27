@@ -70,7 +70,7 @@
 	else if (!$action) {
 
 		//$shops 		= $sql->query('SELECT * FROM itemcateg ORDER BY corder');
-		$shops		= $sql->fetchq("SELECT * FROM itemcateg ORDER BY corder", PDO::FETCH_ASSOC, false, true);
+		$shops		= $sql->fetchq("SELECT * FROM itemcateg ORDER BY corder", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 		$eq 		= $sql->fetchq("SELECT * FROM users_rpg WHERE uid = {$loguser['id']}");
 		$q 			= "";
 		foreach($shops as $i) $q .= " OR id=".$eq["eq".$i['id']];

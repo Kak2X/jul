@@ -93,7 +93,7 @@ function calclvl($exp){
 function getuseritems($user, $name = false, $extra = 0){
 	global $sql;
 	
-	$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, false, true);
+	$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 	$q 		= "";
 	foreach($num as $i){
 		$q .= "r.eq$i = i.id OR ";
@@ -108,7 +108,7 @@ function getuseritems($user, $name = false, $extra = 0){
 		FROM items i
 		INNER JOIN users_rpg r ON ($q $extra)
 		WHERE r.uid = $user
-	", PDO::FETCH_GROUP | PDO::FETCH_UNIQUE, false, true);
+	", PDO::FETCH_GROUP | PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	
 	return $itemdb;
 }

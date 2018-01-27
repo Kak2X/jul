@@ -17,7 +17,7 @@
 	if(!$it)
 		$it=0;
 	if(!$ne) {
-		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, false, true);
+		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 		$q 		= "";
 		foreach($num as $i) $q .= " OR id = ".filter_int($user['eq'.$i]);
 		$items = $sql->getarraybykey("SELECT * FROM items WHERE id=$it$q", 'id');

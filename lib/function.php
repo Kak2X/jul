@@ -725,7 +725,7 @@ function dotags($msg, $user, &$tags = array()) {
 function doreplace($msg, $posts, $days, $userid, &$tags = null) {
 	global $tagval, $sql;
 
-	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, true);
+	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 
 	$userdata		= array(
 		'id'		=> $userid,
@@ -1101,7 +1101,7 @@ function getrank($rankset, $title, $posts, $powl){
 			WHERE num <= $posts	AND rset = $rankset
 			ORDER BY num DESC
 			LIMIT 1
-		", 0, 0, true);
+		", 0, 0, mysql::USE_CACHE);
 	}
 
 	$powerranks = array(
@@ -1307,7 +1307,7 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	if (!$u) {
 		if ($id == $loguser['id']) $u = $loguser;
 		else {
-			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, true);
+			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 			//if (!$u) return "<span style='color: #FF0000'>[Invalid userlink with ID #$id]</span>"; // (development only notice)
 		}
 	}

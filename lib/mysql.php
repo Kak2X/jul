@@ -26,6 +26,10 @@ class mysql {
 	const MSG_PREPARED = 0b10;
 	const MSG_EXECUTE  = 0b100;
 	const MSG_CACHED   = 0b1000;
+	
+	// Fetch flags
+	const USE_CACHE    = 0b1;
+	const FETCH_ALL    = 0b10;
 
 	public function connect($host, $user, $pass, $dbname, $persist = false) {
 		global $config;
@@ -251,35 +255,35 @@ class mysql {
 		return $q;
 	}
 	
-	public function fetchq($query, $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
-		$hash = self::getqueryhash($query, $cache);
+	public function fetchq($query, $flag = PDO::FETCH_ASSOC, $options = 0) {
+		$hash = self::getqueryhash($query, $options);
 		$res = $this->query($query, $hash);
-		$res = (!$all) ? $this->fetch($res, $flag, $hash) : $this->fetchAll($res, $flag, $hash);
+		$res = ($options & self::FETCH_ALL) ? $this->fetchAll($res, $flag, $hash) : $this->fetch($res, $flag, $hash);
 		return $res;
 	}
 	
-	public function fetchp($query, $values = array(), $flag = PDO::FETCH_ASSOC, $cache = false, $all = false){
-		$hash = self::getqueryhash($query, $cache);
+	public function fetchp($query, $values = array(), $flag = PDO::FETCH_ASSOC, $options = 0) {
+		$hash = self::getQueryHash($query, $options);
 		$res = $this->prepare($query, array(), $hash);
-		if (!$cache) 
+		if ($hash === NULL) 
 			if (!($this->execute($res, $values)))
 				return false;
 		
-		$res = (!$all) ? $this->fetch($res, $flag, $hash) : $this->fetchAll($res, $flag, $hash);
+		$res = ($options & self::FETCH_ALL) ? $this->fetchAll($res, $flag, $hash) : $this->fetch($res, $flag, $hash);
 		return $res;
 	}
 	
-	public function resultq($query, $row=0, $col=0, $cache = false){
-		$hash = self::getqueryhash($query, $cache);
+	public function resultq($query, $row=0, $col=0, $options = 0){
+		$hash = self::getqueryhash($query, $options);
 		$res = $this->query($query, $hash);
 		$res = $this->result($res, $row, $col, $hash);
 		return $res;
 	}
 	
-	public function resultp($query, $values = array(), $row=0, $col=0, $cache = false){
-		$hash = self::getqueryhash($query, $cache);
+	public function resultp($query, $values = array(), $row=0, $col=0, $options = 0){
+		$hash = self::getqueryhash($query, $options);
 		$res = $this->prepare($query, array(), $hash);
-		if (!$cache) 
+		if ($hash === NULL) 
 			if (!($this->execute($res, $values)))
 				return false;
 		
@@ -287,9 +291,9 @@ class mysql {
 		return $res;
 	}
 	
-	// Is this even used?
-	public function getmultiresults($query, $key, $wanted='', $cache = false) {
-		$hash = self::getqueryhash($query, $cache);
+	// Not used?
+	public function getmultiresults($query, $key, $wanted='', $options = 0) {
+		$hash = self::getqueryhash($query, $options);
 		// $tmp[<keyval>] = <serialized array>
 		$q = $this->query($query, $hash);
 		
@@ -305,22 +309,22 @@ class mysql {
 		return $ret;
 	}
 	
-	public function getresultsbykey($query, $key='', $wanted='', $cache = false) {
-		$hash = self::getqueryhash($query, $cache);
-		$q = $this->query($query, $cache);
+	public function getresultsbykey($query, $key='', $wanted='', $options = 0) {
+		$hash = self::getqueryhash($query, $options);
+		$q = $this->query($query, $hash);
 		$ret = $this->fetchAll($q, PDO::FETCH_KEY_PAIR, $hash);
 		return $ret;
 	}
 	
-	public function getresults($query, $wanted='', $cache = false) {
-		$hash = self::getqueryhash($query, $cache);
-		$q = $this->query($query, $cache);
+	public function getresults($query, $wanted='', $options = 0) {
+		$hash = self::getqueryhash($query, $options);
+		$q = $this->query($query, $hash);
 		$ret = $this->fetchAll($q, PDO::FETCH_COLUMN, $hash);
 		return $ret;
 	}
 	
-	public function getarraybykey($query, $key, $cache = false) {
-		$hash = self::getqueryhash($query, $cache);
+	public function getarraybykey($query, $key, $options = 0) {
+		$hash = self::getqueryhash($query, $options);
 		// $tmp[<keyval>] = <all values>
 		$q = $this->query($query, $hash);
 		
@@ -337,8 +341,8 @@ class mysql {
 		return $ret;
 	}
 
-	public function getarray($query, $cache = false) {
-		$hash = self::getqueryhash($query, $cache);
+	public function getarray($query, $options = 0) {
+		$hash = self::getqueryhash($query, $options);
 		// $ret[<num>] = <entire assoc row>
 		$q = $this->query($query, $hash);
 		$ret = $this->fetchAll($q, PDO::FETCH_ASSOC, $hash);
@@ -350,7 +354,7 @@ class mysql {
 	}
 	
 	public function num_rows($res) {
-		if (!$res || is_bool($res)) return NULL;
+		if ($res === NULL || is_bool($res)) return NULL;
 		return $res->rowCount();
 	}
 	

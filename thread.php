@@ -486,8 +486,8 @@
 		$pthread	= null;
 		if (!$id) {
 			// Enable caching for these
-			$pthread = $sql->fetchq("SELECT id,title,forum FROM threads WHERE id={$post['thread']}", PDO::FETCH_BOTH, true);
-			$pforum  = $sql->resultq("SELECT minpower FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, true);
+			$pthread = $sql->fetchq("SELECT id,title,forum FROM threads WHERE id={$post['thread']}", PDO::FETCH_BOTH, mysql::USE_CACHE);
+			$pforum  = $sql->resultq("SELECT minpower FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, mysql::USE_CACHE);
 		}
 		
 		$post['act'] = filter_int($act[$post['user']]);

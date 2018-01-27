@@ -638,10 +638,99 @@ piwikTracker.enableLinkTracking();
 
 	// Print mysql queries
 	if (mysql::$debug_on && in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $loguser['id'] == 1 || $config['always-show-debug']) {
-		if (!isset($_GET['debugsql'])) // $_SERVER['REQUEST_METHOD'] != 'POST'
+		if (!isset($_GET['debugsql']) && !$config['always-show-debug']) {
+			// Link to enable debugging
 			print "<br><a href='".$_SERVER['REQUEST_URI'].(($_SERVER['QUERY_STRING']) ? "&" : "?")."debugsql=1'>Useless mySQL query debugging shit</a>";
-		else
-			print mysql::debugprinter();
+		} else {
+		
+?>
+	<br>
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center b' colspan=5>
+				SQL Debug
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
+			<td class='tdbgh center' style='width: 20px'>ID</td>
+			<td class='tdbgh center' style='width: 300px'>Function</td>
+			<td class='tdbgh center'>Query</td>
+			<td class='tdbgh center' style='width: 90px'>Time</td>
+		</tr>
+<?php
+			
+
+			
+			
+			$oldid  = NULL;
+			$num    = 1;
+			foreach(mysql::$debug_list as $i => $d) {
+				// Cycling tccell1/2
+				$cell = (($i & 1)+1);
+				
+				// Add a separator between connection ID changes
+				if ($oldid != $d[0]) {
+?>
+		<tr><td class='tdbgc center' style='height: 4px' colspan=5></td></tr>
+<?php
+				}
+				$oldid = $d[0];
+				
+				// Does the row *NOT* count towards the query count?
+				if ($d[5]) {
+					$c = "-";
+				} else {
+					$c = $num;
+					++$num;
+				}
+				
+				// Format the message text
+				if ($d[6] & mysql::MSG_QUERY) {
+					// The error marker has a higher precedence (for obv. reasons)
+					
+					if ($d[7] !== NULL) {
+						$color = "FF0000";
+					} else if ($d[6] & mysql::MSG_CACHED) {
+						$color = "00dd00";
+					} else if ($d[6] & mysql::MSG_PREPARED) {
+						$color = "ffff44";
+					} else if ($d[6] & mysql::MSG_EXECUTE) {
+						$color = "ffcc44";
+					}
+					
+					// Set the color for non-standard queries
+					if ($color !== NULL) {
+						$d[3] = "<span style='color:#{$color}".
+							   ( $d[7] !== NULL 
+							   ? ";border-bottom:1px dotted {$color}' title=\"{$d[7]}\"" 
+							   : "'" ).
+							   ">{$d[3]}</span>";
+						$d[4] = "<span style='color:#{$color}'>{$d[4]}</span>";
+					}
+					
+					$color = NULL;
+				} else { // Informative messages
+					$d[3] = "<i>{$d[3]}</i>";
+				}
+				
+?>
+		<tr>
+			<td class='tdbg<?=$cell?> center'><?= $c ?></td>
+			<td class='tdbg<?=$cell?> center'><?= $d[0] ?></td>
+			<td class='tdbg<?=$cell?> center'>
+				<?=$d[1]?><span class='fonts'><br>
+				<?=$d[2]?></span>
+			</td>
+			<td class='tdbg<?=$cell?>'><?= $d[3] ?></td>
+			<td class='tdbg<?=$cell?> center'><?= $d[4] ?></td>
+		</tr>
+<?php
+			}
+?>
+	</table>
+<?php
+		}
 	}
 	
 

@@ -11,12 +11,19 @@
 		// Query debugging functions for admins
 		static $connection_count = 0;
 		static $debug_on   = false;
-		static $debug_list = array(); // [<id>, <function>, <file:line>, <info>, <time taken>]
+		static $debug_list = array();
 
-		var $cache = array();
-		var $connection = NULL;
-		var $id = 0;
-		var $error = NULL;
+		public $cache = array();
+		public $connection = NULL;
+		public $id = 0;
+		public $error = NULL;
+		
+		// Debug log types
+		const MSG_NONE     = 0;
+		const MSG_QUERY    = 0b1;
+		const MSG_PREPARED = 0b10;
+		const MSG_EXECUTE  = 0b100;
+		const MSG_CACHED   = 0b1000;
 
 		public function connect($host, $user, $pass, $dbname, $persist = false) {
 			global $config;
@@ -40,7 +47,6 @@
 			
 			$t 			= microtime(true) - $start;
 			$this->id 	= ++self::$connection_count;
-			//$this->set_character_encoding("utf8");
 			
 						
 			if ($config['enable-sql-debugger']) {
@@ -48,14 +54,8 @@
 			}
 			
 			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					"<i>" . (($persist) ? "Persistent c" : "C" ) . "onnection established to mySQL server ($host, $user, using password: ". (($pass!=="") ? "YES" : "NO") . ")</i>",
-					sprintf("%01.6fs", $t)
-				);
+				$message = (($persist) ? "Persistent c" : "C" )."onnection established to MySQL server ($host, $user, using password: ".(($pass!=="") ? "YES" : "NO").")";
+				$this->log($message, $t, self::MSG_NONE);
 			}
 
 			self::$time += $t;
@@ -71,24 +71,15 @@
 		*/
 		// $usecache contains hash
 		public function query($query, $hash = false, &$querycheck = array()) {
+			$type  = self::MSG_QUERY;
 			
-			// Already cached the result?
+			// If we cached the result, just add a hit to the cache hits and move on
 			if ($hash && isset($this->cache[$hash])) {
-				$start = microtime(true);
 				++self::$cachehits;
-				
-				$t = microtime(true) - $start;
 				if (self::$debug_on) {
-					$b = self::getbacktrace();
-					self::$debug_list[] = array(
-						$this->id,
-						$b['pfunc'],
-						$b['file'] . ":" . $b['line'],
-						"<font color=#00dd00>" . htmlentities($query) . "</font>",
-						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>"
-					);
+					$this->log($query, 0, $type | self::MSG_CACHED);
 				}
-				return NULL; // We don't need to return anything
+				return NULL;
 			}
 			
 			
@@ -99,7 +90,7 @@
 				$res = $this->connection->query($query);
 				++self::$queries;
 				
-				//$type = strtoupper(substr(trim($query), 0, 6));
+				// If the query was a SELECT, add the returned rows to the counter
 				if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
 					self::$rowst += $res->rowCount();
 				
@@ -117,38 +108,21 @@
 			self::$time += $t;
 
 			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? htmlentities($query) : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
-				);
+				$this->log($query, $t, $type, $err);
 			}
 
 			return $res;
 		}
 		
 		public function prepare($query, $options = array(), $hash = NULL) {
-	
-			// Already cached the result?
+			$type = self::MSG_QUERY | self::MSG_PREPARED;
+			// If we cached the result, just add a hit to the cache hits and move on
 			if ($hash && isset($this->cache[$hash])) {
-				$start = microtime(true);
 				++self::$cachehits;
-				
-				$t = microtime(true) - $start;
 				if (self::$debug_on) {
-					$b = self::getbacktrace();
-					self::$debug_list[] = array(
-						$this->id,
-						$b['pfunc'],
-						$b['file'] . ":" . $b['line'],
-						"<font color=#00dd00>".htmlentities($query)."</font>",
-						"<font color=#00dd00>" . sprintf("%01.6fs", $t) . "</font>"
-					);
+					$this->log($query, 0, $type | self::MSG_CACHED);
 				}
-				return NULL; // We don't need to return anything
+				return NULL;
 			}
 			
 			$start = microtime(true);
@@ -156,7 +130,6 @@
 			$res = NULL;
 			try {
 				$res = $this->connection->prepare($query, $options);
-				++self::$queries;
 			}
 			catch (PDOException $e) {
 				$err = $e->getMessage();
@@ -168,31 +141,30 @@
 			self::$time += $t;
 
 			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? "<span style='color:#ffff44'>".htmlentities($query)."</span>" : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
-				);
+				$this->log($query, $t, $type, $err);
 			}
 
 			return $res;
 		}
 		
 		public function execute($result, $vals = array()){
-			$start = microtime(true);
+			$type  = self::MSG_QUERY | self::MSG_EXECUTE;
 			
-			// This is to prevent an uncatchable fatal error. Thank you PHP!
-			if (!$result) return NULL;
+			// This is to prevent an uncatchable fatal error.
+			if (!$result) {
+				$query = "[No query ref]";
+				$err   = "Called execute method with a NULL \$result pointer.";
+				trigger_error("MySQL (execute) error: {$err}", E_USER_ERROR);
+				$this->log($query, 0, $type, $err);
+				return NULL;
+			}
 			
 			$query = $result->queryString;
-			
+			$start = microtime(true);
 			try {
 				$res = $result->execute($vals);
 				++self::$queries;
-				
+				// If the query was a SELECT, add the returned rows to the counter
 				if (strtoupper(substr(trim($query), 0, 6)) == "SELECT")
 					self::$rowst += $result->rowCount();
 			}
@@ -206,15 +178,7 @@
 			self::$time += $t;
 
 			if (self::$debug_on) {
-				$b = self::getbacktrace();
-				$query .= " | Values: " . implode(",", $vals);
-				self::$debug_list[] = array(
-					$this->id,
-					$b['pfunc'],
-					$b['file'] . ":" . $b['line'],
-					((!isset($err)) ? "<span style='color:#ffcc44'>".htmlentities($query)."</span>" : "<span style='color:#FF0000;border-bottom:1px dotted red;' title=\"$err\">".htmlentities($query)."</span>"),
-					sprintf("%01.6fs", $t)
-				);
+				$this->log($query, $t, $type, $err);
 			}
 			
 			return $res;
@@ -222,12 +186,12 @@
 
 		public function fetch($result, $flag = PDO::FETCH_BOTH, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
-			if ($hash && isset($this->cache[$hash]))
+			// If the result was cached, grab the result instead of attempting to fetch from a dummy pointer
+			if ($hash && isset($this->cache[$hash])) {
 				$res = $this->cache[$hash];
-				
-			else if ($result != false && $res = $result->fetch($flag)) { //, $reset ? PDO::FETCH_ORI_ABS : PDO::FETCH_ORI_NEXT))
+			} else if ($result != false && $res = $result->fetch($flag)) { //, $reset ? PDO::FETCH_ORI_ABS : PDO::FETCH_ORI_NEXT))
 				++self::$rowsf;
 				if ($hash) $this->cache[$hash] = $res;
 			}
@@ -238,12 +202,11 @@
 		
 		public function fetchAll($result, $flag = PDO::FETCH_BOTH, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
-			if ($hash && isset($this->cache[$hash]))
+			if ($hash && isset($this->cache[$hash])) {
 				$res = $this->cache[$hash];
-			
-			else if ($result != false && $res = $result->fetchAll($flag)) {
+			} else if ($result != false && $res = $result->fetchAll($flag)) {
 				++self::$rowsf;
 				if ($hash) $this->cache[$hash] = $res;
 			}
@@ -254,15 +217,15 @@
 
 		public function result($result, $row=0, $col=0, $hash = NULL){
 			$start = microtime(true);
-			$res = NULL;
+			$res   = NULL;
 			
 			if ($row) {
 				trigger_error("Deprecated: passed \$row > 0", E_USER_NOTICE);
 			}
 			
-			if ($hash && isset($this->cache[$hash]))
+			if ($hash && isset($this->cache[$hash])) {
 				$res = $this->cache[$hash];
-			else if($result != false && $result->rowCount() > $row) {
+			} else if ($result != false && $result->rowCount() > $row) {
 				$res = $result->fetchColumn($col);
 				++self::$rowsf;
 				if ($hash) $this->cache[$hash] = $res;
@@ -481,57 +444,21 @@
 
 		//private function __construct() {}
 
-		// Debugging shit for admins
-		public static function debugprinter() {
-			if (!self::$debug_on) return "";
-			
-			$out  = "";
-			$out .= "<br>
-				<table class='table'>
-					<tr>
-						<td class='tdbgh center' colspan=5>
-							<b>SQL Debug</b>
-						</td>
-					</tr>
-					<tr>
-						<td class='tdbgh center' width=20 >&nbsp</td>
-						<td class='tdbgh center' width=20 >ID</td>
-						<td class='tdbgh center' width=300>Function</td>
-						<td class='tdbgh center' width=*  >Query</td>
-						<td class='tdbgh center' width=90 >Time</td>
-					</tr>";
-			$oldid = NULL;
-			foreach(self::$debug_list as $i => $d) {
-				// Cycling tccell1/2
-				$cell = (($i & 1)+1);
-				
-				// Is the query ID identical to the previous?
-				if ($oldid != $d[0]) {
-					// If so, add a separator
-					$out .= "
-						<tr>
-							<td class='tdbgc center' colspan=5>
-								<img src='images/_.gif' height='4' width='1'>
-							</td>
-						</tr>";
-				}
-				$oldid = $d[0];
-				$out .= "
-					<tr>
-						<td class='tdbg{$cell} center'>$i</td>
-						<td class='tdbg{$cell} center'>$d[0]</td>
-						<td class='tdbg{$cell} center'>
-							$d[1]<span class='fonts'><br>
-							$d[2]</span>
-						</td>
-						<td class='tdbg{$cell}'>".str_replace("\t", "", trim($d[3]))."</td>
-						<td class='tdbg{$cell} center'>$d[4]</td>
-					</tr>";
-			}
-			$out .= "</table>";
-			return $out;
-		}
-		
+		// Add an entry to the log table
+		private function log($msg, $time, $msg_type, &$error_text = NULL) {
+			$b = self::getbacktrace();
+			self::$debug_list[] = array(
+				$this->id, // Connection ID
+				$b['pfunc'], // Parent function
+				$b['file'] . ":" . $b['line'], // Line strike
+				htmlentities(str_replace("\t", "", trim($msg))), // Message contents (usually a query)
+				sprintf("%01.6fs", $time), // Time taken
+				($msg_type & self::MSG_PREPARED || !$msg_type), // No increment flag
+				$msg_type, // Message type (including error type)
+				$error_text, // Errors
+			);
+		}	
+
 		private static function getbacktrace() {
 			$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 			
@@ -539,14 +466,9 @@
 			for ($i = 1; strpos($backtrace[$i]['file'], "mysql.php"); ++$i);
 			
 			// And check in what function it comes from
-			if (!isset($backtrace[$i+1]))
-				$backtrace[$i]['pfunc'] = "<i>(main)</i>";
-			else
-				$backtrace[$i]['pfunc'] = $backtrace[$i+1]['function'];
-			
-			$backtrace[$i]['file'] = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
+			$backtrace[$i]['pfunc'] = (isset($backtrace[$i+1]) ? $backtrace[$i+1]['function'] : "<i>(main)</i>");
+			$backtrace[$i]['file']  = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
 			
 			return $backtrace[$i];
 		}
 	}
-?>

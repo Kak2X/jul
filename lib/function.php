@@ -2337,6 +2337,7 @@ function gethttpheaders() {
 }
 
 function error_reporter($type, $msg, $file, $line, $context) {
+	
  	global $loguser, $errors;
 
 	// They want us to shut up? (@ error control operator) Shut the fuck up then!
@@ -2360,27 +2361,36 @@ function error_reporter($type, $msg, $file, $line, $context) {
 
 	// Get the ACTUAL location of error for mysql queries
 	if ($type == E_USER_NOTICE && substr($file, -9) === "mysql.php"){
-		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		$backtrace = debug_backtrace();
 		for ($i = 1; substr($backtrace[$i]['file'], -9) === "mysql.php"; ++$i);
-		$file = $backtrace[$i]['file'];
+		$file = "[Parent] ".$backtrace[$i]['file'];
 		$line = $backtrace[$i]['line'];
-	} else if ($type == E_USER_NOTICE && substr($msg, 0, 10) === "Deprecated") {
-		// Get the location of error for deprecation
-		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-		$file = $backtrace[2]['file'];
+		$func = get_class($backtrace[$i]['object']).' # '.$backtrace[$i]['function'];
+		$args = $backtrace[$i]['args'];
+	} else if (in_array($type, [E_USER_NOTICE,E_USER_WARNING,E_USER_ERROR,E_USER_DEPRECATED], true)) {
+		// And do the same for custom thrown errors
+		$backtrace = debug_backtrace();
+		$file = "[Parent] ".$backtrace[2]['file'];
 		$line = $backtrace[2]['line'];
+		$func = $backtrace[2]['function'];
+		$args = $backtrace[2]['args'];
+	} else {
+		$backtrace = debug_backtrace();
+		$func = $backtrace[1]['function'];
+		$args = $backtrace[1]['args'];
 	}
 	
-	$errorlocation = strip_doc_root($file) . " #$line";
+	
+	$file = strip_doc_root($file);
 	
 	// Without $irctypetext the error is marked as "local reporting only"
 	if (isset($irctypetext)) {
 		xk_ircsend("102|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
-				   " $irctypetext: ".xk()."($errorlocation) $msg");
+				   " {$irctypetext}: ".xk()."({$file} #{$line}) {$msg}");
 	}
 
 	// Local reporting
-	$errors[] = array($typetext, $msg, $errorlocation);
+	$errors[] = array($typetext, $msg, $func, $args, $file, $line);
 	
 	return true;
 }
@@ -2422,46 +2432,71 @@ function highlight_trace($arr) {
 }
 
 function error_printer($trigger, $report, $errors){
-	static $called = false;
+	static $called = false; // The error reporter only needs to be called once
 	
 	if (!$called){
-		
 		$called = true;
 		
+		// Exit if we don't have permission to view the errors or there are none
 		if (!$report || empty($errors)){
 			return $trigger ? "" : true;
 		}
 		
-		if ($trigger != false){ // called by printtimedif()
-		
-			$list = "<table class='table' cellspacing=0>
+		if ($trigger != false) { // called by printtimedif()
+			//array($typetext, $msg, $func, $args, $file, $line);
+			$cnt = count($errors);	
+			$list = "<br>
+			<table class='table'>
 				<tr>
-					<td class='tbl tdbgh font center' colspan=4>Errors</td>
+					<td class='tdbgh center b' colspan=4>
+						Error list (Total: {$cnt})
+					</td>
 				</tr>
 				<tr>
-					<td class='tbl tdbgc center font'>Type</td>
-					<td class='tbl tdbgc center font'>Message</td>
-					<td class='tbl tdbgc center font'>Location</td>
+					<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
+					<td class='tdbgh center' style='width: 150px'>Error type</td>
+					<td class='tdbgh center'>Function</td>
+					<td class='tdbgh center'>Message</td>
 				</tr>";
-			foreach ($errors as $error){
+			
+			for ($i = 0; $i < $cnt; ++$i) {
+				$cell = ($i%2)+1;
+				
 				$list .= "
 					<tr>
-						<td class='tbl tdbg1 font'><nobr>".htmlspecialchars($error[0])."</nobr></td>
-						<td class='tbl tdbg2 font'>".htmlspecialchars($error[1])."</td>
-						<td class='tbl tdbg1 font'>".htmlspecialchars($error[2])."</td>
+						<td class='tdbg{$cell} center'>".($i+1)."</td>
+						<td class='tdbg{$cell} center'>{$errors[$i][0]}</td>
+						<td class='tdbg{$cell} center'>
+							{$errors[$i][2]}(".print_args($errors[$i][3]).")
+							<div class='fonts'>{$errors[$i][4]}:{$errors[$i][5]}</div>
+						</td>
+						<td class='tdbg{$cell}'>{$errors[$i][1]}</td>						
 					</tr>";
 			}
 				
-			return $list."</table><br>";
+			return $list."</table>";
 			
 		}
 		else{
 				extract(error_get_last());
 				$ok = error_reporter($type, $message, $file, $line)[0];
-				die("<pre>Fatal Error!\n\nType: $ok[0]\nMessage: $ok[1]\nFile: $ok[2]\nLine: $ok[3]</pre>");				
+				fatal_error($type, $message, $file, $line);				
 		}
 	}
 	
 	return true;
+}
+
+function print_args($args) {
+	$res = "";
+	foreach ($args as $val) {
+		if (is_array($val)) {
+			$tmp = print_args($val);
+			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[{$tmp}]</span>";
+		} else {
+			$res .= ($res !== "" ? "," : "")."<span class='fonts'>'{$val}'</span>";
+		}
+	}
+	return $res;
 }
 

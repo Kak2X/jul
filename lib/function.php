@@ -2219,6 +2219,16 @@ function marqueeshit($str) {
 	return "<marquee scrollamount='". mt_rand(1, 50) ."' scrolldelay='". mt_rand(1, 50) ."' direction='". pick_any(array("left", "right")) ."'>$str</marquee>";
 }
 
+// For some dumb reason a simple str_replace isn't enough under Windows
+function strip_doc_root($file) {
+	$root_path = $_SERVER['DOCUMENT_ROOT'];
+	if (PHP_OS == 'WINNT') {
+		$root_path = str_replace("/", "\\", $root_path);
+	}
+	return str_replace($root_path, "", $file);
+}
+
+
 // additional includes
 require_once "lib/datetime.php";
 
@@ -2361,7 +2371,7 @@ function error_reporter($type, $msg, $file, $line, $context) {
 		$line = $backtrace[2]['line'];
 	}
 	
-	$errorlocation = str_replace($_SERVER['DOCUMENT_ROOT'], "", $file) ." #$line";
+	$errorlocation = strip_doc_root($file) . " #$line";
 	
 	// Without $irctypetext the error is marked as "local reporting only"
 	if (isset($irctypetext)) {

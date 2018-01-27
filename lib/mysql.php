@@ -541,9 +541,10 @@ class mysql {
 		// Loop until we have found the real location of the query
 		for ($i = 1; strpos($backtrace[$i]['file'], "mysql.php"); ++$i);
 		
+		
 		// And check in what function it comes from
 		$backtrace[$i]['pfunc'] = (isset($backtrace[$i+1]) ? $backtrace[$i+1]['function'] : "<i>(main)</i>");
-		$backtrace[$i]['file']  = str_replace($_SERVER['DOCUMENT_ROOT'], "", $backtrace[$i]['file']);
+		$backtrace[$i]['file']  = strip_doc_root($backtrace[$i]['file']);
 		
 		return $backtrace[$i];
 	}

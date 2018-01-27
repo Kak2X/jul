@@ -663,11 +663,10 @@ piwikTracker.enableLinkTracking();
 
 			
 			
-			$oldid  = NULL;
-			$num    = 1;
+			$oldid    = NULL;
+			$num      = 1;
+			$transact = $transchg = false;
 			foreach(mysql::$debug_list as $i => $d) {
-				// Cycling tccell1/2
-				$cell = (($i & 1)+1);
 				
 				// Add a separator between connection ID changes
 				if ($oldid != $d[0]) {
@@ -686,7 +685,11 @@ piwikTracker.enableLinkTracking();
 				}
 				
 				// Format the message text
-				if ($d[6] & mysql::MSG_QUERY) {
+				if ($d[6] & mysql::MSG_TRANSCHG) {
+					// Transaction change
+					$transchg = true;
+					$transact = !$transact;
+				} else if ($d[6] & mysql::MSG_QUERY) {
 					// The error marker has a higher precedence (for obv. reasons)
 					
 					if ($d[7] !== NULL) {
@@ -712,6 +715,16 @@ piwikTracker.enableLinkTracking();
 					$color = NULL;
 				} else { // Informative messages
 					$d[3] = "<i>{$d[3]}</i>";
+				}
+				
+				// Highlight queries in a transaction
+				if ($transchg) {
+					$cell = 'c fonts';
+					$transchg = false;
+				} else if ($transact) {
+					$cell = 'h';
+				} else {
+					$cell = (($i & 1)+1); // Cycling tccell1/2
 				}
 				
 ?>
@@ -821,11 +834,26 @@ piwikTracker.enableLinkTracking();
 		.submit{
 		  border:	#663399 solid 2px;
 		  font:	10pt verdana;}
+		  
+		body, #w {
+			padding: 0px !important;
+			margin: 0px !important;
+			color: #fff !important;
+			position: fixed !important;
+		}
+		#w {
+			background: #000F1F url('images/starsbg.png');
+			left: 0px !important;
+			top: 0px !important;
+			width: 100%;
+			height: 100%;
+		}
 		</style>
 	</head>
 	<body>
+		<div id='w'>
 		<center>
-			<div class="fonts" style="position: fixed; width: 600px; margin-left: -300px; top: 40%; left: 50%;">
+			<div class="fonts" style="position: fixed; width: 600px; margin-left: -300px; top: 30%; left: 50%;">
 				<table class="table font">
 					<tr>
 						<td class='tbl tdbgh center' style="padding: 3px;">
@@ -840,8 +868,36 @@ piwikTracker.enableLinkTracking();
 				</table>
 			</div>
 		</center>
+		</div>
 	</body>
 </html>
 <?php
 	die;
+	}
+
+	function fatal_error($type, $message, $file, $line) {
+?><style type='text/css'>
+	body, #w {
+		padding: 0px !important;
+		margin: 0px !important;
+		color: #fff !important;
+		position: fixed !important;
+	}
+	#w {
+		background: #000 !important; 
+		left: 0px !important;
+		top: 0px !important;
+		width: 100%;
+		height: 100%;
+		overflow: auto;
+	}
+</style>
+<pre id='w'>Fatal <?=$type?>
+
+<span style='color: #0f0'><?=$file?></span>#<span style='color: #fe6'><?=$line?></span>
+
+<span style='color: #fc0'><?=$message?></span>
+</pre>
+<?php
+		die;
 	}

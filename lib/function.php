@@ -26,7 +26,8 @@
 	
 	$errors = array();
 	set_error_handler('error_reporter');
-	
+	set_exception_handler('exception_reporter');
+		
 	require 'lib/config.php';
 	require 'lib/mysql.php';
 	require 'lib/layout.php';
@@ -2348,32 +2349,18 @@ function error_reporter($type, $msg, $file, $line, $context) {
 	}
 
 	// Get the ACTUAL location of error for mysql queries
-	
 	if ($type == E_USER_NOTICE && substr($file, -9) === "mysql.php"){
 		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		for ($i = 1; substr($backtrace[$i]['file'], -9) === "mysql.php"; ++$i);
 		$file = $backtrace[$i]['file'];
 		$line = $backtrace[$i]['line'];
-	}
-	/*
-	if ($type == E_USER_ERROR && substr($file, -9) === "mysql.php") {
-		$backtrace = debug_backtrace();
-		for ($i = 1; isset($backtrace[$i]); ++$i) {
-			if (substr($backtrace[$i]['file'], -9) !== "mysql.php") {
-				$file = $backtrace[$i]['file'];
-				$line = $backtrace[$i]['line'];
-				break;
-			}
-		}
-	}*/
-	
-	// Get the location of error for deprecation
-	elseif ($type == E_USER_NOTICE && substr($msg, 0, 10) === "Deprecated") {
-		$backtrace = debug_backtrace();
+	} else if ($type == E_USER_NOTICE && substr($msg, 0, 10) === "Deprecated") {
+		// Get the location of error for deprecation
+		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
 		$file = $backtrace[2]['file'];
 		$line = $backtrace[2]['line'];
 	}
-
+	
 	$errorlocation = str_replace($_SERVER['DOCUMENT_ROOT'], "", $file) ." #$line";
 	
 	// Without $irctypetext the error is marked as "local reporting only"
@@ -2386,6 +2373,42 @@ function error_reporter($type, $msg, $file, $line, $context) {
 	$errors[] = array($typetext, $msg, $errorlocation);
 	
 	return true;
+}
+
+// Chooses what to do with unhandled exceptions
+function exception_reporter($err) {
+	global $config, $sysadmin;
+	
+	// Convert the exception to an error so the reporter can digest it
+	$type = E_ERROR;
+	$msg  = $err->getMessage() . "\n\n<span style='color: #FFF'>Stack trace:</span>\n\n". highlight_trace($err->getTrace());
+	$file = $err->getFile();
+	$line = $err->getLine();
+	unset($err);
+	error_reporter($type, $msg, $file, $line, NULL);
+	
+	// Should we display the debugging screen?
+	if (!$sysadmin && !$config['always-show-debug']) {
+		dialog(
+			"Something exploded in the codebase <i>again</i>.<br>".
+			"Sorry for the inconvenience<br><br>".
+			"Click <a href='?".urlencode(filter_string($_SERVER['QUERY_STRING']))."'>here</a> to try again.",
+			"Technical difficulties II", 
+			"{$config['board-name']} -- Technical difficulties");
+	} else {
+		fatal_error("Exception", $msg, $file, $line);
+	}
+}
+
+function highlight_trace($arr) {
+	$out = "";
+	foreach ($arr as $k => $v) {
+		$out .= "<span style='color: #FFF'>{$k}</span><span style='color: #F44'>#</span> ".
+		        "<span style='color: #0f0'>{$v['file']}</span>#<span style='color: #6cf'>{$v['line']}</span> ".
+		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".print_r($v['args'], true)."\n)</span></span>\n";
+	}
+	//implode("<span style='color: #0F0'>,</span>", $v['args'])
+	return $out;
 }
 
 function error_printer($trigger, $report, $errors){

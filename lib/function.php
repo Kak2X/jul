@@ -282,25 +282,29 @@
 	
 	$bpt_flags = 0;
 	
-	// Disabled - this info can be faked
-	//if (!($clientip    = filter_var(filter_string($_SERVER['HTTP_CLIENT_IP']),       FILTER_VALIDATE_IP))) $clientip    = "";
-	//if (!($forwardedip = filter_var(filter_string($_SERVER['HTTP_X_FORWARDED_FOR']), FILTER_VALIDATE_IP))) $forwardedip = "";	
+	// These extra variables are in control of the user. Nuke them if they're not valid IPs
+	if (!($clientip    = filter_var(filter_string($_SERVER['HTTP_CLIENT_IP']),       FILTER_VALIDATE_IP))) $clientip    = "";
+	if (!($forwardedip = filter_var(filter_string($_SERVER['HTTP_X_FORWARDED_FOR']), FILTER_VALIDATE_IP))) $forwardedip = "";	
 	
 	// Build the query to check if we're IP Banned
 					  $checkips  = "INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1";
-	//if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
-	//if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
+	if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
+	if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
 
 	if($sql->resultq("SELECT COUNT(*) FROM ipbans WHERE $checkips")) $ipbanned = 1;
 	if($sql->resultq("SELECT COUNT(*) FROM tor WHERE `ip` = '{$_SERVER['REMOTE_ADDR']}' AND `allowed` = '0'")) $torbanned = 1;
 
 	
 	if ($_SERVER['HTTP_REFERER']) {
-		// NOTE: Doesn't work in a prepared query since the placeholder can't be in a function
 		$botinfo = $sql->fetchq("SELECT signature, malicious FROM bots WHERE INSTR('".addslashes(strtolower($_SERVER['HTTP_USER_AGENT']))."', signature) > 0");
 		if ($botinfo) {
 			$isbot = 1;
-			if ($botinfo['malicious']) $ipbanned = 1;
+			if ($botinfo['malicious']) {
+				$ipbanned = 1;
+				if (!$sql->resultq("SELECT 1 FROM ipbans WHERE $checkips")) {
+					$sql->query("INSERT INTO `ipbans` SET `ip` = '{$_SERVER['REMOTE_ADDR']}', `reason`='Malicious bot.', `date` = '". ctime() ."', `banner` = '0'");
+				}
+			}
 		}
 	}
 	

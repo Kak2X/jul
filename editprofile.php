@@ -66,7 +66,7 @@
 		sbr(0,$bio);
 		
 		// Make sure the thread layout does exist to prevent "funny" shit
-		$tlayout = filter_int($_POST['tlayout']);
+		$tlayout = filter_int($_POST['layout']);
 		$valid = $sql->resultq("SELECT id FROM tlayouts WHERE id = $tlayout");
 		if (!$valid) $tlayout = 1;	// Regular (no numgfx)
 			

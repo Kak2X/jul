@@ -28,31 +28,29 @@
 			$maxuserstext 	= $misc['maxuserstext'];
 		}
 		
-		// The rest
-		$qadd = "views=:views,hotcount=:hotcount,maxpostsday=:maxpostsday,maxpostshour=:maxpostshour,maxpostsdaydate=:maxpostsdaydate,".
-				"maxpostshourdate=:maxpostshourdate,maxusers=:maxusers,maxusersdate=:maxusersdate,maxuserstext=:maxuserstext,".
-				"disable=:disable,donations=:donations,ads=:ads,valkyrie=:valkyrie,scheme=:scheme,specialtitle=:specialtitle,regmode=:regmode,regcode=:regcode";		
-		$sql->queryp("UPDATE misc SET $qadd",
-			[
-				'views'				=> filter_int($_POST['views']),
-				'hotcount'			=> filter_int($_POST['hotcount']),
-				'maxpostsday' 		=> filter_int($_POST['maxpostsday']),
-				'maxpostshour' 		=> filter_int($_POST['maxpostshour']),
-				'maxpostsdaydate' 	=> fieldstotimestamp('maxpostsday_','_POST'),
-				'maxpostshourdate' 	=> fieldstotimestamp('maxpostshour_','_POST'),
-				'maxusers' 			=> $maxusers,
-				'maxusersdate' 		=> $maxusersdate,
-				'maxuserstext' 		=> $maxuserstext,
-				//'maxuserstext' 	=> filter_string($_POST['maxuserstext']),
-				'disable' 			=> ($sysadmin ? filter_int($_POST['disable']) : $misc['disable']),
-				'donations' 		=> filter_float($_POST['donations']),
-				'ads' 				=> filter_float($_POST['ads']),
-				'valkyrie' 			=> filter_float($_POST['valkyrie']),
-				'scheme' 			=> $scheme,
-				'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
-				'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
-				'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode'])
-			]);
+		// The query
+		$settings = [
+			'views'				=> filter_int($_POST['views']),
+			'hotcount'			=> filter_int($_POST['hotcount']),
+			'maxpostsday' 		=> filter_int($_POST['maxpostsday']),
+			'maxpostshour' 		=> filter_int($_POST['maxpostshour']),
+			'maxpostsdaydate' 	=> fieldstotimestamp('maxpostsday_','_POST'),
+			'maxpostshourdate' 	=> fieldstotimestamp('maxpostshour_','_POST'),
+			'maxusers' 			=> $maxusers,
+			'maxusersdate' 		=> $maxusersdate,
+			'maxuserstext' 		=> $maxuserstext,
+			'disable' 			=> ($sysadmin ? filter_int($_POST['disable']) : $misc['disable']),
+			'donations' 		=> filter_float($_POST['donations']),
+			'ads' 				=> filter_float($_POST['ads']),
+			'valkyrie' 			=> filter_float($_POST['valkyrie']),
+			'scheme' 			=> $scheme,
+			'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
+			'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
+			'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
+			'private'			=> ($sysadmin ? filter_int($_POST['private']) : $misc['private']),
+		];
+			
+		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders($settings), $settings);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
 	}
@@ -62,6 +60,7 @@
 	$sysset = (!$sysadmin) ? "readonly disabled" : "";
 	// Selections
 	$reg_sel[$misc['regmode']] = 'selected';
+	$prv_sel[$misc['private']] = 'selected';
 
 	print adminlinkbar("admin.php");
 	
@@ -70,9 +69,8 @@
 		<tr><td class='tdbgh center'><b>Panel de Admin<br></td></tr>
 		<tr><td class='tdbg1 center'>
 			&nbsp;<br>
-			<b>PRO TIP</b><br>
-			<br>
-			Don't bother changing disabled options - it won't work.
+			There are a few features you can use. Select one from above.<br>
+			Alternatively you can change some general board options in the panel below.
 			<br>&nbsp;
 		</td></tr>
 	</table>
@@ -103,6 +101,15 @@
 		</tr>
 		<tr><td class='tdbg1 center' width='200'><b>Registration code</b></td>
 			<td class='tdbg2'><input type='text' name='regcode' value="<?=htmlspecialchars($misc['regcode'])?>" <?=$sysset?>></td>
+		</tr>
+		<tr><td class='tdbg1 center' width='200'><b>Board access</b></td>
+			<td class='tdbg2'>
+				<select name='private' <?=$sysset?>>
+					<option value='0' <?=filter_string($prv_sel[0])?>>Public</option>
+					<option value='1' <?=filter_string($prv_sel[1])?>>Private</option>
+					<option value='2' <?=filter_string($prv_sel[2])?>>Hidden (!)</option>
+				</select>
+			</td>
 		</tr>
 		
 		<tr><td class='tdbgc center' colspan=2>Appareance</td></tr>

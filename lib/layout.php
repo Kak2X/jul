@@ -146,22 +146,27 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href="login.php">Login</a>';
 	}
 	
-	$headlinks2 = "
-	<a href='index.php'>Main</a>
-	- <a href='memberlist.php'>Memberlist</a>
-	- <a href='activeusers.php'>Active users</a>
-	- <a href='calendar.php'>Calendar</a>
-	<!-- - <a href='http://tcrf.net'>Wiki</a> -->
-	- <a href='irc.php'>IRC Chat</a>
-	- <a href='online.php'>Online users</a><br>
-	<a href='ranks.php'>Ranks</a>
-	- <a href='faq.php'>Rules/FAQ</a>
-	- <a href='acs.php'>JCS</a>
-	- <a href='stats.php'>Stats</a>
-	- <a href='latestposts.php'>Latest Posts</a>
-	- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
-	- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
-	";		
+	if (!$loguser['id'] && $miscdata['private']) {
+		$headlinks2 = '<a href="faq.php">Rules/FAQ</a>';
+	} else {
+		$headlinks2 = "
+		<a href='index.php'>Main</a>
+		- <a href='memberlist.php'>Memberlist</a>
+		- <a href='activeusers.php'>Active users</a>
+		- <a href='calendar.php'>Calendar</a>
+		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
+		- <a href='irc.php'>IRC Chat</a>
+		- <a href='online.php'>Online users</a><br>
+		<a href='ranks.php'>Ranks</a>
+		- <a href='faq.php'>Rules/FAQ</a>
+		- <a href='acs.php'>JCS</a>
+		- <a href='stats.php'>Stats</a>
+		- <a href='latestposts.php'>Latest Posts</a>
+		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
+		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
+		";
+	}
+	
 	
 	
 	/*

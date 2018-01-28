@@ -52,6 +52,9 @@
 			");
 	//$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
 
+	// Just fetch now everything from misc that's going to be used on every page
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private FROM misc");
+	
 	// Get the running script's filename
 	$path = explode("/", $_SERVER['SCRIPT_NAME']);
 	$scriptname = end($path);
@@ -110,6 +113,10 @@
 
 		}
 		
+		if ($miscdata['private'] == 2) {
+			do404();
+		}
+		
 		header("HTTP/1.1 403 Forbidden");
 
 		die("<title>Error</title>
@@ -119,17 +126,21 @@
 				Suspicious request detected (e.g. bot or malicious tool).
 			");
 	}
-
 	
-	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle FROM misc", PDO::FETCH_ASSOC);
+	function do404() {
+		header("HTTP/1.1 404 Not Found");
+		die;
+	}
 	
 	if ($miscdata['disable']) {
 		if ($_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
-			if ($x_hacks['host'])
+			if ($miscdata['private'] == 2) {
+				do404();
+			} else if ($x_hacks['host']) {
 				require "lib/downtime-bmf.php";
-			else
+			} else {
 				require "lib/downtime2.php";
+			}
 		} else {
 			$config['title-submessage'] = "<br>(THE BOARD IS DISABLED)";
 		}
@@ -263,6 +274,10 @@
 			'title'			=> '',
 			'hideactivity'	=> 0,
 		);	
+	}
+	
+	if ($miscdata['private'] == 2 && !$loguser['id']) {
+		do404();
 	}
 
 	if ($x_hacks['superadmin']) $loguser['powerlevel'] = 4;
@@ -502,6 +517,18 @@
 	
 	// When a post milestone is reached, everybody gets rainbow colors for a day
 	$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
+	
+	// Private board option
+	$allowedpages = ['register.php', 'login.php', 'faq.php'];
+	if (!$loguser['id'] && $miscdata['private'] && !in_array($scriptname, $allowedpages)) {
+		errorpage(
+			"You need to <a href='login.php'>login</a> to browse this board.<br>".
+			"If you don't have an account you can <a href='register.php'>register</a> one.<br><br>".
+			"The Rules/FAQ are available <a href='faq.php'>here</a>."
+		);// view faq page ehre
+	}
+	
+	unset($allowedpages);
 	
 	/* we're not Jul, and the special sex->namecolor system got nuked anyway
 	if (!$x_hacks['host'] && filter_int($_GET['namecolors'])) {

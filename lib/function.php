@@ -2466,12 +2466,18 @@ function error_printer($trigger, $report, $errors){
 			for ($i = 0; $i < $cnt; ++$i) {
 				$cell = ($i%2)+1;
 				
+				if ($errors[$i][2]) {
+					$func = $errors[$i][2]."(".print_args($errors[$i][3]).")";
+				} else {
+					$func = "<i>(main)</i>";
+				}
+				
 				$list .= "
 					<tr>
 						<td class='tdbg{$cell} center'>".($i+1)."</td>
 						<td class='tdbg{$cell} center'>{$errors[$i][0]}</td>
 						<td class='tdbg{$cell} center'>
-							{$errors[$i][2]}(".print_args($errors[$i][3]).")
+							{$func}
 							<div class='fonts'>{$errors[$i][4]}:{$errors[$i][5]}</div>
 						</td>
 						<td class='tdbg{$cell}'>{$errors[$i][1]}</td>						

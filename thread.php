@@ -69,6 +69,9 @@
 		}
 		$numposts 	= $sql->resultq("SELECT COUNT(*) FROM `posts` WHERE `thread` = '{$id}' AND `id` < '{$pid}'");
 		$page 		= floor($numposts / $ppp);
+		
+		// Canonical page w/o ppp link (for bots)
+		$meta['canonical']	= "thread.php?id=$id&page=$page";
 	} else {
 		$page		= filter_int($_GET['page']);
 	}

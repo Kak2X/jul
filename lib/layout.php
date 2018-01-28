@@ -58,15 +58,14 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	$metatag = '';
 
-	if (filter_bool($meta['noindex']))
+	if (isset($meta['noindex']))
 		$metatag .= "<meta name=\"robots\" content=\"noindex,follow\" />";
 
-	if (filter_bool($meta['description']))
+	if (isset($meta['description']))
 		$metatag .= "<meta name=\"description\" content=\"{$meta['description']}\" />";
 
-	// Why is this disabled?
-	if (filter_bool($x_hacks['smallbrowse']) and false) {
-		$css = "<link rel='stylesheet' href='/mobile.css'>";
+	if (isset($meta['canonical'])) {
+		$metatag .= "<link rel='canonical' href='{$meta['canonical']}' />";
 	}
 	
 	$favicon = "favicon";
@@ -278,7 +277,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$css = "";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='/css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='/css/$schemefile.css'>";
+		$css = "<link rel='stylesheet' href='/css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
@@ -468,6 +467,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 ?><html>
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
+		<meta name='viewport' content='width=device-width, initial-scale=1'>
 		<?=$metatag?>
 			<title><?=$windowtitle?></title>
 			<link rel='shortcut ico' href='<?=$favicon?>.ico' type='image/x-icon'>

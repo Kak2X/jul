@@ -183,6 +183,18 @@
 	$logpwenc = null;
 	*/
 	
+	// Delete expired bans
+	$sql->query("
+		UPDATE `users` SET 
+		    `ban_expire` = 0, 
+		    `powerlevel` = powerlevel_prev
+		WHERE `ban_expire` != 0 AND 
+		      `powerlevel` = '-1' AND
+		      `ban_expire` < ".ctime()
+	);
+	
+	$sql->query("DELETE FROM `ipbans` WHERE `expire` != 0 AND `expire` < ".ctime());
+	
 	if(isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
 		$loguserid 	= (int) $_COOKIE['loguserid'];
 		$loguser 	= $sql->fetchq("SELECT * FROM `users` WHERE `id` = $loguserid");
@@ -1467,6 +1479,42 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 	}*/
 
 	return $output;
+}
+
+const IRC_MAIN = 0;
+const IRC_STAFF = 1;
+const IRC_ADMIN = 102;
+// Banner 0 = automatic ban
+function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
+	global $sql;
+	if ($expire) {
+		$expire = ctime() + 3600 * $expire;
+	}
+	$sql->queryp("
+		INSERT INTO `ipbans` (`ip`,`reason`,`date`,`banner`,`expire`) 
+		VALUES(?,?,?,?,?) ", [$ip, $reason, ctime(), $banner, $expire]);
+	if ($ircreason !== NULL) {
+		xk_ircsend("{$destchannel}|{$ircreason}");
+	}
+}
+
+function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permanent = false){
+	global $sql;
+	
+	$new_powl		= $permanent ? -2 : -1;
+	$expire         = $expire ? ctime() + 3600 * $expire : 0;
+			
+	$res = $sql->queryp("
+		UPDATE users SET 
+		    `powerlevel_prev` = `powerlevel`, 
+		    `powerlevel`      = ?, 
+		    `title`           = ?,
+		    `ban_expire`      = ?,
+		WHERE id = ?", [$new_powl, $reason, $expire, $id]);
+		
+	if ($ircreason !== NULL){
+		xk_ircsend(IRC_STAFF."|{$ircreason}");
+	}
 }
 
 function fonlineusers($id){

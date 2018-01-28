@@ -11,6 +11,9 @@
 		$titleopt	= 1;
 		$id_q		= "?id=$id";
 		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+		if (!$userdata) {
+			errorpage("This user doesn't exist.");
+		}
 	} else {
 		
 		if(!$loguser['id'])
@@ -104,14 +107,26 @@
 		}
 		
 		if ($issuper) {
-			$namecolor = $_POST['colorspec'] ? $_POST['colorspec'] : $_POST['namecolor'];
+			// Always process the backup entry, so it can be updated even when it isn't selected
+			$namecolor_bak = substr(filter_string($_POST['namecolor']), 1); // Remove #
+			if (!ctype_xdigit($namecolor_bak)) {
+				errorpage("What are you trying to accomplish?");
+			}
+					
+			switch (filter_int($_POST['colorspec'])) {
+				case 0: $namecolor = ""; break;
+				case 1: $namecolor = $namecolor_bak; break;
+				case 2: $namecolor = "random"; break;
+				case 3: $namecolor = "time";   break;
+				case 4: $namecolor = "rnbow";  break;
+				default: $namecolor = ""; break;
+			}
 		} else {
-			$namecolor = $userdata['namecolor'];
+			$namecolor = $namecolor_bak = $userdata['namecolor'];
 		}
 		
 		
 		$sql->beginTransaction();
-		$querycheck = array();
 		
 		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
 		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
@@ -122,7 +137,8 @@
 			'password'			=> $passwordenc,	
 			// Appareance
 			'title'				=> $titleopt ? xssfilters(filter_string($_POST['title'], true)) : $userdata['title'],
-			'namecolor'			=> htmlspecialchars($namecolor, ENT_QUOTES),
+			'namecolor'			=> $namecolor,
+			'namecolor_bak'		=> $namecolor_bak,
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
 			'picture' 			=> filter_string($_POST['picture'], true),
 			'minipic' 			=> filter_string($_POST['minipic'], true),
@@ -130,7 +146,7 @@
 			'postheader' 		=> xssfilters($postheader),
 			'signature' 		=> xssfilters($signature),
 			// Personal information
-			'sex' 				=> forcerange($_POST['sex'], 0, 2, 0),	// x >= 0 && x <= 2, default to 0 otherwise 
+			'sex' 				=> numrange(filter_int($_POST['sex']), 0, 2),
 			'aka' 				=> filter_string($_POST['aka'], true),
 			'realname' 			=> filter_string($_POST['realname'], true),
 			'location' 			=> xssfilters(filter_string($_POST['location'], true)),
@@ -150,24 +166,19 @@
 			'timezone' 			=> filter_int($_POST['timezone']),
 			'postsperpage' 		=> filter_int($_POST['postsperpage']),
 			'threadsperpage'	=> filter_int($_POST['threadsperpage']),
-			'viewsig'			=> forcerange($_POST['viewsig'], 0, 2, 0),
-			'pagestyle' 		=> forcerange($_POST['pagestyle'], 0, 1, 0),
-			'pollstyle' 		=> forcerange($_POST['pollstyle'], 0, 1, 0),
+			'viewsig'			=> numrange(filter_int($_POST['viewsig']), 0, 2),
+			'pagestyle' 		=> numrange(filter_int($_POST['pagestyle']), 0, 1),
+			'pollstyle' 		=> numrange(filter_int($_POST['pollstyle']), 0, 1),
 			'layout' 			=> $tlayout,
-			'signsep' 			=> forcerange($_POST['signsep'], 0, 3, 0),
+			'signsep' 			=> numrange(filter_int($_POST['signsep']), 0, 3),
 			'scheme' 			=> filter_int($_POST['scheme']),
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
-			// What user?
-			'id'				=> $id,
 		);
 		
+		$userset = mysql::setplaceholders($mainval);
 		
 		if ($edituser) {
-			/*
-			if ($sex == -378) {
-			$sex = $sexn;
-			}
-*/
+			
 			if ($id == 1 && $loguser['id'] != 1) {
 				xk_ircsend("1|". xk(7) ."Someone (*cough* {$loguser['id']} *cough*) is trying to be funny...");
 			}
@@ -198,34 +209,28 @@
 				'profile_locked'	=> filter_int($_POST['profile_locked']),
 				'editing_locked'	=> filter_int($_POST['editing_locked']),
 				'titleoption'		=> filter_int($_POST['titleoption']),
-				
+				'ban_expire'		=> ($_POST['powerlevel'] == -1 && filter_int($_POST['ban_hours']) > 0) ? (ctime() + filter_int($_POST['ban_hours']) * 3600) : 0,
 			);
 	
-			$adminset = "powerlevel=:powerlevel,name=:name,regdate=:regdate,posts=:posts,profile_locked=:profile_locked,editing_locked=:editing_locked,titleoption=:titleoption,";
+			$adminset = mysql::setplaceholders($adminval).",";
 			
+			// Green coins support
 			$gcoins = filter_int($_POST['gcoins']);
-			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id", false, $querycheck);
+			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id");
 		} else {
 			$adminval = array();
 			$adminset = "";
 		}
 		
-		
-		// You are not supposed to look at this.
-		// No, really. These are the same placeholder from the arrays above. It's a lot prettier to look at.
 		$sql->queryp("
-			UPDATE users SET {$adminset}password=:password,namecolor=:namecolor,picture=:picture,minipic=:minipic,signature=:signature,bio=:bio,email=:email,
-			icq=:icq,title=:title,useranks=:useranks,aim=:aim,sex=:sex,homepageurl=:homepageurl,homepagename=:homepagename,privateemail=:privateemail,
-			timezone=:timezone,dateformat=:dateformat,dateshort=:dateshort,postsperpage=:postsperpage,aka=:aka,realname=:realname,
-			location=:location,postheader=:postheader,scheme=:scheme,threadsperpage=:threadsperpage,birthday=:birthday,viewsig=:viewsig,
-			layout=:layout,moodurl=:moodurl,imood=:imood,signsep=:signsep,pagestyle=:pagestyle,pollstyle=:pollstyle,hideactivity=:hideactivity
-			WHERE id = :id", array_merge($adminval, $mainval), $querycheck);
+			UPDATE users SET {$adminset}{$userset}
+			WHERE id = {$id}", array_merge($adminval, $mainval));
 		
-		if ($sql->checkTransaction($querycheck)) {
-			if (!$edituser)	errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
-			else errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
-		} else {
-			errorpage("Could not edit the profile due to an error.");
+		$sql->commit();
+		if (!$edituser)	{
+			errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
+		} else { 
+			errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
 		}
 		
 	}
@@ -251,7 +256,7 @@
 		*/
 
 		table_format("Login information", array(
-			"User name" 	=> [4, "name", "", 25, 25], // static
+			"User name" 	=> [4, "name", "If you want to change this, ask an admin.", 25, 25], // static
 			"Password"		=> [4, "password", "You can change your password by entering a new one here."], // password field
 		));
 		
@@ -262,9 +267,9 @@
 			// ... and also gets the extra "Administrative bells and whistles"
 			table_format("Administrative bells and whistles", array(
 				"Power level" 				=> [4, "powerlevel", ""], // Custom listbox with negative values.
-				//"Ban duration"			=> [4, "ban_hours", ""],
+				"Ban duration"			    => [4, "ban_hours", ""],
 				"Number of posts"			=> [0, "posts", "", 6, 10],
-				"Registration time"			=> [4, "regdate", ""],
+				"Registration date"			=> [4, "regdate", ""],
 				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
 				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked"],
 				"Custom Title Privileges" 	=> [2, "titleoption", "", "Revoked|Determine by rank/posts|Enabled"],
@@ -278,25 +283,25 @@
 		}
 		if ($issuper) {
 			table_format("Appareance", array(
-				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color (leave this blank to return to the default color). This is an hexadecimal number.<br>You can use the <a href='hex.php' target='_blank'>Color Chart</a> to select a color to enter here."],
+				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color."],
 			));
 		}
 		table_format("Appareance", array(
-			"User rank"		=> [4, "useranks", "You can hide your rank, or choose from different sets."],
-			"User picture" 	=> [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a picture. The limits are 200x200 pixels, and about 100KB; anything over this will be removed.", 60, 100],
-			"Mood avatar" 	=> [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
-			"Minipic" 		=> [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 60, 100],
-			"Post header" 	=> [1, "postheader", "This will get added before the start of each post you make. This can be used to give a default font color and face to your posts (by putting a &lt;font&gt; tag). This should preferably be kept small, and not contain too much text or images."],
-			"Signature" 	=> [1, "signature", "This will get added at the end of each post you make, below an horizontal line. This should preferably be kept to a small enough size."],
+			"User rank"         => [4, "useranks", "You can hide your rank, or choose from different sets."],
+			"Avatar"            => [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a avatar. Anything over 200&times;200 pixels will be removed.", 60, 100],
+			"Mood avatar"       => [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
+			"Minipic"           => [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 60, 100],
+			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
+			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
 		
 		table_format("Personal information", array(
-			"Sex" 		=> [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
+			"Sex" 		    => [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
 			"Also known as" => [0, "aka", "If you go by an alternate alias (or are constantly subjected to name changes), enter it here.  It will be displayed in your profile if it doesn't match your current username.", 25, 25],
-			"Real name" => [0, "realname", "Your real name (you can leave this blank).", 40],
-			"Location" 	=> [0, "location", "Where you live (city, country, etc.).", 40],
-			"Birthday"	=> [4, "birthday", "Your date of birth."],
-			"Bio"		=> [1, "bio", " Some information about yourself, showing up in your profile."],
+			"Real name"     => [0, "realname", "Your real name (you can leave this blank).", 40],
+			"Location" 	    => [0, "location", "Where you live (city, country, etc.).", 40],
+			"Birthday"	    => [4, "birthday", "Your date of birth."],
+			"Bio"		    => [1, "bio", " Some information about yourself, showing up in your profile. Accepts HTML."],
 		));
 
 		table_format("Online services", array(
@@ -310,12 +315,12 @@
 		));
 		
 		table_format("Options", array(
-			"Custom date format" 			=> [0, "dateformat", "Edit the date format here to affect how dates are displayed. Leave it blank to return to the default format ({$config['default-dateformat']})<br>See the <a href='http://php.net/manual/en/function.date.php'>date() function in the PHP manual</a> for more information.", 16, 32],
-			"Custom short date format" 		=> [0, "dateshort", "A shorter date format displayed on certain areas of the board.  Leave it blank to return to the default format (<b>{$config['default-dateshort']}</b>).", 8, 16],
+			"Custom date format" 			=> [0, "dateformat", "Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting. Leave blank to use the default.", 16, 32],
+			"Custom short date format" 		=> [0, "dateshort", "Change how abbreviated dates are displayed. Uses the same formatting. Leave blank to reset.", 8, 16],
 			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
-			"Signatures and post headers"	=> [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.", "Disabled|Enabled|Auto-updating"],
+			"Post layouts"	                => [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.", "Disabled|Enabled|Auto-updating"],
 			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Seperate Line (shows more pages)", "Inline|Seperate line"],
 			"Poll vote system"				=> [2, "pollstyle", "Normal (based on users) or Influence (based on levels)", "Normal|Influence"],
 			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here."],
@@ -345,25 +350,31 @@
 		
 		// The namecolor field is special
 		// Usually it contains an hexadecimal number, but it can take extra text values for special effects
-		// When a special effect is defined, we make sure to blank the main textbox
-		// otherwise we select the "Defined" option
-		if ($userdata['namecolor'] && !ctype_xdigit($userdata['namecolor'])) {	// Special effect?
-			$userdata['namecolor'] = "";
-			$sel_color[$userdata['namecolor']] = 'checked=1';
-		} else {
-			$sel_color[0] = 'checked=1';
+		// Because both the coloropt and namecolor are stored in the same field
+		// A second "backup" field is used to preserve the user's name color choice from the color picker
+		if ($userdata['namecolor'] && ctype_xdigit($userdata['namecolor'])) { // Color defined
+			$userdata['namecolor'] = '#'.$userdata['namecolor']; // Input type color compat
+			$sel_color[1] = 'checked=1';
+		} else {	// Special effect
+			switch ($userdata['namecolor']) {
+				case 'random': $coloropt = 2; break;
+				case 'time':   $coloropt = 3; break;
+				case 'rnbow':  $coloropt = 4; break;
+				default:       $coloropt = 0; break;	
+			}
+			$userdata['namecolor'] = '#'.$userdata['namecolor_bak'];
+			$sel_color[$coloropt] = 'checked=1';
 		}
 
-		$colorspec="
-		<input type=radio class='radio' name=colorspec value='' ".filter_string($sel_color[0]).">Defined 
-		<input type=radio class='radio' name=colorspec value='random' ".filter_string($sel_color[1]).">Random 
-		<input type=radio class='radio' name=colorspec value='time' ".filter_string($sel_color[2]).">Time-dependent 
-		<input type=radio class='radio' name=colorspec value='rnbow' ".filter_string($sel_color[3]).">Rainbow";
-	
-		$namecolor = "<input type='text' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=6 MAXLENGTH=6> $colorspec";
+		$namecolor = " 
+		<input type=radio class='radio' name=colorspec value=0 ".filter_string($sel_color[0]).">None 
+		<input type=radio class='radio' name=colorspec value=1 ".filter_string($sel_color[1]).">Defined: <input type='color' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=7 MAXLENGTH=7> 
+		<input type=radio class='radio' name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
+		<input type=radio class='radio' name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
+		<input type=radio class='radio' name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
 		
 		if ($edituser) {
-			// Powerelevel selection
+			// Powerlevel selection
 			$powerlevel = "";
 			$check1[$userdata['powerlevel']] = 'selected';
 			if (!$sysadmin) unset($pwlnames[4]);
@@ -371,8 +382,39 @@
 				$powerlevel .= "<option value={$pwl} ".filter_string($check1[$pwl]).">{$pwlname}</option>";
 			}
 			$powerlevel = "<select name=powerlevel>{$powerlevel}</select>";
+			
 			// Registration time
 			$regdate = datetofields($userdata['regdate'], 'reg', true, true);
+			
+			// Hours left before the user is unbanned
+			$ban_val 	= (
+				$userdata['powerlevel'] == -1 && $userdata['ban_expire'] ? 
+				ceil(($userdata['ban_expire'] - ctime()) / 3600) : 
+				0
+			);
+			
+			$ban_select = array(
+				$ban_val => timeunits2($ban_val*3600),
+				0		 => "*Permanent",
+				1		 => "1 hour",
+				3		 => "3 hours",
+				6		 => "6 hours",
+				24		 => "1 day",
+				72		 => "3 days",
+				168		 => "1 week",
+				336		 => "2 weeks",
+				774		 => "1 month",
+				1488	 => "2 months"
+			);
+			ksort($ban_select); // Place the $ban_val entry in the correct position
+			
+			$sel_b[$ban_val] = "selected";
+			
+			$ban_hours = "<select name='ban_hours'>";
+			foreach($ban_select as $i => $x){
+				$ban_hours .= "<option value=$i ".filter_string($sel_b[$i]).">$x</option>";
+			}
+			$ban_hours .= "</select> (has effect only for Banned users)";
 		}
 
 		
@@ -381,8 +423,9 @@
 			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.ord");
 		else
 			$scheme = doschemelist(true, $userdata['scheme'], 'scheme');
-		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY u.layout ORDER BY tl.ord');
+		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
+		
 		
 		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
 		$signsep = "";
@@ -394,10 +437,11 @@
 		
 		/*
 			Table field generator
+			Now updated to use the 'new' (commit c028c21269e1d87d0dbce8bf50c7c4b68a2fbfda) layout
 		*/
 		$t = "";
 		foreach($fields as $i => $field){
-			$t .= "<tr><td class='tdbgh center'>$i</td><td class='tdbgh center'>&nbsp;</td></tr>";
+			$t .= "<tr><td class='tdbgh center' colspan=2>$i</td></tr>";
 			foreach($field as $j => $data){
 				$desc = $edituser ? "" : "<br><small>$data[2]</small>";
 				if (!$data[0]) { // text box
@@ -406,7 +450,7 @@
 					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".htmlspecialchars($userdata[$data[1]])."\">";
 				}
 				else if ($data[0] == 1) // large
-					$input = "<textarea name='$data[1]' rows=8 cols=60 style='resize:vertical;' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+					$input = "<textarea name='$data[1]' rows=8 style='width: 100%' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
 				else if ($data[0] == 2){ // radio
 					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]
 					$choices = explode("|", $data[3]);
@@ -419,8 +463,6 @@
 					$ch[$userdata[$data[1]]] = "selected";
 					$choices = explode("|", $data[3]);
 					$input = "";
-					//for ($i = 0; isset($choices[$i]); $i+=2)
-					//	$input .= "<option value=".$choices[$i]." ".filter_string($ch[$i]).">".$choices[$i+1]."</option>";
 					foreach($choices as $i => $x)
 						$input .= "<option value=$i ".filter_string($ch[$i]).">$x</option>";
 					$input = "<select name='$data[1]'>$input</select>";
@@ -445,15 +487,12 @@
 	<br>
 	<FORM ACTION="editprofile.php<?=$id_q?>" NAME=REPLIER METHOD=POST autocomplete=off>
 	<table class='table'>
-		<?=$finput?>
+		<tr style='display: none'><td><?=$finput?></td></tr>
 		<?=$t?>
+		<tr><td class='tdbgh center' colspan=2>&nbsp;</td></tr>
 		<tr>
-			<td class='tdbgh center'>&nbsp;</td>
-			<td class='tdbgh center'>&nbsp;</td>
-		</tr>
-		<tr>
-			<td class='tdbg1 center'>&nbsp;</td>
-			<td class='tdbg2'>
+			<td class='tdbg1 center' style='width: 40%'>&nbsp;</td>
+			<td class='tdbg2' style='width: 60%'>
 		<input type='hidden' name=auth VALUE="<?=generate_token()?>">
 		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
 		</td>
@@ -462,12 +501,7 @@
 	<?php
 	
 	pagefooter();
-	
-	function forcerange(&$var, $low, $high, $default) {
-		$var = (int) $var;
-		return ($var < $low || $var > $high) ? $default: $var;
-	}
-	
+
 	function table_format($name, $array){
 		global $fields;
 		
@@ -489,4 +523,4 @@
 		}
 		return "<select name='$val'>$txt</select>";
 	}
-?>
+	

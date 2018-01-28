@@ -64,7 +64,7 @@
 			</td>
 			<td class='tdbg2'>
 				<input type=radio class='radio' name=v value=0 <?=filter_string($ch1[0])?>> Today &nbsp;&nbsp;
-				<input type=radio class='radio' name=v value=1 <?=filter_string($ch1[1])?>> Other: <?=datetofields($timestamp, 'other', true, false, true)?>
+				<input type=radio class='radio' name=v value=1 <?=filter_string($ch1[1])?>> Other: <?=datetofields($timestamp, 'other', DTF_DATE | DTF_NOLABEL)?>
 			</td>
 		</tr>
 		

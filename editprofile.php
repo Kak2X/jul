@@ -384,7 +384,7 @@
 			$powerlevel = "<select name=powerlevel>{$powerlevel}</select>";
 			
 			// Registration time
-			$regdate = datetofields($userdata['regdate'], 'reg', true, true);
+			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);
 			
 			// Hours left before the user is unbanned
 			$ban_val 	= (

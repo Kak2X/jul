@@ -129,16 +129,16 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Max posts/day</b></td>
-			<td class='tdbg2'><input type='text' name='maxpostsday' value='<?=$misc['maxpostsday']?>' class='right'> posts, at <?=datetofields($misc['maxpostsdaydate'],'maxpostsday_', true, true , true)?></td>
+			<td class='tdbg2'><input type='text' name='maxpostsday' value='<?=$misc['maxpostsday']?>' class='right'> posts, at <?=datetofields($misc['maxpostsdaydate'],'maxpostsday_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Max posts/hour</b></td>
-			<td class='tdbg2'><input type='text' name='maxpostshour' value='<?=$misc['maxpostshour']?>' class='right'> posts, at <?=datetofields($misc['maxpostshourdate'],'maxpostshour_', true, true , true)?></td>
+			<td class='tdbg2'><input type='text' name='maxpostshour' value='<?=$misc['maxpostshour']?>' class='right'> posts, at <?=datetofields($misc['maxpostshourdate'],'maxpostshour_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Most users online</b></td>
 			<td class='tdbg2'>
-				<input type='text' name='maxusers' value='<?=$misc['maxusers']?>' class='right'> users, at <?=datetofields($misc['maxusersdate'],'maxusers_', true, true , true)?>
+				<input type='text' name='maxusers' value='<?=$misc['maxusers']?>' class='right'> users, at <?=datetofields($misc['maxusersdate'],'maxusers_', DTF_DATE | DTF_TIME | DTF_NOLABEL)?>
 				<br><input type='checkbox' name='maxusersreset' value='1'> Reset user list
 			</td>
 		</tr>

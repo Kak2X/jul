@@ -65,7 +65,7 @@
 	$ratingstatus = "";
 	
 	$maxposts 		= $sql->resultq("SELECT posts FROM users ORDER BY posts DESC LIMIT 1");
-	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel']);
+	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel'],$user['ban_expire']);
 	$threadsposted 	= $sql->resultq("SELECT COUNT(id) FROM threads WHERE user = $id");
 	if (!$maxposts) $maxposts = 1;
 	//$i = 0;
@@ -215,10 +215,16 @@
 			break;
 	}
 	// AKA
-	if ($user['aka'] && $user['aka'] != $user['name'])
+	if ($user['aka'] && $user['aka'] != $user['name']) {
 		$aka = "<tr><td class='tdbg1' width=150><b>Also known as</td><td class='tdbg2'>".htmlspecialchars($user['aka'])."</td></tr>";
-	else $aka='';
-
+	} else {
+		$aka = "";
+	}
+	if ($user['powerlevel'] == -1 && $user['ban_expire']) {
+		$bantime =  "<tr><td class='tdbg1' width=150><b>Banned until</td><td class='tdbg2'>".printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-ctime())." remaining)</td></tr>";
+	} else {
+		$bantime = "";
+	}
 	
 	
 ?>
@@ -230,7 +236,7 @@
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan=2>General information</td></tr>
 			<!-- <td class='tdbg1' width=150><b>Username</td>			<td class='tdbg2'><?=$user['name']?><tr> -->
-			<?=$aka?>
+			<?=$aka.$bantime?>
 			<tr><td class='tdbg1' width=150><b>Total posts</td>			<td class='tdbg2'><?=$user['posts']?> (<?=$postavg?> per day) <?=$projdate?><br><?=$bar?></td></tr>
 			<tr><td class='tdbg1' width=150><b>Total threads</td>		<td class='tdbg2'><?=$threadsposted?></td></tr>
 			<tr><td class='tdbg1' width=150><b>EXP</td>					<td class='tdbg2'><?=$expstatus?></td></tr>

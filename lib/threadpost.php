@@ -23,7 +23,7 @@
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
 		//unset($postuser);
 
-		$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel']);
+		$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel'], $post['ban_expire']);
 		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);

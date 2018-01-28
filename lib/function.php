@@ -1073,7 +1073,7 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 function ctime(){global $config; return time() + $config['server-time-offset'];}
 function cmicrotime(){global $config; return microtime(true) + $config['server-time-offset'];}
 
-function getrank($rankset, $title, $posts, $powl){
+function getrank($rankset, $title, $posts, $powl, $bandate = NULL){
 	global $hacks, $sql;
 	$rank	= "";
 	if ($rankset == 255) {   //special code for dots
@@ -1121,6 +1121,7 @@ function getrank($rankset, $title, $posts, $powl){
 	}
 
 	$powerranks = array(
+		-2 => 'Permabanned',
 		-1 => 'Banned',
 		//1  => '<b>Staff</b>',
 		2  => '<b>Moderator</b>',
@@ -1134,6 +1135,11 @@ function getrank($rankset, $title, $posts, $powl){
 		$rank .= $title;
 	elseif (in_array($powl, $powerranks))
 		$rank .= filter_string($powerranks[$powl]);
+		
+	// *LIVE* ban expiration date
+	if ($bandate && $powl == -1) {
+		$rank .= "<br>Banned until ".printdate($bandate)."<br>Expires in ".timeunits2($bandate-ctime());
+	}
 
 	return $rank;
 }

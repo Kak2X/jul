@@ -1,6 +1,6 @@
 <?php
 
-function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor';}
+function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
 function postcode($post,$set){
 	global $ip, $quote, $edit;

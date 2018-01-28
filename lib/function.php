@@ -2068,8 +2068,8 @@ function dofilters($p){
 	$p=str_replace("%WIKISTATSFRAME2%", '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Referers&actionToWidgetize=getWebsites&idSite=2&period=day&date=2010-10-12&disableLink=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>', $p);
 //	$p=str_replace("http://xkeeper.shacknet.nu:5/", 'http://xchan.shacknet.nu:5/', $p);
 //	$p=preg_replace("'<style'si",'&lt;style',$p);
-	$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
-
+	//$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
+	$p=preg_replace("'(https?://.*?photobucket.com/)'si",'images/photobucket.png#\\1',$p);
 	//$p=preg_replace("'%BZZZ%'si",'onclick="bzzz(',$p);
 	
 	return $p;

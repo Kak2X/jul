@@ -483,8 +483,8 @@ class mysql {
 			$b = self::getbacktrace();
 			if ($sysadmin || $config['always-show-debug']) {
 				fatal_error(
-					"error while executing query '<b>{$query}</b>' in transaction",
-					"{$error_text}<br><span style='color:#fff'><br><br>The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>",
+					"error while executing in transaction:\n<br>{$query}\n<br>",
+					"{$error_text}<br><span style='color:#fff'>\n<br>\n<br>The transaction <span style='color:#".($res ? "0F0'>has been" : "F00'>could <b>not</b> be")."</span> rolled back.</span>",
 					$b['file'], 
 					$b['line']
 				);

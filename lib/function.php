@@ -2341,14 +2341,14 @@ function error_reporter($type, $msg, $file, $line, $context) {
 	} else if (in_array($type, [E_USER_NOTICE,E_USER_WARNING,E_USER_ERROR,E_USER_DEPRECATED], true)) {
 		// And do the same for custom thrown errors
 		$backtrace = debug_backtrace();
-		$file = "[Parent] ".$backtrace[2]['file'];
-		$line = $backtrace[2]['line'];
-		$func = $backtrace[2]['function'];
-		$args = $backtrace[2]['args'];
+		$file = "[Parent] ".filter_string($backtrace[2]['file']);
+		$line = filter_int($backtrace[2]['line']);
+		$func = filter_string($backtrace[2]['function']);
+		$args = filter_string($backtrace[2]['args']);
 	} else {
 		$backtrace = debug_backtrace();
-		$func = $backtrace[1]['function'];
-		$args = $backtrace[1]['args'];
+		$func = filter_string($backtrace[1]['function']);
+		$args = filter_array($backtrace[1]['args']);
 	}
 	
 	
@@ -2468,8 +2468,9 @@ function print_args($args) {
 	$res = "";
 	foreach ($args as $val) {
 		if (is_array($val)) {
-			$tmp = print_args($val);
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[{$tmp}]</span>";
+			//$tmp = print_args($val);
+			//$res .= ($res !== "" ? "," : "")."<span class='fonts'>[{$tmp}]</span>";
+			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[Array]</span>";
 		} else {
 			$res .= ($res !== "" ? "," : "")."<span class='fonts'>'{$val}'</span>";
 		}

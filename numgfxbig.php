@@ -14,7 +14,7 @@
 
 	$img	= imagecreate(26 * $l, 28);
 	$bg		= imagecolorallocate($img, 5, 5, 5);
-	$num	= imagecreatefrompng("digits.png");
+	$num	= imagecreatefrompng("images/digits.png");
 	$o		= $p;
 
 	$na		= str_split($n);

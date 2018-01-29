@@ -434,9 +434,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 		<meta name='viewport' content='width=device-width, initial-scale=1'>
 		<?=$metatag?>
-			<title><?=$windowtitle?></title>
-			<link rel='shortcut ico' href='<?=$favicon?>.ico' type='image/x-icon'>
-			<?=$css?>
+		<title><?=$windowtitle?></title>
+		<link rel='shortcut ico' href='images/favicon/<?=$favicon?>.ico' type='image/x-icon'>
+		<?=$css?>
 	</head>
 	<body>
 	<?php

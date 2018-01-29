@@ -50,7 +50,7 @@ class mysql {
 		}
 		catch (PDOException $x) {
 			$this->error = $x->getMessage();
-			$this->connection = NULL;
+			return NULL;
 		}
 		
 		$t 			= microtime(true) - $start;

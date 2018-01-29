@@ -914,8 +914,6 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 	$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 	$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 	//$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
-	$msg=preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
-
 
 	do {
 		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
@@ -1918,51 +1916,49 @@ function include_js($fn, $as_tag = false) {
 }
 
 
-function xssfilters($p, $validate = false){
+function xssfilters($data, $validate = false){
+	
+	$diff = false;
+	$orig = $data;
+	
+	// https://stackoverflow.com/questions/1336776/xss-filtering-function-in-php
+	// Fix &entity\n;
+	$data = str_replace(array('&amp;','&lt;','&gt;'), array('&amp;amp;','&amp;lt;','&amp;gt;'), $data);
+	$data = preg_replace('/(&#*\w+)[\x00-\x20]+;/u', '$1;', $data);
+	$data = preg_replace('/(&#x*[0-9A-F]+);*/iu', '$1;', $data);
+	$data = html_entity_decode($data, ENT_COMPAT, 'UTF-8');
 
-	$temp = $p;
+	$temp = $data;
+	// Remove any attribute starting with "on" or xmlns
+	#$data = preg_replace('#(<[^>]+?[\x00-\x20"\'])(?:on|xmlns)[^>]*+>#iu', '$1>', $data);
+	do {
+		$old_data	= $data;
+		$data		= preg_replace('#(<[^>]+?[\x00-\x20"\'])(on|xmlns)([^>]*+)>#iu', '$1DISABLED_$2$3>', $data);
+	} while ($old_data !== $data);
 	
-	$p=str_ireplace("FSCommand","BS<z>Command", $p);
-	$p=str_ireplace("execcommand","hex<z>het", $p);
-	// This shouldn't hit code blocks due to the way they are formatted
-	$p=preg_replace("'on\w+( *?)=( *?)(\'|\")'si", "jscrap=$3", $p);
-	$p=preg_replace("'<(/?)(script|meta|embed|object|svg|form|textarea|xml|title|input|xmp|plaintext|base|!doctype|html|head|body)'i", "&lt;$1$2", $p);
-	$p=preg_replace("'<iframe(?! src=\"https://www.youtube.com/embed/)'si",'<<z>iframe',$p);
+	// Remove javascript: and vbscript: protocols
+	$data = preg_replace('#([a-z]*)[\x00-\x20]*=[\x00-\x20]*([`\'"]*)[\x00-\x20]*j[\x00-\x20]*a[\x00-\x20]*v[\x00-\x20]*a[\x00-\x20]*s[\x00-\x20]*c[\x00-\x20]*r[\x00-\x20]*i[\x00-\x20]*p[\x00-\x20]*t[\x00-\x20]*:#iu', '$1=$2nojavascript...', $data);
+	$data = preg_replace('#([a-z]*)[\x00-\x20]*=([\'"]*)[\x00-\x20]*v[\x00-\x20]*b[\x00-\x20]*s[\x00-\x20]*c[\x00-\x20]*r[\x00-\x20]*i[\x00-\x20]*p[\x00-\x20]*t[\x00-\x20]*:#iu', '$1=$2novbscript...', $data);
+	$data = preg_replace('#([a-z]*)[\x00-\x20]*=([\'"]*)[\x00-\x20]*-moz-binding[\x00-\x20]*:#u', '$1=$2nomozbinding...', $data);
+	if ($data !== $temp) $diff = true;
+
+	// Remove namespaced elements (we do not need them)
+	$data = preg_replace('#</*\w+:\w[^>]*+>#i', '', $data);
 	
-	/*
-	$p=preg_replace("'onload'si",'onl<z>oad',$p);
-	$p=preg_replace("'onerror'si",'oner<z>ror',$p);
-	$p=preg_replace("'onunload'si",'onun<z>load',$p);
-	$p=preg_replace("'onchange'si",'onch<z>ange',$p);
-	$p=preg_replace("'onsubmit'si",'onsu<z>bmit',$p);
-	$p=preg_replace("'onreset'si",'onr<z>eset',$p);
-	$p=preg_replace("'onselect'si",'ons<z>elect',$p);
-	$p=preg_replace("'onblur'si",'onb<z>lur',$p);
-	$p=preg_replace("'onfocus'si",'onfo<z>cus',$p);
-	$p=preg_replace("'onclick'si",'oncl<z>ick',$p);
-	$p=preg_replace("'ondblclick'si",'ondbl<z>click',$p);
-	$p=preg_replace("'onmousedown'si",'onm<z>ousedown',$p);
-	$p=preg_replace("'onmousemove'si",'onmou<z>semove',$p);
-	$p=preg_replace("'onmouseout'si",'onmou<z>seout',$p);
-	$p=preg_replace("'onmouseover'si",'onmo<z>useover',$p);
-	$p=preg_replace("'onmouseup'si",'onmou<z>seup',$p);
-	*/
-	if ($temp != $p) {
-		nuke_js($temp, $p);
+	$temp = $data;
+	do {
+	    // Remove really unwanted tags
+	    $old_data = $data;
+	    $data = preg_replace('#<(/*(?:applet|b(?:ase|gsound)|embed|frame(?:set)?|i(?:frame|layer)|layer|meta|object|script|title|xml)[^>]*+)>#i', '&lt;$1&gt;', $data);
+	} while ($old_data !== $data);
+	if ($data !== $temp) $diff = true;
+	
+	if ($diff) {
+		nuke_js($orig, $data);
 		if ($validate) return NULL;
 	}
 	
-	
-	$p=preg_replace("'document.cookie'si",'document.co<z>okie',$p);
-	$p=preg_replace("'eval'si",'eva<z>l',$p);
-	$p=preg_replace("'javascript:'si",'javasc<z>ript:',$p);	
-	//$p=preg_replace("'document.'si",'docufail.',$p);
-	//$p=preg_replace("'<script'si",'<<z>script',$p);
-	//$p=preg_replace("'</script'si",'<<z>/script',$p);
-	//$p=preg_replace("'<meta'si",'<<z>meta',$p);
-	
-
-	return $p;
+	return $data;
 	
 }
 function dofilters($p){
@@ -1970,25 +1966,7 @@ function dofilters($p){
 	
 	
 	$p = xssfilters($p);
-	
-	/*
-	if (filter_bool($_GET['t']) && false) {
-		$p=preg_replace("'<script(.*?)</script>'si",'',$p);
-		$p=preg_replace("'<script'si",'',$p);
-		$p=preg_replace("'\b\s(on[^=]*?=.*)\b'si",'',$p);
-		if ($temp != $p) {
-			nuke_js($temp, $p);
-		}
-	} else {
-	
 
-
-		if ($temp != $p) {
-			nuke_js($temp, $p);
-		}
-	}
-	*/
-	
 	//$p=preg_replace("'<object(.*?)</object>'si","",$p);
 	//$p=preg_replace("'autoplay'si",'',$p); // kills autoplay, need to think of a solution for embeds.
 
@@ -2017,17 +1995,17 @@ function dofilters($p){
 //	$p=preg_replace("'drama'si", 'batter blaster', $p);
 //	$p=preg_replace("'TheKinoko'si", 'MY NAME MEANS MUSHROOM... IN <i>JAPANESE!</i> HOLY SHIT GUYS THIS IS <i>INCREDIBLE</i>!!!!!!!!!', $p);
 //	$p=preg_replace("'hopy'si",'I am a dumb',$p);
-	$p=preg_replace("'crashdance'si",'CrashDunce',$p);
-	$p=preg_replace("'get blue spheres'si",'HI EVERYBODY I\'M A RETARD PLEASE BAN ME',$p);
+//	$p=preg_replace("'crashdance'si",'CrashDunce',$p);
+//	$p=preg_replace("'get blue spheres'si",'HI EVERYBODY I\'M A RETARD PLEASE BAN ME',$p);
 	$p=preg_replace("'zeon'si",'shit',$p);
-	$p=preg_replace("'faith in humanity'si",'IQ',$p);
+//	$p=preg_replace("'faith in humanity'si",'IQ',$p);
 //	$p=preg_replace("'motorcycles'si",'<img src="images/cardgames.png" align="absmiddle" title="DERP DERP DERP">',$p);
 //	$p=preg_replace("'card games'si",'<img src="images/motorcycles.png" align="absmiddle" title="GET BLUE SPHERES">',$p);
 //	$p=preg_replace("'touhou'si", "Baby's First Bullet Hell&trade;", $p);
 //	$p=preg_replace("'nintendo'si",'grandma',$p);
 //	$p=preg_replace("'card games on motorcycles'si",'bard dames on rotorcycles',$p);
 
-	$p=str_replace("ftp://teconmoon.no-ip.org", 'about:blank', $p);
+//	$p=str_replace("ftp://teconmoon.no-ip.org", 'about:blank', $p);
 	if (filter_bool($hacks['comments'])) {
 		$p=str_replace("<!--", '<font color=#80ff80>&lt;!--', $p);
 		$p=str_replace("-->", '--&gt;</font>', $p);
@@ -2038,13 +2016,18 @@ function dofilters($p){
 	$p=preg_replace("'http://.{0,3}\.?tinypic\.com'si",'tinyshit',$p);
 	$p=str_replace('<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">',"<!-- -->",$p);
 	$p=str_replace("tabindex=\"0\" ","title=\"the owner of this button is a fucking dumbass\" ",$p);
-	$p=str_replace("%WIKISTATSFRAME%","<div id=\"widgetIframe\"><iframe width=\"600\" height=\"260\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=VisitsSummary&actionToWidgetize=getSparklines&idSite=2&period=day&date=today&disableLink=1\" scrolling=\"no\" frameborder=\"0\" marginheight=\"0\" marginwidth=\"0\"></iframe></div>",$p);
-	$p=str_replace("%WIKISTATSFRAME2%", '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Referers&actionToWidgetize=getWebsites&idSite=2&period=day&date=2010-10-12&disableLink=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>', $p);
+//	$p=str_replace("%WIKISTATSFRAME%","<div id=\"widgetIframe\"><iframe width=\"600\" height=\"260\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=VisitsSummary&actionToWidgetize=getSparklines&idSite=2&period=day&date=today&disableLink=1\" scrolling=\"no\" frameborder=\"0\" marginheight=\"0\" marginwidth=\"0\"></iframe></div>",$p);
+//	$p=str_replace("%WIKISTATSFRAME2%", '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Referers&actionToWidgetize=getWebsites&idSite=2&period=day&date=2010-10-12&disableLink=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>', $p);
 //	$p=str_replace("http://xkeeper.shacknet.nu:5/", 'http://xchan.shacknet.nu:5/', $p);
 //	$p=preg_replace("'<style'si",'&lt;style',$p);
 	//$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
 	$p=preg_replace("'(https?://.*?photobucket.com/)'si",'images/photobucket.png#\\1',$p);
 	//$p=preg_replace("'%BZZZ%'si",'onclick="bzzz(',$p);
+	
+	$p = xssfilters($p);
+
+	$p = preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);
+
 	
 	return $p;
 }

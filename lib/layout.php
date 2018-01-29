@@ -271,44 +271,25 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$bgimage = " url('$bgimage')";
 	else 
 		$bgimage = '';
-	
+
 	if ($nullscheme) {
 		// special "null" scheme.
 		$css = "";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='/css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
+		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
 		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css="
-			<style type='text/css'>
-			html, img { image-rendering: -moz-crisp-edges; }
-/*			
-			body	{
-				cursor:	url('images/ikachanpointer.png'), default;
-				}
-			a:link {
-				cursor:	url('images/ikachanpointer2.png'), pointer;
-				}
-*/			a:link,a:visited,a:active,a:hover{text-decoration:none;font-weight:bold;}
-			a {
-				color: #$linkcolor;
-			}
-			a:visited {
-				color: #$linkcolor2;
-			}
-			a:active {
-				color: #$linkcolor3;
-			}
-			a:hover {
-				color: #$linkcolor4;
-			}
-			img { border:none; }
-			pre br { display: none; }
+		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'>
+		<style type='text/css'>
+			a,.buttonlink                   { color: #$linkcolor; }
+			a:visited,.buttonlink:visited   { color: #$linkcolor2; }
+			a:active,.buttonlink:active     { color: #$linkcolor3; }
+			a:hover,.buttonlink:hover 	    { color: #$linkcolor4; }
 			body {
 				scrollbar-face-color:		#$scr3;
 				scrollbar-track-color:		#$scr7;
@@ -323,18 +304,14 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			}
 			div.lastpost { font: 10px $font2 !important; white-space: nowrap; }
 			div.lastpost:first-line { font: 13px $font !important; }
-			.sparkline { display: none; }
 			.font 	{font:13px $font}
-			.fonth	{font:13px $font;color:$tableheadtext}	/* this is only used once (!) */
+			.fonth	{font:13px $font;color:$tableheadtext}
 			.fonts	{font:10px $font2}
 			.fontt	{font:10px $font3}
 			.tdbg1	{background:#$tablebg1}
 			.tdbg2	{background:#$tablebg2}
 			.tdbgc	{background:#$categorybg}
-			.tdbgh	{background:#$tableheadbg;}
-			.center	{text-align:center}
-			.right	{text-align:right}
-			.nobr	{white-space:nowrap}
+			.tdbgh	{background:#$tableheadbg; color:$tableheadtext}
 			.table	{empty-cells:	show; width: 100%;
 					 border-top:	#$tableborder 1px solid;
 					 border-left:	#$tableborder 1px solid;
@@ -343,18 +320,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#$tableborder 1px solid;
 					 border-bottom:	#$tableborder 1px solid}
-			code {
-				overflow:		auto;
-				width:			100%;
-				white-space:	pre;
-				display:		block;
-			}
-			code br { display: none; }
-			input[type=radio] { color: black; background: white; }
-			
-			.pstspl1 {opacity:0;}
-			.pstspl1:hover {opacity:1;}
-			.pstspl2 {background:#000;color:#FFF;display:block;}
 		";
 	}
 	

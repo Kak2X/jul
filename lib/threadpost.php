@@ -14,6 +14,7 @@
 		
 		$post = setlayout($post);
 		
+		
 		//$p = $post['id'];
 		//$u = $post['uid'];
 		
@@ -23,23 +24,30 @@
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
 		//unset($postuser);
 
-		$set['userrank'] = getrank($post['useranks'], str_replace("<div", "<<z>idiot", $post['title']), $post['posts'], $post['powerlevel'], $post['ban_expire']);
+		$set['userrank'] = getrank(
+			filter_int($post['useranks']), 
+			filter_string($post['title']),
+			$post['posts'],
+			$post['powerlevel'],
+			$post['ban_expire']
+		);
 		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);
 
-		$set['location'] = $post['location'] ? "<br>From: {$post['location']}" : "";
+		$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
 
-		if($post['picture'] || ($post['moodid'] && $post['moodurl'])) {
+		$post['picture'] = filter_string($post['picture']);
+		if ($post['picture'] || ($post['moodid'] && $post['moodurl'])) {
 			
 			$post['picture']  = htmlspecialchars($post['picture']);
-			$set['userpic']   = "<img src=\"{$post['picture']}\">";
+			$set['userpic']   = "<img class='avatar' src=\"{$post['picture']}\">";
 			$set['picture']   = $post['picture'];
 			
 			if ($post['moodid'] && $post['moodurl']) {
 				// Replace $ placeholder with the actual image number
 				$set['picture'] = str_replace(array('$', '>', '"'), array($post['moodid'], '%3E', '&quot;'), $post['moodurl']);
-				$set['userpic'] = "<img src=\"{$set['picture']}\">";
+				$set['userpic'] = "<img class'avatar' src=\"{$set['picture']}\">";
 			}
 			//   $userpicture="<img src=\"$user['picture']\" name=pic$p onload=sizelimit(pic$p,60,100)>";
 		} else {
@@ -59,6 +67,8 @@
 
 		if (filter_int($post['editdate'])) {
 			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
+		} else {
+			$post['edited'] = "";
 		}
 		
 		

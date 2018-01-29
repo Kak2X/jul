@@ -9,10 +9,27 @@ a:hover { color: #CECAFE; }
 .tdbg2 { background: #15426D; } /* tablebg2 */
 .tdbgc { background: #0F265F; }
 .tdbgh { 
-	background: #0048B7 url("/images/julold/header_shade.png") repeat-x bottom center; color: #FFF; border: 1px solid black; text-shadow: 2px 2px 4px #000; font: 13px 'verdana', sans-serif;
+	background: #0048B7 url("../images/julold/header_shade.png") repeat-x bottom center;
+	color: #FFF;
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	text-shadow: 2px 2px 4px #000;
+	font: 13px 'verdana', sans-serif;
 } 
 .tdbg1,.tdbg2,.tdbgc,.tdbgh	{ border-right: 1px solid #000; border-bottom: 1px solid #000; }
 .table { border-top: #000 1px solid; border-left: #000 1px solid; }
 .font { font: 13px 'verdana', sans-serif; }
 .fonts { font: 10px 'verdana', sans-serif; }
 .fontt { font: 10px 'tahoma', serif; }
+
+textarea,input,select {
+	border: 1px solid #000;
+	background: #000;
+	color: #EEE;
+	font: 10pt monospace;
+}
+
+input[type=submit] {
+	border: #000 solid 2px;
+	font: 10pt 'verdana', sans-serif;
+}

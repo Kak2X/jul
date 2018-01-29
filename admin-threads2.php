@@ -42,17 +42,13 @@
 				<td class='tdbgh center'>Status</td>
 			</tr>
 		<?php
-
-		// dammit not again
-		//$q	= "SELECT `threads`.`id`, `threads`.`title` , `threads`.`lastpostdate` , `posts`.`date` as realdate, (`posts`.`date` - `threads`.`lastpostdate`) AS `diff` FROM `threads` LEFT JOIN (SELECT MAX(`date`) as `date`, `thread` FROM `posts` GROUP BY `thread`) as `posts`  ON `posts`.`thread` = `threads`.`id` ORDER BY `diff` DESC";
-		//$sql	= mysql_query($q) or die(mysql_error());
-		
+ 	
 		$threads = $sql->query("
-			SELECT t.id, t.title, t.lastpostdate, p.date realdate, (p.date - t.lastpostdate) diff
+			SELECT t.id, t.title, t.lastpostdate, p.date as realdate 
 			FROM threads t
 			LEFT JOIN (SELECT MAX(date) as date, thread FROM posts GROUP BY thread) p ON p.thread = t.id
-			HAVING diff != 0
-			ORDER BY diff DESC
+			WHERE t.lastpostdate != p.date
+			ORDER BY t.id DESC
 		");
 
 		$count	= "";
@@ -61,22 +57,16 @@
 
 			$status	= "";
 
-			//if ($data['lastpostdate'] != $data['realdate']) {
-
-			if ($data['lastpostdate'] == "0" && $data['realdate'] == NULL) {
+			if (!$data['lastpostdate'] && $data['realdate'] === NULL) {
 				$status	= "<font color=#ff8888>Broken thread</font>";
 			} else {
 				$userd	= $sql->fetchq("SELECT date, user FROM posts WHERE thread = '{$data['id']}' ORDER BY date DESC LIMIT 1");
-				//mysql_query("UPDATE `threads` SET `lastposter` = '". $userd['user'] ."', `lastpostdate` = '". $userd['date'] ."' WHERE `id` = '". $data['id'] ."'") or "<font color=#ff0000>Error</font>: ". mysql_error();
 				$status	= $sql->execute($update, ['lastposter' => $userd['user'], 'lastpostdate' => $userd['date'], 'id' => $data['id'] ]); 
 				if ($status) 	$status = "<font color=#80ff80>Updated</font>";
 				else			$status = "<font color=#ff0000>Error</font>";
 				$count++;
 			}
-			//}
-
-			//if ($status) {
-
+			
 			?>
 		<tr>
 			<td class='tdbg1 center'><?=$data['id']?></td>

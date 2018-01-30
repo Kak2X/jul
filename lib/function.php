@@ -416,6 +416,14 @@
 				die;
 			}
 			unset($oldban);
+			
+			// optionally force log out
+			if ($config['force-lastip-match']) {
+				setcookie('loguserid','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+				setcookie('logverify','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+				// Attempt to preserve current page
+				die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
+			}
 
 
 			$sql->queryp("

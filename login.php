@@ -8,7 +8,12 @@
 
 	$username = filter_string($_POST['username'], true);
 	$password = filter_string($_POST['userpass']);
-	$verifyid = filter_string($_POST['verify']);
+	
+	if (!$config['force-lastip-match']) {
+		$verifyid = filter_int($_POST['verify']);
+	} else {
+		$verifyid = 4;
+	}
 	
 	$action   = filter_string($_POST['action']);
 	
@@ -79,10 +84,32 @@
 		$txt .= "<tr><td class='tdbg1 center'> You are now logged out.<br>".redirect('index.php','the board',0)."</td></tr>";
 	}
 	elseif (!$action) {
-		$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
-		for ($i = 4; $i > 0; --$i) {
-			$verifyoptext[$i] = "(".implode('.', $ipaddr).")";
-			$ipaddr[$i-1]       = 'xxx';
+		if (!$config['force-lastip-match']) {
+			$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
+			for ($i = 4; $i > 0; --$i) {
+				$verifyoptext[$i] = "(".implode('.', $ipaddr).")";
+				$ipaddr[$i-1]       = 'xxx';
+			}
+			
+			$verifytxt = "
+				<td class='tdbg1 center' rowspan=2><b>IP Verification:</b></td>
+				<td class='tdbg2' rowspan=2>
+					<select name=verify>
+						<option selected value=0>Don't use</option>
+						<option value=1> /8 $verifyoptext[1]</option>
+						<option value=2>/16 $verifyoptext[2]</option>
+						<option value=3>/24 $verifyoptext[3]</option>
+						<option value=4>/32 $verifyoptext[4]</option>
+					</select>
+					<br>
+					<small>
+						You can require your IP address to match your current IP, to an extent, to remain logged in.
+					</small>
+				</td>";
+			
+		} else {
+			// We can hide the selection if we force the matching anyway
+			$verifytxt = "<td class='tdbg2' rowspan=2 colspan=2></td>";
 		}
 		$txt .= "
 		<body onload='window.document.REPLIER.username.focus()'>
@@ -99,21 +126,7 @@
 				<td class='tdbg2'>
 					<input type='text' name=username MAXLENGTH=25 style='width:280px;'>
 				</td>
-				
-				<td class='tdbg1 center' rowspan=2><b>IP Verification:</b></td>
-				<td class='tdbg2' rowspan=2>
-					<select name=verify>
-						<option selected value=0>Don't use</option>
-						<option value=1> /8 $verifyoptext[1]</option>
-						<option value=2>/16 $verifyoptext[2]</option>
-						<option value=3>/24 $verifyoptext[3]</option>
-						<option value=4>/32 $verifyoptext[4]</option>
-					</select>
-					<br>
-					<small>
-						You can require your IP address to match your current IP, to an extent, to remain logged in.
-					</small>
-				</td>
+				{$verifytxt}
 			</tr>
 			<tr>
 				<td class='tdbg1 center'><b>Password:</b></td> 

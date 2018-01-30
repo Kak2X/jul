@@ -12,7 +12,7 @@
   
 	pageheader();
 	
-	print adminlinkbar('del.php');
+	print adminlinkbar();
 	
 	if (filter_array($_POST['deluser'])) { //($loguserid==1 or $loguserid==2)){
 		
@@ -98,7 +98,7 @@
 	
 	
 ?>
-<form action='del.php' method=post>
+<form action='?' method=post>
 <table class='table'>
 	<tr><td class='tdbgh center' colspan=2>Sort Options</td></tr>
 	<tr><td class='tdbg1 center' width=300><b>User Search:</b></td>
@@ -210,7 +210,7 @@
 	$users		= $sql->queryp("SELECT * FROM `users` $sqlquery", $values);
 	$usercount	= $sql->num_rows($users);
 	?>
-<form action=del.php method=post>
+<form action=? method=post>
 <table class='table'>
 	<tr><td class='tbl tdbgc font center' colspan=8><b><?=$usercount?> user(s) found.</b></td></tr>
 	<tr>

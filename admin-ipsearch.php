@@ -2,7 +2,7 @@
 	require 'lib/function.php';
 	pageheader("IP Address Search");
 	admincheck();
-	print adminlinkbar('ipsearch.php');
+	print adminlinkbar();
 
 	$_POST['ip'] = filter_string($_POST['ip']);
 	if(!filter_string($_POST['su'])) $_POST['su']='n';
@@ -15,7 +15,7 @@
 	$ch4[$_POST['d']] = ' checked';
 
 ?>
-<form action=ipsearch.php method=post>
+<form action='?' method=post>
 <table class='table'>
 	<tr><td class='tdbgh center' colspan=2>IP search</td></tr>
 	<tr>

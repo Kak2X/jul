@@ -51,7 +51,16 @@
 	
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int) date("Gi") < 1) {
-		require "lib/downtime.php";
+		header("HTTP/1.1 503 Service Unavailable");
+		
+		dialog(
+			"The daily backup is in progress. Check back in about five minutes.
+			<br>
+			<br>Feel free to drop by IRC:
+			<br><b>irc.badnik.net</b> &mdash; <b>#x</b>", 
+			"It's Midnight Backup Time Again", 
+			"{$config['board-name']} -- Temporarily down"
+		);
 	}
 	
 	// Get the running script's filename
@@ -282,11 +291,15 @@
 		if (!$sysadmin && $_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
 			if ($miscdata['private'] == 2) {
 				do404();
-			} else if ($x_hacks['host']) {
-				require "lib/downtime-bmf.php";
-			} else {
-				require "lib/downtime2.php";
 			}
+			
+			http_response_code(500);
+			dialog(
+				"We'll be back later.",
+				"Down for maintenance",
+				"{$config['board-name']} is offline for now"
+			);
+			
 		} else {
 			$config['title-submessage'] = "<br>(THE BOARD IS DISABLED)";
 		}
@@ -457,7 +470,7 @@
 		if ($loguser['title'] == "Banned; account hijacked. Contact admin via PM to change it.") {
 			$reason	= "Your account was hijacked; please contact {$config['admin-name']} to reset your password and unban your account.";
 		} elseif ($loguser['title']) {
-			$reason	= "Ban reason: ". $loguser['title'] ."<br>If you think have been banned in error, please contact {$config['admin-name']}.";
+			$reason	= "Ban reason: {$loguser['title']}<br>If you think have been banned in error, please contact {$config['admin-name']}.";
 		} else {
 			$reason	= $sql->resultq("SELECT `reason` FROM ipbans WHERE $checkips");
 			$reason	= ($reason ? "Reason: $reason" : "<i>(No reason given)</i>");
@@ -469,7 +482,7 @@
 					"<br>If you think you have been banned in error, please contact the administrator:".
 					"<br>E-mail: {$config['admin-email']}";
 		
-		echo dialog($message, "Banned");
+		echo dialog($message, "Banned", $config['board-name']);
 		
 	}
 	if ($torbanned) {
@@ -478,7 +491,7 @@
 					"<br>".
 					"<br>E-mail: {$config['admin-email']}";
 		
-		echo dialog($message, "Tor is not allowed");
+		echo dialog($message, "Tor is not allowed", $config['board-name']);
 	}
 	
 	/*

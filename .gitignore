@@ -1,7 +1,13 @@
+# holdovers from Xkeeper0/jul
 .rem/
 .old/
 board/
 xkeeper/
 version.txt
-lib/config.php
+
+# It's a secret to everybody
 lib/firewall.php
+
+# No testboard stuff
+lib/config.php
+backups/*.zip

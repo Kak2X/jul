@@ -14,12 +14,6 @@
 
 	$startingtime = microtime(true);
 
-	
-	// Wait for the midnight backup to finish...
-	if ((int)date("Gi") < 5) {
-		require "lib/downtime.php";
-	}
-	
 	// Fields necessary to generate userlinks
 	$userfields = "u.name, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
 	
@@ -53,7 +47,12 @@
 	//$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
 
 	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private FROM misc");
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup FROM misc");
+	
+	// Wait for the midnight backup to finish...
+	if ($miscdata['backup'] || (int) date("Gi") < 1) {
+		require "lib/downtime.php";
+	}
 	
 	// Get the running script's filename
 	$path = explode("/", $_SERVER['SCRIPT_NAME']);
@@ -1838,41 +1837,58 @@ function adminlinkbar($sel = 'admin.php') {
 
 	if (!$isadmin) return;
 
+	if (!$sel) {
+		// If no selection is passed, default to the current script
+		global $scriptname;
+		$sel = $scriptname;
+	}
+
 	$links	= array(
 		array(
 			'admin.php'	=> "Admin Control Panel",
 		),
 		array(
-//			'admin-todo.php'       => "To-do list",
-			'announcement.php'     => "Go to Announcements",
-			'admin-editforums.php' => "Edit Forum List",
-			'admin-editmods.php'   => "Edit Forum Moderators",
-			'ipsearch.php'         => "IP Search",
-			'admin-threads.php'    => "ThreadFix",
-			'admin-threads2.php'   => "ThreadFix 2",
-			'del.php'              => "Delete User",
+//			'admin-todo.php'        => "To-do list",
+			'announcement.php'      => "Go to Announcements",
+//			'admin-editfilters.php' => "Edit Filters",
+			'admin-editforums.php'  => "Edit Forum List",
+			'admin-editmods.php'    => "Edit Forum Moderators",
+		),
+		array(
+			'admin-threads.php'     => "ThreadFix",
+			'admin-threads2.php'    => "ThreadFix 2",
+			'admin-backup.php'      => "Board Backups",		
+		),
+		array(
+			'admin-ipsearch.php'    => "IP Search",
+		//	'admin-ipbans.php'      => "IP Bans",
+		//	'admin-pendingusers.php'=> "Pending Users",
+		//	'admin-slammer.php'     => "EZ Ban Button",
+			'admin-deluser.php'     => "Delete User",
 		)
 	);
 
 	$r = "<div style='padding:0px;margins:0px;'>
 			<table class='table'>
 				<tr>
-					<td class='tdbgh center'>
-						<b>Admin Functions</b>
+					<td class='tdbgh center b' style='border-bottom: 0'>
+						Admin Functions
 					</td>
 				</tr>
 			</table>";
 
-    foreach ($links as $linkrow) {
+	$total = count($links) - 1;
+    foreach ($links as $rownum => $linkrow) {
 		$c	= count($linkrow);
 		$w	= floor(1 / $c * 100);
 
 		$r .= "<table class='table'><tr>";
+		$nb = ($rownum != $total) ? ";border-bottom: 0" : "";
 
 		foreach($linkrow as $link => $name) {
 			$cell = '1';
 			if ($link == $sel) $cell = 'c';
-			$r .= "<td class='tdbg{$cell} center' width=\"$w%\"><a href=\"$link\">$name</a></td>";
+			$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px{$nb}' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
 		}
 
 		$r .= "</tr></table>";

@@ -1,0 +1,2 @@
+This is the working area used during the backup process.
+Do not rename or delete this folder.

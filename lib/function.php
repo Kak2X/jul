@@ -52,15 +52,21 @@
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int) date("Gi") < 1) {
 		header("HTTP/1.1 503 Service Unavailable");
+		$title 		= "{$config['board-name']} -- Temporarily down";
 		
-		dialog(
-			"The daily backup is in progress. Check back in about five minutes.
-			<br>
-			<br>Feel free to drop by IRC:
-			<br><b>irc.badnik.net</b> &mdash; <b>#x</b>", 
-			"It's Midnight Backup Time Again", 
-			"{$config['board-name']} -- Temporarily down"
-		);
+		if ((int)date("Gi") < 1) {
+			$messagetitle = "It's Midnight Backup Time Again";
+			$message 	  = "The daily backup is in progress. Check back in about a minute.";
+		} else {
+			$messagetitle = "Backup Time";
+			$message 	  = "A backup is in progress. Please check back in a couple of minutes.";
+		}
+		if ($config['irc-servers']) {
+			$message .= "<br>
+						<br>Feel free to drop by IRC:
+						<br><b>{$config['irc-servers'][1]}</b> &mdash; <b>".implode(", ", $config['irc-channels'])."</b>";
+		}
+		dialog($message, $messagetitle, $title);
 	}
 	
 	// Get the running script's filename

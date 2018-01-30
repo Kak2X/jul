@@ -1,5 +1,6 @@
 <?php
-
+	$startingtime = microtime(true);
+	
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
 	
@@ -10,28 +11,16 @@
 	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 	header('Pragma: no-cache');
 	
-	
-
-	$startingtime = microtime(true);
-
-	// Fields necessary to generate userlinks
-	$userfields = "u.name, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
-	
-	
 	$errors = array();
 	set_error_handler('error_reporter');
 	set_exception_handler('exception_reporter');
 		
+	require 'lib/defines.php';
 	require 'lib/config.php';
 	require 'lib/mysql.php';
 	require 'lib/layout.php';
 	require 'lib/rpg.php';
-	require 'lib/datetime.php';
-
-	const IRC_MAIN = 0;
-	const IRC_STAFF = 1;
-	const IRC_ADMIN = 102;
-	
+	require 'lib/datetime.php';	
 	
 	$sql	= new mysql;
 
@@ -335,11 +324,6 @@
 	
 	
 	$ipbanned = $torbanned = $isbot = 0;
-	
-	const BPT_IPBANNED 	= 1;
-	const BPT_PROXY 	= 2;
-	const BPT_TOR 		= 4;
-	const BPT_BOT 		= 8;
 	
 	$bpt_flags = 0;
 	

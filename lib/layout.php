@@ -1,11 +1,5 @@
 <?php
 	
-	$sepn 	= array('Dashes','Line','Full horizontal line','None');
-	$sep	= array('<br><br>--------------------<br>',
-					'<br><br>____________________<br>',
-					'<br><br><hr>',
-					'<br><br>');
-					
 /*
 	if (!$x_hacks['host']) {
 		if ($loguserid == 1) $config['board-title']	= "";

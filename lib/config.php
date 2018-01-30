@@ -3,22 +3,28 @@
 	$sqlhost 	= 'localhost';
 	$sqluser 	= 'root';
 	$sqlpass 	= '';
-	$dbname		= 'jul';
+	$dbname		= 'julpower';
 	
 	$sqldebuggers = array('127.0.0.1');
 	
-	const BOARD_VERSION = '05/01/2017 k001';
+	const BOARD_VERSION = 'v1.92.??';
 	
 	$config = array(
 	
 		// Layout
 		'board-name'			=> "Not Jul",
-		'board-title'			=> "<h1>Not Jul<h1>",
+		'board-title'			=> '<img src="images/pointlessbannerv2.png" title="The testboard experience">',
 		'title-submessage'		=> "",
 		'board-url'				=> 'http://localhost/jul', // Non-HTTPS Board URL without last backslash (the origin check depends on this)
 		'admin-email'			=> 'admin@something.com',
 		'admin-name'			=> '(admin name)',
-		
+		'irc-servers'			=> array ( // List of IRC servers. The first one is the 'preferred' option
+									1 => "irc.badnik.zone",
+									2 => "irc.rustedlogic.net",
+									3 => "irc.tcrf.net",
+								),
+		'irc-server-title'		=> "BadnikZONE", 
+		'irc-channels'			=> array ('#tcrf', '#x'),
 		
 		'footer-url'			=> 'http://localhost/',
 		'footer-title'			=> 'Special World',
@@ -43,10 +49,13 @@
 		'enable-firewall'		=> true,					
 		'irc-reporting'			=> true,					// Report to IRC
 		'show-ikachan'			=> true,
+		'backup-folder'			=> 'backups',				// Folder containing backups, relative to the ab root
+		'backup-threshold'		=> 15,						// Days before a backup is considered old
+		'force-lastip-match'	=> false,					// Force logout on IP changes
 		
 		// Debugging
-		'enable-sql-debugger'	=> false,					// (stub to set option in mysql.php)
-		'always-show-debug'		=> false,					// Always show error/query list regardless of powerlevel
+		'enable-sql-debugger'	=> true,					// (stub to set option in mysql.php)
+		'always-show-debug'		=> true,					// Always show error/query list regardless of powerlevel
 		'force-user-id'			=> false,						
 		'allow-rereggie'		=> false,
 		

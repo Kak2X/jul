@@ -137,6 +137,21 @@
 		//	$post['text']=doreplace2($post['text'], $post['options']);
 		return $post;
 	}
+	
+	function getpostlayoutid($text){
+		global $sql;
+		
+		// Everything breaks on transactions if $text is blank
+		if (!$text) return 0;
+		
+		$id = $sql->resultp("SELECT id FROM postlayouts WHERE text = ? LIMIT 1", [$text]);
+		// Is this a new layout?
+		if (!$id) {
+			$sql->queryp("INSERT INTO postlayouts (text) VALUES (?)", [$text]);
+			$id = $sql->insert_id();
+		}
+		return $id;
+	}
 
 function syndrome($num, $double=false, $bar=true){
 	$bar	= false;

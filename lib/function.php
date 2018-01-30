@@ -86,22 +86,7 @@
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
 	} else {
-
 		$die = 0;
-		// Bad Design Decisions 2001.
-		// :(
-		/*
-		if (!get_magic_quotes_gpc()) {
-			$_GET = addslashes_array($_GET);
-			$_POST = addslashes_array($_POST);
-			$_COOKIE = addslashes_array($_COOKIE);
-		}
-		if(!ini_get('register_globals')){
-			$supers=array('_ENV', '_SERVER', '_GET', '_POST', '_COOKIE',);
-			foreach($supers as $__s) if (is_array($$__s)) extract($$__s, EXTR_SKIP);
-			unset($supers);
-		}
-		*/
 	}
 	
 
@@ -357,9 +342,6 @@
 		}
 	}
 	
-	//if ($ipbanned || $torbanned)
-	//	$windowtitle = $boardname;
-	
 	/*
 		Set up extra url info for referer/hit logging
 	*/
@@ -381,8 +363,6 @@
 		$bpt_flags = $bpt_flags & BPT_BOT;
 	}
 	
-
-	//if (isset($_SERVER['HTTP_REFERER']) && substr($_SERVER['HTTP_REFERER'], 0, strlen($config['board-url'])) != $config['board-url']){
 	if ($origin && !SAME_ORIGIN) {
 		$sql->queryp("INSERT INTO referer (time, url, ref, ip) VALUES (:time,:url,:ref,:ip)",
 		[
@@ -539,7 +519,7 @@
 	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
 		$loguser['layout']		= 2;
 		$loguser['viewsig']		= 0;
-		$config['board-title']				= "<span style='font-size: 2em'>$boardname</span>";
+		$config['board-title']	= "<span style='font-size: 2em'>{$config['board-name']}</span>";
 		$x_hacks['smallbrowse']	= true;
 	}
 	
@@ -559,14 +539,14 @@
 
 //  $hacks['noposts'] = true;
 
-/*
-	$getdoom	= true;
-	require "ext/mmdoom.php";
-*/
-	//$x_hacks['rainbownames'] = ($sql->resultq("SELECT MAX(`id`) % 100000 FROM `posts`")) <= 100;
-	
+	// Doom timer setup
+//	$getdoom	= true;
+//	require "ext/mmdoom.php";
+
 	// When a post milestone is reached, everybody gets rainbow colors for a day
-	$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
+	if (!$x_hacks['rainbownames']) {
+		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
+	}
 	
 	// Private board option
 	$allowedpages = ['register.php', 'login.php', 'faq.php'];
@@ -575,9 +555,8 @@
 			"You need to <a href='login.php'>login</a> to browse this board.<br>".
 			"If you don't have an account you can <a href='register.php'>register</a> one.<br><br>".
 			"The Rules/FAQ are available <a href='faq.php'>here</a>."
-		);// view faq page ehre
+		);
 	}
-	
 	unset($allowedpages);
 	
 	/* we're not Jul, and the special sex->namecolor system got nuked anyway
@@ -609,23 +588,6 @@
 
 	}
 */
-// New birthday shit
-/*
-	$today = date('m-d',ctime() - (60 * 60 * 3));
-	@$sql->query("UPDATE `users` SET `sex` = `oldsex` WHERE `sex` = 255 AND FROM_UNIXTIME(birthday,'%m-%d')!='$today'");
-	@$sql->query("UPDATE `users` SET `oldsex` = `sex`, `sex` = '255' WHERE sex != 255 AND birthday AND FROM_UNIXTIME(birthday,'%m-%d')='$today'");
-*/
-
-// Old birthday shit
-/*
-	mysql_query("UPDATE `users` SET `sex` = '2' WHERE `sex` = 255");
-	$busers = @mysql_query("SELECT id, name FROM users WHERE FROM_UNIXTIME(birthday,'%m-%d')='".date('m-d',ctime() - (60 * 60 * 3))."' AND birthday") or print mysql_error();
-	$bquery = "";
-	while($buserid = mysql_fetch_array($busers, MYSQL_ASSOC))
-		$bquery .= ($bquery ? " OR " : "") ."`id` = '". $buserid['id'] ."'";
-	if ($bquery)
-		mysql_query("UPDATE `users` SET `sex` = '255' WHERE $bquery");
-*/
 
 // For our convenience (read: to go directly into a query), at the cost of sacrificing the NULL return value
 function filter_int(&$v) 		{ return (int) $v; }
@@ -633,36 +595,6 @@ function filter_float(&$v)		{ return (float) $v; }
 function filter_bool(&$v) 		{ return (bool) $v; }
 function filter_array (&$v)		{ return (array) $v; }
 function filter_string(&$v) 	{ return (string) $v; }
-
-/*
-function filter_int(&$v) {
-	if (!isset($v)) {
-		return null;
-	} else {
-		$v	= (int) $v;
-		return $v;
-	}
-}
-
-function filter_bool(&$v) {
-	if (!isset($v)) {
-		return null;
-	} else {
-		$v	= (bool) $v;
-		return $v;
-	}
-}
-
-
-function filter_string(&$v) {
-	if (!isset($v)) {
-		return null;
-	} else {
-		$v	= (string) $v;
-		return $v;
-	}
-}
-*/
 
 function readsmilies($path = 'smilies.dat') {
 	global $x_hacks;
@@ -675,15 +607,6 @@ function readsmilies($path = 'smilies.dat') {
 	$r = fclose($fpnt);
 	return $smil;
 }
-
-/* bad leftover from the old days
-function numsmilies(){
-	$fpnt=fopen('smilies.dat','r');
-	for($i=0;fgetcsv($fpnt,300,'');$i++);
-	$r=fclose($fpnt);
-	return $i;
-}
-*/
 
 function readpostread($userid) {
 	global $sql;
@@ -1127,17 +1050,8 @@ function getrank($rankset, $title, $posts, $powl, $bandate = NULL){
 			for ($i = max(array_keys($pr)); $i !== 0; --$i) {
 				$dotnum[$i] = floor($postsx / $pr[$i]);		
 				$postsx = $postsx - $dotnum[$i] * $pr[$i];	// Posts left
-			}/*
-			$dotnum[5] = floor($postsx / $pr[5]);
-			$postsx = $postsx - $dotnum[5] * $pr[5];
-			$dotnum[4] = floor($postsx / $pr[4]);
-			$postsx = $postsx - $dotnum[4] * $pr[4];
-			$dotnum[3] = floor($postsx / $pr[3]);
-			$postsx = $postsx - $dotnum[3] * $pr[3];
-			$dotnum[2] = floor($postsx / $pr[2]);
-			$postsx = $postsx - $dotnum[2] * $pr[2];
-			$dotnum[1] = floor($postsx / $pr[1]);
-*/
+			}
+			
 			foreach($dotnum as $dot => $num) {
 				for ($x = 0; $x < $num; ++$x) {
 					$rank .= "<img src='images/dot". $dot .".gif' align='absmiddle'>";
@@ -1314,65 +1228,22 @@ function fadec($c1,$c2,$pct) {
   return $ret;
 }
 */
-/*
-function getuserlink(&$u, $substitutions = null, $urlclass = '') {
-	
-	if ($substitutions === true) {
-		global $herpderpwelp;
-		if (!$herpderpwelp)
-			trigger_error('Deprecated: $substitutions passed true (old behavior)', E_USER_NOTICE);
-		$herpderpwelp = true;
-	}
-	
-	global $herpderpwelp;
-	if (!$herpderpwelp)
-		trigger_error('Deprecated: getuserlink function used', E_USER_NOTICE);
-	$herpderpwelp = true;
-
-	// dumb hack for $substitutions
-	$fn = array(
-		'aka'			=> 'aka',
-		'id'			=> 'id',
-		'name'			=> 'name',
-		'sex'			=> 'sex',
-		'powerlevel'	=> 'powerlevel',
-		'birthday'		=> 'birthday'
-	);
-	if ($substitutions)
-		$fn = array_merge($fn, $substitutions);
-
-	$akafield = htmlspecialchars($u[$fn['aka']], ENT_QUOTES);
-	$alsoKnownAs = (($u[$fn['aka']] && $u[$fn['aka']] != $u[$fn['name']])
-		? " title='Also known as: {$akafield}'" : '');
-
-	$u[$fn['name']] = htmlspecialchars($u[$fn['name']], ENT_QUOTES);
-
-	global $tzoff;
-	$birthday = (date('m-d', $u[$fn['birthday']]) == date('m-d',ctime() + $tzoff));
-	$rsex = (($birthday) ? 255 : $u[$fn['sex']]);
-
-	$namecolor = getnamecolor($rsex, $u[$fn['powerlevel']]);
-
-	$class = $urlclass ? " class='{$urlclass}'" : "";
-	
-	return "<a style='color:#{$namecolor};'{$class} href='profile.php?id=". $u[$fn['id']] ."'{$alsoKnownAs}>". $u[$fn['name']] ."</a>";
-}
-*/
 
 function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	global $sql, $loguser, $userfields;
 	
 	if (!$u) {
-		if ($id == $loguser['id']) $u = $loguser;
-		else {
+		if ($id == $loguser['id']) {
+			$u = $loguser;
+		} else {
 			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, mysql::USE_CACHE);
-			//if (!$u) return "<span style='color: #FF0000'>[Invalid userlink with ID #$id]</span>"; // (development only notice)
 		}
 	}
 	
-	if ($id) $u['id'] = $id;
-	
-	// Values being NULL is a sign of a deleted user
+	if ($id) {
+		$u['id'] = $id;
+	}
+	// When the username is null it typically means the user has been deleted.
 	// Print this so we don't just end up with a blank link.
 	if ($u['name'] == NULL) {
 		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
@@ -1380,11 +1251,19 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	
 	$akafield		= htmlspecialchars($u['aka']);
 	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: {$akafield}\"" : '';
+	
 	$u['name'] 		= htmlspecialchars($u['name'], ENT_QUOTES);
-	// Don't calculate birthday effect again
-	if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) {
-		$u['namecolor'] = 'rnbow';
+	
+	if ($u['namecolor']) {
+		if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) { // Don't calculate birthday effect again
+			$namecolor = 'rnbow';
+		} else {
+			$namecolor = $u['namecolor'];
+		}
+	} else {
+		$namecolor = "";
 	}
+	
 	$namecolor		= getnamecolor($u['sex'], $u['powerlevel'], $u['namecolor']);
 	
 	$minipic		= ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
@@ -1392,7 +1271,7 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	$class = $urlclass ? " class='{$urlclass}'" : "";
 	
 	
-	return "$minipic<a style='color:#{$namecolor}'{$class} href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
+	return "{$minipic}<a style='color:#{$namecolor}'{$class} href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
 }
 
 function getnamecolor($sex, $powl, $namecolor = ''){
@@ -1714,21 +1593,6 @@ function loaduser($id,$type){
 }
 */
 
-function getpostlayoutid($text){
-	global $sql;
-	
-	// Everything breaks on transactions if $text is blank
-	if (!$text) return 0;
-	
-	$id = $sql->resultp("SELECT id FROM postlayouts WHERE text = ? LIMIT 1", [$text]);
-	// Is this a new layout?
-	if (!$id) {
-		$sql->queryp("INSERT INTO postlayouts (text) VALUES (?)", [$text]);
-		$id = $sql->insert_id();
-	}
-	return $id;
-}
-
 function squot($t, &$src){
 	switch($t){
 		case 0: $src=htmlspecialchars($src); break;
@@ -2015,9 +1879,6 @@ function xssfilters($data, $validate = false){
 function dofilters($p){
 	global $hacks;
 	
-	
-	$p = xssfilters($p);
-
 	//$p=preg_replace("'<object(.*?)</object>'si","",$p);
 	//$p=preg_replace("'autoplay'si",'',$p); // kills autoplay, need to think of a solution for embeds.
 

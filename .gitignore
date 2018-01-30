@@ -9,5 +9,5 @@ version.txt
 lib/firewall.php
 
 # No testboard stuff
-lib/config.php
+# lib/config.php # nobody ended up updating config.sample.php
 backups/*.zip

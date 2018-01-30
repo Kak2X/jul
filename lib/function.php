@@ -131,38 +131,17 @@
 		die;
 	}
 	
-	if ($miscdata['disable']) {
-		if ($_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
-			if ($miscdata['private'] == 2) {
-				do404();
-			} else if ($x_hacks['host']) {
-				require "lib/downtime-bmf.php";
-			} else {
-				require "lib/downtime2.php";
-			}
-		} else {
-			$config['title-submessage'] = "<br>(THE BOARD IS DISABLED)";
-		}
-		/*
-		die("
-		<title>Damn</title>
-			<body style=\"background: #000 url('images/bombbg.png'); color: #f00;\">
-				<font style=\"font-family: Verdana, sans-serif;\">
-				<center>
-				<br><font style=\"color: #f88; size: 175%;\"><b>The board has been taken offline for a while.</b></font>
-				<br>
-				<br><font style=\"color: #f55;\">This is probably because:
-				<br>&bull; we're trying to prevent something from going wrong,
-				<br>&bull; abuse of the forum was taking place and needs to be stopped,
-				<br>&bull; some idiot thought it'd be fun to disable the board
-				</font>
-				<br>
-				<br>The forum should be back up within a short time. Until then, please do not panic;
-				<br>if something bad actually happened, we take backups often.
-			");
-			*/
-	}
+	// Delete expired bans
+	$sql->query("
+		UPDATE `users` SET 
+		    `ban_expire` = 0, 
+		    `powerlevel` = powerlevel_prev
+		WHERE `ban_expire` != 0 AND 
+		      `powerlevel` = '-1' AND
+		      `ban_expire` < ".ctime()
+	);
 	
+	$sql->query("DELETE FROM `ipbans` WHERE `expire` != 0 AND `expire` < ".ctime());
 	
 	$loguser = array();
 
@@ -194,19 +173,12 @@
 	$logpwenc = null;
 	*/
 	
-	// Delete expired bans
-	$sql->query("
-		UPDATE `users` SET 
-		    `ban_expire` = 0, 
-		    `powerlevel` = powerlevel_prev
-		WHERE `ban_expire` != 0 AND 
-		      `powerlevel` = '-1' AND
-		      `ban_expire` < ".ctime()
-	);
-	
-	$sql->query("DELETE FROM `ipbans` WHERE `expire` != 0 AND `expire` < ".ctime());
-	
-	if(isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
+	if ($config['force-user-id']) {
+		// Forcing the user id?
+		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
+		$loguser['lastip'] = $_SERVER['REMOTE_ADDR']; // since these now match, it will not update the lastip value on the db
+	} else if (isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
+		// Are we logged in?
 		$loguserid 	= (int) $_COOKIE['loguserid'];
 		$loguser 	= $sql->fetchq("SELECT * FROM `users` WHERE `id` = $loguserid");
 
@@ -222,10 +194,6 @@
 		unset($loguserid, $logverify, $verifyid, $verifyhash);
 	}
 	
-	if ($config['force-user-id'])
-		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
-
-	
 	if ($loguser) {
 		$loguser['tzoff'] = $loguser['timezone'] * 3600;
 		
@@ -237,21 +205,33 @@
 		// Load inventory
 		$itemdb = getuseritems($loguser['id']);
 		
-		if ($itemdb)
-			foreach($itemdb as $item)
-				if ($item['effect'] == 5) $hacks['comments'] = true;
+		// Items effects which only affect the user go here
+		if ($itemdb) {
+			foreach($itemdb as $item) {
+				switch ($item['effect']) {
+					// New HTML comment display enable
+					case 5: $hacks['comments'] = true; break;
+				}
+			}
+		}
 		
-		if ($loguser['id'] == 1)
+		if ($loguser['id'] == 1) {
 			$hacks['comments'] = true;
-		//else 
+		} //else {
+			// Old HTML comment display enable
 			//$hacks['comments'] = $sql->resultq("SELECT COUNT(*) FROM `users_rpg` WHERE `uid` = '{$loguser['id']}' AND `eq6` IN ('43', '71', '238')");
+		//}
 		
+		// ?
 		/*
 		if ($loguser['viewsig'] >= 3)
 			return header("Location: /?sec=1");
 		*/
-		if ($loguser['powerlevel'] >= 1)
+		// Normal+ can view the submessage
+		if ($loguser['powerlevel'] >= 1) {
 			$config['board-title'] .= $config['title-submessage'];
+		}
+		// Making sure Tina is always admin even if it's displayed as Normal user?
 		/*
 		if ($loguser['id'] == 175 && !$x_hacks['host'])
 			$loguser['powerlevel'] = max($loguser['powerlevel'], 3);
@@ -298,6 +278,37 @@
 	//$getdoom = true;
 	//require "ext/mmdoom.php";
 	
+	if ($miscdata['disable']) {
+		if (!$sysadmin && $_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
+			if ($miscdata['private'] == 2) {
+				do404();
+			} else if ($x_hacks['host']) {
+				require "lib/downtime-bmf.php";
+			} else {
+				require "lib/downtime2.php";
+			}
+		} else {
+			$config['title-submessage'] = "<br>(THE BOARD IS DISABLED)";
+		}
+		/*
+		die("
+		<title>Damn</title>
+			<body style=\"background: #000 url('images/bombbg.png'); color: #f00;\">
+				<font style=\"font-family: Verdana, sans-serif;\">
+				<center>
+				<br><font style=\"color: #f88; size: 175%;\"><b>The board has been taken offline for a while.</b></font>
+				<br>
+				<br><font style=\"color: #f55;\">This is probably because:
+				<br>&bull; we're trying to prevent something from going wrong,
+				<br>&bull; abuse of the forum was taking place and needs to be stopped,
+				<br>&bull; some idiot thought it'd be fun to disable the board
+				</font>
+				<br>
+				<br>The forum should be back up within a short time. Until then, please do not panic;
+				<br>if something bad actually happened, we take backups often.
+			");
+			*/
+	}
 	
 	
 	$ipbanned = $torbanned = $isbot = 0;
@@ -338,6 +349,9 @@
 	//if ($ipbanned || $torbanned)
 	//	$windowtitle = $boardname;
 	
+	/*
+		Set up extra url info for referer/hit logging
+	*/
 	$url = $_SERVER['REQUEST_URI'];
 
 	if($ipbanned) {

@@ -634,20 +634,7 @@ function filter_int(&$v) 		{ return (int) $v; }
 function filter_float(&$v)		{ return (float) $v; }
 function filter_bool(&$v) 		{ return (bool) $v; }
 function filter_array (&$v)		{ return (array) $v; }
-function filter_string(&$v, $codefilter = false) { 
-	if ($codefilter) {
-		$v = str_replace("\x00", "", $v);
-		$v = preg_replace("'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]'", "", $v);
-
-		//Unicode Control Codes
-		$v = str_replace("\xC2\xA0","\x20", $v);
-		$v = preg_loop($v, "\xC2+[\x80-\x9F]");
-		
-		// Entities
-		$v = preg_replace("'(&(\n)?#x?([0-9]|[a-f])+[;>]?)+'si", "<small>(garbage entities were deleted)</small>", $v);
-	}
-	return (string) $v; 
-}
+function filter_string(&$v) 	{ return (string) $v; }
 
 /*
 function filter_int(&$v) {

@@ -502,7 +502,7 @@
 		View milestones
 	*/
 
-	$views = $sql->resultq('SELECT views FROM misc') + 1;
+	$views = $miscdata['views'] + 1;
 	
 	if (!$isbot && !IS_AJAX_REQUEST) {
 		

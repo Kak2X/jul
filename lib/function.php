@@ -402,29 +402,28 @@
 				$diff = "/".($diff+1)*8;
 
 				xk_ircsend("102|". xk(7) ."User {$loguser['name']} (id {$loguser['id']}) changed from IP ". xk(8) . $loguser['lastip'] . xk(7) ." to ". xk(8) . $_SERVER['REMOTE_ADDR'] .xk(7). " ({$color}{$diff}" .xk(7). ")");
-			}
-			
-			// "Transfer" the IP bans just in case
-			$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
-			if ($oldban){
-				ipban(
-					$_SERVER['REMOTE_ADDR'],  // IP to ban
-					$oldban['reason'], // Copy over the ban reason
-					"Previous IP address was IP banned - updated IP bans list.", // IRC Message 
-					IRC_ADMIN // IRC Channel
-				);
-				die;
-			}
-			unset($oldban);
-			
-			// optionally force log out
-			if ($config['force-lastip-match']) {
-				setcookie('loguserid','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
-				setcookie('logverify','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
-				// Attempt to preserve current page
-				die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
-			}
 
+				// "Transfer" the IP bans just in case
+				$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
+				if ($oldban){
+					ipban(
+						$_SERVER['REMOTE_ADDR'],  // IP to ban
+						$oldban['reason'], // Copy over the ban reason
+						"Previous IP address was IP banned - updated IP bans list.", // IRC Message 
+						IRC_ADMIN // IRC Channel
+					);
+					die;
+				}
+				unset($oldban);
+				
+				// optionally force log out
+				if ($config['force-lastip-match']) {
+					setcookie('loguserid','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+					setcookie('logverify','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+					// Attempt to preserve current page
+					die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
+				}
+			}
 
 			$sql->queryp("
 				UPDATE users

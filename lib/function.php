@@ -26,7 +26,11 @@
 	require 'lib/mysql.php';
 	require 'lib/layout.php';
 	require 'lib/rpg.php';
+	require 'lib/datetime.php';
 
+	const IRC_MAIN = 0;
+	const IRC_STAFF = 1;
+	const IRC_ADMIN = 102;
 	
 	
 	$sql	= new mysql;
@@ -348,10 +352,10 @@
 	if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
 	if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
 
-	if($sql->resultq("SELECT COUNT(*) FROM ipbans WHERE $checkips")) $ipbanned = 1;
+	$baninfo = $sql->fetchq("SELECT ip, expire FROM ipbans WHERE $checkips");
+	if($baninfo) $ipbanned = 1;
 	if($sql->resultq("SELECT COUNT(*) FROM tor WHERE `ip` = '{$_SERVER['REMOTE_ADDR']}' AND `allowed` = '0'")) $torbanned = 1;
-
-	
+					
 	if ($_SERVER['HTTP_REFERER']) {
 		$botinfo = $sql->fetchq("SELECT signature, malicious FROM bots WHERE INSTR('".addslashes(strtolower($_SERVER['HTTP_USER_AGENT']))."', signature) > 0");
 		if ($botinfo) {
@@ -359,7 +363,11 @@
 			if ($botinfo['malicious']) {
 				$ipbanned = 1;
 				if (!$sql->resultq("SELECT 1 FROM ipbans WHERE $checkips")) {
-					$sql->query("INSERT INTO `ipbans` SET `ip` = '{$_SERVER['REMOTE_ADDR']}', `reason`='Malicious bot.', `date` = '". ctime() ."', `banner` = '0'");
+					ipban(
+						$_SERVER['REMOTE_ADDR'],
+						"Malicious bot.",
+						xk(7) . "Auto IP Banned malicious bot with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ."."
+					);
 				}
 			}
 		}
@@ -482,7 +490,13 @@
 			$reason	= ($reason ? "Reason: $reason" : "<i>(No reason given)</i>");
 		}
 		
-		$message = 	"You are banned from this board.".
+		$expiration = (
+			$baninfo['expire']
+			? " until ".printdate($baninfo['expire']).".<br>That's ".timeunits2($baninfo['expire'] - ctime())." from now"
+			: ""
+		);
+		
+		$message = 	"You are banned from this board{$expiration}.".
 					"<br>". $reason .
 					"<br>".
 					"<br>If you think you have been banned in error, please contact the administrator:".
@@ -1524,9 +1538,6 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 	return $output;
 }
 
-const IRC_MAIN = 0;
-const IRC_STAFF = 1;
-const IRC_ADMIN = 102;
 // Banner 0 = automatic ban
 function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
@@ -2237,11 +2248,6 @@ function strip_doc_root($file) {
 	}
 	return str_replace($root_path, "", $file);
 }
-
-
-// additional includes
-require_once "lib/datetime.php";
-
 
 function unescape($in) {
 

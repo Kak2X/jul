@@ -3,28 +3,37 @@
 	
 	require 'lib/function.php';
 	
-	$id		= filter_int($_GET['id']);
-	$quoteid	= filter_int($_GET['postid']);
+	// Stop this insanity.  Never index newreply.
+	$meta['noindex'] = true;
 	
-	if (!$id) 
+	$id         = filter_int($_GET['id']);
+	$quoteid    = filter_int($_GET['postid']);
+	
+	if (!$id)  {
 		errorpage("No thread specified.", "index.php", 'return to the index page', 0);
-	
+	}
 	
 	$thread = $sql->fetchq("SELECT forum, closed, sticky, title, lastposter FROM threads WHERE id = $id");
 
-	// Stop this insanity.  Never index newreply.
-	$meta['noindex'] = true;
-
-	if (!$thread) 
+	if (!$thread) {
 		errorpage("Nice try. Next time, wait until someone makes the thread <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
-	
+	}
 
 	$forumid = (int) $thread['forum'];
-	$forum = $sql->fetchq("SELECT title, minpower, minpowerreply, id, specialscheme, specialtitle FROM forums WHERE id = $forumid");
+	$forum   = $sql->fetchq("
+		SELECT title, minpower, minpowerreply, id, specialscheme, specialtitle 
+		FROM forums 
+		WHERE id = {$forumid}
+	");
 	
-	
-	if($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$loguser['id']}"))
-		$ismod = 1;
+	// Local mods
+	if (!$ismod) {
+		$ismod = $sql->resultq("
+			SELECT 1 
+			FROM forummods 
+			WHERE forum = {$forumid} and user = {$loguser['id']}
+		");
+	}
 	
 	// Thread permissions for our sanity
 	$canviewforum 	= (!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']);
@@ -67,12 +76,13 @@
 
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
 		
+		// Trying to post as someone else?
 		if ($loguser['id'] && !$password) {
 			$userid = $loguser['id'];
 			$user	= $loguser;
 		} else {
-			$userid 	= checkuser($username,$password);
-			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
+			$userid 	= checkuser($username, $password);
+			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '{$userid}'");
 		}
 		
 
@@ -98,11 +108,12 @@
 				$error	= "You didn't enter anything in the post.";
 			if ($user['lastposttime'] > (ctime()-4))
 				$error	= "You are posting too fast.";
+			// Attachments check here
 		}
 		
-		if ($error) 
+		if ($error) {
 			errorpage("Couldn't enter the post. $error", "thread.php?id=$id", htmlspecialchars($thread['title']), 0);
-		
+		}
 		// All OK
 
 		$sign	= $user['signature'];
@@ -123,10 +134,6 @@
 			check_token($_POST['auth']);
 			
 			$sql->beginTransaction();
-
-			$querycheck = array();
-
-			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '$userid'", false, $querycheck);
 
 			if ($nolayout) {
 				$headid = 0;
@@ -149,39 +156,37 @@
 						'signid'			=> $signid,
 						'moodid'			=> $moodid,
 						
-						'text'				=> xssfilters($message),
+						'text'				=> $message,
 						'tagval'			=> $tagval,
 						'options'			=> $nosmilies . "|" . $nohtml,
 						
-					 ], $querycheck);
+					 ]);
 					 
 			$pid = $sql->insert_id();
 			
 			
 			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky," : "";
-
+			
+			// Update statistics
 			$sql->query("UPDATE `threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '$userid' WHERE `id`='$id'", false, $querycheck);
 			$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '$currenttime', `lastpostuser` ='$userid', `lastpostid` = '$pid' WHERE `id`='$forumid'", false, $querycheck);
 
 			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '$id'", false, $querycheck);
 			$sql->query("REPLACE INTO threadsread SET `uid` = '$userid', `tid` = '$id', `time` = ". ctime() .", `read` = '1'", false, $querycheck);
 
-			
-			if ($sql->checkTransaction($querycheck)) {
-				
-				xk_ircout("reply", $user['name'], array(
-					'forum'		=> $forum['title'],
-					'fid'		=> $forumid,
-					'thread'	=> str_replace("&lt;", "<", $thread['title']),
-					'pid'		=> $pid,
-					'pow'		=> $forum['minpower'],
-				));
+			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '$userid'");
 
-				return header("Location: thread.php?pid=$pid#$pid");
-				
-			} else {
-				errorpage("An error occurred while creating the post.");
-			}
+			$sql->commit();
+			
+			xk_ircout("reply", $user['name'], array(
+				'forum'		=> $forum['title'],
+				'fid'		=> $forumid,
+				'thread'	=> str_replace("&lt;", "<", $thread['title']),
+				'pid'		=> $pid,
+				'pow'		=> $forum['minpower'],
+			));
+
+			return header("Location: thread.php?pid=$pid#$pid");
 
 		}
 		
@@ -204,7 +209,7 @@
 
 		//$qppp = $ppp + 1;
 		$posts = $sql->query("
-			SELECT $userfields, u.posts, p.user, p.text, p.options, p.num
+			SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.num
 			FROM posts p
 			LEFT JOIN users u ON p.user = u.id
 			WHERE p.thread = $id
@@ -358,8 +363,7 @@
 	
 	?>
 	<?=$barlinks?>
-	<form action="newreply.php?id=<?=$id?>" name=replier method=post autocomplete=off>
-	<body onload=window.document.REPLIER.message.focus()>
+	<form method="POST" action="newreply.php?id=<?=$id?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 		<tr>
 			<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
@@ -372,21 +376,19 @@
 			</td>
 			<td class='tdbg2' colspan=2>
 				<?=$altloginjs?>
-					<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($username)?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
-
 					<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
 					<input style="display:none;" type="text"     name="__f__usernm__">
 					<input style="display:none;" type="password" name="__f__passwd__">
-
+					<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($username)?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
 					<b>Password:</b> <input type='password' name=password SIZE=13 MAXLENGTH=64 autocomplete=off>
 				</span>
 			</td>
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center'><b>Reply:</b></td>
+			<td class='tdbg1 center b'>Reply:</td>
 			<td class='tdbg2' style='width: 800px' valign=top>
-				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message, ENT_QUOTES)?></textarea>
+				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message, ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
 				<?=moodlist($moodid)?>
@@ -403,7 +405,7 @@
 		</tr>
 	
 		<tr>
-			<td class='tdbg1 center'><b>Options:</b></td>
+			<td class='tdbg1 center b'>Options:</td>
 			<td class='tdbg2' colspan=2>
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
@@ -411,6 +413,16 @@
 			</td>
 		</tr>
 		<?=$modoptions?>
+		<tr>
+			<td class='tdbg1 center'>
+				<span class='b'>Quik-Attach:</span>
+				<div class='fonts'>Preview for more options</div>
+			</td>
+			<td class='tdbg2' colspan=2>
+				<input type="file" name="attachment0">
+				<br>Max size: <?= sizeunits($config['attach-max-size']) ?>
+			</td>
+		</tr>
 	</table>
 	<br>
 	<table class='table'><?=$postlist?></table>
@@ -421,3 +433,38 @@
 	
 	pagefooter();
 
+// This layout is completely stolen from the I3 Archive
+// Just so you know
+function attachdisplay($link, $filename, $size, $views, $is_image = false) {
+	$size_txt = sizeunits($size);
+	
+	if ($is_image) { // An image?
+		return "<a href='download.php?id={$link}'><img src='attachments/t/{$link}.png' title='{$filename} - {$size_txt}, views: {$views}'></a><br><br>";
+	} else { // Not an image
+		return "<a href='download.php?id={$link}'>{$filename}</a> ({$size_txt}) - views: {$views}<br>";
+	}
+}
+
+// on preview, uploaded files are saved on temp/attach<thread>_<user>
+
+// Assumes to receive an array of elements fetched off the DB
+function attachfield($list) {
+	$out = "";
+	foreach ($list as $x) {
+		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image']); 
+	}
+	return "<fieldset><legend>Attachments</legend>{$out}</fieldset>";
+}
+
+function upload_attachment() {
+}
+	
+function sizeunits($bytes) {
+	static $sizes = ['B', 'KB', 'MB', 'GB'];
+	for ($i = $sbar = 1; $i < 5; ++$i, $sbar *= 1024) { // $sbar defines the size multiplier
+		if ($bytes < $sbar * 1024) {
+			// only .00 is really worthless to know so cut that out
+			return $qseconds = str_replace('.00', '', sprintf("%04.2f", $bytes / $sbar)).' '.$sizes[$i-1];
+		}
+	}
+}

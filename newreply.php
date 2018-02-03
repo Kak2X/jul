@@ -114,6 +114,25 @@
 		if ($error) {
 			errorpage("Couldn't enter the post. $error", "thread.php?id=$id", htmlspecialchars($thread['title']), 0);
 		}
+		
+		// Process attachments removal
+		$cnt = get_attachments_index($id, $loguser['id']);
+		$list = array();
+		for ($i = 0; $i < $cnt; ++$i) {
+			if (filter_int($_POST["remove{$i}"])) {
+				$list[] = $i;
+			}
+		}
+		if (!empty($list)) {
+			remove_temp_attachments($id, $loguser['id'], $list);
+		}
+		
+		// Upload current attachment
+		// May need to get changed if an add row system is done (ala poll choices)
+		if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
+			upload_attachment($_FILES["attachment{$i}"], $id, $loguser['id'], $i);
+		}
+		
 		// All OK
 
 		$sign	= $user['signature'];
@@ -311,6 +330,8 @@
 		$ppost['text']			= $message;
 		$ppost['options']		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		$ppost['attach']		= get_temp_attachments($id, $loguser['id']);
+		
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 	/*	
@@ -427,7 +448,16 @@
 // This layout is completely stolen from the I3 Archive
 // Just so you know
 function quikattach() {
-	global $config;
+	global $config, $loguser, $id, $thread;
+	
+	$cnt = get_attachments_index($id, $loguser['id']);
+	// Existing attachments
+	$out = "";
+	for ($i = 0; $i < $cnt; ++$i) {
+		$out .= htmlspecialchars(file_get_contents(attachment_tempname($id, $loguser['id'], $i).".dat"))
+		." &nbsp; <input type='checkbox' name='remove{$i}' value=1><label for='remove{$i}'>Remove</a><br>";
+	}
+	
 	return "".
 		"<tr>
 			<td class='tdbg1 center'>
@@ -435,17 +465,21 @@ function quikattach() {
 				<div class='fonts'>Preview for more options</div>
 			</td>
 			<td class='tdbg2' colspan=2>
-				<input type='file' name='attachment0'>
+				{$out}
+				<input type='file' name='attachment{$i}'>
 				<br>Max size: ".sizeunits($config['attach-max-size'])."
 			</td>
 		</tr>";
 }
 
-function attachdisplay($id, $filename, $size, $views, $is_image = false) {
+function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL) {
 	$size_txt = sizeunits($size);
 	
-	if ($is_image) { // An image?
-		return "<a href='download.php?id={$id}'><img src='".attachment_name($id, true)."' title='{$filename} - {$size_txt}, views: {$views}'></a><br><br>";
+	if ($is_image) { // An image
+		return 
+		"<a href='download.php?id={$id}'>".
+		"<img src='".($imgprev !== NULL ? $imgprev : attachment_name($id, true))."' title='{$filename} - {$size_txt}, views: {$views}'>".
+		"</a><br><br>";
 	} else { // Not an image
 		return "<a href='download.php?id={$id}'>{$filename}</a> ({$size_txt}) - views: {$views}<br>";
 	}
@@ -458,7 +492,8 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false) {
 function attachfield($list) {
 	$out = "";
 	foreach ($list as $x) {
-		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image']); 
+		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
+		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev']); 
 	}
 	return "<fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
@@ -477,7 +512,27 @@ function upload_attachment($file, $thread, $user, $file_id) {
 	// Preserve given filename to an identically named .dat file
 	file_put_contents("{$path}.dat", $file['name']);
 	
-	return move_uploaded_file($file['tmp_name'], $path);
+	// Move the file and THEN generate the thumbnail
+	$res = move_uploaded_file($file['tmp_name'], $path);
+	
+	list($width, $height) = getimagesize($path);
+	$is_image = ($width && $height);
+	// Generate a thumbnail
+	if ($is_image) {
+		$src_image = imagecreatefromstring(file_get_contents($path));
+		if ($src_image) {
+			$dst_image = resize_image($src_image, 100, 100);
+		}
+		if (!$src_image || !$dst_image) {
+			// source image not found or resize error
+			$dst_image = imagecreatefrompng("images/thumbnailbug.png");
+		}
+		imagedestroy($src_image);
+		imagepng($dst_image, "{$path}_t");
+		imagedestroy($dst_image);
+	}
+	
+	return $res;
 }
 
 // Check if any current attachments are in the temp folder
@@ -509,30 +564,64 @@ function save_attachments($thread, $user, $post_id) {
 		
 		$rowid = $sql->insert_id();
 		
-		
-		// Generate a thumbnail
+		// Move the thumbnail we previously generated off the temp folder
 		if ($is_image) {
-			$src_image = imagecreatefromstring(file_get_contents($path));
-			if ($src_image) {
-				$dst_image = resize_image($src_image, 100, 100);
-			}
-			if (!$src_image || !$dst_image) {
-				// source image not found or resize error
-				$dst_image = imagecreatefrompng("images/thumbnailbug.png");
-			}
-			imagedestroy($src_image);
-			imagepng($dst_image, attachment_name($rowid, true));
-			imagedestroy($dst_image);
+			rename("{$path}_t", attachment_name($rowid, true));
 		}
-		
-
 		rename($path, attachment_name($rowid));
 		unlink("{$path}.dat");
 	}
 }
 
+// For attachdisplay
+function get_temp_attachments($thread, $user) {
+	$cnt = get_attachments_index($thread, $user);
+	$res = array();
+	for ($i = 0; $i < $cnt; ++$i) {
+		$path = attachment_tempname($thread, $user, $i);
+		$is_image = file_exists("{$path}_t"); // Can cheat this one
+		$res[] = [
+			'id'       => 0,
+			'filename' => file_get_contents("{$path}.dat"),
+			'size'     => filesize($path), // File size
+			'views'    => 0,
+			'is_image' => $is_image,
+			'imgprev'  => $is_image ? "data:".mime_content_type("{$path}_t").";base64,".base64_encode(file_get_contents("{$path}_t")) : NULL, // Image preview hack
+		];
+	}
+	return $res;
+}
+
+function remove_temp_attachments($thread, $user, $list) {
+	$max = get_attachments_index($thread, $user); // Get this before it's too late
+	// Remove attachments
+	foreach ($list as $i) {
+		$path = attachment_tempname($thread, $user, $i);
+		unlink($path);
+		unlink($path.'.dat');
+		$del[$i] = true; // Removed elements
+	}
+	
+	// Reorder the list since it's expected to not have any holes
+	for ($i = $offset = 0; $i < $max; ++$i) {
+		if (isset($del[$i])) {
+			++$offset; // File deleted, add 1 to rename offset
+		} else if ($offset) {
+			$src_path  = attachment_tempname($thread, $user, $i);
+			$dest_path = attachment_tempname($thread, $user, $i - $offset);
+			
+			rename($src_path, $dest_path); // Main file
+			rename("{$src_path}.dat", "{$dest_path}.dat"); // Metadata
+			if (file_exists("{$src_path}_t")) {
+				rename("{$src_path}_t", "{$dest_path}_t"); // Thumbnail
+			}
+
+		}
+	}
+}
+
 // Get the total size of all attachments uploaded in the temp area
-function check_attachments_size($thread, $user, $extra = 0) {
+function get_attachments_size($thread, $user, $extra = 0) {
 	$size = $extra;
 	for ($i = 0; true; ++$i) {
 		$path = attachment_tempname($thread, $user, $i);
@@ -546,7 +635,7 @@ function check_attachments_size($thread, $user, $extra = 0) {
 function get_attachments_index($thread, $user) {
 	for ($i = 0; true; ++$i) {
 		if (!file_exists(attachment_tempname($thread, $user, $i))) {
-			return $i - 1;
+			return $i;
 		}
 	}
 }
@@ -572,19 +661,20 @@ function resize_image($image, $max_width, $max_height) {
 	
 	// Don't bother if the image is already under the limits
 	if ($width <= $max_width && $height <= $max_height) {
-		return $image;
-	}
-	
-	$ratio     = $width / $height;
-	if ($ratio > 1) { // width > height
-		$n_width    = $max_width;
-		$n_height   = round($height * $max_width / $width);
+		$dst_image = imagecreatetruecolor($width, $height);
+		imagecopy($dst_image, $image, 0, 0, 0, 0, $width, $height);
 	} else {
-		$n_width    = round($width * $max_height / $height);
-		$n_height   = $max_height;
+		$ratio     = $width / $height;
+		if ($ratio > 1) { // width > height
+			$n_width    = $max_width;
+			$n_height   = round($height * $max_width / $width);
+		} else {
+			$n_width    = round($width * $max_height / $height);
+			$n_height   = $max_height;
+		}
+		
+		$dst_image = imagecreatetruecolor($n_width, $n_height);
+		imagecopyresampled($dst_image, $image, 0, 0, 0, 0, $n_width, $n_height, $width, $height);
 	}
-	
-	$dst_image = imagecreatetruecolor($n_width, $n_height);
-	imagecopyresampled($dst_image, $src_image, 0, 0, 0, 0, $n_width, $n_height, $width, $height);
 	return $dst_image;
 }

@@ -413,16 +413,7 @@
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<tr>
-			<td class='tdbg1 center'>
-				<span class='b'>Quik-Attach:</span>
-				<div class='fonts'>Preview for more options</div>
-			</td>
-			<td class='tdbg2' colspan=2>
-				<input type="file" name="attachment0">
-				<br>Max size: <?= sizeunits($config['attach-max-size']) ?>
-			</td>
-		</tr>
+		<?=quikattach()?>
 	</table>
 	<br>
 	<table class='table'><?=$postlist?></table>
@@ -435,17 +426,34 @@
 
 // This layout is completely stolen from the I3 Archive
 // Just so you know
-function attachdisplay($link, $filename, $size, $views, $is_image = false) {
+
+function quikattach() {
+	global $config;
+	return "".
+		"<tr>
+			<td class='tdbg1 center'>
+				<span class='b'>Quik-Attach:</span>
+				<div class='fonts'>Preview for more options</div>
+			</td>
+			<td class='tdbg2' colspan=2>
+				<input type='file' name='attachment0'>
+				<br>Max size: ".sizeunits($config['attach-max-size'])."
+			</td>
+		</tr>";
+}
+
+function attachdisplay($id, $filename, $size, $views, $is_image = false) {
 	$size_txt = sizeunits($size);
 	
 	if ($is_image) { // An image?
-		return "<a href='download.php?id={$link}'><img src='attachments/t/{$link}.png' title='{$filename} - {$size_txt}, views: {$views}'></a><br><br>";
+		return "<a href='download.php?id={$id}'><img src='".attachment_name($id, true)."' title='{$filename} - {$size_txt}, views: {$views}'></a><br><br>";
 	} else { // Not an image
-		return "<a href='download.php?id={$link}'>{$filename}</a> ({$size_txt}) - views: {$views}<br>";
+		return "<a href='download.php?id={$id}'>{$filename}</a> ({$size_txt}) - views: {$views}<br>";
 	}
 }
 
-// on preview, uploaded files are saved on temp/attach<thread>_<user>
+// on preview, uploaded files are saved on temp/attach_<thread>_<user>_<i>
+// once confirmed, they are simply identified by index
 
 // Assumes to receive an array of elements fetched off the DB
 function attachfield($list) {
@@ -456,9 +464,98 @@ function attachfield($list) {
 	return "<fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
-function upload_attachment() {
-}
+// Upload to the temp area
+// file_id should be sequential
+function upload_attachment($file, $thread, $user, $file_id) {
+	global $config;
 	
+	if (!$file['size']) 
+		errorpage("This is an 0kb file");
+	if (get_attachments_size($thread, $user, $file['size']) > $config['attach-max-size'])
+		errorpage("The file you're trying to upload is over the file size limit.");	
+	
+	$path = attachment_tempname($thread, $user, $file_id);
+	// Preserve given filename to an identically named .dat file
+	file_put_contents("{$path}.dat", $file['name']);
+	
+	return move_uploaded_file($file['tmp_name'], $path);
+}
+
+// Check if any current attachments are in the temp folder
+// and move them to the proper attachment folder and save to the DB
+function save_attachments($thread, $user, $post_id) {
+	global $sql;
+	for ($i = 0; true; ++$i) {
+		$path = attachment_tempname($thread, $user, $i);
+		if (!file_exists($path)){
+			break;
+		}
+		
+		// Fill out extra metadata
+		list($width, $height) = getimagesize($file['tmp_name']);
+		$is_image = ($width && $height);
+		
+		
+		$sqldata = [
+			'post'     => $post_id,
+			'user'     => $user,
+			'mime'     => mime_content_type($path),
+			'filename' => file_get_contents("{$path}.dat"),
+			'size'     => filesize($path),
+			'views'    => 0,
+			'is_image' => $is_image,
+		];
+		
+		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
+		
+		$rowid = $sql->insert_id();
+		
+		
+		// Generate a thumbnail
+		if ($is_image) {
+			$src_image = imagecreatefromstring(file_get_contents($path));
+			if ($src_image) {
+				$dst_image = resize_image($src_image, 100, 100);
+			}
+			if (!$src_image || !$dst_image) {
+				// source image not found or resize error
+				$dst_image = imagecreatefrompng("images/thumbnailbug.png");
+			}
+			imagedestroy($src_image);
+			imagepng($dst_image, attachment_name($rowid, true));
+			imagedestroy($dst_image);
+		}
+		
+
+		rename($path, attachment_name($rowid));
+		unlink("{$path}.dat");
+	}
+}
+
+// Get the total size of all attachments uploaded in the temp area
+function check_attachments_size($thread, $user, $extra = 0) {
+	$size = $extra;
+	for ($i = 0; true; ++$i) {
+		$path = attachment_tempname($thread, $user, $i);
+		if (!file_exists($path)) {
+			return $size;
+		}
+		$size += filesize($path);
+	}
+}
+
+function get_attachments_index($thread, $user) {
+	for ($i = 0; true; ++$i) {
+		if (!file_exists(attachment_tempname($thread, $user, $i))) {
+			return $i - 1;
+		}
+	}
+}
+
+function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : $id); }
+function attachment_tempname ($thread, $user, $file_id) { return "temp/attach_{$thread}_{$user}_{$file_id}"; }
+
+
 function sizeunits($bytes) {
 	static $sizes = ['B', 'KB', 'MB', 'GB'];
 	for ($i = $sbar = 1; $i < 5; ++$i, $sbar *= 1024) { // $sbar defines the size multiplier
@@ -467,4 +564,22 @@ function sizeunits($bytes) {
 			return $qseconds = str_replace('.00', '', sprintf("%04.2f", $bytes / $sbar)).' '.$sizes[$i-1];
 		}
 	}
+}
+
+function resize_image($image, $max_width, $max_height) {
+	// Determine thumbnail size based on the aspect ratio
+	$width     = imagesx($image);
+	$height    = imagesy($image);
+	$ratio     = $width / $height;
+	if ($ratio > 1) { // width > height
+		$n_width    = $max_width;
+		$n_height   = round($height * $max_width / $width);
+	} else {
+		$n_width    = round($width * $max_height / $height);
+		$n_height   = $max_height;
+	}
+	
+	$dst_image = imagecreatetruecolor($n_width, $n_height);
+	imagecopyresampled($dst_image, $src_image, 0, 0, 0, 0, $n_width, $n_height, $width, $height);
+	return $dst_image;
 }

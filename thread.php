@@ -442,13 +442,16 @@
 	$layouts = $sql->query("SELECT headid, signid FROM posts WHERE {$searchon} LIMIT $min, $ppp");
 	preplayouts($layouts);
 	
-	/* 
-	$posts = $sql->query(
-		"SELECT p.*,text$sfields,edited,editdate,options,tagval,u.id uid,name,$ufields,regdate ".
-		"FROM posts_text, posts p LEFT JOIN users u ON p.user=u.id ".
-		"WHERE {$searchon} AND p.id=pid ORDER BY p.id LIMIT $min,$ppp");
-		*/
-		
+	
+	$attachments = $sql->fetchq("
+		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
+		FROM posts p
+		LEFT JOIN attachments a ON p.id = a.post
+		WHERE p.{$searchon} AND a.id IS NOT NULL
+		ORDER BY p.id
+		LIMIT {$min},{$ppp}
+	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+	
 	// heh
 	$posts = $sql->query("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
@@ -483,6 +486,10 @@
 
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+		
+		if (isset($attachments[$post['id']])) {
+			$post['attach'] = $attachments[$post['id']];
+		}
 
 
 		$pforum		= null;

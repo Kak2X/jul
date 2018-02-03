@@ -104,7 +104,7 @@ function attachfield($list) {
 		$out .= "<br/>".attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], NULL);
 	}
 	
-	return "<fieldset><legend>Attachments</legend>{$out}</fieldset>";
+	return "<br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
 // Upload to the temp area
@@ -208,6 +208,9 @@ function remove_temp_attachments($thread, $user, $list) {
 		$path = attachment_tempname($thread, $user, $i);
 		unlink($path);
 		unlink($path.'.dat');
+		if (file_exists($path.'_t')) {
+			unlink($path.'_t');
+		}
 		$del[$i] = true; // Removed elements
 	}
 	
@@ -247,6 +250,18 @@ function get_attachments_index($thread, $user) {
 			return $i;
 		}
 	}
+}
+
+// The thread id is an important part of the temp attachment name
+// Obviously it doesn't exist yet when creating a new thread
+function get_attachments_newthread($keyformat, $user) {
+	$i = -1;
+	do {
+		++$i;
+		$set = glob("temp/attach_{$keyformat}{$i}_{$user}_*", GLOB_NOSORT);
+	} while($set);
+	echo "[Returned key {$i}]";
+	return $i;
 }
 
 function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : "f/{$id}"); }

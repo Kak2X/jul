@@ -18,7 +18,6 @@
 			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
 	}
 	
-	
 	$windowtitle = "{$config['board-name']} -- {$forum['title']} -- New Thread";
 	
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
@@ -73,9 +72,13 @@
 	$nohtml			= filter_int($_POST['nohtml']);
 	$nolayout		= filter_int($_POST['nolayout']);
 	
+	$iconpreview    = "";
+	
+	// Attachment preview stuff
+	$input_tid  = "";
+	$tid_temp   = "nx";
 	
 	if (isset($_POST['preview']) || isset($_POST['submit'])) {
-		
 		// common threadpost / query requirements
 		
 		$username = filter_string($_POST['username'], true);
@@ -111,6 +114,48 @@
 		// ---
 		
 		if($userid != -1 && $subject && $message && $forumexists && $authorized && $limithit) {
+			
+			// as soon as the first file is properly attached, mark the temp key as confirmed
+			// and do the same for each next iteration of the script
+			// meaning that on next iterations of this script, the current key value will be used
+			if (isset($_POST['tidconfirm'])) {
+				echo "[CONFIRMED]<br>";
+				$attach_id  = filter_int($_POST['attach_id']);
+				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
+			} else {
+				$attach_id  = get_attachments_newthread("n{$id}_", $loguser['id']);
+			}
+			$input_tid .= "<input type='hidden' name='attach_id' value='{$attach_id}'>";
+			$tid_temp   = "n{$id}_{$attach_id}";
+			
+			// Process attachments removal
+			$cnt = get_attachments_index($tid_temp, $loguser['id']);	
+			$list = array();
+			for ($i = 0; $i < $cnt; ++$i) {
+				if (filter_int($_POST["remove{$i}"])) {
+					$list[] = $i;
+				}
+			}
+
+			if (!empty($list)) {
+				remove_temp_attachments($tid_temp, $loguser['id'], $list);
+			}
+			
+
+			
+			// Upload current attachment
+			// May need to get changed if an add row system is done (ala poll choices)
+			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
+				upload_attachment($_FILES["attachment{$i}"], $tid_temp, $loguser['id'], $i);
+				echo "[CONFIRMED ON NEXT]<br>";
+				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
+			} else if (count($list) == $cnt) {
+				echo "[UNCONFIRMED]<br>";
+				// if every attachment is removed and no extra one is getting uploaded, unconfirm the key
+				// this is to prevent any funny shit
+					$tid_temp = "nx";
+					$input_tid = "";
+			}
 			
 			// The thread preview also needs this for threadpost()
 			
@@ -229,6 +274,8 @@
 						 ], $querycheck);
 						 
 				$pid = $sql->insert_id();
+				
+				save_attachments($tid_temp, $loguser['id'], $pid);
 				
 				$sql->query("
 					UPDATE `forums` SET
@@ -401,6 +448,7 @@
 		$ppost['text']			= $message;
 		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		$ppost['attach']		= get_temp_attachments($tid_temp, $loguser['id']);
 		
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
@@ -430,17 +478,18 @@
 		<?=threadpost($ppost,1)?>
 	</table>
 			<?php
-			$focuson = 'message';
+			$autofocus[1] = 'autofocus'; // for 'message'
 		} else {
-			$focuson = 'subject';
+			$autofocus[0] = 'autofocus'; // for 'subject'
 		}
 		
-		?>
+		
+	
+?>
 		
 	<?=$forumlink?>
-	<form action="<?=$formlink?>" name=replier method=post autocomplete=off>
+	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
-		<body onload='window.document.REPLIER.<?=$focuson?>.focus()'>
 			<tr>
 				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
 				<td class='tdbgh center' colspan=2>&nbsp;</td>
@@ -480,7 +529,7 @@
 			<tr>
 				<td class='tdbg1 center'><b>Thread title:</b></td>
 				<td class='tdbg2' colspan=2>
-					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>">
+					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>" <?=filter_string($autofocus[0])?>>
 				</td>
 			</tr>
 			<tr>
@@ -494,7 +543,7 @@
 				<td class='tdbg1 center'><b>Post:</b></td>
 				<td class='tdbg2' style='width: 800px' valign=top>
 					<?=replytoolbar(2)?>
-					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
+					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
 					<?=moodlist($moodid)?>
@@ -506,6 +555,7 @@
 				<td class='tdbg2' colspan=2>
 					<input type='hidden' name=action VALUE=postthread>
 					<input type='hidden' name=auth   VALUE="<?=generate_token()?>">
+					<?= $input_tid ?>
 					<input type='submit' class=submit name=submit VALUE="Submit thread">
 					<input type='submit' class=submit name=preview VALUE="Preview thread">
 				</td>
@@ -529,7 +579,7 @@
 			<tr>
 				<td class='tdbg1 center'><b>Poll title:</b></td>
 				<td class='tdbg2' colspan=2>
-					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>">
+					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($subject)?>" <?=filter_string($autofocus[0])?>>
 				</td>
 			</tr>
 			<tr>
@@ -570,7 +620,7 @@
 				<td class='tdbg1 center'><b>Post:</b></td>
 				<td class='tdbg2' style='width: 800px' valign=top>
 					<?=replytoolbar(2)?>
-					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
+					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"  <?=filter_string($autofocus[1])?>><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
 					<?=moodlist($moodid)?>
@@ -581,6 +631,7 @@
 				<td class='tdbg1 center'>&nbsp;</td><td class='tdbg2' colspan=2>
 					<input type='hidden' name=action VALUE=postthread>
 					<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+					<?= $input_tid ?>
 					<input type='submit' class=submit name=submit VALUE="Submit poll">
 					<input type='submit' class=submit name=preview VALUE="Preview poll">
 				</td>
@@ -598,10 +649,11 @@
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label>
 				</td>
 			</tr>
+		<?=quikattach($tid_temp, $loguser['id'])?>
 		</table>
 		</form>
 		<?=$forumlink?>
 		<?=replytoolbar(4)?>
 		<?php
-
+echo $tid_temp;
 	pagefooter();

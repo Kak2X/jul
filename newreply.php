@@ -183,6 +183,7 @@
 					 
 			$pid = $sql->insert_id();
 			
+			save_attachments($id, $loguser['id'], $pid);
 			
 			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky," : "";
 			
@@ -434,7 +435,7 @@
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<?=quikattach()?>
+		<?=quikattach($id, $loguser['id'])?>
 	</table>
 	<br>
 	<table class='table'><?=$postlist?></table>
@@ -447,15 +448,15 @@
 
 // This layout is completely stolen from the I3 Archive
 // Just so you know
-function quikattach() {
-	global $config, $loguser, $id, $thread, $numdir;
+function quikattach($thread, $user) {
+	global $config, $numdir;
 	
-	$cnt = get_attachments_index($id, $loguser['id']);
+	$cnt = get_attachments_index($thread, $user);
 	// Existing attachments
 	$out = "";
 	$sizetotal = 0;
 	for ($i = 0; $i < $cnt; ++$i) {
-		$path = attachment_tempname($id, $loguser['id'], $i);
+		$path = attachment_tempname($thread, $user, $i);
 		$cell = ($i % 2) + 1;
 		$size = filesize($path);
 		$out .= "
@@ -600,7 +601,7 @@ function save_attachments($thread, $user, $post_id) {
 		}
 		
 		// Fill out extra metadata
-		list($width, $height) = getimagesize($file['tmp_name']);
+		list($width, $height) = getimagesize("{$path}_t");
 		$is_image = ($width && $height);
 		
 		

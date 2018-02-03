@@ -426,7 +426,6 @@
 
 // This layout is completely stolen from the I3 Archive
 // Just so you know
-
 function quikattach() {
 	global $config;
 	return "".
@@ -552,7 +551,7 @@ function get_attachments_index($thread, $user) {
 	}
 }
 
-function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : $id); }
+function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : "f/{$id}"); }
 function attachment_tempname ($thread, $user, $file_id) { return "temp/attach_{$thread}_{$user}_{$file_id}"; }
 
 
@@ -570,6 +569,12 @@ function resize_image($image, $max_width, $max_height) {
 	// Determine thumbnail size based on the aspect ratio
 	$width     = imagesx($image);
 	$height    = imagesy($image);
+	
+	// Don't bother if the image is already under the limits
+	if ($width <= $max_width && $height <= $max_height) {
+		return $image;
+	}
+	
 	$ratio     = $width / $height;
 	if ($ratio > 1) { // width > height
 		$n_width    = $max_width;

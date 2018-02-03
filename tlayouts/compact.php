@@ -32,6 +32,7 @@ function postcode($post,$set){
 			<td class='tbl tdbg{$set['bg']}' valign=top height=60 colspan=2 id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
+				{$set['attach']}
 				{$post['signtext']}
 			</td>
 		</tr>

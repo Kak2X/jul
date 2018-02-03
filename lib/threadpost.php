@@ -71,6 +71,11 @@
 			$post['edited'] = "";
 		}
 		
+		if (filter_array($post['attach'])) {
+			$set['attach'] = attachfield($post['attach']);
+		} else {
+			$set['attach'] = "";
+		}
 		
 		return dofilters(postcode($post,$set));
 	}

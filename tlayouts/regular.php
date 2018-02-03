@@ -109,6 +109,7 @@ function postcode($post,$set){
 				<td class='tbl tdbg{$set['bg']}' valign=top style='background: $fcol3; padding: 0;'>
 					{$post['headtext']}
 					{$post['text']}
+					{$set['attach']}
 					{$post['signtext']}
 				</td>
 			</tr>
@@ -168,6 +169,7 @@ function postcode($post,$set){
 					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' valign=top height=220 id='post{$post['id']}'>
 						{$post['headtext']}
 						{$post['text']}
+						{$set['attach']}
 						{$post['signtext']}
 					</td>
 				</tr>

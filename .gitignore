@@ -12,6 +12,12 @@ lib/firewall.php
 # lib/config.php # nobody ended up updating config.sample.php
 backups/*.zip
 
+# Attachments
+attachments/*
+!attachments/index.html
+!attachments/t/index.html
+!attachments/f/.htaccess
+
 # Never cache the temp folder
 temp/*
 !temp/.htaccess

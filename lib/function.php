@@ -1944,8 +1944,10 @@ function dofilters($p){
 	return $p;
 }
 
-
+// Additional includes
+require 'lib/attachments.php';
 require 'lib/threadpost.php';
+
 // require 'lib/replytoolbar.php';
 
 function replytoolbar() { return; }

@@ -104,7 +104,7 @@ function attachfield($list) {
 		$out .= "<br/>".attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], NULL);
 	}
 	
-	return "<br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
+	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
 // Upload to the temp area

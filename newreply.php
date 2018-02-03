@@ -448,40 +448,81 @@
 // This layout is completely stolen from the I3 Archive
 // Just so you know
 function quikattach() {
-	global $config, $loguser, $id, $thread;
+	global $config, $loguser, $id, $thread, $numdir;
 	
 	$cnt = get_attachments_index($id, $loguser['id']);
 	// Existing attachments
 	$out = "";
+	$sizetotal = 0;
 	for ($i = 0; $i < $cnt; ++$i) {
-		$out .= htmlspecialchars(file_get_contents(attachment_tempname($id, $loguser['id'], $i).".dat"))
-		." &nbsp; <input type='checkbox' name='remove{$i}' value=1><label for='remove{$i}'>Remove</a><br>";
+		$path = attachment_tempname($id, $loguser['id'], $i);
+		$cell = ($i % 2) + 1;
+		$size = filesize($path);
+		$out .= "
+		<tr>
+			<td class='tdbg{$cell}'>
+				".htmlspecialchars(file_get_contents("{$path}.dat"))."
+			</td>
+			<td class='tdbg{$cell}'>".sizeunits($size)."</td>
+			<td class='tdbg{$cell}'>
+				<input type='checkbox' name='remove{$i}' value=1>
+				<label for='remove{$i}'>Remove</a><br>
+			</td>";
+		
+		$sizetotal += $size;
 	}
 	
 	return "".
-		"<tr>
-			<td class='tdbg1 center'>
-				<span class='b'>Quik-Attach:</span>
-				<div class='fonts'>Preview for more options</div>
-			</td>
-			<td class='tdbg2' colspan=2>
-				{$out}
-				<input type='file' name='attachment{$i}'>
-				<br>Max size: ".sizeunits($config['attach-max-size'])."
-			</td>
-		</tr>";
+"<tr>
+	<td class='tdbg1 center'>
+		<span class='b'>Quik-Attach:</span>
+		<div class='fonts'>Preview for more options</div>
+	</td>
+	<td class='tdbg2' colspan=2>
+		<table class='table' style='border: none !important; width: auto !important'>
+			<tr><td class='tdbgh center b' colspan=3>Files to upload</td></tr>
+			<tr>
+				<td class='tdbgh center'>Filename</td>
+				<td class='tdbgh center'>File size</td>
+				<td class='tdbgh center'></td>
+			</tr>
+			{$out}
+			<tr>
+				<td class='tdbgc center b'>Total</td>
+				<td class='tdbgc center b' colspan=2>
+					".sizeunits($sizetotal)."/".sizeunits($config['attach-max-size'])."
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2' colspan=3>
+					<img src='images/{$numdir}bar-on.gif' style='height:8px; width:".ceil($sizetotal * 100 / $config['attach-max-size'])."%'>
+				</td>
+			</tr>
+			<tr>
+				<td colspan=3>
+					<input type='file' class='w' name='attachment{$i}'>
+				</td>
+			</tr>
+		</table>
+		
+	</td>
+</tr>";
 }
 
 function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL) {
 	$size_txt = sizeunits($size);
 	
+	// id 0 is a magic value used for post previews
+	$w = $id ? 'a' : 'b';
+	
+	
 	if ($is_image) { // An image
 		return 
-		"<a href='download.php?id={$id}'>".
+		"<$w href='download.php?id={$id}'>".
 		"<img src='".($imgprev !== NULL ? $imgprev : attachment_name($id, true))."' title='{$filename} - {$size_txt}, views: {$views}'>".
-		"</a><br><br>";
+		"</$w>";
 	} else { // Not an image
-		return "<a href='download.php?id={$id}'>{$filename}</a> ({$size_txt}) - views: {$views}<br>";
+		return "<$w href='download.php?id={$id}'>{$filename}</$w> ({$size_txt}) - views: {$views}";
 	}
 }
 
@@ -491,10 +532,23 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 // Assumes to receive an array of elements fetched off the DB
 function attachfield($list) {
 	$out = "";
-	foreach ($list as $x) {
+	$datalist = array();
+	// Display images first
+	foreach ($list as $k => $x) {
+		if (!$x['is_image']) {
+			$datalist[] = $k;
+			continue;
+		}
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
-		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev']); 
+		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev']).
+		" &nbsp; "; 
 	}
+	// And then leftover files
+	foreach ($datalist as $i) {
+		$x = $list[$i];
+		$out .= "<br/>".attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], NULL);
+	}
+	
 	return "<fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 

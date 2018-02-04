@@ -69,9 +69,8 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 	
 	return "".
 "<tr>
-	<td class='tdbg1 center'>
-		<span class='b'>Quik-Attach:</span>
-		<div class='fonts'>Preview for more options</div>
+	<td class='tdbg1 center b'>
+		Attachments:
 	</td>
 	<td class='tdbg2' colspan=2>
 		<table class='table' style='border: none !important; width: auto !important'>

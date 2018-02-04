@@ -1,9 +1,8 @@
 <?php
 
-// This layout is completely stolen from the I3 Archive
-// Just so you know
-function quikattach($thread, $user) {
-	global $config, $numdir;
+// TODO: Make the metadata file contain everything instead of checking the file size over and over again
+function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
+	global $config, $numdir, $sql;
 	
 	$cnt = get_attachments_index($thread, $user);
 	// Existing attachments
@@ -22,9 +21,50 @@ function quikattach($thread, $user) {
 			<td class='tdbg{$cell}'>
 				<input type='checkbox' name='remove{$i}' value=1>
 				<label for='remove{$i}'>Remove</a><br>
-			</td>";
+			</td>
+		</tr>";
 		
 		$sizetotal += $size;
+	}
+	
+	$out_conf = "";
+	if ($showpost !== NULL) {
+		$j = $i;
+		// Show uploaded attachments from a certain post
+		// Used in editpost
+		$attach = $sql->getarray("".
+			"SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image".
+			"	FROM attachments a".
+			"	WHERE a.post = {$showpost}", mysql::USE_CACHE);
+		if ($attach) {
+			$out_conf .= "<tr><td class='tdbgh center b' colspan=3>Files uploaded</td></tr>";
+		}
+		foreach ($attach as $x) {
+			$cell = ($j % 2) + 1;
+			
+			if (!isset($sel[$x['id']])) {
+				$sizetotal += $x['size'];
+				$delmark = "";
+			} else {
+				// Deletion mark
+				$delmark = " style='text-decoration: line-through'";
+			}
+			
+			$out_conf .= "
+			<tr>
+				<td class='tdbg{$cell}'{$delmark}>
+					{$x['filename']}
+				</td>
+				<td class='tdbg{$cell}'{$delmark}>".sizeunits($x['size'])."</td>
+				<td class='tdbg{$cell}'>
+					<input type='checkbox' name='removec{$x['id']}' value=1 ".filter_string($sel[$x['id']]).">
+					<label for='removec{$x['id']}'>Remove</a><br>
+				</td>
+			</tr>";			
+			
+			$j++;
+		}
+		
 	}
 	
 	return "".
@@ -42,6 +82,7 @@ function quikattach($thread, $user) {
 				<td class='tdbgh center'></td>
 			</tr>
 			{$out}
+			{$out_conf}
 			<tr>
 				<td class='tdbgc center b'>Total</td>
 				<td class='tdbgc center b' colspan=2>
@@ -71,11 +112,12 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 	} else { // Not an image
 		$thumb = "images/defaultthumb.png";
 	}
-	
+	$controls = "";
+	/*
 	$controls = $editmode ? 
 		"<a href='attachment.php?id={$id}&action=edit'>Edit</a> - ".
 		"<a href='attachment.php?id={$id}&action=delete'>Delete</a> "
-		: "";
+		: "";*/
 	
 	// id 0 is a magic value used for post previews
 	$w = $id ? 'a' : 'b';
@@ -113,7 +155,7 @@ function attachfield($list, $editmode = false) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $editmode);
 	}
-	if ($editmode) {
+	/* if ($editmode) {
 		$out .= "
 		<table class='attachment-box-addnew fonts'>
 			<tr>
@@ -122,18 +164,18 @@ function attachfield($list, $editmode = false) {
 				</td>
 			</tr>
 		</table>";
-	}
+	}*/
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
 // Upload to the temp area
 // file_id should be sequential
-function upload_attachment($file, $thread, $user, $file_id) {
+function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	global $config;
 	
 	if (!$file['size']) 
 		errorpage("This is an 0kb file");
-	if (get_attachments_size($thread, $user, $file['size']) > $config['attach-max-size'])
+	if (get_attachments_size($thread, $user, $file['size'] + $extra) > $config['attach-max-size'])
 		errorpage("The file you're trying to upload is over the file size limit.");	
 	
 	$path = attachment_tempname($thread, $user, $file_id);
@@ -174,9 +216,12 @@ function save_attachments($thread, $user, $post_id) {
 		}
 		
 		// Fill out extra metadata
-		list($width, $height) = getimagesize("{$path}_t");
-		$is_image = ($width && $height);
-		
+		if (file_exists("{$path}_t")) {
+			list($width, $height) = getimagesize("{$path}_t");
+			$is_image = ($width && $height);
+		} else {
+			$is_image = false;
+		}
 		
 		$sqldata = [
 			'post'     => $post_id,
@@ -268,6 +313,7 @@ function remove_attachments($list, $post = NULL) {
 }
 
 // Get the total size of all attachments uploaded in the temp area
+// and in the actual area too
 function get_attachments_size($thread, $user, $extra = 0) {
 	$size = $extra;
 	for ($i = 0; true; ++$i) {

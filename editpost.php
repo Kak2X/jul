@@ -46,7 +46,7 @@
 	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 
-
+	$attachsel = array();
 	
 	
 	
@@ -77,7 +77,39 @@
 
 			$edited 	= getuserlink($loguser);
 			//$edited = str_replace('\'', '\\\'', getuserlink($loguser));
-		
+			
+			// Mark the already confirmed attachment just for deletion (will be properly removed on submit)
+			// Recycle the same query which will be used later in quikattach()
+			$extrasize = 0;
+			$attach = $sql->getarray("".
+				"SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image".
+				"	FROM attachments a".
+				"	WHERE a.post = {$id}", mysql::USE_CACHE);
+			foreach ($attach as $x) {
+				if (isset($_POST["removec{$x['id']}"])) {
+					$attachsel[$x['id']] = 'checked';
+				} else {
+					$extrasize += $x['size']; // get_attachment_size() works for temp attachments only, so calculate the extra here
+				}
+			}
+			
+			// Process *TEMP* attachments removal
+			$cnt = get_attachments_index($threadid, $post['user']);
+			$list = array();
+			for ($i = 0; $i < $cnt; ++$i) {
+				if (filter_int($_POST["remove{$i}"])) {
+					$list[] = $i;
+				}
+			}
+			if (!empty($list)) {
+				remove_temp_attachments($threadid, $post['user'], $list);
+			}
+			
+			// Upload current attachment
+			// May need to get changed if an add row system is done (ala poll choices)
+			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
+				upload_attachment($_FILES["attachment{$i}"], $threadid, $post['user'], $i, $extrasize);
+			}	
 		
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
@@ -98,8 +130,7 @@
 				if($signid) $sign=''; else $signid=0;
 				
 				
-				// There's only one query to check so we don't bother using a transaction
-				$checkquery = array();
+				$sql->beginTransaction();
 				
 				$sql->queryp("UPDATE posts SET `headid` = :headid, `signid` = :signid, `moodid` = :moodid, `options` = :options, `headtext` = :headtext, `text` = :text, `signtext` = :signtext, `edited` = :edited, `editdate` = :editdate WHERE id = $id",
 					[
@@ -115,14 +146,14 @@
 						'signid'	=> $signid,
 						'moodid'	=> $moodid,
 						
-					], $checkquery);
-					
-				if ($checkquery[0]) {
-					errorpage("Post edited successfully.", "thread.php?pid=$id#$id", 'return to the thread', 0);
-				} else {
-					errorpage("An error occurred while editing the post.");
+					]);
+				$sql->commit();
+				
+				if ($attachsel) {
+					remove_attachments(array_keys($attachsel));
 				}
-					
+				save_attachments($threadid, $post['user'], $id);
+				errorpage("Post edited successfully.", "thread.php?pid=$id#$id", 'return to the thread', 0);
 				
 			} else {
 				/*
@@ -151,11 +182,21 @@
 				// Edited notice
 				$ppost['edited']	= $edited;
 				$ppost['editdate'] 	= ctime();
-				$ppost['attach']    = $sql->fetchq("
-					SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image
-					FROM attachments a
-					WHERE a.post = {$id}
-				", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
+				
+				// Attachments crap
+				$ppost['attach'] = array();
+				// Include in the preview anything which isn't marked as deleted
+				foreach ($attach as $k => $val) {
+					if (!isset($attachsel[$val['id']])) {
+						$ppost['attach'][] = $attach[$k];
+					}
+				}
+				// As well as the temp attachments
+				$ppost['attach']    = array_merge($ppost['attach'], get_temp_attachments($threadid, $post['user']));
+				/*
+				echo "<pre>";
+				print_r($ppost['attach']);
+				die;*/
 	
 				if ($isadmin)
 					$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
@@ -206,9 +247,8 @@
 
 		?>
 		<?=$barlinks?>
-	<table class='table'>
-		<body onload=window.document.REPLIER.message.focus()>
-		<FORM ACTION="editpost.php?id=<?=$id?>" NAME=REPLIER METHOD=POST>
+		<form method="POST" ACTION="editpost.php?id=<?=$id?>" enctype="multipart/form-data">
+		<table class='table'>
 			<tr>
 				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
 				<td class='tdbgh center' colspan=2>&nbsp;</td>
@@ -227,7 +267,7 @@
 					<b>Post:</b>
 				</td>
 				<td class='tdbg2' width=800px valign=top>
-					<textarea wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
+					<textarea wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
 			</tr>
 			<tr>
@@ -256,9 +296,10 @@
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label>
 				</td>
+				<?=quikattach($threadid, $post['user'], $post['id'], $attachsel)?>
 			</tr>
-		</FORM>
-	</table>
+		</table>
+		</form>
 		<?=$barlinks?>
 		<?php
 	}

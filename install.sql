@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 05, 2017 at 09:24 PM
+-- Generation Time: Feb 04, 2018 at 07:22 PM
 -- Server version: 10.1.9-MariaDB
 -- PHP Version: 5.6.15
 
@@ -16,6 +16,10 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+--
+-- Database: `julpower`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -27,7 +31,7 @@ CREATE TABLE `actionlog` (
   `atime` varchar(15) NOT NULL DEFAULT '',
   `adesc` mediumtext NOT NULL,
   `aip` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -53,7 +57,26 @@ CREATE TABLE `announcements` (
   `options` char(3) NOT NULL DEFAULT '0|0',
   `moodid` tinyint(3) NOT NULL DEFAULT '0',
   `noob` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attachments`
+--
+
+CREATE TABLE `attachments` (
+  `id` int(11) NOT NULL,
+  `post` int(11) NOT NULL,
+  `user` int(11) NOT NULL,
+  `mime` varchar(64) NOT NULL,
+  `filename` varchar(255) NOT NULL,
+  `size` int(11) NOT NULL,
+  `views` int(11) NOT NULL DEFAULT '0',
+  `is_image` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `biggestposters`
@@ -64,7 +87,9 @@ CREATE TABLE `biggestposters` (
   `posts` mediumint(8) NOT NULL,
   `waste` mediumint(8) NOT NULL,
   `average` mediumint(8) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `blockedlayouts`
@@ -73,7 +98,7 @@ CREATE TABLE `biggestposters` (
 CREATE TABLE `blockedlayouts` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `blocked` smallint(5) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -85,7 +110,7 @@ CREATE TABLE `bots` (
   `id` int(11) NOT NULL,
   `signature` text NOT NULL,
   `malicious` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `bots`
@@ -380,7 +405,7 @@ CREATE TABLE `categories` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `minpower` tinyint(4) DEFAULT '0',
   `corder` tinyint(3) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `categories`
@@ -403,7 +428,7 @@ CREATE TABLE `dailystats` (
   `threads` int(11) NOT NULL DEFAULT '0',
   `posts` int(11) NOT NULL DEFAULT '0',
   `views` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -416,7 +441,7 @@ CREATE TABLE `defines` (
   `definition` varchar(255) NOT NULL,
   `date` int(11) NOT NULL,
   `user` varchar(32) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -477,7 +502,9 @@ CREATE TABLE `delusers` (
   `dateshort` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `events`
@@ -492,7 +519,7 @@ CREATE TABLE `events` (
   `title` varchar(200) NOT NULL DEFAULT '',
   `text` text NOT NULL,
   `private` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -506,7 +533,9 @@ CREATE TABLE `failedlogins` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `ip` varchar(32) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `failedregs`
@@ -519,7 +548,9 @@ CREATE TABLE `failedregs` (
   `password` varchar(255) NOT NULL,
   `ip` varchar(32) NOT NULL,
   `regcode` varchar(32) DEFAULT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `failsupress`
@@ -528,7 +559,7 @@ CREATE TABLE `failedregs` (
 CREATE TABLE `failsupress` (
   `ip` varchar(32) NOT NULL,
   `cnt` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -539,7 +570,9 @@ CREATE TABLE `failsupress` (
 CREATE TABLE `favorites` (
   `user` bigint(6) NOT NULL DEFAULT '0',
   `thread` bigint(9) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `forummods`
@@ -548,7 +581,9 @@ CREATE TABLE `favorites` (
 CREATE TABLE `forummods` (
   `forum` smallint(5) NOT NULL DEFAULT '0',
   `user` mediumint(8) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `forumread`
@@ -558,7 +593,9 @@ CREATE TABLE `forumread` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `forum` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `readdate` int(10) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `forums`
@@ -583,17 +620,16 @@ CREATE TABLE `forums` (
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   `specialtitle` tinytext,
   `pollstyle` tinyint(2) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `forums`
 --
 
 INSERT INTO `forums` (`id`, `title`, `description`, `olddesc`, `catid`, `minpower`, `minpowerthread`, `minpowerreply`, `numthreads`, `numposts`, `lastpostdate`, `lastpostuser`, `lastpostid`, `forder`, `specialscheme`, `hidden`, `specialtitle`, `pollstyle`) VALUES
-(1, 'General Forum', 'For everybody.', '', 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, NULL, 0, '', 0),
+(1, 'General Forum', 'For everybody.', '', 1, 0, 0, 0, 13, 21, 1517771941, 1, 24, 1, NULL, 0, '', 0),
 (2, 'General Staff Forum', 'Not for everybody.', '', 2, 1, 1, 1, 0, 0, 0, 0, 0, 2, NULL, 0, '', 0),
 (3, 'Trash Forum', '?', '', 1, 0, 2, 2, 0, 0, 0, 0, 0, 2, NULL, 0, '', 0);
-
 
 -- --------------------------------------------------------
 
@@ -609,7 +645,7 @@ CREATE TABLE `guests` (
   `lasturl` varchar(100) NOT NULL DEFAULT '',
   `lastforum` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `flags` tinyint(3) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -622,7 +658,9 @@ CREATE TABLE `hits` (
   `user` mediumint(8) NOT NULL DEFAULT '0',
   `ip` varchar(15) NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `ipbans`
@@ -633,8 +671,11 @@ CREATE TABLE `ipbans` (
   `reason` varchar(100) NOT NULL DEFAULT '',
   `perm` tinyint(2) UNSIGNED NOT NULL DEFAULT '0',
   `date` int(10) UNSIGNED NOT NULL DEFAULT '0',
-  `banner` smallint(5) UNSIGNED NOT NULL DEFAULT '1'
-) ENGINE=InnoDB;
+  `banner` smallint(5) UNSIGNED NOT NULL DEFAULT '1',
+  `expire` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `itemcateg`
@@ -645,7 +686,7 @@ CREATE TABLE `itemcateg` (
   `corder` tinyint(4) NOT NULL DEFAULT '0',
   `name` varchar(20) NOT NULL DEFAULT '',
   `description` varchar(255) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `itemcateg`
@@ -687,7 +728,7 @@ CREATE TABLE `items` (
   `desc` text NOT NULL,
   `user` int(11) NOT NULL,
   `hidden` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `items`
@@ -706,7 +747,7 @@ CREATE TABLE `itemtypes` (
   `id` tinyint(3) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
   `ord` tinyint(4) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -722,25 +763,24 @@ CREATE TABLE `jstrap` (
   `filtered` text NOT NULL,
   `url` varchar(255) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
-
--- --------------------------------------------------------
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `log`
 --
 
 CREATE TABLE `log` (
-  `ip` varchar(32) NOT NULL,
-  `time` int(11) UNSIGNED NOT NULL,
-  `get` text NOT NULL,
-  `post` text NOT NULL,
-  `cookie` text NOT NULL,
-  `useragent` text NOT NULL,
+  `ip` varchar(32) DEFAULT NULL,
+  `time` int(11) UNSIGNED DEFAULT NULL,
+  `get` text,
+  `post` text,
+  `cookie` text,
+  `useragent` text,
   `ref` text,
-  `banflags` smallint(5) NOT NULL,
-  `defntime` char(19) NOT NULL
-) ENGINE=InnoDB;
+  `headers` text,
+  `banflags` smallint(5) DEFAULT NULL,
+  `defntime` char(19) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -752,7 +792,7 @@ CREATE TABLE `minilog` (
   `ip` varchar(32) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL,
   `banflags` smallint(5) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -778,14 +818,16 @@ CREATE TABLE `misc` (
   `specialtitle` tinytext,
   `regmode` tinyint(2) NOT NULL DEFAULT '0',
   `regcode` varchar(32) DEFAULT NULL,
-  `bigpostersupdate` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+  `bigpostersupdate` int(11) NOT NULL DEFAULT '0',
+  `private` tinyint(4) NOT NULL DEFAULT '0',
+  `backup` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `misc`
 --
-INSERT INTO `misc` () VALUES ();
 
+INSERT INTO `misc` () VALUES ();
 -- --------------------------------------------------------
 
 --
@@ -797,7 +839,7 @@ CREATE TABLE `pendingusers` (
   `password` text,
   `ip` varchar(15) NOT NULL,
   `time` int(11) UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -822,7 +864,9 @@ CREATE TABLE `pmsgs` (
   `text` mediumtext NOT NULL,
   `signtext` text NOT NULL,
   `tagval` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `poll`
@@ -834,7 +878,7 @@ CREATE TABLE `poll` (
   `briefing` text NOT NULL,
   `closed` tinyint(1) NOT NULL DEFAULT '0',
   `doublevote` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -846,7 +890,7 @@ CREATE TABLE `pollvotes` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` int(11) NOT NULL DEFAULT '0',
   `user` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -859,7 +903,7 @@ CREATE TABLE `poll_choices` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` varchar(255) NOT NULL DEFAULT '',
   `color` varchar(25) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -870,7 +914,7 @@ CREATE TABLE `poll_choices` (
 CREATE TABLE `postlayouts` (
   `id` mediumint(8) UNSIGNED NOT NULL,
   `text` text NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -881,7 +925,7 @@ CREATE TABLE `postlayouts` (
 CREATE TABLE `postradar` (
   `user` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `comp` smallint(5) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -907,7 +951,7 @@ CREATE TABLE `posts` (
   `options` char(3) NOT NULL DEFAULT '0|0',
   `edited` text,
   `editdate` int(11) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `postsday`
@@ -917,7 +961,7 @@ CREATE TABLE `postsday` (
   `time` int(11) NOT NULL DEFAULT '0',
   `acmlm2` int(11) NOT NULL DEFAULT '0',
   `justus` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -929,7 +973,7 @@ CREATE TABLE `ranks` (
   `rset` tinyint(3) UNSIGNED NOT NULL DEFAULT '1',
   `num` mediumint(8) NOT NULL DEFAULT '0',
   `text` varchar(255) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `ranks`
@@ -1063,7 +1107,7 @@ INSERT INTO `ranks` (`rset`, `num`, `text`) VALUES
 CREATE TABLE `ranksets` (
   `id` tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(50) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `ranksets`
@@ -1087,7 +1131,7 @@ CREATE TABLE `referer` (
   `url` varchar(255) NOT NULL,
   `ref` varchar(255) NOT NULL,
   `ip` varchar(15) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1103,7 +1147,9 @@ CREATE TABLE `rendertimes` (
   `querytime` double NOT NULL,
   `scripttime` double NOT NULL,
   `rendertime` double NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
 
 --
 -- Table structure for table `rpg_classes`
@@ -1123,14 +1169,16 @@ CREATE TABLE `rpg_classes` (
   `Dex` float UNSIGNED NOT NULL DEFAULT '1',
   `Lck` float UNSIGNED NOT NULL DEFAULT '1',
   `Spd` float UNSIGNED NOT NULL DEFAULT '1'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `rpg_classes`
 --
 
 INSERT INTO `rpg_classes` (`id`, `name`, `sex`, `minpowerselect`, `HP`, `MP`, `Atk`, `Def`, `Int`, `MDf`, `Dex`, `Lck`, `Spd`) VALUES
-(1, 'Tyrant', NULL, NULL, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+(1, 'Tyrant', NULL, NULL, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+(2, 'Demoness Overlord', NULL, NULL, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+
 
 -- --------------------------------------------------------
 
@@ -1143,7 +1191,7 @@ CREATE TABLE `rpg_inventory` (
   `user` mediumint(9) NOT NULL,
   `itemid` int(11) NOT NULL,
   `equippedto` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1157,7 +1205,7 @@ CREATE TABLE `schemes` (
   `name` varchar(50) DEFAULT NULL,
   `file` varchar(200) DEFAULT NULL,
   `special` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `schemes`
@@ -1186,13 +1234,14 @@ INSERT INTO `schemes` (`id`, `ord`, `name`, `file`, `special`) VALUES
 (101, 21, 'Hydra''s Blue Thing (V2)', 'hydras_blue_thing_v2.php', 0),
 (150, 150, 'AE Torture', 'aesucks.php', 1),
 (151, 151, 'Daily Cycle', 'dailycycle.php', 1),
-(202, 202, 'Attitude Barn', 'spec-attitude.php', 1), -- I have no idea what the real name of the next schemes are
+(202, 202, 'Attitude Barn', 'spec-attitude.php', 1),
 (203, 203, 'Black Hole', 'spec-blackhole.php', 1),
 (204, 204, 'Subcon', 'spec-subcon.php', 1),
 (205, 205, 'Top Secret', 'spec-topsecret.php', 1),
 (206, 206, 'Trolldra', 'spec-trolldra.php', 1),
 (207, 207, 'Waffles', 'spec-waffle.php', 1),
-(208, 208, 'The Zen', 'spec-zen.php', 1);
+(208, 208, 'The Zen', 'spec-zen.php', 1),
+(209, 209, 'Unfiction', 'spec-unfiction.php', 1);
 
 -- --------------------------------------------------------
 
@@ -1216,9 +1265,7 @@ CREATE TABLE `threads` (
   `sticky` tinyint(1) UNSIGNED NOT NULL DEFAULT '0',
   `poll` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `locked` tinyint(1) UNSIGNED NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
-
--- --------------------------------------------------------
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `threadsread`
@@ -1229,7 +1276,7 @@ CREATE TABLE `threadsread` (
   `tid` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `time` int(11) NOT NULL,
   `read` tinyint(4) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1240,7 +1287,7 @@ CREATE TABLE `threadsread` (
 CREATE TABLE `tinapoints` (
   `name` varchar(32) NOT NULL,
   `points` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1253,7 +1300,7 @@ CREATE TABLE `tlayouts` (
   `ord` smallint(5) NOT NULL DEFAULT '0',
   `name` varchar(50) DEFAULT NULL,
   `file` varchar(50) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tlayouts`
@@ -1275,7 +1322,7 @@ CREATE TABLE `tor` (
   `ip` varchar(15) NOT NULL,
   `allowed` tinyint(4) NOT NULL DEFAULT '0',
   `hits` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1289,7 +1336,7 @@ CREATE TABLE `tournamentplayers` (
   `cmt` varchar(255) NOT NULL,
   `time` int(11) NOT NULL,
   `score` int(11) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1308,7 +1355,7 @@ CREATE TABLE `tournaments` (
   `scoretype` tinyint(4) NOT NULL,
   `active` tinyint(4) NOT NULL,
   `organizer` mediumint(9) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1321,7 +1368,7 @@ CREATE TABLE `userpic` (
   `categ` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `url` varchar(250) NOT NULL DEFAULT '',
   `name` varchar(100) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1333,7 +1380,7 @@ CREATE TABLE `userpiccateg` (
   `id` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `page` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `name` varchar(200) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1345,7 +1392,7 @@ CREATE TABLE `userratings` (
   `userfrom` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `userrated` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `rating` smallint(5) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1367,9 +1414,11 @@ CREATE TABLE `users` (
   `signature` text,
   `bio` text,
   `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
+  `powerlevel_prev` tinyint(2) NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
   `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) DEFAULT NULL,
+  `namecolor_bak` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
   `useranks` tinyint(1) UNSIGNED NOT NULL DEFAULT '1',
   `titleoption` tinyint(1) NOT NULL DEFAULT '1',
@@ -1405,8 +1454,9 @@ CREATE TABLE `users` (
   `dateformat` varchar(32) NOT NULL,
   `dateshort` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
-  `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+  `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
+  `ban_expire` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1427,7 +1477,7 @@ CREATE TABLE `users_rpg` (
   `eq5` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `eq6` smallint(5) UNSIGNED NOT NULL DEFAULT '0',
   `eq7` smallint(6) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Indexes for dumped tables
@@ -1445,6 +1495,14 @@ ALTER TABLE `actionlog`
 ALTER TABLE `announcements`
   ADD PRIMARY KEY (`id`),
   ADD KEY `forum` (`forum`);
+
+--
+-- Indexes for table `attachments`
+--
+ALTER TABLE `attachments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `post` (`post`),
+  ADD KEY `user` (`user`);
 
 --
 -- Indexes for table `biggestposters`
@@ -1741,7 +1799,8 @@ ALTER TABLE `users`
   ADD KEY `lastposttime` (`lastposttime`),
   ADD KEY `lastactivity` (`lastactivity`),
   ADD KEY `powerlevel` (`powerlevel`),
-  ADD KEY `sex` (`sex`);
+  ADD KEY `sex` (`sex`),
+  ADD KEY `ban_expire` (`ban_expire`);
 
 --
 -- Indexes for table `users_rpg`
@@ -1764,6 +1823,11 @@ ALTER TABLE `actionlog`
 ALTER TABLE `announcements`
   MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `attachments`
+--
+ALTER TABLE `attachments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `biggestposters`
 --
 ALTER TABLE `biggestposters`
@@ -1772,12 +1836,17 @@ ALTER TABLE `biggestposters`
 -- AUTO_INCREMENT for table `bots`
 --
 ALTER TABLE `bots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+--
+-- AUTO_INCREMENT for table `dailystats`
+--
+ALTER TABLE `dailystats`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `events`
 --
@@ -1797,7 +1866,7 @@ ALTER TABLE `failedregs`
 -- AUTO_INCREMENT for table `forums`
 --
 ALTER TABLE `forums`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 --
 -- AUTO_INCREMENT for table `guests`
 --
@@ -1807,12 +1876,12 @@ ALTER TABLE `guests`
 -- AUTO_INCREMENT for table `itemcateg`
 --
 ALTER TABLE `itemcateg`
-  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 --
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` mediumint(8) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `itemtypes`
 --
@@ -1852,7 +1921,7 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `rpg_classes`
 --
 ALTER TABLE `rpg_classes`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
 -- AUTO_INCREMENT for table `rpg_inventory`
 --
@@ -1872,7 +1941,7 @@ ALTER TABLE `userpic`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

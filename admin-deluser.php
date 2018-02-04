@@ -49,6 +49,7 @@
 				$sql->query("UPDATE events SET user={$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
 				$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
 				$sql->query("UPDATE pmsgs SET userto = {$config['deleted-user-id']} WHERE userto=$id", false, $querycheck);
+				$sql->query("UPDATE attachments SET user = {$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
 				$sql->query("UPDATE users SET posts = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}", false, $querycheck);
 				
 				$sql->query("DELETE FROM forummods WHERE user=$id", false, $querycheck);

@@ -2,7 +2,7 @@
 	
 	function threadpost($post,$bg,$pthread='') {
 		
-		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts; //${"tablebg$bg"};
+		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts, $isadmin; //${"tablebg$bg"};
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -72,7 +72,7 @@
 		}
 		
 		if (filter_array($post['attach'])) {
-			$set['attach'] = attachfield($post['attach']);
+			$set['attach'] = attachfield($post['attach'], ($isadmin || $post['uid'] == $loguser['id']));
 		} else {
 			$set['attach'] = "";
 		}

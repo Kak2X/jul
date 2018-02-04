@@ -64,46 +64,55 @@ function quikattach($thread, $user) {
 </tr>";
 }
 
-function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL) {
-	$size_txt = sizeunits($size);
+function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL, $editmode = false) {
+
+	if ($is_image) { // An image
+		$thumb = ($imgprev !== NULL ? $imgprev : attachment_name($id, true));
+	} else { // Not an image
+		$thumb = "images/defaultthumb.png";
+	}
+	
+	$controls = $editmode ? 
+		"<a href='attachments.php?id={$id}&action=edit'>Edit</a> - ".
+		"<a href='attachments.php?id={$id}&action=delete'>Delete</a> "
+		: "";
 	
 	// id 0 is a magic value used for post previews
 	$w = $id ? 'a' : 'b';
 	
+	return "
+	<table class='attachment-box'>
+		<tr>
+		<td class='attachment-box-thumb' rowspan=2>
+			<$w href='download.php?id={$id}'><img src='{$thumb}'></$w>
+		</td>
+		<td class='attachment-box-text fonts'>
+			<div><$w href='download.php?id={$id}'>{$filename}</$w></div>
+			<div>Size:<span style='float: right'>".sizeunits($size)."</span></div>
+			<div>Views:<span style='float: right'>{$views}</span></div>
+		</td>
+	</tr>
+	<tr>
+		<td class='attachment-box-controls fonts right'>
+			{$controls}
+		</td>
+	</tr>
+	</table>";
 	
-	if ($is_image) { // An image
-		return 
-		"<$w href='download.php?id={$id}'>".
-		"<img src='".($imgprev !== NULL ? $imgprev : attachment_name($id, true))."' title='{$filename} - {$size_txt}, views: {$views}'>".
-		"</$w>";
-	} else { // Not an image
-		return "<$w href='download.php?id={$id}'>{$filename}</$w> ({$size_txt}) - views: {$views}";
-	}
+	
+
 }
 
 // on preview, uploaded files are saved on temp/attach_<thread>_<user>_<i>
 // once confirmed, they are simply identified by index
 
 // Assumes to receive an array of elements fetched off the DB
-function attachfield($list) {
+function attachfield($list, $editmode = false) {
 	$out = "";
-	$datalist = array();
-	// Display images first
 	foreach ($list as $k => $x) {
-		if (!$x['is_image']) {
-			$datalist[] = $k;
-			continue;
-		}
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
-		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev']).
-		" &nbsp; "; 
+		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $editmode);
 	}
-	// And then leftover files
-	foreach ($datalist as $i) {
-		$x = $list[$i];
-		$out .= "<br/>".attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], NULL);
-	}
-	
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
@@ -130,7 +139,7 @@ function upload_attachment($file, $thread, $user, $file_id) {
 	if ($is_image) {
 		$src_image = imagecreatefromstring(file_get_contents($path));
 		if ($src_image) {
-			$dst_image = resize_image($src_image, 100, 100);
+			$dst_image = resize_image($src_image, 80, 80);
 		}
 		if (!$src_image || !$dst_image) {
 			// source image not found or resize error

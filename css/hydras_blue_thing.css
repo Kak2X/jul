@@ -33,3 +33,11 @@ input[type=submit] {
 	border: #000 solid 2px;
 	font: 10pt 'verdana', sans-serif;
 }
+
+.attachment-box {
+	border: #000 1px solid;
+	background: #05375F;
+}
+.attachment-box:hover{
+	background: #0F265F !important;
+}

@@ -314,6 +314,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#$tableborder 1px solid;
 					 border-bottom:	#$tableborder 1px solid}
+			.attachment-box {
+				border: #$tableborder 1px solid;
+				background: #$tablebg2;
+			}
+			.attachment-box:hover{
+				background: #$categorybg !important;
+			}
 		";
 	}
 	

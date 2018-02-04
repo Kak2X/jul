@@ -128,9 +128,8 @@
 		}
 		
 		// Upload current attachment
-		// May need to get changed if an add row system is done (ala poll choices)
 		if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
-			upload_attachment($_FILES["attachment{$i}"], $id, $loguser['id'], $i);
+			upload_attachment($_FILES["attachment{$i}"], $id, $loguser['id'], $i - count($list));
 		}
 		
 		// All OK

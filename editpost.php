@@ -106,9 +106,8 @@
 			}
 			
 			// Upload current attachment
-			// May need to get changed if an add row system is done (ala poll choices)
 			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
-				upload_attachment($_FILES["attachment{$i}"], $threadid, $post['user'], $i, $extrasize);
+				upload_attachment($_FILES["attachment{$i}"], $threadid, $post['user'], $i - count($list), $extrasize);
 			}	
 		
 			if (isset($_POST['submit'])) {

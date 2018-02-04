@@ -827,10 +827,12 @@ function escape_codeblock($text) {
 }
 
 function doreplace2($msg, $options='0|0', $nosbr = false){
+	global $hacks;
+	
 	// options will contain smiliesoff|htmloff
-	$options = explode("|", $options);
-	$smiliesoff = $options[0];
-	$htmloff = $options[1];
+	$options     = explode("|", $options);
+	$smiliesoff  = $options[0];
+	$htmloff     = $options[1];
 
 
 	//$list = array("<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
@@ -851,35 +853,42 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);
 		}
 	}
-
-	$msg=str_replace('[red]',	'<font color=FFC0C0>',$msg);
-	$msg=str_replace('[green]',	'<font color=C0FFC0>',$msg);
-	$msg=str_replace('[blue]',	'<font color=C0C0FF>',$msg);
-	$msg=str_replace('[orange]','<font color=FFC080>',$msg);
-	$msg=str_replace('[yellow]','<font color=FFEE20>',$msg);
-	$msg=str_replace('[pink]',	'<font color=FFC0FF>',$msg);
-	$msg=str_replace('[white]',	'<font color=white>',$msg);
-	$msg=str_replace('[black]',	'<font color=0>'	,$msg);
-	$msg=str_replace('[/color]','</font>',$msg);
-	$msg=preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
-	$msg=str_replace('[quote]','<blockquote><hr>',$msg);
-	$msg=str_replace('[/quote]','<hr></blockquote>',$msg);
-	$msg=preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
-	$msg=preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
-	$msg=str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">',$msg);
-	$msg=str_replace('[/spoiler]','</div></div>',$msg);
-	$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
-	$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
-	$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
-	$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
-	$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
-	//$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
+	
+	// Simple check for skipping BBCode replacements
+	if (strpos($msg, "[") !== false){
+		$msg=str_replace('[red]',	'<font color=FFC0C0>',$msg);
+		$msg=str_replace('[green]',	'<font color=C0FFC0>',$msg);
+		$msg=str_replace('[blue]',	'<font color=C0C0FF>',$msg);
+		$msg=str_replace('[orange]','<font color=FFC080>',$msg);
+		$msg=str_replace('[yellow]','<font color=FFEE20>',$msg);
+		$msg=str_replace('[pink]',	'<font color=FFC0FF>',$msg);
+		$msg=str_replace('[white]',	'<font color=white>',$msg);
+		$msg=str_replace('[black]',	'<font color=0>'	,$msg);
+		$msg=str_replace('[/color]','</font>',$msg);
+		$msg=preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
+		$msg=str_replace('[quote]','<blockquote><hr>',$msg);
+		$msg=str_replace('[/quote]','<hr></blockquote>',$msg);
+		$msg=preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
+		$msg=preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
+		$msg=str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">',$msg);
+		$msg=str_replace('[/spoiler]','</div></div>',$msg);
+		$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
+		$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
+		$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
+		$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
+		$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
+	}
 
 	do {
 		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
 				"<\\1t\\2\\3><\\5t\\6\\7>", $msg, -1, $replaced);
 	} while ($replaced >= 1);
 
+	// Comment display
+	if ($hacks['comments']) {
+		$p=str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $p);
+		$p=str_replace("-->", '--&gt;</span>', $p);
+	}
 
 	if (!$nosbr) sbr(0,$msg);
 
@@ -1918,10 +1927,6 @@ function dofilters($p){
 //	$p=preg_replace("'card games on motorcycles'si",'bard dames on rotorcycles',$p);
 
 //	$p=str_replace("ftp://teconmoon.no-ip.org", 'about:blank', $p);
-	if (filter_bool($hacks['comments'])) {
-		$p=str_replace("<!--", '<font color=#80ff80>&lt;!--', $p);
-		$p=str_replace("-->", '--&gt;</font>', $p);
-	}
 
 	$p=str_replace("http://insectduel.proboards82.com","http://jul.rustedlogic.net/idiotredir.php?",$p);
 //	$p=str_replace("http://imageshack.us", "imageshit", $p);
@@ -1935,7 +1940,8 @@ function dofilters($p){
 	//$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
 	$p=preg_replace("'(https?://.*?photobucket.com/)'si",'images/photobucket.png#\\1',$p);
 	//$p=preg_replace("'%BZZZ%'si",'onclick="bzzz(',$p);
-	
+	//$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
+
 	$p = xssfilters($p);
 
 	$p = preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);

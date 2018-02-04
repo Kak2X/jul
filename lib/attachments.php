@@ -241,6 +241,22 @@ function remove_temp_attachments($thread, $user, $list) {
 	}
 }
 
+function remove_attachments($list, $post = NULL) {
+	global $sql;
+	if ($post !== NULL) {
+		$sql->query("DELETE FROM attachments WHERE post = {$post}");
+	} else {
+		$sql->query("DELETE FROM attachments WHERE id IN (".implode(',', $list).")");
+	}
+	foreach ($list as $id) {
+		unlink(attachment_name($id));
+		$thumbpath = attachment_name($id, true);
+		if (file_exists($thumbpath)) {
+			unlink($thumbpath);
+		}
+	}
+}
+
 // Get the total size of all attachments uploaded in the temp area
 function get_attachments_size($thread, $user, $extra = 0) {
 	$size = $extra;

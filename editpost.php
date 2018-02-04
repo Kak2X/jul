@@ -151,7 +151,11 @@
 				// Edited notice
 				$ppost['edited']	= $edited;
 				$ppost['editdate'] 	= ctime();
-
+				$ppost['attach']    = $sql->fetchq("
+					SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image
+					FROM attachments a
+					WHERE a.post = {$id}
+				", PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 	
 				if ($isadmin)
 					$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
@@ -279,14 +283,19 @@
 			$sql->beginTransaction();
 			$querycheck = array();
 			$sql->query("DELETE FROM posts WHERE id = $id", false, $querycheck);
+			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$id}");
 			$p = $sql->fetchq("SELECT id,user,date FROM posts WHERE thread=$threadid ORDER BY date DESC");
+			// TODO: This breaks when deleting the last post in a thread, since there is no id, user or date
+			//       Check if $p exists and delete the entire thread if it doesn't
 			$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id=$threadid", false, $querycheck);
 			$sql->query("UPDATE forums SET numposts=numposts-1 WHERE id={$forum['id']}", false, $querycheck);
 			
-			if ($sql->checkTransaction($querycheck))
+			if ($sql->checkTransaction($querycheck)) {
+				remove_attachments($list, $id);
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
-			else
+			} else {
 				errorpage("An error occurred while deleting the post.");
+			}
 		}
 	
 		?>

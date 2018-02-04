@@ -96,12 +96,19 @@ input[type=radio] {
 }
 
 /* Attachments */
-.attachment-box {
+.attachment-box, .attachment-box-addnew{
 	float: left;
-	width: 300px;
-	height: 100px;
 	margin-right: 2px;
 	margin-bottom: 2px;
+}
+.attachment-box{
+	width: 300px;
+	height: 100px;
+}
+.attachment-box-addnew {
+	width: 100px;
+	height: 100px;
+	text-align: center;
 }
 .attachment-box-thumb {
 	width: 100px; 
@@ -115,6 +122,7 @@ input[type=radio] {
 .attachment-box-controls {
 	vertical-align: bottom;
 }
+
 
 /* Ikachan cursor (disabled) */
 /*			

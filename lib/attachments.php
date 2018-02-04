@@ -73,8 +73,8 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 	}
 	
 	$controls = $editmode ? 
-		"<a href='attachments.php?id={$id}&action=edit'>Edit</a> - ".
-		"<a href='attachments.php?id={$id}&action=delete'>Delete</a> "
+		"<a href='attachment.php?id={$id}&action=edit'>Edit</a> - ".
+		"<a href='attachment.php?id={$id}&action=delete'>Delete</a> "
 		: "";
 	
 	// id 0 is a magic value used for post previews
@@ -112,6 +112,16 @@ function attachfield($list, $editmode = false) {
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $editmode);
+	}
+	if ($editmode) {
+		$out .= "
+		<table class='attachment-box-addnew fonts'>
+			<tr>
+				<td>
+					<a href='attachment.php?action=add'><big>[+]</big><br/><br/>Add attachment</a>
+				</td>
+			</tr>
+		</table>";
 	}
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }

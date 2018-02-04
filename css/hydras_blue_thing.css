@@ -34,10 +34,10 @@ input[type=submit] {
 	font: 10pt 'verdana', sans-serif;
 }
 
-.attachment-box {
+.attachment-box,.attachment-box-addnew  {
 	border: #000 1px solid;
 	background: #05375F;
 }
-.attachment-box:hover{
+.attachment-box:hover,.attachment-box-addnew :hover{
 	background: #0F265F !important;
 }

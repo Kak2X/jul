@@ -314,11 +314,11 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#$tableborder 1px solid;
 					 border-bottom:	#$tableborder 1px solid}
-			.attachment-box {
+			.attachment-box,.attachment-box-addnew {
 				border: #$tableborder 1px solid;
 				background: #$tablebg2;
 			}
-			.attachment-box:hover{
+			.attachment-box:hover,.attachment-box-addnew:hover {
 				background: #$categorybg !important;
 			}
 		";

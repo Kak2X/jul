@@ -285,7 +285,6 @@ function get_attachments_newthread($keyformat, $user) {
 		++$i;
 		$set = glob("temp/attach_{$keyformat}{$i}_{$user}_*", GLOB_NOSORT);
 	} while($set);
-	echo "[Returned key {$i}]";
 	return $i;
 }
 

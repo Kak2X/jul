@@ -119,7 +119,6 @@
 			// and do the same for each next iteration of the script
 			// meaning that on next iterations of this script, the current key value will be used
 			if (isset($_POST['tidconfirm'])) {
-				echo "[CONFIRMED]<br>";
 				$attach_id  = filter_int($_POST['attach_id']);
 				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
 			} else {
@@ -147,10 +146,8 @@
 			// May need to get changed if an add row system is done (ala poll choices)
 			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
 				upload_attachment($_FILES["attachment{$i}"], $tid_temp, $loguser['id'], $i);
-				echo "[CONFIRMED ON NEXT]<br>";
 				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
 			} else if (count($list) == $cnt) {
-				echo "[UNCONFIRMED]<br>";
 				// if every attachment is removed and no extra one is getting uploaded, unconfirm the key
 				// this is to prevent any funny shit
 					$tid_temp = "nx";
@@ -655,5 +652,4 @@
 		<?=$forumlink?>
 		<?=replytoolbar(4)?>
 		<?php
-echo $tid_temp;
 	pagefooter();

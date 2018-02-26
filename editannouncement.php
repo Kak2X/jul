@@ -143,7 +143,7 @@
 					</tr>
 				</table>
 				<table class='table'>
-				<?=threadpost($ppost,1)?>
+				<?=threadpost($ppost,1,$forumid)?>
 				</table>
 				<br>
 				<?php

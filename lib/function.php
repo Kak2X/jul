@@ -875,7 +875,7 @@ function settags($text, $tags) {
 }
 
 
-function doforumlist($id, $name = ''){
+function doforumlist($id, $name = '', $shownone = ''){
 	global $loguser,$sql;
 	
 	if (!$name) {
@@ -926,8 +926,10 @@ function doforumlist($id, $name = ''){
 	}
 	
 	// Multi-use forum list
-	if ($name) return "<select name='$name'>$forumlinks</select>";
-	
+	if ($name) {
+		if ($shownone) $forumlinks = "<option value=0>$shownone</option>$forumlinks";
+		return "<select name='$name'>$forumlinks</select>";
+	}
 	$forumlinks .= "	</optgroup>
 					</select>
 				</form>
@@ -1721,7 +1723,7 @@ function adminlinkbar($sel = 'admin.php') {
 		array(
 //			'admin-todo.php'        => "To-do list",
 			'announcement.php'      => "Go to Announcements",
-//			'admin-editfilters.php' => "Edit Filters",
+			'admin-editfilters.php' => "Edit Filters",
 			'admin-editforums.php'  => "Edit Forum List",
 			'admin-editmods.php'    => "Edit Forum Moderators",
 		),
@@ -1848,63 +1850,40 @@ function xssfilters($data, $validate = false){
 	return $data;
 	
 }
-function dofilters($p){
-	global $hacks;
+function dofilters($p, $f = 0){
+	global $sql, $hacks;
+	static $filters;
 	
-	//$p=preg_replace("'<object(.*?)</object>'si","",$p);
-	//$p=preg_replace("'autoplay'si",'',$p); // kills autoplay, need to think of a solution for embeds.
-
-	// Absolute allowed now alongside position:relative div
-	//$p=preg_replace("'position\s*:\s*(absolute|fixed)'si", "display:none", $p);
-	$p=preg_replace("'position\s*:\s*fixed'si", "display:none", $p);
-
-
-	//$p=preg_replace("':awesome:'","<small>[unfunny]</small>", $p);
-
-	$p=preg_replace("':facepalm:'si",'<img src=images/facepalm.jpg>',$p);
-	$p=preg_replace("':facepalm2:'si",'<img src=images/facepalm2.jpg>',$p);
-	$p=preg_replace("':epicburn:'si",'<img src=images/epicburn.png>',$p);
-	$p=preg_replace("':umad:'si",'<img src=images/umad.jpg>',$p);
-	$p=preg_replace("':gamepro5:'si",'<img src=images/gamepro5.gif title="FIVE EXPLODING HEADS OUT OF FIVE">',$p);
-	$p=preg_replace("':headdesk:'si",'<img src=images/headdesk.jpg title="Steven Colbert to the rescue">',$p);
-	$p=preg_replace("':rereggie:'si",'<img src=images/rereggie.png>',$p);
-	$p=preg_replace("':tmyk:'si",'<img src=images/themoreyouknow.jpg title="do doo do doooooo~">',$p);
-	$p=preg_replace("':jmsu:'si",'<img src=images/jmsu.png>',$p);
-	$p=preg_replace("':noted:'si",'<img src=images/noted.png title="NOTED, THANKS!!">',$p);
-	$p=preg_replace("':apathy:'si",'<img src=images/stickfigure-notext.png title="who cares">',$p);
-	$p=preg_replace("':spinnaz:'si", '<img src="images/smilies/spinnaz.gif">', $p);
-	$p=preg_replace("':trolldra:'si", '<img src="images/trolldra.png">', $p);
-	$p=preg_replace("':reggie:'si",'<img src=images/reggieshrug.jpg title="REGGIE!">',$p);
-
-//	$p=preg_replace("'drama'si", 'batter blaster', $p);
-//	$p=preg_replace("'TheKinoko'si", 'MY NAME MEANS MUSHROOM... IN <i>JAPANESE!</i> HOLY SHIT GUYS THIS IS <i>INCREDIBLE</i>!!!!!!!!!', $p);
-//	$p=preg_replace("'hopy'si",'I am a dumb',$p);
-//	$p=preg_replace("'crashdance'si",'CrashDunce',$p);
-//	$p=preg_replace("'get blue spheres'si",'HI EVERYBODY I\'M A RETARD PLEASE BAN ME',$p);
-	$p=preg_replace("'zeon'si",'shit',$p);
-//	$p=preg_replace("'faith in humanity'si",'IQ',$p);
-//	$p=preg_replace("'motorcycles'si",'<img src="images/cardgames.png" align="absmiddle" title="DERP DERP DERP">',$p);
-//	$p=preg_replace("'card games'si",'<img src="images/motorcycles.png" align="absmiddle" title="GET BLUE SPHERES">',$p);
-//	$p=preg_replace("'touhou'si", "Baby's First Bullet Hell&trade;", $p);
-//	$p=preg_replace("'nintendo'si",'grandma',$p);
-//	$p=preg_replace("'card games on motorcycles'si",'bard dames on rotorcycles',$p);
-
-//	$p=str_replace("ftp://teconmoon.no-ip.org", 'about:blank', $p);
-
-	$p=str_replace("http://insectduel.proboards82.com","http://jul.rustedlogic.net/idiotredir.php?",$p);
-//	$p=str_replace("http://imageshack.us", "imageshit", $p);
-	$p=preg_replace("'http://.{0,3}\.?tinypic\.com'si",'tinyshit',$p);
-	$p=str_replace('<link href="http://pieguy1372.freeweb7.com/misc/piehills.css" rel="stylesheet">',"<!-- -->",$p);
-	$p=str_replace("tabindex=\"0\" ","title=\"the owner of this button is a fucking dumbass\" ",$p);
-//	$p=str_replace("%WIKISTATSFRAME%","<div id=\"widgetIframe\"><iframe width=\"600\" height=\"260\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=VisitsSummary&actionToWidgetize=getSparklines&idSite=2&period=day&date=today&disableLink=1\" scrolling=\"no\" frameborder=\"0\" marginheight=\"0\" marginwidth=\"0\"></iframe></div>",$p);
-//	$p=str_replace("%WIKISTATSFRAME2%", '<div id="widgetIframe"><iframe width="100%" height="600" src="http://stats.rustedlogic.net/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Referers&actionToWidgetize=getWebsites&idSite=2&period=day&date=2010-10-12&disableLink=1" scrolling="no" frameborder="0" marginheight="0" marginwidth="0"></iframe></div>', $p);
-//	$p=str_replace("http://xkeeper.shacknet.nu:5/", 'http://xchan.shacknet.nu:5/', $p);
-//	$p=preg_replace("'<style'si",'&lt;style',$p);
-	//$p=str_replace("-.-", "I'M AN ANNOYING UNDERAGE ASSHAT SO I SHOULDN'T BE POSTING BUT I DO IT ANYWAY", $p);
-	$p=preg_replace("'(https?://.*?photobucket.com/)'si",'images/photobucket.png#\\1',$p);
-	//$p=preg_replace("'%BZZZ%'si",'onclick="bzzz(',$p);
-	//$msg=str_replace('http://nightkev.110mb.com/justus_layout.css','about:blank',$msg);
-
+	// Note: these queries are not merged due to showposts (by user) functionality
+	$filters = $sql->fetchq("
+		SELECT method, source, replacement
+		FROM filters
+		WHERE enabled = 1 AND forum = 0
+		ORDER BY id ASC
+	", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+	
+	if ($f) {
+		$filters += $sql->fetchq("
+			SELECT method, source, replacement 
+			FROM filters
+			WHERE enabled = 1 AND forum = {$f}
+		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+	}
+	
+	foreach($filters as $x) {
+		switch ($x['method']) {
+			case 0:
+				$p = str_replace($x['source'], $x['replacement'], $p);
+				break;
+			case 1:
+				$p = str_ireplace($x['source'], $x['replacement'], $p);
+				break;
+			case 2:
+				$p = preg_replace("'{$x['source']}'si", $x['replacement'], $p); // Force 'si modifiers to prevent the 'e modifier from being used
+				break;
+		}
+	}
+	
 	$p = xssfilters($p);
 
 	$p = preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);

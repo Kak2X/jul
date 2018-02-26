@@ -471,7 +471,7 @@
 		</tr>
 	</table>
 	<table class='table'>
-		<?=threadpost($ppost,1)?>
+		<?=threadpost($ppost,1,$id)?>
 	</table>
 			<?php
 			$autofocus[1] = 'autofocus'; // for 'message'

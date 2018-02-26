@@ -575,6 +575,75 @@ CREATE TABLE `favorites` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `filters`
+--
+
+CREATE TABLE `filters` (
+  `id` int(11) NOT NULL,
+  `type` tinyint(4) NOT NULL DEFAULT '1',
+  `method` tinyint(4) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `forum` int(11) NOT NULL DEFAULT '0',
+  `source` varchar(127) NOT NULL,
+  `replacement` varchar(127) NOT NULL,
+  `comment` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `filters`
+--
+
+INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `replacement`, `comment`) VALUES
+(3, 3, 2, 1, 0, 'position\\s*:\\s*fixed', 'display:none', ''),
+(4, 3, 2, 0, 0, 'position\\s*:\\s*(absolute|fixed)', 'display:none', 'Absolute allowed now alongside position:relative div'),
+(5, 6, 1, 1, 0, ':facepalm:', '<img src=images/facepalm.jpg>', ''),
+(6, 6, 1, 1, 0, ':facepalm2:', '<img src=images/facepalm2.jpg>', ''),
+(7, 6, 1, 1, 0, ':epicburn:', '<img src=images/epicburn.png>', ''),
+(8, 6, 1, 1, 0, ':umad:', '<img src=images/umad.jpg>', ''),
+(9, 6, 1, 1, 0, ':gamepro5:', '<img src=images/gamepro5.gif title=\"FIVE EXPLODING HEADS OUT OF FIVE\">', ''),
+(10, 6, 1, 1, 0, ':headdesk:', '<img src=images/headdesk.jpg title=\"Steven Colbert to the rescue\">', NULL),
+(11, 6, 1, 1, 0, ':rereggie:', '<img src=images/rereggie.png>', NULL),
+(12, 6, 1, 1, 0, ':tmyk:', '<img src=images/themoreyouknow.jpg title=\"do doo do doooooo~\">', NULL),
+(13, 6, 1, 1, 0, ':jmsu:', '<img src=images/jmsu.png>', NULL),
+(14, 6, 1, 1, 0, ':noted:', '<img src=images/noted.png title=\"NOTED, THANKS!!\">', NULL),
+(15, 6, 1, 1, 0, ':apathy:', '<img src=images/stickfigure-notext.png title=\"who cares\">', NULL),
+(16, 6, 1, 1, 0, ':spinnaz:', '<img src=\"images/smilies/spinnaz.gif\">', NULL),
+(17, 6, 1, 1, 0, ':trolldra:', '<img src=\"images/trolldra.png\">', NULL),
+(18, 6, 1, 1, 0, ':reggie:', '<img src=images/reggieshrug.jpg title=\"REGGIE!\">', NULL),
+(19, 5, 1, 0, 0, 'drama', 'batter blaster', NULL),
+(20, 5, 1, 0, 0, 'TheKinoko', 'MY NAME MEANS MUSHROOM... IN <i>JAPANESE!</i> HOLY SHIT GUYS THIS IS <i>INCREDIBLE</i>!!!!!!!!!', NULL),
+(21, 5, 1, 0, 0, 'hopy', 'I am a dumb', NULL),
+(22, 5, 1, 0, 0, 'crashdance', 'CrashDunce', ''),
+(23, 5, 1, 0, 0, 'get blue spheres', 'HI EVERYBODY I\'M A RETARD PLEASE BAN ME', ''),
+(24, 5, 1, 1, 0, 'zeon', 'shit', NULL),
+(25, 5, 1, 0, 0, 'faith in humanity', 'IQ', ''),
+(26, 5, 1, 0, 0, 'motorcycles', '<img src=\"images/cardgames.png\" align=\"absmiddle\" title=\"DERP DERP DERP\">', NULL),
+(27, 5, 1, 0, 0, 'card games', '<img src=\"images/motorcycles.png\" align=\"absmiddle\" title=\"GET BLUE SPHERES\">', NULL),
+(28, 5, 1, 0, 0, 'touhou', 'Baby\'s First Bullet Hell&trade;', NULL),
+(29, 5, 1, 0, 0, 'nintendo', 'grandma', NULL),
+(30, 5, 1, 0, 0, 'card games on motorcycles', 'bard dames on rotorcycles', NULL),
+(31, 2, 2, 0, 0, '^.*(http://hyperhacker.no-ip.org/b/smilies/lolface.png).*$', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
+(32, 2, 2, 0, 0, '.*?images/smilies/roflx.gif.*?', '<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>', ''),
+(33, 2, 0, 0, 0, 'ftp://teconmoon.no-ip.org', 'about:blank', ''),
+(34, 2, 0, 1, 0, 'http://insectduel.proboards82.com', 'idiotredir.php?', NULL),
+(35, 2, 0, 0, 0, 'http://imageshack.us', 'imageshit', ''),
+(36, 2, 2, 1, 0, 'http://.{0,3}.?tinypic.com', 'tinyshit', ''),
+(37, 2, 0, 1, 0, '<link href=\"http://pieguy1372.freeweb7.com/misc/piehills.css\" rel=\"stylesheet\">', '<!-- -->', NULL),
+(38, 3, 0, 1, 0, 'tabindex=\"0\" ', 'title=\"the owner of this button is a fucking dumbass\" >', NULL),
+(39, 1, 0, 0, 0, '%WIKISTATSFRAME%', '<div id=\"widgetIframe\"><iframe width=\"600\" height=\"260\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=ifr', NULL),
+(40, 1, 0, 0, 0, '%WIKISTATSFRAME2%', '<div id=\"widgetIframe\"><iframe width=\"100%\" height=\"600\" src=\"http://stats.rustedlogic.net/index.php?module=Widgetize&action=if', NULL),
+(41, 2, 0, 0, 0, 'http://xkeeper.shacknet.nu:5/', 'http://xchan.shacknet.nu:5/', NULL),
+(42, 3, 1, 0, 0, '<style', '&lt;style', NULL),
+(43, 5, 0, 0, 0, '-.-', 'MORONS EVERYWHERE BAN BAN BAN!!!', 'late 2016 was fun'),
+(45, 3, 2, 1, 0, ' src=(\"|\\\')[a-z]:(.*?)(\"|\\\')', ' src=\"images/linkingfail.gif\"', ''),
+(46, 3, 1, 0, 0, '%BZZZ%', 'onclick=\"bzzz(', NULL),
+(47, 6, 1, 0, 0, ':awesome:', '<small>[unfunny]</small>', ''),
+(48, 3, 2, 0, 0, 'autoplay', 'ap', 'kills autoplay, need to think of a solution for embeds.'),
+(49, 2, 2, 1, 0, '(https?://.*?photobucket.com/)', 'images/photobucket.png#\\\\1', 'photobucket replacement image');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `forummods`
 --
 
@@ -1569,6 +1638,13 @@ ALTER TABLE `failedregs`
 --
 ALTER TABLE `favorites`
   ADD UNIQUE KEY `user` (`user`,`thread`);
+  
+--
+-- Indexes for table `filters`
+--
+ALTER TABLE `filters`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `forum` (`forum`);
 
 --
 -- Indexes for table `forumread`
@@ -1862,6 +1938,11 @@ ALTER TABLE `failedlogins`
 --
 ALTER TABLE `failedregs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `filters`
+--
+ALTER TABLE `filters`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 --
 -- AUTO_INCREMENT for table `forums`
 --

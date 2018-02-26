@@ -1,6 +1,6 @@
 <?php
 	
-	function threadpost($post,$bg,$pthread='') {
+	function threadpost($post,$bg,$forum = 0,$pthread='') {
 		
 		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts, $isadmin; //${"tablebg$bg"};
 		
@@ -77,7 +77,7 @@
 			$set['attach'] = "";
 		}
 		
-		return dofilters(postcode($post,$set));
+		return dofilters(postcode($post,$set), $forum);
 	}
 
 	function preplayouts($posts) {

@@ -119,7 +119,7 @@
 		$annc['act'] = filter_int($act[$annc['user']]);
 		
 		$annc['text'] = "<center><b>{$annc['atitle']}</b></center><hr>{$annc['text']}";
-		$annclist .= threadpost($annc,$bg);
+		$annclist .= threadpost($annc,$bg,$id);
 	}
 	
 	echo "$pagelinks<table class='table'>$annclist</table>$pagelinks";

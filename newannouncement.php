@@ -191,7 +191,7 @@
 							</span>
 						</td>
 						<td class='tbl $bg' valign=top>
-							".doreplace2(dofilters($post['text']), $post['options'])."
+							".doreplace2(dofilters($post['text'], $id), $post['options'])."
 						</td>
 					</tr>";
 			} else {
@@ -265,7 +265,7 @@
 			</tr>
 		</table>
 		<table class='table'>
-			<?=threadpost($ppost,1)?>
+			<?=threadpost($ppost,1,$id)?>
 		</table>
 		<br>
 		<?php

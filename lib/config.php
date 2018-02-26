@@ -56,6 +56,7 @@
 		// File uploads
 		'attach-max-size'       => 2 * 1048576,	// 2 MB 	// Max size for attachments
 		
+		
 		// Debugging
 		'enable-sql-debugger'	=> true,					// (stub to set option in mysql.php)
 		'always-show-debug'		=> true,					// Always show error/query list regardless of powerlevel

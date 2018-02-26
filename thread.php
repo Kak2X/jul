@@ -105,6 +105,7 @@
 			$thread_error = E_BADPOSTS;
 			$thread['closed'] = true;
 			$thread['title'] = "Bad posts with ID #$id";
+			$forum['id'] = 0;
 			break;
 		}
 
@@ -122,6 +123,7 @@
 			}
 			$thread_error = E_BADFORUM;
 			$forum['title'] = " --- BAD FORUM ID --- ";
+			$forum['id'] = 0;
 			break;
 		}
 
@@ -194,11 +196,11 @@
 		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$user}") - 1;
 		$thread['title'] = "Posts by {$uname}";
 		$windowtitle = "Posts by {$uname}";
+		$forum['id'] = 0;
 		$tlinks = '';
 	}
 	else {
 		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-		require_once 'lib/layout.php';
 		errorpage("No thread specified.","index.php",'the index page');
 	}	
 
@@ -375,7 +377,7 @@
 				</tr>
 				<tr>
 					<td class='tdbg2 fonts' colspan=3>
-						".nl2br(dofilters($poll['briefing']))."
+						".nl2br(dofilters($poll['briefing']), $thread['forum'])."
 					</td>
 				</tr>
 				$choices
@@ -503,7 +505,7 @@
 		$post['act'] = filter_int($act[$post['user']]);
 
 		if (!$pforum || $pforum <= $loguser['powerlevel'])
-			$postlist .= threadpost($post, $bg, $pthread);
+			$postlist .= threadpost($post, $bg, $forum['id'], $pthread);
 		else
 			$postlist .=
 				"<table class='table'>

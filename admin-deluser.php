@@ -4,67 +4,80 @@
 
 	$allowedusers	= array(
 		$x_hacks['adminip'],		// Xkeeper
-		//"24.234.157.232",			// also me
-		
-		);
+		//"24.234.157.232",			// also me	
+	);
+	
+	const SHOW_ALL    = -20;
+	const SHOW_BANNED = -10;
 
-	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers)) errorpage("Nein.");
+	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers) && !$sysadmin && $loguser['id'] != 1) errorpage("Nein.");
   
 	pageheader();
 	
 	print adminlinkbar();
 	
-	if (filter_array($_POST['deluser'])) { //($loguserid==1 or $loguserid==2)){
+	// Explicitly check if the 'dodelete' button was pressed
+	// Since the forms have been merged to preserve sort options between deletions
+	if (isset($_POST['dodelete']) && filter_array($_POST['deluser'])) {
 		
-		check_token($_POST['auth'], 65);
+		check_token($_POST['auth'], TOKEN_USERDEL);
 		
 		$dellist = array_keys($_POST['deluser']);
 		$delusercnt = 0;
 		$delusertext = "";
 
-		$querycheck = array();
 		$sql->beginTransaction();
 		
-		foreach($dellist as $id) {
+		foreach($dellist as $key => $id) {
 			
 			// Although this is a sysadmin-only tool, filter that id properly just in case
-			$id = (int) $id;
+			$dellist[$key] = (int) $dellist[$key];
+			$id = $dellist[$key];
 
-			$userdata = $sql->query("SELECT $userfields FROM users u WHERE u.id = $id");
-
-			while ($user = $sql->fetch($userdata)) {
-				$id		= $user['id'];
-				$name 	= $user['name'];
-				
-				$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
-				$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
-				// Backup the user's data just in case
-				$sql->query("INSERT INTO `delusers` ( SELECT * FROM `users` WHERE `id` = '$id' )", false, $querycheck);
-				$sql->query("UPDATE posts SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id", false, $querycheck);
-//				$ups=$sql->query("SELECT id FROM posts WHERE user=$id");
-//				while($up=mysql_fetch_array($ups)) $sql->query("UPDATE posts_text SET signtext=CONCAT_WS('','$line',signtext) WHERE pid=$up[id]") or print mysql_error();
-				$sql->query("UPDATE threads SET user={$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
-				$sql->query("UPDATE threads SET lastposter={$config['deleted-user-id']} WHERE lastposter=$id", false, $querycheck);
-				$sql->query("UPDATE forums SET lastpostuser={$config['deleted-user-id']} WHERE lastpostuser=$id", false, $querycheck);
-				$sql->query("UPDATE events SET user={$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
-				$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
-				$sql->query("UPDATE pmsgs SET userto = {$config['deleted-user-id']} WHERE userto=$id", false, $querycheck);
-				$sql->query("UPDATE attachments SET user = {$config['deleted-user-id']} WHERE user=$id", false, $querycheck);
-				$sql->query("UPDATE users SET posts = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}", false, $querycheck);
-				
-				$sql->query("DELETE FROM forummods WHERE user=$id", false, $querycheck);
-				$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id", false, $querycheck);
-				$sql->query("DELETE FROM pollvotes WHERE user=$id", false, $querycheck);
-				$sql->query("DELETE FROM users WHERE id=$id", false, $querycheck);
-				$sql->query("DELETE FROM users_rpg WHERE uid=$id", false, $querycheck);
-				
-				$delusertext	.= "\r\n<tr><td class='tdbg1 center' width=120>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
-				$delusercnt		++;
+			$user = $sql->fetchq("SELECT $userfields FROM users u WHERE u.id = $id");
+			
+			if (!$user) {
+				$dellist = array(); // Post-delete refresh likely; exit immediately
+				break;
 			}
+
+			$id		= $user['id'];
+			$name 	= $user['name'];
+			
+			// Backup the user's data just in case
+			$sql->query("INSERT INTO `delusers` ( SELECT * FROM `users` WHERE `id` = '$id' )");
+			
+			// Since we're moving all posts to the deleted user account, include the user's name as a "signature"
+			$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
+			$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
+			$sql->query("UPDATE posts SET user     = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
+			$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
+			
+			
+			$sql->query("UPDATE threads     SET user         = {$config['deleted-user-id']} WHERE user=$id");
+			$sql->query("UPDATE threads     SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");
+			$sql->query("UPDATE forums      SET lastpostuser = {$config['deleted-user-id']} WHERE lastpostuser=$id");
+			$sql->query("UPDATE events      SET user         = {$config['deleted-user-id']} WHERE user=$id");
+			$sql->query("UPDATE pmsgs       SET userto       = {$config['deleted-user-id']} WHERE userto=$id");
+			$sql->query("UPDATE attachments SET user         = {$config['deleted-user-id']} WHERE user=$id");
+			$sql->query("UPDATE users       SET posts        = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}");
+			
+			$sql->query("DELETE FROM forummods WHERE user=$id");
+			$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id");
+			$sql->query("DELETE FROM pollvotes WHERE user=$id");
+			$sql->query("DELETE FROM users WHERE id=$id");
+			$sql->query("DELETE FROM users_rpg WHERE uid=$id");
+			
+			$delusertext .= "\r\n<tr><td class='tdbg1 center' width=120>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
+			$delusercnt++;
+			
 		}
+		$sql->commit();
 		
-		if (!$sql->checkTransaction($querycheck)) {
-			errorpage("Couldn't delete the specified users.");
+		// Since we're sure the queries have succeeded, now delete the userpic folders
+		// Not done on post-delete refresh
+		foreach($dellist as $id) {
+			deletefolder("userpic/{$id}");
 		}
 
 		?>
@@ -81,151 +94,134 @@
 	}
 
 
+	// Layout config for easy add/removal
+	$sort_types = array(
+		0 => ['lastactivity', 'Last activity'],
+		1 => ['regdate', 'Registration date'],
+		2 => ['posts', 'Posts'],
+		3 => ['threads', 'Threads'],
+		4 => ['power', 'Group'],
+		5 => ['lastip', 'IP address'],
+	);
 	
-	$_POST['searchname']		= filter_string($_POST['searchname']);
-	$_POST['searchip']			= filter_string($_POST['searchip']);
-	$_POST['maxposts']			= filter_int($_POST['maxposts']);
+	// Variable fetching
+	$_POST['searchname']        = filter_string($_POST['searchname']);
+	$_POST['searchip']          = filter_string($_POST['searchip']);
+	$_POST['maxposts']          = filter_int($_POST['maxposts']);
 	
-	$_POST['sortpowerlevel'] 	= filter_string($_POST['sortpowerlevel']);
-	$_POST['sortord'] 			= filter_int($_POST['sortord']);
-	$_POST['sorttype'] 			= filter_int($_POST['sorttype']);
-	// Variable defaults
-	if (!$_POST['sortpowerlevel']) 	$_POST['sortpowerlevel'] = "ab";
-	if (!$_POST['sortord']) 		$_POST['sortord']		 = 0;
-	$powerselect[$_POST['sortpowerlevel']]	= 'selected';
-	$sortsel[$_POST['sorttype']]			= 'selected';
-	$ordsel[$_POST['sortord']]				= 'checked';
+	// Display only banned users by default
+	if (!isset($_POST['sortpower'])) {
+		$_POST['sortpower'] = SHOW_BANNED;
+	} else {
+		$_POST['sortpower'] = filter_int($_POST['sortpower']);
+	}
+	$_POST['sortord']           = filter_int($_POST['sortord']);
+	$_POST['sorttype']          = numrange(filter_int($_POST['sorttype']), 0, count($sort_types) - 1);
+	
+	$powersel[$_POST['sortpower']]       = 'selected';
+	$sortsel[$_POST['sorttype']]         = 'selected';
+	$ordsel[$_POST['sortord']]           = 'checked';
+
  
-	
-	
-?>
-<form action='?' method=post>
-<table class='table'>
-	<tr><td class='tdbgh center' colspan=2>Sort Options</td></tr>
-	<tr><td class='tdbg1 center' width=300><b>User Search:</b></td>
-		<td class='tdbg2'><input type='text' name=searchname size=30 maxlength=25 value="<?=htmlspecialchars($_POST['searchname'])?>"></td></tr>
-	<tr><td class='tdbg1 center' width=300><b>IP Search:</b></td>
-		<td class='tdbg2'><input type='text' name=searchip size=30 maxlength=32 value="<?=htmlspecialchars($_POST['searchip'])?>"></td></tr>
-	<tr><td class='tdbg1 center' width=300><b>Show users with less than:</b></td>
-		<td class='tdbg2'><input type='text' name=maxposts size=15 maxlength=9 value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
-	<tr><td class='tdbg1 center'><b>Powerlevel:</b></td>
-		<td class='tdbg2'>
-			<select name='sortpowerlevel'>
-				<option value='aa'  <?=filter_string($powerselect['aa']) ?>>* Any powerlevel</option>
-				<option value='ab'  <?=filter_string($powerselect['ab']) ?>>* All banned</option>
-				<option value='s3'  <?=filter_string($powerselect['s3']) ?>>Administrator</option>
-				<option value='s2'  <?=filter_string($powerselect['s2']) ?>>Moderator</option>
-				<option value='s1'  <?=filter_string($powerselect['s1']) ?>>Local Moderator</option>
-				<option value='s0'  <?=filter_string($powerselect['s0']) ?>>Normal User</option>
-				<option value='s-1' <?=filter_string($powerselect['s-1'])?>>Banned</option>
-				<option value='s-2' <?=filter_string($powerselect['s-2'])?>>Permabanned</option>
+ ?>
+<form method="POST" action="?">
+<table class="table">
+	<tr><td class="tdbgh center" colspan=2>Sort Options</td></tr>
+	<tr><td class="tdbg1 center b" style="width: 300px">User Search:</td>
+		<td class="tdbg2"><input type="text" name="searchname" size=30 maxlength=25 value="<?=htmlspecialchars($_POST['searchname'])?>"></td></tr>
+	<tr><td class="tdbg1 center b">IP Search:</td>
+		<td class="tdbg2"><input type="text" name="searchip"   size=30 maxlength=32 value="<?=htmlspecialchars($_POST['searchip'])?>"></td></tr>
+	<tr><td class="tdbg1 center b">Show users with less than:</td>
+		<td class="tdbg2"><input type='text' name="maxposts"   size=15 maxlength=9  value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
+	<tr><td class="tdbg1 center b">Powerlevel:</td>
+		<td class="tdbg2">
+			<select name="sortpower">
+				<option value='<?= SHOW_ALL    ?>' <?=filter_string($powersel[SHOW_ALL])    ?>>* Any powerlevel</option>
+				<option value='<?= SHOW_BANNED ?>' <?=filter_string($powersel[SHOW_BANNED]) ?>>* All banned (default)</option>
+<?php			foreach ($pwlnames as $groupid => $groupname) { ?>
+					<option value=<?= $groupid ?> <?= filter_string($groupsel[$groupid]) ?>><?= $groupname ?></option>
+<?php			} ?> 
 			</select>
 		</td>
 	</tr>
-	<tr><td class='tdbg1 center' width=300><b>Sort by:</b></td>
-		<td class='tdbg2'>
-			<select name='sorttype'>
-				<option value='0' <?=filter_string($sortsel[0])?>> Last activity </option>
-				<option value='1' <?=filter_string($sortsel[1])?>> Register date </option>
-				<option value='2' <?=filter_string($sortsel[2])?>> Posts </option>
-				<option value='3' <?=filter_string($sortsel[3])?>> Powerlevel </option>
-				<option value='4' <?=filter_string($sortsel[4])?>> IP address</option>
+	<tr><td class="tdbg1 center b">Sort by:</td>
+		<td class="tdbg2">
+			<select name="sorttype">
+<?php			foreach ($sort_types as $sort_id => $x) { ?>
+					<option value=<?= $sort_id ?> <?=filter_string($sortsel[$sort_id])?>> <?= $x[1] ?> </option>
+<?php			} ?> 
 			</select>, 
-			<input type=radio class='radio' name=sortord value='0' <?=filter_string($ordsel[0])?>> Descending&nbsp;&nbsp;
-			<input type=radio class='radio' name=sortord value='1' <?=filter_string($ordsel[1])?>> Ascending
+			<input type="radio" name="sortord" value="0" <?=filter_string($ordsel[0])?>> Descending&nbsp;&nbsp;
+			<input type="radio" name="sortord" value="1" <?=filter_string($ordsel[1])?>> Ascending
 		</td>
 	</tr>
 	<tr>
-		<td class='tdbg1 center'>&nbsp;</td>
-		<td class='tdbg2'>
-			<input type=submit value='Apply filters'>
+		<td class="tdbg1 center">&nbsp;</td>
+		<td class="tdbg2">
+			<input type="submit" name="setfilter" value="Apply filters">
 		</td>
 	</tr>
 </table>
-</form>
+
 <?php
 
-
-//	print_r($_POST);
-	$sqlquery	= "";
+	// WHERE Clause
+	$sqlwhere	= array();
 	$values		= array();
 
 	if ($_POST['maxposts']) {
-		$sqlquery	= "`posts` <= :posts";
-		$values['posts']	= $_POST['maxposts'];
+		$sqlwhere[] = "`posts` <= :posts";
+		$values['posts']        = $_POST['maxposts'];
 	}
 	if ($_POST['searchip']) {
-		if ($sqlquery)	$sqlquery	.= " AND ";
-		//$sqlquery	.= "`lastip` LIKE '". $_POST['searchip'] ."%'";
-		$sqlquery	.= "`lastip` LIKE :searchip";
-		$values['searchip']	= $_POST['searchip'].'%';
+		$sqlwhere[] = "`lastip` LIKE :searchip";
+		$values['searchip']     = "{$_POST['searchip']}%";
 	}
 	if ($_POST['searchname']) {
-		if ($sqlquery)	$sqlquery	.= " AND ";
-		$sqlquery	.= "`name` LIKE :searchname";
-		$values['searchname']	= '%'.$_POST['searchname'].'%';
+		$sqlwhere[] = "`name` LIKE :searchname";
+		$values['searchname']   = "%{$_POST['searchname']}%";
 	}
 
-	if ($_POST['sortpowerlevel'] != "aa") {
-		if ($sqlquery)	$sqlquery	.= " AND ";
-
-		if ($_POST['sortpowerlevel'] == "ab") 
-			$sqlquery	.= "`powerlevel` < '0'";
-		else {
-			$sqlquery	.= "`powerlevel` = :powerlevel";
-			$values['powerlevel'] = str_replace("s", "", $_POST['sortpowerlevel']);
-		}
+	if ($_POST['sortpower'] == SHOW_BANNED) { // Special handler for all banned
+		$sqlwhere[] = "(`powerlevel` < 0) ";
+	} else if ($_POST['sortpower'] != SHOW_ALL) {
+		$sqlwhere[] = "`powerlevel` = :powerlevel";
+		$values['powerlevel'] = $_POST['sortpower'];
 	}
-
-	switch ($_POST['sorttype']) {
-		case 0:
-			$sortfield	= "lastactivity";
-			break;
-		case 1:
-			$sortfield	= "regdate";
-			break;
-		case 2:
-			$sortfield	= "posts";
-			break;
-		case 3:
-			$sortfield	= "powerlevel";
-			break;
-		case 4:
-			$sortfield	= "lastip";
-			break;
-		default:
-			$sortfield	= "lastactivity";
-			break;
-	}
-
+	
+	$wheretxt = $sqlwhere ? "WHERE ". implode(" AND ", $sqlwhere) : "";
+	
+	// ORDER Clause
+	$sortfield = $sort_types[$_POST['sorttype']][0];
 	$sortorder = $_POST['sortord'] ? "ASC" : "DESC";
 	
-	if ($sqlquery) $sqlquery	= "WHERE ". $sqlquery;
-	$sqlquery	.= " ORDER BY `$sortfield` $sortorder";
-
-
-/*  if(!$p) $p=0;
-  if ($ip) $q = "lastip = '$ip'";
-	else $q = "posts=$p";
-*/
-	$users		= $sql->queryp("SELECT * FROM `users` $sqlquery", $values);
+	$users = $sql->queryp("
+		SELECT u.*, COUNT(t.id) threads 
+		FROM users u 
+		LEFT JOIN threads t ON u.id = t.user
+		{$wheretxt}
+		GROUP BY u.id
+		ORDER BY {$sortfield} {$sortorder}", $values);
 	$usercount	= $sql->num_rows($users);
-	?>
-<form action=? method=post>
+
+	// User results / selection table
+?>
+
 <table class='table'>
-	<tr><td class='tbl tdbgc font center' colspan=8><b><?=$usercount?> user(s) found.</b></td></tr>
+	<tr><td class="tdbgc center b" colspan=9><?=$usercount?> user(s) found.</td></tr>
 	<tr>
-		<td class='tdbgh center'>&nbsp;</td>
-		<td class='tdbgh center'>Name</td>
-		<td class='tdbgh center'>Posts</td>
-		<td class='tdbgh center'>Regdate</td>
-		<td class='tdbgh center'>Last post</td>
-		<td class='tdbgh center' width=200>Last activity</td>
-		<td class='tdbgh center'>Last URL</td>
-		<td class='tdbgh center'>IP</td>
+		<td class="tdbgh center">&nbsp;</td>
+		<td class="tdbgh center">Name</td>
+		<td class="tdbgh center">Posts</td>
+		<td class="tdbgh center">Threads</td>
+		<td class="tdbgh center" style="width: 200px">Regdate</td>
+		<td class="tdbgh center" style="width: 200px">Last post</td>
+		<td class="tdbgh center" style="width: 200px">Last activity</td>
+		<td class="tdbgh center">Last URL</td>
+		<td class="tdbgh center">IP</td>
 	</tr>
 	<?php
-	while ($user=$sql->fetch($users)) {
+	while ($user = $sql->fetch($users)) {
 		$userlink = getuserlink($user);
 		
 		if($user['lastposttime']) $lastpost	= printdate($user['lastposttime'], true);
@@ -235,34 +231,35 @@
 		if($user['regdate']) $regdate = printdate($user['regdate'], true);
 			else $regdate		= '-';
 
+		// Padding of numbers to gray 0
 		$textid	= str_pad($user['id'], 5, "x", STR_PAD_LEFT);
 		$textid	= str_replace("x", "<font color=#606060>0</font>", $textid);
 		$textid	= str_replace("</font><font color=#606060>", "", $textid);
 
 		?>
 	<tr>
-		<td class='tdbg1 center'><input type=checkbox name=deluser[<?=$user['id']?>] value='1'></td>
-		<td class='tdbg2'><?=$textid?> - <?=$userlink?></td>
-		<td class='tdbg1 center' width=0><?=$user['posts']?></td>
-		<td class='tdbg1 center' width=120><?=$regdate?></td>
-		<td class='tdbg1 center' width=120><?=$lastpost?></td>
-		<td class='tdbg1 center' width=120><?=$lastactivity?></td>
-		<td class='tdbg2'><?=$user['lasturl']?>&nbsp;</td>
-		<td class='tdbg2 center'><?=$user['lastip']?></td>
+		<td class="tdbg1 center"><input type="checkbox" name="deluser[<?=$user['id']?>]" value="1"></td>
+		<td class="tdbg2"><?= $textid ?> - <?= $userlink ?></td>
+		<td class="tdbg1 center"><?= $user['posts'] ?></td>
+		<td class="tdbg1 center"><?= $user['threads'] ?></td>
+		<td class="tdbg1 center"><?= $regdate ?></td>
+		<td class="tdbg1 center"><?= $lastpost ?></td>
+		<td class="tdbg1 center"><?= $lastactivity ?></td>
+		<td class="tdbg2"><?= $user['lasturl'] ?>&nbsp;</td>
+		<td class="tdbg2 center"><?= $user['lastip'] ?></td>
 	</tr>
 		<?php
 	}
 
   ?>
 	<tr>
-		<td class='tdbg1' colspan=8>
-			<input type='submit' class=submit name=submit value=Submit>
-			<input type='hidden' name='auth' value='<?=generate_token(65)?>'>
+		<td class="tdbg1" colspan=9>
+			<input type="submit" name="dodelete" value="Submit">
+			<?= auth_tag(TOKEN_USERDEL) ?>
 		</td>
 	</tr>
 </table>
 </form>
 <?php
-  
+
   pagefooter();
-?>

@@ -91,7 +91,7 @@
 		</tr>
 		<tr><td class='tdbg1 center' width='200'><b>Registration mode</b></td>
 			<td class='tdbg2'>
-				<select name='regmode' <?=$sysset?>>
+				<select name='regmode' id="regmode" onchange="enacode()" <?=$sysset?>>
 					<option value='0' <?=filter_string($reg_sel[0])?>>Open registration</option>
 					<option value='1' <?=filter_string($reg_sel[1])?>>Disabled</option>
 					<option value='2' <?=filter_string($reg_sel[2])?>>Pending membership</option>
@@ -99,7 +99,7 @@
 				</select>
 			</td>
 		</tr>
-		<tr><td class='tdbg1 center' width='200'><b>Registration code</b></td>
+		<tr id="regcodetr"><td class='tdbg1 center' width='200'><b>Registration code</b></td>
 			<td class='tdbg2'><input type='text' name='regcode' value="<?=htmlspecialchars($misc['regcode'])?>" <?=$sysset?>></td>
 		</tr>
 		<tr><td class='tdbg1 center' width='200'><b>Board access</b></td>
@@ -169,7 +169,13 @@
 		</tr>
 	</table>
 	</form>
-
+	<?php/* Hide the Registration Code row if the respective registration mode isn't selected */?>
+	<script type="text/javascript">
+		function enacode() {
+			document.getElementById("regcodetr").style.display = (document.getElementById("regmode").selectedIndex == 3 ? "" : "none");
+		}
+		enacode();
+	</script>
 	<?php
 
 

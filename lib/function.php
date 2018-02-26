@@ -614,39 +614,6 @@ function readpostread($userid) {
 	return $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = $userid");
 }
 
-function generatenumbergfx($num, $minlen=0, $double = false) {
-	global $numdir;
-
-	$nw			= 8 * ($double ? 2 : 1);
-	$num		= (string) $num; // strval
-	$len		= strlen($num);
-	$gfxcode	= "";
-
-	// Left-Padding
-	if($minlen > 1 && $len < $minlen) {
-		$gfxcode = "<img src='images/_.gif' width=". ($nw * ($minlen - $len)) ." height=$nw>";
-	}
-
-	for($i = 0; $i < $len; ++$i) {
-		$code	= $num[$i];
-		switch ($code) {
-			case "/":
-				$code	= "slash";
-				break;
-		}
-		if ($code == " ") {
-			$gfxcode.="<img src='images/_.gif' width=$nw height=$nw>";
-
-		} else {
-			$gfxcode.="<img src='numgfx/$numdir$code.png' width=$nw height=$nw>";
-
-		}
-	}
-	return $gfxcode;
-}
-
-
-
 function dotags($msg, $user, &$tags = array()) {
 	global $sql, $loguser;
 	if (is_string($tags)) {
@@ -886,8 +853,8 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 
 	// Comment display
 	if ($hacks['comments']) {
-		$p=str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $p);
-		$p=str_replace("-->", '--&gt;</span>', $p);
+		$msg=str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $msg);
+		$msg=str_replace("-->", '--&gt;</span>', $msg);
 	}
 
 	if (!$nosbr) sbr(0,$msg);
@@ -1171,27 +1138,18 @@ function create_verification_hash($n,$pw) {
 	return $n . hash('sha256', $pw . $vstring);
 }
 
-function generate_token($div = 20, $extra = "") {
+function generate_token($div = TOKEN_MAIN, $extra = "") {
 	global $config, $loguser;
-	
-	$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
-	
-	$n 		= count($ipaddr) - 2;
-	$orig 	= $ipaddr[$n+1];
-	
-	for ($i = $n; $i >= 0; --$i) 
-		$ipaddr[$i+1] = $ipaddr[$i+1] << ($ipaddr[$i] / $div);
-	$ipaddr[0] = $ipaddr[0] << ($orig / $div);
-	
-	$ipaddr = implode('.', $ipaddr);
-		
-	return hash('sha256', $loguser['name'] . $ipaddr . $config['salt-string'] . $extra . $loguser['password']);
-	
+	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $div . $loguser['password']);
 }
 
-function check_token(&$var, $div = 20, $extra = "") {
+function check_token(&$var, $div = TOKEN_MAIN, $extra = "") {
 	$res = (trim($var) == generate_token($div, $extra));
 	if (!$res) errorpage("Invalid token.");
+}
+
+function auth_tag($div = TOKEN_MAIN) {
+	return '<input type="hidden" name="auth" value="'.generate_token($div).'">';
 }
 
 function getpwhash($pass, $id) {
@@ -1408,6 +1366,11 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 	}*/
 
 	return $output;
+}
+
+function get_minipic($id) {
+	// WIP
+	return "-";
 }
 
 // Banner 0 = automatic ban
@@ -2122,6 +2085,52 @@ function preg_loop($before, $regex){
 	return $after;
 }
 
+
+function generatenumbergfx($num, $minlen = 0, $size = 1) {
+	global $numdir;
+
+	$nw			= 8 * $size; //($double ? 2 : 1);
+	$num		= (string) $num; // strval
+	$len		= strlen($num);
+	$gfxcode	= "";
+
+	// Left-Padding
+	if($minlen > 1 && $len < $minlen) {
+		$gfxcode = "<img src='images/_.gif' style='width:". ($nw * ($minlen - $len)) ."px;height:{$nw}px'>";
+	}
+
+	for($i = 0; $i < $len; ++$i) {
+		$code	= $num[$i];
+		switch ($code) {
+			case "/":
+				$code	= "slash";
+				break;
+		}
+		if ($code == " ") {
+			$gfxcode .= "<img src='images/_.gif' style='width:{$nw}px;height:{$nw}px'>";
+		} else if ($code == "i") { // the infinity symbol is just a rotated 8, right...?
+			$gfxcode .= "<img src='numgfx/{$numdir}8.png' style='width:{$nw}px;height:{$nw}px;transform:rotate(90deg)'>";			
+		} else {
+			$gfxcode .= "<img src='numgfx/{$numdir}{$code}.png' style='width:{$nw}px;height:{$nw}px'>";
+		}
+	}
+	return $gfxcode;
+}
+
+// Progress bar (for RPG levels, syndromes)
+function drawprogressbar($width, $height, $progress, $images) {
+	$on = floor($progress / 100 * $width);
+	$off = $width - $on;
+	return "<img src='{$images['left']}' style='height:{$height}px'>".
+			"<img src='{$images['on']}' style='height:{$height}px;width:{$on}px'>".
+			"<img src='{$images['off']}' style='height:{$height}px;width:{$off}px'>".
+			"<img src='{$images['right']}' style='height:{$height}px'>";
+}
+
+// Single image progress bar (for comparisions like in activeusers.php)
+function drawminibar($progress, $image = 'images/minibar.png') {
+	return "<img src='{$image}' style='float: left; width: ". round($progress) ."%; height: 3px'>";
+}
 
 function adbox() {
 

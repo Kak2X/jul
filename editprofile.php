@@ -469,7 +469,7 @@
 					unset($ch);
 				}
 				else
-					$input = $$data[1];
+					$input = ${$data[1]};
 					
 				$t .= "<tr><td class='tdbg1 center'><b>$j:</b>$desc</td><td class='tdbg2'>$input</td></tr>";
 			}

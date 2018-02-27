@@ -33,7 +33,7 @@
 	$q = $qppp.$qrpg;
 
 	if(!$_GET['ppp']) $_GET['ppp']=50;
-	if(!$_GET['page']) $_GET['page']=0;
+	//if(!$_GET['page']) $_GET['page']=0;
 
 	
 	// WHERE clause of query
@@ -102,10 +102,11 @@
 		usort($users,'sortbyexp'.($_GET['ord'] ? 'asc' : 'desc'));
 	}
 	
-	$pagelinks = "<span class='fonts'>Pages:";
-	for($i = 0, $total = $numusers / $_GET['ppp']; $i < $total; ++$i) {
-		$pagelinks .= ($i == $_GET['page'] ? ' '.($i+1): " <a href='memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp&page=$i'>".($i+1).'</a>');
-	}
+	$pagelinks = 
+	"<span class='fonts'>".
+		pagelist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp", $numusers, $_GET['ppp'], true).
+	"</span>";
+	
 	if ($numusers != 1) $s = "s";
 	
 	pageheader();

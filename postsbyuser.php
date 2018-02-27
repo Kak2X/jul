@@ -7,6 +7,8 @@
 	$_GET['page'] 	= filter_int($_GET['page']);
 	$_GET['ppp'] 	= filter_int($_GET['ppp']);
 	
+	const PBU_DEFAULT_PPP = 50;
+	
 	
 	if (!$_GET['id']) {
 		errorpage('No user specified.', 'return to the board', 'index.php');
@@ -35,7 +37,7 @@
 	}
 	
 	if (!$_GET['page']) $_GET['page'] = 0;
- 	if (!$_GET['ppp'])  $_GET['ppp'] = 50;
+ 	if (!$_GET['ppp'])  $_GET['ppp'] = PBU_DEFAULT_PPP;
 	$min = $_GET['ppp'] * $_GET['page'];
 
 	$posts = $sql->query(
@@ -60,18 +62,9 @@
 	// Seek to page
 	//if (!@mysql_data_seek($posts, $min)) $_GET['page'] = 0;
 
-	$pagelinks = '<span class="fonts">Pages:';
-	$forumlink = "";
-	for($i = 0, $max = $posttotal/$_GET['ppp']; $i < $max; ++$i) {
-		if ($i == $_GET['page']) {
-			$pagelinks .= ' '.($i+1);
-		} else {
-			if ($_GET['ppp'] != 50) $postperpage = "&ppp={$_GET['ppp']}";
-			if ($forumquery) $forumlink = "&forum={$_GET['forum']}";
-			$pagelinks .=" <a href='postsbyuser.php?id={$_GET['id']}$postperpage$forumlink&page=$i'>".($i+1).'</a>';
-		}
-	}
-	$pagelinks .= "</span>";
+	$postperpage = ($_GET['ppp'] != PBU_DEFAULT_PPP) ? "&ppp={$_GET['ppp']}" : "";
+	$forumlink   = $forumquery ? "&forum={$_GET['forum']}" : "";
+	$pagelinks = "<span class='fonts'>".pagelist("?id={$_GET['id']}{$postperpage}{$forumlink}", $posttotal, $_GET['ppp'], true)."</span>";
 	
 	pageheader("Listing posts by $user");
 	

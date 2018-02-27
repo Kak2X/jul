@@ -2064,6 +2064,35 @@ function preg_loop($before, $regex){
 	return $after;
 }
 
+// $startrange === true -> print all pages
+function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midrange = 4){
+	$page    = filter_int($_GET['page']);
+	$pages   = ceil($elements / $ppp);
+	$pagelinks = "";
+	if ($pages > 1) {
+		$pagelinks = "Pages: ";
+		for ($i = 0; $i < $pages; ++$i) {
+			// restrict page range to sane values
+			if ($startrange !== true && $i > $startrange && $i < $pages - $endrange) {
+				// around the current page
+				if ($i < $page - $midrange) {
+					$i = min($page-$midrange, $pages-$endrange);
+					$pagelinks .= " ...";
+				}
+				else if ($i > $page + $midrange) {
+					$i = $pages-$endrange;
+					$pagelinks .= " ...";
+				}
+			}
+			
+			$w = ($i == $page) ? "x" : "a";
+			$pagelinks .= "<{$w} href=\"{$url}&page={$i}\">".($i + 1)."</{$w}> ";
+		}
+	}
+	
+	return $pagelinks;
+}
+
 
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;

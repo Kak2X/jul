@@ -79,29 +79,7 @@
 		LIMIT $min,$ppp
 	");
 	$annctotal = $sql->resultq("SELECT COUNT(*) FROM announcements WHERE forum = $forum");
-	
-	$pageend = (int)($annctotal / $ppp);
-	$pagelinks = "Pages:";
-	if ($annctotal < $ppp)
-		$pagelinks = '';
-	else for ($i = 0; $i <= $pageend; ++$i) {
-		// restrict page range to sane values
-		if ($i > 9 && $i < $pageend-9) {
-			if ($i < $page-4) {
-				$i = min($page-4, $pageend-9);
-				$pagelinks .= " ...";
-			}
-			if ($i > $page+4) {
-				$i = $pageend-9;
-				$pagelinks .= " ...";
-			}
-		}
-		
-		if ($i == $page)
-			$pagelinks	.= " ".($i + 1);
-		else
-			$pagelinks	.= " <a href='announcement.php?f=$forum&page=$i'>".($i + 1)."</a>";
-	}
+	$pagelinks = pagelist("?f=$forum", $annctotal, $ppp);
 
 	$annclist = "<table class='table'><tr><td class='tdbgh center' width=150>User</td><td class='tdbgh center' colspan=2>Announcement</td></tr>";
 	for ($i = 0; $annc = $sql->fetch($anncs); ++$i) {

@@ -523,34 +523,11 @@
 	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
 	$query = preg_replace("'pid=(\d*)'si", "id={$id}", $query);
 	$query = preg_replace("'&{2,}'si", "&", $query);
-	if ($query && substr($query, -1) != "&")
-		$query	.= "&";
-	if (!$page)
-		$page = 0;
+	//if ($query && substr($query, -1) != "&")
+	//	$query	.= "&";
 
-	$pageend = (int)($thread['replies'] / $ppp);
-	$pagelinks = "Pages:";
-	if ($thread['replies'] < $ppp)
-		$pagelinks = '';
-	else for ($i = 0; $i <= $pageend; ++$i) {
-		// restrict page range to sane values
-		if ($i > 9 && $i < $pageend-9) {
-			if ($i < $page-4) {
-				$i = min($page-4, $pageend-9);
-				$pagelinks .= " ...";
-			}
-			if ($i > $page+4) {
-				$i = $pageend-9;
-				$pagelinks .= " ...";
-			}
-		}
-		
-		if ($i == $page)
-			$pagelinks	.= " ".($i + 1);
-		else
-			$pagelinks	.= " <a href='$query"."page=$i'>".($i + 1)."</a>";
-	}
-
+	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
+	
 	//print $header.sizelimitjs()."
 	
 	print "

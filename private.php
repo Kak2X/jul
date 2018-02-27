@@ -27,7 +27,7 @@
 	if ($view == 'sent') {
 		$to   		= 'from';
 		$from 		= 'to';
-		$viewparam 	= 'view=sent&';
+		$viewparam 	= 'view=sent';
 	} else {
 		$to   		= 'to';
 		$from 		= 'from';
@@ -39,18 +39,8 @@
 	$ppp	= max(min($ppp, 500), 1);
 	
 	// Page number links
-	if (!$page) $page = 1;
-
-	$pmin 		= ($page - 1) * $ppp;
 	$msgtotal 	= $sql->resultq("SELECT COUNT(*) FROM pmsgs WHERE user$to = $u");
-	$pagelinks 	= 'Pages:';
-	
-	for($i = 0, $p = 1; $i < $msgtotal; $i += $ppp, ++$p) {
-		if($p == $page)
-			$pagelinks.=" $p";
-		else
-			$pagelinks.=" <a href='private.php?{$idparam}{$viewparam}page={$p}'>{$p}</a>";
-	}
+	$pagelinks = pagelist("private.php?{$idparam}{$viewparam}", $msgtotal, $ppp, true);
 	
 
 	// 1252378129
@@ -62,7 +52,7 @@
 		LEFT JOIN users u ON user{$from} = u.id
 		WHERE p.user{$to} = $u
 		ORDER BY p.msgread ASC, p.id DESC
-		LIMIT $pmin, $ppp
+		LIMIT ".($page * $ppp).", $ppp
 	");
 
 	$from[0] = strtoupper($from[0]);

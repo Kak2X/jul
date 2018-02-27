@@ -157,11 +157,9 @@
 		$forumpagelinks = 
 			"<table style='width: 100%'>
 				<tr>
-					<td align=left class='fonts'>Pages:";
-		for($k = 0, $limit = $threadcount / $tpp; $k < $limit; ++$k)
-			$forumpagelinks .= ($k != $page ? " <a href='?$query&page=$k'>".($k+1).'</a>':' '.($k+1));
-		$forumpagelinks .= 
-					"</td>
+					<td align=left class='fonts'>
+						".pagelist("?$query", $threadcount, $tpp, true)."
+					</td>
 				</tr>
 			</table>";
     }
@@ -394,25 +392,17 @@
 			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>".$forumnames[$thread['forumid']]."</a>";
 
 		// Extra pages
+		$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);
+		$maxfromend   = (($loguser['pagestyle']) ? 20 : 10);
+		
+		$_GET['page'] = 0; // horrible hack
+		$pagelinks = pagelist("thread.php?id={$thread['id']}", $thread['replies'] + 1, $ppp, $maxfromstart, $maxfromend);
+		
 		if($thread['replies'] >= $ppp) {
-			$pagelinks='';
-
-			$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);
-			$maxfromend   = (($loguser['pagestyle']) ? 20 : 10);
-
-			$totalpages	= ceil(($thread['replies'] + 1) / $ppp);
-			for($k = 0; $k < $totalpages; ++$k) {
-				if ($totalpages >= ($maxfromstart+$maxfromend+1) && $k > $maxfromstart && $k < ($totalpages - $maxfromend)) {
-				  $k = ($totalpages - $maxfromend);
-					$pagelinks .= " ...";
-				}
-				$pagelinks.=" <a href='thread.php?id={$thread['id']}&page=$k'>".($k+1).'</a>';
-			}
-
 			if ($loguser['pagestyle'])
-				$belowtitle[] = "Page:{$pagelinks}";
+				$belowtitle[] = $pagelinks;
 			else
-				$threadtitle .= " <span class='fonts'>(Pages:{$pagelinks})</span>";
+				$threadtitle .= " <span class='fonts'>({$pagelinks})</span>";
 		}
 		
 		// The thread description has its own line though

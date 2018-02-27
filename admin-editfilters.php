@@ -15,12 +15,14 @@
 		//99 => "Test"
 	);
 	$max_filters = count($filter_types);
-	$fpp = 5; // Filters per page
 	
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['page']   = filter_int($_GET['page']);
 	$_GET['type']   = numrange(filter_int($_GET['type']), 0, $max_filters);
+	$_GET['fpp']    = filter_int($_GET['fpp']);
+	if (!$_GET['fpp']) $_GET['fpp'] = 6;
 	
+	$redirurl = "?type={$_GET['type']}&fpp={$_GET['fpp']}&page={$_GET['page']}";
 	if (isset($_POST['setdel']) && isset($_POST['del'])) {
 		// Delete multiple filters (from the overview page)
 		check_token($_POST['auth']);
@@ -34,7 +36,7 @@
 			}
 			//msg_holder::set_cookie("{$i} filter".($i != 1 ? 's' : '')." deleted.");
 		}
-		return header("Location: ?type={$_GET['type']}");	
+		return header("Location: {$redirurl}");	
 	} else if (isset($_POST['qdelid'])) {
 		// Delete a single filter (from the edit page)
 		check_token($_POST['auth']);
@@ -44,7 +46,7 @@
 		$sql->query("DELETE FROM filters WHERE id = {$delid}");
 		//msg_holder::set_cookie("1 filter deleted.");
 		
-		return header("Location: admin-editfilters.php?type={$_GET['type']}");
+		return header("Location: {$redirurl}");
 	} else if (isset($_POST['edit'])) {
 		// Creating / updating a filter
 		check_token($_POST['auth']);
@@ -87,7 +89,7 @@
 			'type'        => $type,
 		]);
 		
-		return header("Location: ?type={$_GET['type']}");
+		return header("Location: {$redirurl}");
 	}
 
 
@@ -112,7 +114,7 @@
 	.rh {height: 19px;}
 	textarea {display: block}
 </style>
-<form method="POST" action="?type=<?= $_GET['type'] ?>&id=<?= $_GET['id'] ?>">
+<form method="POST" action="<?= $redirurl ?>&id=<?= $_GET['id'] ?>">
 <?= auth_tag() ?>
 
 <table class="table">
@@ -130,7 +132,7 @@
 		</td>
 
 <?php	if (!$_GET['type']) { ?>
-		<td class="tdbg1 center rh">Select a filter type.</td>
+		<td class="tdbg1 center rh">Select a filter type from the sidebar.</td>
 	</tr>
 	<tr><td class="tdbg2 center">&nbsp;</td></tr>
 <?php
@@ -251,14 +253,15 @@
 			LEFT JOIN forums x ON f.forum = x.id
 			WHERE f.type = {$_GET['type']}
 			ORDER BY f.source ASC
-			-- LIMIT ".($_GET['page'] * $fpp).",{$fpp}
+			".($_GET['fpp'] > 0 ? "LIMIT ".($_GET['page'] * $_GET['fpp']).",{$_GET['fpp']}" : "")."
 		");
+		$filtercount = $sql->resultq("SELECT COUNT(*) FROM filters WHERE type = {$_GET['type']}");
 		for ($i = 0; $x = $sql->fetch($filters); ++$i) {	
 			#################
 ?>
 	<tr class="rh">
 		<td class="tdbg1 center fonts">
-			<input type="checkbox" name="del[]" value=<?= $x['id'] ?>> - <a href="?type=<?= $_GET['type'] ?>&id=<?= $x['id'] ?>">Edit</a>
+			<input type="checkbox" name="del[]" value=<?= $x['id'] ?>> - <a href="<?= $redirurl ?>&id=<?= $x['id'] ?>">Edit</a>
 		</td>
 			<td class="tdbg1 center b"><span style=color:<?= ($x['enabled'] ? "#0F0>ON" : "#F00>OFF") ?></span>
 		</td>
@@ -276,11 +279,18 @@
 			################
 		}
 ?>
-	<tr><td class="tdbg2 center" colspan=7>&nbsp;</td></tr>
+	<tr>
+		<td class="tdbg2 center" colspan=7>&nbsp;
+			<?php if ($filtercount > $_GET['fpp'] && $_GET['fpp'] > 0) { ?>
+				<?= pagelist("?id={$_GET['id']}&type={$_GET['type']}&fpp={$_GET['fpp']}", $filtercount, $_GET['fpp']) ?>
+				 -- <a href="?id=<?= $_GET['id'] ?>&type=<?= $_GET['type'] ?>&fpp=-1">Show all</a>
+			<?php } ?>
+		</td>
+	</tr>
 
 	<tr class="rh">
 		<td class="tdbgc" style="border-right: 0" colspan=2><input type="submit" style="height: 16px; font-size: 10px" name="setdel" value="Delete Selected"></td>
-		<td class="tdbgc center" colspan=5><a href="?type=<?= $_GET['type'] ?>&id=-1">&lt; Add a new filter &gt;</a></td>
+		<td class="tdbgc center" colspan=5><a href="<?= $redirurl ?>&id=-1">&lt; Add a new filter &gt;</a></td>
 	</tr>
 <?php }	?>
 		</td>

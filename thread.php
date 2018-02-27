@@ -444,15 +444,17 @@
 	$layouts = $sql->query("SELECT headid, signid FROM posts WHERE {$searchon} LIMIT $min, $ppp");
 	preplayouts($layouts);
 	
-	
-	$attachments = $sql->fetchq("
-		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
-		FROM posts p
-		LEFT JOIN attachments a ON p.id = a.post
-		WHERE p.{$searchon} AND a.id IS NOT NULL
-		ORDER BY p.id
-		LIMIT {$min},{$ppp}
-	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
+	if ($showattachments) {
+		$attachments = $sql->fetchq("
+			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
+			FROM posts p
+			LEFT JOIN attachments a ON p.id = a.post
+			WHERE p.{$searchon} AND a.id IS NOT NULL
+			ORDER BY p.id
+			LIMIT {$min},{$ppp}
+		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+	}
 	
 	// heh
 	$posts = $sql->query("
@@ -489,7 +491,7 @@
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 		
-		if (isset($attachments[$post['id']])) {
+		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
 		}
 

@@ -8,6 +8,7 @@
 	
 	// Stop this insanity.  Never index newthread.
 	$meta['noindex'] = true;	
+	const BLANK_KEY = "nk";
 
 	// Detect all three (invalid forum, banned user, restricted forum) in one query
 	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = $id AND {$loguser['powerlevel']} >= minpowerthread");
@@ -76,7 +77,7 @@
 	
 	// Attachment preview stuff
 	$input_tid  = "";
-	$tid_temp   = "nx";
+	$attach_key   = BLANK_KEY;
 	
 	if (isset($_POST['preview']) || isset($_POST['submit'])) {
 		// common threadpost / query requirements
@@ -115,42 +116,19 @@
 		
 		if($userid != -1 && $subject && $message && $forumexists && $authorized && $limithit) {
 			
-			// as soon as the first file is properly attached, mark the temp key as confirmed
-			// and do the same for each next iteration of the script
-			// meaning that on next iterations of this script, the current key value will be used
-			if (isset($_POST['tidconfirm'])) {
-				$attach_id  = filter_int($_POST['attach_id']);
-				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
-			} else {
-				$attach_id  = get_attachments_newthread("n{$id}_", $loguser['id']);
-			}
-			$input_tid .= "<input type='hidden' name='attach_id' value='{$attach_id}'>";
-			$tid_temp   = "n{$id}_{$attach_id}";
-			
-			// Process attachments removal
-			$cnt = get_attachments_index($tid_temp, $loguser['id']);	
-			$list = array();
-			for ($i = 0; $i < $cnt; ++$i) {
-				if (filter_int($_POST["remove{$i}"])) {
-					$list[] = $i;
+
+			if ($config['allow-attachments']) {
+				$attachids   = get_attachments_key("n{$id}", $loguser['id']); // Get the base key to identify the correct files
+				$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
+				$attach_key   = $attachids[1]; // String (base) key for file names
+				$attach_count = process_temp_attachments($attach_key, $loguser['id']); // Process the attachments and return the post-processed total
+				if ($attach_count) {
+					// Some files are attached; reconfirm the key
+					$input_tid = save_attachments_key($attach_id);
+				} else {
+					$attach_key = BLANK_KEY; // just in case
 				}
-			}
-
-			if (!empty($list)) {
-				remove_temp_attachments($tid_temp, $loguser['id'], $list);
-			}
-			
-
-			
-			// Upload current attachment
-			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
-				upload_attachment($_FILES["attachment{$i}"], $tid_temp, $loguser['id'], $i - count($list));
-				$input_tid .= "<input type='hidden' name='tidconfirm' value=1>";
-			} else if (count($list) == $cnt) {
-				// if every attachment is removed and no extra one is getting uploaded, unconfirm the key
-				// this is to prevent any funny shit
-					$tid_temp = "nx";
-					$input_tid = "";
+				
 			}
 			
 			// The thread preview also needs this for threadpost()
@@ -183,6 +161,8 @@
 			
 
 			if (isset($_POST['submit'])) {
+				#echo "key => {$attach_key}; count = {$attach_count}";
+				#die;
 				check_token($_POST['auth']);
 				
 				$sql->beginTransaction();
@@ -271,7 +251,9 @@
 						 
 				$pid = $sql->insert_id();
 				
-				save_attachments($tid_temp, $loguser['id'], $pid);
+				if ($config['allow-attachments']) {
+					save_attachments($attach_key, $loguser['id'], $pid);
+				}
 				
 				$sql->query("
 					UPDATE `forums` SET
@@ -444,7 +426,9 @@
 		$ppost['text']			= $message;
 		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		$ppost['attach']		= get_temp_attachments($tid_temp, $loguser['id']);
+		if ($config['allow-attachments']) {
+			$ppost['attach']	= get_temp_attachments($attach_key, $loguser['id']);
+		}
 		
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
@@ -645,7 +629,7 @@
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label>
 				</td>
 			</tr>
-		<?=quikattach($tid_temp, $loguser['id'])?>
+		<?=quikattach($attach_key, $loguser['id'])?>
 		</table>
 		</form>
 		<?=$forumlink?>

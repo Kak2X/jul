@@ -54,6 +54,8 @@
 		'force-lastip-match'	=> false,					// Force logout on IP changes
 		
 		// File uploads
+		'allow-attachments'     => true,                    // Enables the attachment feature
+		'hide-attachments'      => false,                   // Do not show attachments in threads (only works when allow-attachments is false)
 		'attach-max-size'       => 2 * 1048576,	// 2 MB 	// Max size for attachments
 		
 		
@@ -90,4 +92,3 @@
 	// Are we using SSL?
 	if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
 		$config['board-url'] = str_replace("http://", "https://", $config['board-url']);
-?>

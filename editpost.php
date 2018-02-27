@@ -78,21 +78,28 @@
 			$edited 	= getuserlink($loguser);
 			//$edited = str_replace('\'', '\\\'', getuserlink($loguser));
 			
-			// Mark the already confirmed attachment just for deletion (will be properly removed on submit)
-			// Recycle the same query which will be used later in quikattach()
-			$extrasize = 0;
-			$attach = $sql->getarray("".
-				"SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image".
-				"	FROM attachments a".
-				"	WHERE a.post = {$id}", mysql::USE_CACHE);
-			foreach ($attach as $x) {
-				if (isset($_POST["removec{$x['id']}"])) {
-					$attachsel[$x['id']] = 'checked';
-				} else {
-					$extrasize += $x['size']; // get_attachment_size() works for temp attachments only, so calculate the extra here
-				}
-			}
+
 			
+			/*
+			if ($config['allow-attachments']) {
+				$attachids   = get_attachments_key("n{$id}", $loguser['id']); // Get the base key to identify the correct files
+				$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
+				$attach_key   = $attachids[1]; // String (base) key for file names
+				$attach_count = process_temp_attachments($attach_key, $loguser['id']); // Process the attachments and return the post-processed total
+				if ($attach_count) {
+					// Some files are attached; reconfirm the key
+					$input_tid = save_attachments_key($attach_id);
+				} else {
+					$attach_key = BLANK_KEY; // just in case
+				}	
+			}*/
+			if ($config['allow-attachments']) {
+				$savedata  = process_saved_attachments($id);
+				$extrasize = $savedata['size'];
+				$attachsel = $savedata['del'];
+				process_temp_attachments($threadid, $loguser['id'], $extrasize);
+			}
+			/*
 			// Process *TEMP* attachments removal
 			$cnt = get_attachments_index($threadid, $post['user']);
 			$list = array();
@@ -108,7 +115,7 @@
 			// Upload current attachment
 			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
 				upload_attachment($_FILES["attachment{$i}"], $threadid, $post['user'], $i - count($list), $extrasize);
-			}	
+			}	*/
 		
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
@@ -148,10 +155,13 @@
 					]);
 				$sql->commit();
 				
-				if ($attachsel) {
-					remove_attachments(array_keys($attachsel));
+				if ($config['allow-attachments']) {
+					if ($attachsel) {
+						remove_attachments(array_keys($attachsel));
+					}
+					save_attachments($threadid, $post['user'], $id);
 				}
-				save_attachments($threadid, $post['user'], $id);
+				
 				errorpage("Post edited successfully.", "thread.php?pid=$id#$id", 'return to the thread', 0);
 				
 			} else {
@@ -182,16 +192,12 @@
 				$ppost['edited']	= $edited;
 				$ppost['editdate'] 	= ctime();
 				
-				// Attachments crap
-				$ppost['attach'] = array();
-				// Include in the preview anything which isn't marked as deleted
-				foreach ($attach as $k => $val) {
-					if (!isset($attachsel[$val['id']])) {
-						$ppost['attach'][] = $attach[$k];
-					}
+				if ($config['allow-attachments']) {
+					// Attachments crap
+					$attach = get_saved_attachments($id);
+					$ppost['attach']    = array_merge(filter_attachments($attach, $attachsel), get_temp_attachments($threadid, $post['user']));
 				}
-				// As well as the temp attachments
-				$ppost['attach']    = array_merge($ppost['attach'], get_temp_attachments($threadid, $post['user']));
+				
 				/*
 				echo "<pre>";
 				print_r($ppost['attach']);

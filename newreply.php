@@ -116,20 +116,8 @@
 		}
 		
 		// Process attachments removal
-		$cnt = get_attachments_index($id, $loguser['id']);
-		$list = array();
-		for ($i = 0; $i < $cnt; ++$i) {
-			if (filter_int($_POST["remove{$i}"])) {
-				$list[] = $i;
-			}
-		}
-		if (!empty($list)) {
-			remove_temp_attachments($id, $loguser['id'], $list);
-		}
-		
-		// Upload current attachment
-		if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
-			upload_attachment($_FILES["attachment{$i}"], $id, $loguser['id'], $i - count($list));
+		if ($config['allow-attachments']) {
+			process_temp_attachments($id, $loguser['id']);
 		}
 		
 		// All OK
@@ -182,7 +170,9 @@
 					 
 			$pid = $sql->insert_id();
 			
-			save_attachments($id, $loguser['id'], $pid);
+			if ($config['allow-attachments']) {
+				save_attachments($id, $loguser['id'], $pid);
+			}
 			
 			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky," : "";
 			
@@ -330,7 +320,9 @@
 		$ppost['text']			= $message;
 		$ppost['options']		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		$ppost['attach']		= get_temp_attachments($id, $loguser['id']);
+		if ($config['allow-attachments']) {
+			$ppost['attach']	= get_temp_attachments($id, $loguser['id']);
+		}
 		
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";

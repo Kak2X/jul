@@ -1,6 +1,5 @@
 <?php
 
-// TODO: Make the metadata file contain everything instead of checking the file size over and over again
 function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 	global $config, $numdir, $sql;
 	
@@ -9,33 +8,32 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 	}
 	
 	$cnt = get_attachments_index($thread, $user);
-	// Existing attachments
+	// Display removal options for temp attachments
 	$out = "";
 	$sizetotal = 0;
 	for ($i = 0; $i < $cnt; ++$i) {
 		$path = attachment_tempname($thread, $user, $i);
 		$cell = ($i % 2) + 1;
-		$size = filesize($path);
+		$metadata = get_attachment_metadata($path);
 		$out .= "
 		<tr>
 			<td class='tdbg{$cell}'>
-				".htmlspecialchars(file_get_contents("{$path}.dat"))."
+				".htmlspecialchars($metadata['filename'])."
 			</td>
-			<td class='tdbg{$cell}'>".sizeunits($size)."</td>
+			<td class='tdbg{$cell}'>{$metadata['size']}</td>
 			<td class='tdbg{$cell}'>
 				<input type='checkbox' name='remove{$i}' value=1>
 				<label for='remove{$i}'>Remove</a><br>
 			</td>
 		</tr>";
 		
-		$sizetotal += $size;
+		$sizetotal += (int) $metadata['size'];
 	}
 	
+	// Display removal options for real attachments associated to the post (when editing a post)
 	$out_conf = "";
 	if ($showpost !== NULL) {
 		$j = $i;
-		// Show uploaded attachments from a certain post
-		// Used in editpost
 		$attach = get_saved_attachments($showpost);
 		if ($attach) {
 			$out_conf .= "<tr><td class='tdbgh center b' colspan=3>Files uploaded</td></tr>";
@@ -170,6 +168,7 @@ function attachfield($list, $editmode = false) {
 
 
 // Update the status of temp attachments after submit/preview is clicked
+// Returns the resulting number of attachments
 function process_temp_attachments($key, $user, $extrasize = 0) {
 	// Get the total number of attachments / first free slot
 	$total = get_attachments_index($key, $user);
@@ -228,9 +227,10 @@ function process_saved_attachments($post) {
 	return ['size' => $extrasize, 'del' => $attachsel];
 }
 
+// Remove from the attachment $list anything marked in $sel
+// $list should be the saved attachment list, $sel the removal list
 function filter_attachments($list, $sel) {
 	$filtered = array();
-	// Include in the preview anything which isn't marked as deleted
 	foreach ($list as $k => $val) {
 		if (!isset($sel[$val['id']])) {
 			$filtered[] = $list[$k];
@@ -250,14 +250,25 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 		errorpage("The file you're trying to upload is over the file size limit.");	
 	
 	$path = attachment_tempname($thread, $user, $file_id);
-	// Preserve given filename to an identically named .dat file
-	file_put_contents("{$path}.dat", $file['name']);
 	
 	// Move the file and THEN generate the thumbnail
 	$res = move_uploaded_file($file['tmp_name'], $path);
 	
 	list($width, $height) = getimagesize($path);
 	$is_image = ($width && $height);
+	
+	// but first, get the metadata out of the way
+	$metadata = array(
+		'filename' => str_replace(array("\r", "\n"), '', $file['name']),
+		'mime'     => mime_content_type($path),
+		'size'     => $file['size'],
+		'width'    => (int) $width,
+		'height'   => (int) $height,
+		'is_image' => (int) $is_image,
+	);
+	write_attachment_metadata($path, $metadata);
+	
+	
 	// Generate a thumbnail
 	if ($is_image) {
 		$src_image = imagecreatefromstring(file_get_contents($path));
@@ -286,22 +297,16 @@ function save_attachments($thread, $user, $post_id) {
 			break;
 		}
 		
-		// Fill out extra metadata
-		if (file_exists("{$path}_t")) {
-			list($width, $height) = getimagesize("{$path}_t");
-			$is_image = ($width && $height);
-		} else {
-			$is_image = false;
-		}
-		
+		// Save the metadata to the database
+		$metadata = get_attachment_metadata($path);
 		$sqldata = [
 			'post'     => $post_id,
 			'user'     => $user,
-			'mime'     => mime_content_type($path),
-			'filename' => file_get_contents("{$path}.dat"),
-			'size'     => filesize($path),
+			'mime'     => $metadata['mime'],
+			'filename' => $metadata['filename'],
+			'size'     => (int) $metadata['size'],
 			'views'    => 0,
-			'is_image' => $is_image,
+			'is_image' => (int) $metadata['is_image'],
 		];
 		
 		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
@@ -309,7 +314,7 @@ function save_attachments($thread, $user, $post_id) {
 		$rowid = $sql->insert_id();
 		
 		// Move the thumbnail we previously generated off the temp folder
-		if ($is_image) {
+		if ((int) $metadata['is_image']) {
 			rename("{$path}_t", attachment_name($rowid, true));
 		}
 		rename($path, attachment_name($rowid));
@@ -323,11 +328,12 @@ function get_temp_attachments($thread, $user) {
 	$res = array();
 	for ($i = 0; $i < $cnt; ++$i) {
 		$path = attachment_tempname($thread, $user, $i);
-		$is_image = file_exists("{$path}_t"); // Can cheat this one
+		$metadata = get_attachment_metadata($path);
+		$is_image = (int) $metadata['is_image']; //file_exists("{$path}_t"); // Can cheat this one
 		$res[] = [
 			'id'       => 0,
-			'filename' => file_get_contents("{$path}.dat"),
-			'size'     => filesize($path), // File size
+			'filename' => $metadata['filename'],
+			'size'     => (int) $metadata['size'], // File size
 			'views'    => 0,
 			'is_image' => $is_image,
 			'imgprev'  => $is_image ? "data:".mime_content_type("{$path}_t").";base64,".base64_encode(file_get_contents("{$path}_t")) : NULL, // Image preview hack
@@ -432,6 +438,23 @@ function save_attachments_key($key) {
 
 function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : "f/{$id}"); }
 function attachment_tempname ($thread, $user, $file_id) { return "temp/attach_{$thread}_{$user}_{$file_id}"; }
+
+function write_attachment_metadata($path, $data) {
+	$output = "";
+	foreach ($data as $key => $val) {
+		$output .= "{$key}={$val}".PHP_EOL;
+	}
+	file_put_contents("{$path}.dat", $output);
+}
+function get_attachment_metadata($path) {
+	$output = array();
+	$h = fopen("{$path}.dat", 'r');
+	while (($x = fgets($h)) !== false) {
+		$pos = strpos($x, '=');
+		$output[substr($x, 0, $pos)] = substr($x, $pos+1);
+	}
+	return $output;
+}
 
 
 function sizeunits($bytes) {

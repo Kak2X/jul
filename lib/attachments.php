@@ -217,6 +217,7 @@ function process_saved_attachments($post) {
 	// Recycle the same query which will be used later in quikattach()
 	$extrasize = 0;
 	$attach = get_saved_attachments($post);
+	$attachsel = array();
 	foreach ($attach as $x) {
 		if (isset($_POST["removec{$x['id']}"])) {
 			$attachsel[$x['id']] = 'checked';

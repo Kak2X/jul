@@ -47,7 +47,7 @@
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 
 	$attachsel = array();
-	
+	$attach_key = "{$threadid}_{$id}";
 	
 	
 /*	print "<font> - ". ($forum['minpower'] <= $loguser['powerlevel'] ? "" : "Restricted thread") ."
@@ -97,7 +97,7 @@
 				$savedata  = process_saved_attachments($id);
 				$extrasize = $savedata['size'];
 				$attachsel = $savedata['del'];
-				process_temp_attachments($threadid, $loguser['id'], $extrasize);
+				process_temp_attachments($attach_key, $loguser['id'], $extrasize);
 			}
 			/*
 			// Process *TEMP* attachments removal
@@ -159,7 +159,7 @@
 					if ($attachsel) {
 						remove_attachments(array_keys($attachsel));
 					}
-					save_attachments($threadid, $post['user'], $id);
+					save_attachments($attach_key, $post['user'], $id);
 				}
 				
 				errorpage("Post edited successfully.", "thread.php?pid=$id#$id", 'return to the thread', 0);
@@ -195,7 +195,7 @@
 				if ($config['allow-attachments']) {
 					// Attachments crap
 					$attach = get_saved_attachments($id);
-					$ppost['attach']    = array_merge(filter_attachments($attach, $attachsel), get_temp_attachments($threadid, $post['user']));
+					$ppost['attach']    = array_merge(filter_attachments($attach, $attachsel), get_temp_attachments($attach_key, $post['user']));
 				}
 				
 				/*
@@ -301,7 +301,7 @@
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label>
 				</td>
-				<?=quikattach($threadid, $post['user'], $post['id'], $attachsel)?>
+				<?=quikattach($attach_key, $post['user'], $post['id'], $attachsel)?>
 			</tr>
 		</table>
 		</form>

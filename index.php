@@ -110,10 +110,7 @@
 		//$namelink="<a href=profile.php?id=$onuser[id] style='color: #$namecolor'>$onuser[name]</a>";
 
 		$namelink = getuserlink($onuser);
-
-		if($onuser['minipic']) {
-			$onuser['minipic'] = '<img width="16" height="16" src="'.str_replace('"','%22',$onuser['minipic']).'" align="absmiddle"> ';
-		}
+		$minipic  = get_minipic($onuser['id'], $onuser['minipic']);
 		
 		// Posted using alternate credentials / without using cookies?
 		if($onuser['nologpost']) {
@@ -122,7 +119,7 @@
 		
 		if($onuser['hideactivity'])
 			$namelink="[$namelink]";	
-		$onlineusersa[] = "{$onuser['minipic']}$namelink";
+		$onlineusersa[] = "{$minipic} $namelink";
 	}
 
 	$onlineusers = $onlineusersa ? ': '. implode(", ", $onlineusersa) : '';

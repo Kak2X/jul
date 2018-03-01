@@ -245,6 +245,7 @@
 			'scheme'		=> 0,
 			'title'			=> '',
 			'hideactivity'	=> 0,
+			'uploads_locked'=> 0,
 		);	
 	}
 	
@@ -266,6 +267,11 @@
 	
 	// >_>
 	$isChristmas = (date('n') == 12);
+	
+	// more >_>
+	if ($loguser['uploads_locked']) {
+		$config['allow-attachments'] = false;
+	}
 	
 	// Doom timer setup
 	//$getdoom = true;
@@ -1112,6 +1118,7 @@ function checkuser($name, $pass){
 	
 	//if ($user['password'] !== getpwhash($pass, $user['id'])) {
 	if (!password_verify(sha1($user['id']).$pass, $user['password'])) {
+		die("fuck");
 		// Also check for the old md5 hash, allow a login and update it if successful
 		// This shouldn't impact security (in fact it should improve it)
 		if (!$hacks['password_compatibility'])
@@ -1235,7 +1242,7 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	
 	$namecolor		= getnamecolor($u['sex'], $u['powerlevel'], $u['namecolor']);
 	
-	$minipic		= ($useicon && isset($u['minipic']) && $u['minipic']) ? "<img width=16 height=16 src=\"".htmlspecialchars($u['minipic'], ENT_QUOTES)."\" align='absmiddle'> " : "";
+	$minipic		= $useicon ? get_minipic($u['id'], filter_string($u['minipic'])) : "";
 	
 	$class = $urlclass ? " class='{$urlclass}'" : "";
 	
@@ -1370,11 +1377,6 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 	return $output;
 }
 
-function get_minipic($id) {
-	// WIP
-	return "-";
-}
-
 // Banner 0 = automatic ban
 function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
@@ -1435,9 +1437,9 @@ function fonlineusers($id){
 		/* if ((!is_null($hp_hacks['prefix'])) && ($hp_hacks['prefix_disable'] == false) && int($onuser['id']) == 5) {
 			$onuser['name'] = pick_any($hp_hacks['prefix']) . " " . $onuser['name'];
 		} */
-		$onuser['minipic']	 = htmlspecialchars($onuser['minipic'], ENT_QUOTES);
-		$namelink			 = getuserlink($onuser);
-		$onlineusers		.='<nobr>';
+		$minipic             = get_minipic($onuser['id'], $onuser['minipic']);
+		$namelink            = getuserlink($onuser);
+		$onlineusers        .='<nobr>';
 		
 		if($onuser['nologpost']) // Was the user posting without using cookies?
 			$namelink="($namelink)";
@@ -1445,10 +1447,10 @@ function fonlineusers($id){
 		if($onuser['hideactivity'])
 			$namelink="[$namelink]";		
 			
-		if ($onuser['minipic'])
-			$namelink = "<img width=16 height=16 src=\"".htmlspecialchars($onuser['minipic'])."\" align='absmiddle'> $namelink";
+		if ($minipic)
+			$namelink = "$minipic $namelink";
 			
-		$onlineusers .= "$namelink</nobr>";
+		$onlineusers .= "{$namelink}</nobr>";
 	}
 	$p = ($numon ? ':' : '.');
 	$s = ($numon != 1 ? 's' : '');
@@ -1630,62 +1632,6 @@ function errorpage($text, $redirurl = '', $redir = '', $redirtimer = 4) {
 	pagefooter();
 }
 
-
-function moodlist($sel = 0, $return = false) {
-	global $loguser;
-	$sel		= floor($sel);
-
-	$a	= array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-	//if ($loguserid == 1) $a[99] = "special";
-	if ($return) return $a;
-
-	$c[$sel]	= " checked";
-	$ret		= "";
-
-	if ($loguser['id'] && $loguser['moodurl'])
-		$ret = '
-			<script type="text/javascript">
-				function avatarpreview(uid,pic)
-				{
-					if (pic > 0)
-					{
-						var moodav="'.htmlspecialchars($loguser['moodurl']).'";
-						document.getElementById(\'prev\').src=moodav.replace("$", pic);
-					}
-					else
-					{
-						document.getElementById(\'prev\').src="images/_.gif";
-					}
-				}
-			</script>
-		';
-
-	$ret .= "
-		<b>Mood avatar list:</b><br>
-		<table style='border-spacing: 0px'>
-			<tr>
-				<td style='width: 150px; white-space:nowrap'>";
-
-	foreach($a as $num => $name) {
-		$jsclick = (($loguser['id'] && $loguser['moodurl']) ? "onclick='avatarpreview({$loguser['id']},$num)'" : "");
-		$ret .= "<input type='radio' name='moodid' value='$num'". filter_string($c[$num]) ." id='mood$num' tabindex='". (9000 + $num) ."' style='height: 12px' $jsclick>
-             <label for='mood$num' ". filter_string($c[$sel]) ." style='font-size: 12px'>&nbsp;$num:&nbsp;$name</label><br>\r\n";
-	}
-
-	if (!$sel || !$loguser['id'] || !$loguser['moodurl'])
-		$startimg = 'images/_.gif';
-	else
-		$startimg = htmlspecialchars(str_replace('$', $sel, $loguser['moodurl']));
-
-	$ret .= "	</td>
-				<td>
-					<img src=\"$startimg\" id=prev>
-				</td>
-			</tr>
-		</table>";
-	return $ret;
-}
-
 function admincheck() {
 	global $isadmin;
 	if (!$isadmin) {
@@ -1797,10 +1743,7 @@ function include_js($fn, $as_tag = false) {
 		// include as a <script src="..."></script> tag
 		return "<script src='$fn' type='text/javascript'></script>";
 	} else {
-		$f = fopen("../js/$fn",'r');
-		$c = fread($f, filesize($fn));
-		fclose($f);
-		return '<script type="text/javascript">'.$c.'</script>';
+		return '<script type="text/javascript">'.file_get_contents("js/{$fn}").'</script>';
 	}
 }
 
@@ -1863,11 +1806,11 @@ function dofilters($p, $f = 0){
 	", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
 	
 	if ($f) {
-		$filters += $sql->fetchq("
+		$filters = array_merge($filters, $sql->fetchq("
 			SELECT method, source, replacement 
 			FROM filters
 			WHERE enabled = 1 AND forum = {$f}
-		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE));
 	}
 	
 	foreach($filters as $x) {
@@ -1893,6 +1836,7 @@ function dofilters($p, $f = 0){
 }
 
 // Additional includes
+require 'lib/avatars.php';
 require 'lib/attachments.php';
 require 'lib/threadpost.php';
 
@@ -2062,6 +2006,13 @@ function preg_loop($before, $regex){
 		$after = preg_replace("'{$regex}'", "", $before);
 	}
 	return $after;
+}
+
+function deletefolder($directory) {
+	if (file_exists($directory)) {
+		foreach(glob("{$directory}/*") as $f) unlink("$f");
+		rmdir($directory);
+	}
 }
 
 // $startrange === true -> print all pages

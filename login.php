@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 
-	const T_LOGIN = 30; // Has to be consistent with logout form on layout.php
+	//const T_LOGIN = 30; // Has to be consistent with logout form on layout.php
 	
 	// Bots don't need to be on this page
 	$meta['noindex'] = true;
@@ -20,7 +20,7 @@
 	$txt = "";
 	
 	if ($action) {
-		check_token($_POST['auth'], T_LOGIN);
+		check_token($_POST['auth'], TOKEN_LOGIN);
 	}
 	
 	if ($action == 'login') {
@@ -139,7 +139,7 @@
 				<td class='tdbg2' colspan=3>
 					<input type='hidden' name=action VALUE=login>
 					<input type='submit' class=submit name=submit VALUE=Login>
-					<input type='hidden' name='auth' value='".generate_token(T_LOGIN)."'>
+					<input type='hidden' name='auth' value='".generate_token(TOKEN_LOGIN)."'>
 				</td>
 			</tr>
 		</FORM>";

@@ -41,6 +41,7 @@ else if ($_POST['knockout']) {
 	echo "Deleted private messages.\n";
 	
 	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1", false, $querycheck);
+	$sql->query("DELETE FROM users_avatars WHERE uid='{$target_id}'");
 	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1", false, $querycheck);
 	echo "Deleted user data.\n";
 	
@@ -51,6 +52,8 @@ else if ($_POST['knockout']) {
 
 	if ($sql->checkTransaction($querycheck)) {
 		echo "Success! Finishing job.\n";
+		deletefolder("userpic/{$target_id}");
+		
 		// Altering a table implies an autocommit
 		$new_maxid = intval($sql->resultq("SELECT id FROM users ORDER BY id DESC LIMIT 1"));
 		$sql->query("ALTER TABLE users AUTO_INCREMENT = {$new_maxid}");

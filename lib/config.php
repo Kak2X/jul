@@ -7,7 +7,7 @@
 	
 	$sqldebuggers = array('127.0.0.1');
 	
-	const BOARD_VERSION = 'v1.92.??';
+	const BOARD_VERSION = 'v1.92 (2/3/2018)';
 	
 	$config = array(
 	
@@ -57,6 +57,15 @@
 		'allow-attachments'     => true,                    // Enables the attachment feature
 		'hide-attachments'      => false,                   // Do not show attachments in threads (only works when allow-attachments is false)
 		'attach-max-size'       => 2 * 1048576,	// 2 MB 	// Max size for attachments
+		
+		'allow-avatar-storage' 	=> true,                    // Enables the board-storage of avatars and minipic. If disabled, it will use the vanilla Jul avatar system.
+		'avatar-limit'			=> 64, // set false to disable
+		'max-minipic-size-x'	=> 16,
+		'max-minipic-size-y'	=> 16,
+		'max-minipic-size-bytes'=> 10240,
+		'max-avatar-size-x'		=> 200,
+		'max-avatar-size-y'		=> 200,
+		'max-avatar-size-bytes' => 102400,
 		
 		
 		// Debugging

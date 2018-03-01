@@ -140,9 +140,6 @@
 			'namecolor'			=> $namecolor,
 			'namecolor_bak'		=> $namecolor_bak,
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
-			'picture' 			=> filter_string($_POST['picture'], true),
-			'minipic' 			=> filter_string($_POST['minipic'], true),
-			'moodurl' 			=> filter_string($_POST['moodurl'], true),
 			'postheader' 		=> xssfilters($postheader),
 			'signature' 		=> xssfilters($signature),
 			// Personal information
@@ -174,6 +171,43 @@
 			'scheme' 			=> filter_int($_POST['scheme']),
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 		);
+		
+		if ($config['allow-avatar-storage']) {
+
+			// Erase minipic
+			if (filter_int($_POST['del_minipic'])){
+				del_minipic($id); // will check on its own
+			}		
+			// Upload a new minipic
+			else if (filter_int($_FILES['minipic']['size'])){
+				imageupload(
+					$_FILES['minipic'], 
+					$config['max-minipic-size-bytes'], 
+					$config['max-minipic-size-x'], 
+					$config['max-minipic-size-y'], 
+					avatarpath($id, 'm') // minipic path
+				);
+			}
+			
+			// Same for the avatar
+			if (filter_int($_POST['del_picture'])){
+				delete_avatar($id, 0);
+			}		
+			else if (filter_int($_FILES['picture']['size'])){
+				imageupload(
+					$_FILES['picture'], 
+					$config['max-avatar-size-bytes'], 
+					$config['max-avatar-size-x'], 
+					$config['max-avatar-size-y'], 
+					avatarpath($id, 0),
+					[$id, 0, 'Default', 0]
+				);
+			}
+		} else {
+			$mainval['picture'] 	= filter_string($_POST['picture']);
+			$mainval['minipic'] 	= filter_string($_POST['minipic']);
+			$mainval['moodurl'] 	= filter_string($_POST['moodurl']);			
+		}
 		
 		$userset = mysql::setplaceholders($mainval);
 		
@@ -208,6 +242,8 @@
 				'posts'				=> filter_int($_POST['posts']),
 				'profile_locked'	=> filter_int($_POST['profile_locked']),
 				'editing_locked'	=> filter_int($_POST['editing_locked']),
+				'avatar_locked'     => filter_int($_POST['avatar_locked']),
+				'uploads_locked'	=> filter_int($_POST['uploads_locked']),
 				'titleoption'		=> filter_int($_POST['titleoption']),
 				'ban_expire'		=> ($_POST['powerlevel'] == -1 && filter_int($_POST['ban_hours']) > 0) ? (ctime() + filter_int($_POST['ban_hours']) * 3600) : 0,
 			);
@@ -272,6 +308,8 @@
 				"Registration date"			=> [4, "regdate", ""],
 				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
 				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked"],
+				"Restrict Avatar Uploads"	=> [2, "avatar_locked", "", "Unlocked|Locked"],
+				"Restrict File Uploads"     => [2, "uploads_locked", "", "Unlocked|Locked"],
 				"Custom Title Privileges" 	=> [2, "titleoption", "", "Revoked|Determine by rank/posts|Enabled"],
 			));
 		}
@@ -288,9 +326,20 @@
 		}
 		table_format("Appareance", array(
 			"User rank"         => [4, "useranks", "You can hide your rank, or choose from different sets."],
-			"Avatar"            => [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a avatar. Anything over 200&times;200 pixels will be removed.", 60, 100],
-			"Mood avatar"       => [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
-			"Minipic"           => [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to 16x16.", 60, 100],
+		));
+		if ($config['allow-avatar-storage']) {
+			table_format("Appareance", array(
+				"Avatar"	 => [4, "picture", "The image showing up below your username in posts. Select an image to upload."],
+				"Minipic"	 => [4, "minipic", "This picture will appear next to your username. Select an image to upload."],
+			));
+		} else {
+			table_format("Appareance", array(
+				"Avatar"            => [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a avatar. Anything over {$config['max-avatar-size-x']}&times;{$config['max-avatar-size-y']} pixels will be removed.", 60, 100],
+				"Mood avatar"       => [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
+				"Minipic"           => [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to {$config['max-minipic-size-x']}&times;{$config['max-minipic-size-y']}.", 60, 100],
+			));
+		}
+		table_format("Appareance", array(
 			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
 			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
@@ -372,6 +421,26 @@
 		<input type=radio class='radio' name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
 		<input type=radio class='radio' name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
 		<input type=radio class='radio' name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
+		
+		// Upload a new minipic / Remove the existing one
+		$minipic = "
+			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-minipic-size-bytes']}'>
+			<input name='minipic' type='file'>
+			<input type='checkbox' id='del_minipic' name='del_minipic' value=1><label for='del_minipic'>Remove minipic</label><br>
+			<small>
+				Max size: {$config['max-minipic-size-x']}x{$config['max-minipic-size-y']} | ".sizeunits($config['max-minipic-size-bytes'])."
+			</small>
+		";
+		
+		// Same for the picture
+		$picture = "
+			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-avatar-size-bytes']}'>
+			<input name='picture' type='file'>
+			<input type='checkbox' id='del_picture' name='del_picture' value=1><label for='del_picture'>Remove avatar</label><br>
+			<small>
+				Max size: {$config['max-avatar-size-x']}x{$config['max-avatar-size-y']} | ".sizeunits($config['max-avatar-size-bytes'])."
+			</small>
+		";
 		
 		if ($edituser) {
 			// Powerlevel selection
@@ -485,7 +554,7 @@
 	
 	?>
 	<br>
-	<FORM ACTION="editprofile.php<?=$id_q?>" NAME=REPLIER METHOD=POST autocomplete=off>
+	<form method="POST" action="editprofile.php<?=$id_q?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 		<tr style='display: none'><td><?=$finput?></td></tr>
 		<?=$t?>
@@ -497,7 +566,7 @@
 		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
 		</td>
 	</table>
-	</FORM>
+	</form>
 	<?php
 	
 	pagefooter();

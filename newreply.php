@@ -404,7 +404,7 @@
 				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message, ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
-				<?=moodlist($moodid)?>
+				<?=moodlayout(0, $loguser['id'], $moodid)?>
 			</td>
 		</tr>
 		
@@ -422,7 +422,8 @@
 			<td class='tdbg2' colspan=2>
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
-				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label>
+				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
+				<?=moodlayout(1, $loguser['id'], $moodid)?>
 			</td>
 		</tr>
 		<?=$modoptions?>

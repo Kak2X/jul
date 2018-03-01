@@ -70,12 +70,12 @@
 		?>
 		<tr>
 			<td class='tdbg1 center'><?=$rank?></td>
-			<td class='tdbg1 center' width=16><?=($user['minipic'] ? "<img src=\"". htmlspecialchars($user['minipic']) ."\" width=16 height=16>" : "&nbsp;")?></td>
+			<td class='tdbg1 center' style='width: <?= $config['max-minipic-size-x'] ?>px'><?= get_minipic($user['id'], $user['minipic']) ?></td>
 			<td class='tdbg2'><?=$userlink?></td>
 			<td class='tdbg1 center'><?=printdate($user['regdate'])?></td>
 			<td class='tdbg1 right'><?=$user['posts']?></td>
-			<td class='tdbg1 right'><b><?=number_format($user['waste'])?></b></td>
-			<td class='tdbg2 right'><b><?=$avgc?></b></td>
+			<td class='tdbg1 right b'><?=number_format($user['waste'])?></td>
+			<td class='tdbg2 right b'><?=$avgc?></td>
 		</tr>
 		<?php
 	}

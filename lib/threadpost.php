@@ -2,7 +2,7 @@
 	
 	function threadpost($post,$bg,$forum = 0,$pthread='') {
 		
-		global $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts, $isadmin; //${"tablebg$bg"};
+		global $config, $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts, $isadmin; //${"tablebg$bg"};
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -14,15 +14,9 @@
 		
 		$post = setlayout($post);
 		
-		
-		//$p = $post['id'];
-		//$u = $post['uid'];
-		
 		$set['bg']    = $bg; //${"tablebg$bg"};
-		//$set['tdbg']  = "<td class='tbl font tdbg$bg' valign=top";
 
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
-		//unset($postuser);
 
 		$set['userrank'] = getrank(
 			filter_int($post['useranks']), 
@@ -37,21 +31,19 @@
 
 		$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
 
-		$post['picture'] = filter_string($post['picture']);
-		if ($post['picture'] || ($post['moodid'] && $post['moodurl'])) {
-			
-			$post['picture']  = htmlspecialchars($post['picture']);
-			$set['userpic']   = "<img class='avatar' src=\"{$post['picture']}\">";
-			$set['picture']   = $post['picture'];
-			
-			if ($post['moodid'] && $post['moodurl']) {
-				// Replace $ placeholder with the actual image number
-				$set['picture'] = str_replace(array('$', '>', '"'), array($post['moodid'], '%3E', '&quot;'), $post['moodurl']);
-				$set['userpic'] = "<img class'avatar' src=\"{$set['picture']}\">";
-			}
-			//   $userpicture="<img src=\"$user['picture']\" name=pic$p onload=sizelimit(pic$p,60,100)>";
+		if ($config['allow-avatar-storage']) {
+			$set['userpic'] = file_exists(avatarpath($post['uid'], $post['moodid'])) ? "<img class='avatar' src='".avatarpath($post['uid'], $post['moodid'])."'>" : "";
 		} else {
-			$set['userpic'] = "";
+			// $set['picture'] doesn't seem to be used...
+			if ($post['moodid'] && $post['moodurl']) { // mood avatar
+				$set['picture'] = str_replace('$', $post['moodid'], htmlspecialchars($post['moodurl']));
+				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
+			} else if (isset($post['picture'])) { // default avatar
+				$set['picture'] = htmlspecialchars($post['picture']);
+				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
+			} else { // null
+				$set['userpic'] = $set['picture'] = "";
+			}
 		}
 
 		if($post['signtext']) {
@@ -63,8 +55,7 @@
 		}
 
 		$post['text'] = doreplace2($post['text'], $post['options']);
-	//  if (strpos($post['text'], "http://hyperhacker.no-ip.org/b/smilies/lolface.png") || strpos($post['text'], "images/smilies/roflx.gif")) $post['text'] = "<img src=images/smilies/roflx.gif><br><br><small>(Excessive post content hidden)</small>";
-
+		
 		if (filter_int($post['editdate'])) {
 			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
 		} else {

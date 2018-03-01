@@ -66,6 +66,7 @@
 			$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id");
 			$sql->query("DELETE FROM pollvotes WHERE user=$id");
 			$sql->query("DELETE FROM users WHERE id=$id");
+			$sql->query("DELETE FROM users_avatars WHERE uid=$id");
 			$sql->query("DELETE FROM users_rpg WHERE uid=$id");
 			
 			$delusertext .= "\r\n<tr><td class='tdbg1 center' width=120>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";

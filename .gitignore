@@ -18,6 +18,10 @@ attachments/*
 !attachments/t/index.html
 !attachments/f/.htaccess
 
+#Userpics
+userpic/*
+!userpic/note.txt
+
 # Never cache the temp folder
 temp/*
 !temp/.htaccess

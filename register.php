@@ -187,7 +187,8 @@
 				
 				// No longer useful
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
-
+				$sql->beginTransaction();
+				
 				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `powerlevel` = :powl, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
 					[
 						'name'				=> $name,
@@ -204,7 +205,8 @@
 				xk_ircout("user", $ircout['name'], $ircout);
 
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
-				
+				$sql->commit();
+				mkdir("userpic/$newuserid");
 				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
 			}
 			

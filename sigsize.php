@@ -40,7 +40,7 @@ print "
 	print "
 	<tr>
 		<td class='tdbg2 center'>". ($lm ? "<img src='images/smilies/denied.gif' title='Say no to the layout maker!' align=absmiddle> $r <img src='images/smilies/denied.gif' title='Say no to the layout maker!' align=absmiddle>" : "$r") ."</td>
-		<td class='tdbg2 center' width=16>". ($u['minipic'] ? "<img src=\"". htmlspecialchars($u['minipic']) ."\" width=16 height=16>" : "") ."</td>
+		<td class='tdbg2 center' style='width: {$config['max-minipic-size-x']}px'>". get_minipic($u['id'], $u['minipic']) ."</td>
 		<td class='tdbg1 center'>".getuserlink($u)."</td>
 		". (!$_GET['bio'] ? "<td class='tdbg2 center' width=100>". number_format($u['hsize']) ."</td>
 							 <td class='tdbg2 center' width=100>". number_format($u['ssize']) ."</td>" : "") ."

@@ -171,8 +171,8 @@
 		print "
 		<tr>
 			<td class='tdbg1 center'>{$rank}</td>
-			<td class='tdbg1 center' style='max-width: {$config['max-minipic-size-x']}px'>
-				". get_minipic($user['id']) ."
+			<td class='tdbg1 center' style='width: {$config['max-minipic-size-x']}px'>
+				". get_minipic($user['id'], $user['minipic']) ."
 			</td>
 			<td class='tdbg2'>". getuserlink($user) ."</td>
 			<td class='tdbg1 center'>". printdate($user['regdate']) ."</td>

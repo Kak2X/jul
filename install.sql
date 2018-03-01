@@ -463,9 +463,11 @@ CREATE TABLE `delusers` (
   `signature` text,
   `bio` text,
   `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
+  `powerlevel_prev` tinyint(2) NOT NULL DEFAULT '0',
   `sex` tinyint(1) UNSIGNED NOT NULL DEFAULT '2',
   `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) DEFAULT NULL,
+  `namecolor_bak` varchar(6) DEFAULT NULL,
   `title` varchar(255) NOT NULL DEFAULT '',
   `useranks` tinyint(1) UNSIGNED NOT NULL DEFAULT '1',
   `titleoption` tinyint(1) NOT NULL DEFAULT '1',
@@ -496,12 +498,15 @@ CREATE TABLE `delusers` (
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
   `profile_locked` tinyint(1) NOT NULL DEFAULT '0',
   `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `uploads_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `avatar_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) UNSIGNED NOT NULL DEFAULT '1',
   `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) NOT NULL,
   `dateshort` varchar(32) NOT NULL,
   `aka` varchar(25) DEFAULT NULL,
-  `hideactivity` tinyint(1) NOT NULL DEFAULT '0'
+  `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
+  `ban_expire` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1530,6 +1535,21 @@ CREATE TABLE `users` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `users_avatars`
+--
+
+CREATE TABLE `users_avatars` (
+  `id` int(11) NOT NULL,
+  `file` smallint(5) UNSIGNED NOT NULL,
+  `user` int(11) NOT NULL,
+  `title` varchar(30) NOT NULL,
+  `hidden` tinyint(1) NOT NULL DEFAULT '0',
+  `weblink` varchar(127) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users_rpg`
 --
 
@@ -1878,6 +1898,16 @@ ALTER TABLE `users`
   ADD KEY `sex` (`sex`),
   ADD KEY `ban_expire` (`ban_expire`);
 
+  
+--
+-- Indexes for table `users_avatars`
+--
+ALTER TABLE `users_avatars`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user` (`user`),
+  ADD KEY `file` (`file`),
+  ADD KEY `hidden` (`hidden`);
+  
 --
 -- Indexes for table `users_rpg`
 --
@@ -2023,6 +2053,11 @@ ALTER TABLE `userpic`
 --
 ALTER TABLE `users`
   MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `users_avatars`
+--
+ALTER TABLE `users_avatars`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

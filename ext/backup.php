@@ -31,7 +31,7 @@
 		//'failedregs',
 		'failsupress',
 		'favorites',
-//		'filters',
+		'filters',
 		'forums',
 //		'irc',
 		'items',
@@ -73,7 +73,7 @@
 		'users',
 		'users_rpg',
 //		'users_subgroups',
-//		'user_avatars',
+		'users_avatars',
 		//'user_comments'#boardc
 	);
 	

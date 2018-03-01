@@ -79,44 +79,13 @@
 			//$edited = str_replace('\'', '\\\'', getuserlink($loguser));
 			
 
-			
-			/*
-			if ($config['allow-attachments']) {
-				$attachids   = get_attachments_key("n{$id}", $loguser['id']); // Get the base key to identify the correct files
-				$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
-				$attach_key   = $attachids[1]; // String (base) key for file names
-				$attach_count = process_temp_attachments($attach_key, $loguser['id']); // Process the attachments and return the post-processed total
-				if ($attach_count) {
-					// Some files are attached; reconfirm the key
-					$input_tid = save_attachments_key($attach_id);
-				} else {
-					$attach_key = BLANK_KEY; // just in case
-				}	
-			}*/
 			if ($config['allow-attachments']) {
 				$savedata  = process_saved_attachments($id);
 				$extrasize = $savedata['size'];
 				$attachsel = $savedata['del'];
 				process_temp_attachments($attach_key, $loguser['id'], $extrasize);
 			}
-			/*
-			// Process *TEMP* attachments removal
-			$cnt = get_attachments_index($threadid, $post['user']);
-			$list = array();
-			for ($i = 0; $i < $cnt; ++$i) {
-				if (filter_int($_POST["remove{$i}"])) {
-					$list[] = $i;
-				}
-			}
-			if (!empty($list)) {
-				remove_temp_attachments($threadid, $post['user'], $list);
-			}
 			
-			// Upload current attachment
-			if (!filter_int($_POST["remove{$i}"]) && isset($_FILES["attachment{$i}"]) && !$_FILES["attachment{$i}"]['error']) {
-				upload_attachment($_FILES["attachment{$i}"], $threadid, $post['user'], $i - count($list), $extrasize);
-			}	*/
-		
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
 				/*
@@ -264,7 +233,7 @@
 				<td class='tdbg2' width=800px valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
 				<td class='tdbg2' width=* rowspan=3>
-					<?=moodlist($moodid)?>
+					<?=moodlayout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>
@@ -299,7 +268,8 @@
 				</td>
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
-					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label>
+					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
+					<?=moodlayout(1, $post['user'], $moodid)?>
 				</td>
 				<?=quikattach($attach_key, $post['user'], $post['id'], $attachsel)?>
 			</tr>

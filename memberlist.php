@@ -79,16 +79,6 @@
 		$sorting $order
 	");
 	
-	/*
-	if (!in_array($sort, array('name','reg','exp','age','posts')))
-		$sort = 'posts';
-	$query='SELECT id,posts,regdate,name,minipic,sex,powerlevel,aka,r.* FROM users LEFT JOIN users_rpg r ON id=uid ';
-	if($sort=='name')  $users1=$sql->query("$query$where ORDER BY name", MYSQL_ASSOC);
-	if($sort=='reg')   $users1=$sql->query("$query$where ORDER BY regdate DESC", MYSQL_ASSOC);
-	if($sort=='exp')   $users1=$sql->query("$query$where", MYSQL_ASSOC);
-	if($sort=='age')   $users1=$sql->query("$query$where AND birthday ORDER BY birthday", MYSQL_ASSOC);
-	if($sort=='posts') $users1=$sql->query("$query$where ORDER BY posts DESC", MYSQL_ASSOC);
-*/
 	$numusers = $sql->num_rows($users1);
 
 	for($i = 0; $user = $sql->fetch($users1); ++$i){
@@ -156,7 +146,7 @@ print "
 <table class='table'>
 		<tr>
 			<td class='tdbgh center' width=30>#</td>
-			<td class='tdbgh center' width=16><img src=images/_.gif width=16 height=8></td>
+			<td class='tdbgh center' style='width: {$config['max-minipic-size-x']}px'>&nbsp;</td>
 			<td class='tdbgh center'>Username</td>
 	";
 
@@ -187,11 +177,11 @@ print "
 		$ulist .= "<tr style='height:24px'>";
 		$user = $users[$i];
 		
-		$userpicture = $user['minipic'] ? "<img width=16 height=16 src=\"".htmlspecialchars($user['minipic'])."\">" : '&nbsp;';
+		$userpicture = get_minipic($user['id'], $user['minipic']);
 		$userlink = getuserlink($user);
 		$ulist.="
 			<td class='tdbg2 center'>".($i+1).".</td>
-			<td class='tdbg1'>{$userpicture}</td>
+			<td class='tdbg1 center'>{$userpicture}</td>
 			<td class='tdbg2'>{$userlink}</td>
 		";
 

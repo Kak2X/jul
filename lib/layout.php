@@ -114,6 +114,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$headlinks.='
 		<a href="javascript:document.logout.submit()">Logout</a>
 		- <a href="editprofile.php">Edit profile</a>
+		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
 		- <a href="forum.php?fav=1">Favorites</a>';
@@ -449,7 +450,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			<table class='table'>
 				<form action='login.php' method='post' name='logout'>
 					<input type='hidden' name='action' value='logout'>
-					<input type='hidden' name='auth' value='<?=generate_token(30)?>'>
+					<?= auth_tag(TOKEN_LOGIN) ?>
 				</form>
 				<tr>
 					<td class='tbl tdbg1 center' colspan=3><?=$config['board-title']?>

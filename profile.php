@@ -116,7 +116,10 @@
 	
 	$picture = $moodavatar = "";
 	if ($user['picture']) $picture = "<img src=\"".htmlspecialchars($user['picture'])."\">";
-	if ($user['moodurl']) $moodavatar = " | <a href='avatar.php?id=$id' class=\"popout\" target=\"_blank\">Preview mood avatar</a>";
+	if (
+		( $config['allow-avatar-storage'] && $sql->resultq("SELECT COUNT(*) FROM users_avatars WHERE user = {$id}")) ||
+		(!$config['allow-avatar-storage'] && $user['moodurl'])
+	) $moodavatar = " | <a href='avatar.php?id=$id' class=\"popout\" target=\"_blank\">Preview mood avatar</a>";
 	
 	
 	if (!$user['icq']) {

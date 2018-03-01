@@ -451,7 +451,7 @@ function get_attachment_metadata($path) {
 	$h = fopen("{$path}.dat", 'r');
 	while (($x = fgets($h)) !== false) {
 		$pos = strpos($x, '=');
-		$output[substr($x, 0, $pos)] = substr($x, $pos+1);
+		$output[substr($x, 0, $pos)] = rtrim(substr($x, $pos+1));
 	}
 	return $output;
 }

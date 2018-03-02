@@ -125,7 +125,8 @@
 				$ppost['text']		= "<center><b>$title</b></center><hr>$message";
 				$ppost['options']	= $nosmilies . "|" . $nohtml;
 				$ppost['act'] 		= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$post['user']}");
-
+				$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$post['user']} AND file = {$moodid}");
+				
 				// Edited notice
 				$ppost['edited']	= $edited;
 				$ppost['editdate'] 	= ctime();

@@ -1,13 +1,15 @@
-function newavatarpreview(uid,pic,nopic=false) {
-	if (!nopic) {
+function newavatarpreview(uid,pic,nostorage=false) {
+	if (!nostorage) {
 		document.getElementById('prev').src="userpic/"+uid+"/"+pic;
-	} else {
+	} else if (nostorage !== true) {
+		document.getElementById('prev').src=nostorage;
+	} else { // magic value for blank userpic
 		document.getElementById('prev').src="images/_.gif";
 	}
 }
 
 var moodav = "";
-function avatarpreview(uid,pic) {
+function avatarpreview(uid,pic,dummy=0) {
 	if (pic > 0) {
 		document.getElementById('prev').src=moodav.replace("$", pic);
 	} else {

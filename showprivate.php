@@ -46,6 +46,7 @@
 	$post['num']	= 0;
 	$post['noob']	= 0;
 	$post['act'] 	= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+	$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$msg['moodid']}");
 	
 	if ($loguser['viewsig'] == 2){
 		$post['headtext'] = $user['postheader'];

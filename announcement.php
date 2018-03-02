@@ -63,8 +63,18 @@
 	
 	$ufields = userfields();
 	
-	$layouts = $sql->query("SELECT headid, signid FROM announcements WHERE forum = $forum LIMIT $min, $ppp");
+	$layouts = $sql->query("SELECT headid, signid FROM announcements WHERE forum = $forum ORDER BY id DESC LIMIT $min, $ppp");
 	preplayouts($layouts);
+	
+	$avatars = $sql->query("
+		SELECT a.user, a.moodid, v.weblink
+		FROM announcements a
+		LEFT JOIN users_avatars v ON a.moodid = v.file
+		WHERE a.forum = $forum AND v.user = a.user
+		ORDER BY a.id DESC
+		LIMIT $min, $ppp
+	");
+	$avatars = prepare_avatars($avatars);
 	
 	// The announcement system is basically a shrunk down version of the threads
 	// This may or may not get replaced depending on :effort: and willigness to break the compatibility even more
@@ -95,8 +105,8 @@
 		}
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
-		
 		$annc['text'] = "<center><b>{$annc['atitle']}</b></center><hr>{$annc['text']}";
+		$annc['piclink'] = $avatars[$annc['user']][$annc['moodid']];
 		$annclist .= threadpost($annc,$bg,$id);
 	}
 	

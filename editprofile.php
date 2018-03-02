@@ -190,9 +190,10 @@
 			}
 			
 			// Same for the avatar
+			$weblink = xssfilters(trim(filter_string($_POST['picture_weblink'])));
 			if (filter_int($_POST['del_picture'])){
 				delete_avatar($id, 0);
-			}		
+			}
 			else if (filter_int($_FILES['picture']['size'])){
 				imageupload(
 					$_FILES['picture'], 
@@ -200,9 +201,16 @@
 					$config['max-avatar-size-x'], 
 					$config['max-avatar-size-y'], 
 					avatarpath($id, 0),
-					[$id, 0, 'Default', 0]
+					[$id, 0, 'Default', 0, $weblink]
 				);
+			} else if ($weblink || file_exists(avatarpath($id, 0))) {
+				// Make sure we don't accidentaly delete the entire avatar if we just blank the URL
+				save_avatar([$id, 0, 'Default', 0, $weblink]);
+			} else {		
+				// File doesn't exist + blanking the URL = delete avatar
+				$sql->query("DELETE FROM users_avatars WHERE user = {$id} AND file = 0");
 			}
+			
 		} else {
 			$mainval['picture'] 	= filter_string($_POST['picture']);
 			$mainval['minipic'] 	= filter_string($_POST['minipic']);
@@ -433,13 +441,15 @@
 		";
 		
 		// Same for the picture
+		$weblink = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$id} AND file = 0");
 		$picture = "
 			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-avatar-size-bytes']}'>
 			<input name='picture' type='file'>
 			<input type='checkbox' id='del_picture' name='del_picture' value=1><label for='del_picture'>Remove avatar</label><br>
 			<small>
 				Max size: {$config['max-avatar-size-x']}x{$config['max-avatar-size-y']} | ".sizeunits($config['max-avatar-size-bytes'])."
-			</small>
+			</small><br/>
+			External URL: <input type='text' name='picture_weblink' size=60 maxlength=127 value=\"".htmlspecialchars($weblink)."\">
 		";
 		
 		if ($edituser) {

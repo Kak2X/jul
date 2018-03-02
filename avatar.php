@@ -38,7 +38,7 @@ if ($config['allow-avatar-storage']) {
 	
 	// compat. hack
 	for ($i = 1; $i < 17; ++$i) {
-		$moods[$i] = array('title' => $moods[$i]);
+		$moods[$i] = array('title' => $moods[$i], 'weblink' => '');
 	}
 	
 	// Build the select box options for the user selection
@@ -86,7 +86,7 @@ if ($me && $moods) {
 		}
 		// >_>
 		if ($loguser['id'] == 1 && $me['id'] == 1) {
-			$moods[99] = array('title' => "special");
+			$moods[99] = array('title' => "special", 'weblink' => '');
 		}
 		
 		$moodurl  = htmlspecialchars($me['moodurl']);
@@ -101,11 +101,11 @@ if ($me && $moods) {
 	
 	// Mood avatar selection
 	$txt     = "";
-	$confirm = 0;
+	$confirm = -1;
 	foreach ($moods as $num => $x) {
 		
 		
-		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num})'";
+		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num},\"".htmlspecialchars($x['weblink'])."\")'";
 		if ($num == $_GET['start']) {
 			$selected = ' checked';
 			$confirm = $_GET['start']; // So no hidden or nonexisting avatars can be viewed
@@ -126,7 +126,7 @@ if ($me && $moods) {
 	
 	// Alternative header text
 	if ($config['allow-avatar-storage']) {
-		$startimg = avatarpath($me['id'], $confirm);
+		$startimg = $confirm != -1 ? avatarpath($me['id'], $confirm, $moods[$confirm]['weblink']) : "images/_.gif";
 	}
 	
 	$ret = "<tr>

@@ -24,13 +24,20 @@ function imageupload($file, $maxsize, $x, $y, $dest = false, $qdata = NULL){
 	if (!$dest)	{
 		return "data:".$file['type'].";base64,".base64_encode(file_get_contents($file['tmp_name']));
 	} else {
-		// New image? If so, add info to db
+		// New image? If so, add info to db (also account for editprofile)
 		if ($qdata !== NULL) {
-			global $sql;
-			$sql->queryp("INSERT INTO users_avatars (user, file, title, hidden) VALUES (?,?,?,?)", $qdata);
+			save_avatar($qdata);
 		}
 		return move_uploaded_file($file['tmp_name'], $dest);
 	}
+}
+
+function save_avatar($qdata) {
+	global $sql;
+	$sql->queryp("
+		INSERT INTO users_avatars (user, file, title, hidden, weblink) VALUES (?,?,?,?,?)
+		ON DUPLICATE KEY UPDATE title = VALUES(title), hidden = VALUES(hidden), weblink = VALUES(weblink)
+	", $qdata);	
 }
 
 function delete_avatar($user, $file) {
@@ -44,7 +51,7 @@ const AVATARS_NOHIDDEN = 0b10;
 function getavatars($user, $flags = 0) {
 	global $sql;
 	return $sql->fetchq("
-		SELECT file, title, hidden
+		SELECT file, title, hidden, weblink
 		FROM users_avatars
 		WHERE user = {$user}
 		".($flags & AVATARS_ALL ? "" : " AND file != 0")."
@@ -53,8 +60,17 @@ function getavatars($user, $flags = 0) {
 	", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 }
 
-function avatarpath($user, $file_id) {return "userpic/{$user}/{$file_id}";}
-function dummy_avatar($title, $hidden) {return ['title' => $title, 'hidden' => $hidden];}
+function prepare_avatars($sets) {
+	global $sql;
+	$res = array();
+	while ($x = $sql->fetch($sets)) {
+		$res[$x['user']][$x['moodid']] = $x['weblink'];
+	}
+	return $res;
+}
+
+function avatarpath($user, $file_id, $weblink = NULL) {return $weblink ? htmlspecialchars($weblink) : "userpic/{$user}/{$file_id}";}
+function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function setmoodavjs($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
 
 // 0 -> side
@@ -106,7 +122,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		// Select box, with now auto av preview update
 		foreach ($moods as $file => $data) {
 			$txt .= 
-			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$loguser['id']},{$file})'>".
+			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$loguser['id']},{$file},\"".htmlspecialchars($data['weblink'])."\")'>".
 				htmlspecialchars($data['title']).
 			"</option>\n";
 		}
@@ -114,7 +130,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		$ret = "
 		Avatar: <select name='moodid'>
 			{$txt}
-		</select><script>newavatarpreview({$loguser['id']},{$sel})</script>";
+		</select><script>newavatarpreview({$loguser['id']},{$sel},\"".htmlspecialchars($moods[$sel]['weblink'])."\")</script>";
 	} else {
 		
 		// Numeric "good luck with hosting" avatar mode

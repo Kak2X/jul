@@ -47,43 +47,56 @@
 		check_token($_POST['auth']);
 		
 		if ($new_default) {
-			// Default avatar?
+			// Default avatar (from non existing)
 			$file     = $_FILES['new0'];
 			$title    = "Default";
 			$newid    = 0;
 			$hidden   = 0;
+			$weblink  = xssfilters(trim(filter_string($_POST['weblink0'])));
 		} else {
 			
 			if (LIMIT_REACHED) {
 				errorpage("Really think this would work, huh?");
 			}
 			
-			$file = $_FILES['newfile'];
+			$file      = filter_array($_FILES['newfile']);
 			
 			// No blank titles
 			$title = filter_string($_POST['newtitle']);
 			if (!$title) errorpage("The avatar title cannot be blank.");
-			
+			$weblink = trim(filter_string($_POST['newweblink']));
+
 			// ID to be used for the image name
 			$newid = (int) $sql->resultq("SELECT MAX(file) FROM users_avatars WHERE user = {$_GET['id']}");
 			$newid++; // Offset by 1 (incidentally this also leaves out value 0; which is reserved to the default avatar)
 
 			// filter that title
-			$title = xssfilters($title);
+			$title   = xssfilters($title);
+			$weblink = xssfilters($weblink);
 			
 			$hidden = filter_int($_POST['newhidden']);
 		}
-			
-		$res = imageupload(
-			$file, // the file
-			$config['max-avatar-size-bytes'], // some
-			$config['max-avatar-size-x'], // image
-			$config['max-avatar-size-y'], // limits
-			avatarpath($_GET['id'], $newid), // image path
-			[$_GET['id'], $newid, $title, $hidden] // db data (user id, file id, title,...)
-		);
+		
+		$validfile = (filter_int($file['error']) == 0);
+		if (!$validfile && !$weblink) {
+			errorpage("You need to either upload an avatar or specify an URL.");
+		}
+		
+		$qdata = [$_GET['id'], $newid, $title, $hidden, $weblink];
+		if ($validfile) {
+			$res = imageupload(
+				$file, // the file
+				$config['max-avatar-size-bytes'], // some
+				$config['max-avatar-size-x'], // image
+				$config['max-avatar-size-y'], // limits
+				avatarpath($_GET['id'], $newid), // image path
+				$qdata // db data (user id, file id, title,...)
+			);
+		} else {
+			save_avatar($qdata);
+		}
 		#errorpage("huh");
-		if ($res) {
+		if ($weblink || $res) {
 			//msg_holder::set_cookie("Avatar '<i>".htmlspecialchars($title)."</i>' uploaded!".DELAYED_CRAP);
 			return header("Location: editavatars.php?id={$_GET['id']}");
 		} else {
@@ -96,16 +109,23 @@
 		*/
 		check_token($_POST['auth']);
 		
-		$res = imageupload(
-			$_FILES['new0'],               // the file
-			$config['max-avatar-size-bytes'], // some
-			$config['max-avatar-size-x'],     // image
-			$config['max-avatar-size-y'],     // limits
-			avatarpath($_GET['id'], 0)       // image path
-		);
+		$new_weblink = xssfilters(trim(filter_string($_POST["weblink0"])));
+		
+		if (filter_array($_FILES['new0']) && !$_FILES['new0']['error']) {
+			$res = imageupload(
+				$_FILES['new0'],               // the file
+				$config['max-avatar-size-bytes'], // some
+				$config['max-avatar-size-x'],     // image
+				$config['max-avatar-size-y'],     // limits
+				avatarpath($_GET['id'], 0)       // image path
+			);
+		}
+		if ($new_weblink) {
+			$sql->resultp("UPDATE users_avatars SET weblink = ? WHERE user = {$_GET['id']} AND file = 0", [$new_weblink]);
+		}
 		
 		#errorpage("huh");
-		if ($res){
+		if ($new_weblink || $res){
 			//msg_holder::set_cookie("Default avatar updated!".DELAYED_CRAP);
 			return header("Location: editavatars.php?id={$_GET['id']}");
 		} else {
@@ -134,15 +154,17 @@
 			*/
 			check_token($_POST['auth']);
 			
-			$new_title = filter_string($_POST["ren{$file}"], true);
-			$new_hidden = filter_int($_POST["hid{$file}"]);
+			$new_title   = filter_string($_POST["ren{$file}"]);
+			$new_hidden  = filter_int($_POST["hid{$file}"]);
+			$new_weblink = filter_string($_POST["weblink{$file}"]);
 			
-			if ($new_title) {
-				$new_title = xssfilters($new_title);
-				$sql->queryp("UPDATE users_avatars SET title = ?, hidden = ? WHERE user = {$_GET['id']} AND file = {$file}", [$new_title, $new_hidden]);
-			} else {
-				$new_title = $data['title']; // if blank don't change the name
+			if (!$new_title) {
+				errorpage("You can't blank out the name of the avatar.");
 			}
+			
+			$new_title   = xssfilters($new_title);
+			$new_weblink = xssfilters($new_weblink);				
+			$sql->queryp("UPDATE users_avatars SET title = ?, hidden = ?, weblink = ? WHERE user = {$_GET['id']} AND file = {$file}", [$new_title, $new_hidden, $new_weblink]);
 			
 			// Conditional in case you just want to update the avatar name
 			if (filter_int($_FILES["new{$file}"]['size'])){
@@ -173,7 +195,7 @@
 	
 	// Always show default avatar table, so you can upload one
 	if (isset($usermood[0])) {
-		$txt = avbox($_GET['id'], 0, dummy_avatar("[Default avatar]", 0), AVBOX_DEFAULT);
+		$txt = avbox($_GET['id'], 0, dummy_avatar("[Default avatar]", 0, $usermood[0]['weblink']), AVBOX_DEFAULT);
 	} else {
 		$txt = avbox($_GET['id'], 0, dummy_avatar("[Default avatar]", 0), AVBOX_DEFAULT | AVBOX_UPLOAD);
 	}
@@ -226,6 +248,11 @@
 			<td class='tdbg1 b center' style='min-width: 100px'>Title</td>
 			<td class='tdbg2'><input type='text' name='newtitle'></td>
 		</tr>
+		<tr>
+			<td class='tdbg1 b center' style='min-width: 100px'>External URL:</td>
+			<td class='tdbg2'><input type='text' name='newweblink'></td>
+		</tr>
+		
 		<tr>
 			<td class='tdbg1 b center'>Options</td>
 			<td class='tdbg2'>
@@ -298,12 +325,17 @@
 				<!-- <tr><td class='tdbgh center' colspan=2>{$data['title']}</td></tr> -->
 				
 				<tr>
-					<td class='tdbg2 avatarbox' style='background-image: url(".avatarpath($user, $file).");' colspan=2></td>
+					<td class='tdbg2 avatarbox' style='background-image: url(\"".avatarpath($user, $file, $data['weblink'])."\");' colspan=2></td>
 				</tr>
 				
 				<tr>
 					<td class='tdbg1 b center' style='min-width: 100px'>{$name_title}</td>
-					<td class='tdbg2'><input type='text' name='ren{$file}' class='sizex' {$misc_readonly} value=\"{$data['title']}\"></td>
+					<td class='tdbg2'><input type='text' name='ren{$file}' class='sizex' {$misc_readonly} value=\"".htmlspecialchars($data['title'])."\"></td>
+				</tr>
+				
+				<tr>
+					<td class='tdbg1 b center' style='min-width: 100px'>External URL:</td>
+					<td class='tdbg2'><input type='text' name='weblink{$file}' class='sizex' value=\"".htmlspecialchars($data['weblink'])."\"></td>
 				</tr>
 				
 				<tr>

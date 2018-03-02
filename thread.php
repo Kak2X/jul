@@ -456,6 +456,16 @@
 		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 	}
 	
+	$avatars = $sql->query("
+		SELECT p.user, p.moodid, v.weblink
+		FROM posts p
+		LEFT JOIN users_avatars v ON p.moodid = v.file
+		WHERE p.{$searchon} AND v.user = p.user
+		ORDER BY p.id DESC
+		LIMIT {$min},{$ppp}
+	");
+	$avatars = prepare_avatars($avatars);
+	
 	// heh
 	$posts = $sql->query("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
@@ -505,6 +515,7 @@
 		}
 		
 		$post['act'] = filter_int($act[$post['user']]);
+		$post['piclink'] = $avatars[$post['user']][$post['moodid']];
 
 		if (!$pforum || $pforum <= $loguser['powerlevel'])
 			$postlist .= threadpost($post, $bg, $forum['id'], $pthread);

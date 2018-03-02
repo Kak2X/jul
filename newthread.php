@@ -426,6 +426,8 @@
 		$ppost['text']			= $message;
 		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		$ppost['piclink']       = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$moodid}");
+		
 		if ($config['allow-attachments']) {
 			$ppost['attach']	= get_temp_attachments($attach_key, $loguser['id']);
 		}

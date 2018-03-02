@@ -32,7 +32,16 @@
 		$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
 
 		if ($config['allow-avatar-storage']) {
-			$set['userpic'] = file_exists(avatarpath($post['uid'], $post['moodid'])) ? "<img class='avatar' src='".avatarpath($post['uid'], $post['moodid'])."'>" : "";
+			if ($post['piclink']) {
+				$set['picture'] = $post['piclink'];
+				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
+			} else if (file_exists(avatarpath($post['uid'], $post['moodid']))) {
+				$set['picture'] = avatarpath($post['uid'], $post['moodid']);
+				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
+			} else {
+				$set['picture'] = $set['userpic'] = "";
+			}
+			
 		} else {
 			// $set['picture'] doesn't seem to be used...
 			if ($post['moodid'] && $post['moodurl']) { // mood avatar

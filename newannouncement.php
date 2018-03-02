@@ -253,6 +253,8 @@
 		$ppost['text']			= "<center><b>$title</b></center><hr>$message";
 		$ppost['options']		= $nosmilies . "|" . $nohtml;
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		$ppost['piclink']       = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$moodid}");
+		
 		if ($isadmin)
 			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 	

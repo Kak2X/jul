@@ -178,6 +178,7 @@
 	$user['options']= "0|0";
 	$user['num']	= 0;
 	$user['act']	= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > ".(ctime() - 86400)." AND user = $id");
+	$user['piclink']= $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$id} AND file = 0");
 	$user['noob']	= 0;
 	
 	// so that layouts show up regardless of setting (for obvious reasons)

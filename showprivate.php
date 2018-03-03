@@ -60,7 +60,7 @@
 		$quote = "<a href='sendprivate.php?id=$id'>Reply</a>";
 	else $quote = "";
 	if ($isadmin)
-		$ip = ($quote ? ' | ' : '') . "IP: <a href='ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
+		$ip = ($quote ? ' | ' : '') . "IP: <a href='admin-ipsearch.php?ip={$msg['ip']}'>{$msg['ip']}</a>";
 
 	
 	pageheader($windowtitle);

@@ -499,7 +499,7 @@
 		}
 
 		if ($isadmin)
-			$ip = " | IP: <a href='ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
 		
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];

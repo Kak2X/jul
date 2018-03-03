@@ -99,7 +99,7 @@
 					" | <a href='profile.php?id=$id&action=blocklayout&auth=$token'>".($isblocked ? "Unb" : "B")."lock layout</a>";
 		if($isadmin){
 			if($user['lastip'])
-				$lastip = " <br>with IP: <a href='ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
+				$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
 			$sneek = "<tr><td class='tdbg1 fonts center' colspan=2><a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |"
 				." <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
 				//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"

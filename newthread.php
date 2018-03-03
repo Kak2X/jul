@@ -449,7 +449,7 @@
 		}
 		
 		if ($isadmin)
-			$ip = " | IP: <a href='ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+			$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 		$threadtype = ($poll ? 'poll' : 'thread');
 			
 			?>

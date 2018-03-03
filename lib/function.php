@@ -1680,7 +1680,7 @@ function adminlinkbar($sel = NULL) {
 		),
 		array(
 			'admin-ipsearch.php'    => "IP Search",
-		//	'admin-ipbans.php'      => "IP Bans",
+			'admin-ipbans.php'      => "IP Bans",
 		//	'admin-pendingusers.php'=> "Pending Users",
 		//	'admin-slammer.php'     => "EZ Ban Button",
 			'admin-deluser.php'     => "Delete User",
@@ -1997,6 +1997,21 @@ function unescape($in) {
 	}
 	return $out;
 
+}
+
+// extract values from queries using PDO::FETCH_NAMED
+function array_column_by_key($array, $index){
+	if (is_array($array)) {
+		$output = array();
+		foreach ($array as $key => $val) {
+			if (is_array($array[$key]) && compact($array[$key][$index])) { // FETCH_NAMED array
+				$output[$key] = $array[$key][$index];
+			}
+		}
+		return $output;
+	} else {
+		return NULL;
+	}
 }
 
 function preg_loop($before, $regex){

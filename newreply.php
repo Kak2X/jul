@@ -13,7 +13,7 @@
 		errorpage("No thread specified.", "index.php", 'return to the index page', 0);
 	}
 	
-	$thread = $sql->fetchq("SELECT forum, closed, sticky, title, lastposter FROM threads WHERE id = $id");
+	$thread = $sql->fetchq("SELECT forum, closed, sticky, announcement, title, lastposter FROM threads WHERE id = $id");
 
 	if (!$thread) {
 		errorpage("Nice try. Next time, wait until someone makes the thread <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
@@ -71,7 +71,7 @@
 	
 	$tsticky = filter_int($_POST['stick']);
 	$tclosed = filter_int($_POST['close']);
-	
+	$tannc	 = filter_int($_POST['tannc']);
 	
 
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
@@ -174,7 +174,7 @@
 				save_attachments($id, $loguser['id'], $pid);
 			}
 			
-			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky," : "";
+			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky, announcement = $tannc," : "";
 			
 			// Update statistics
 			$sql->query("UPDATE `threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '$userid' WHERE `id`='$id'", false, $querycheck);
@@ -351,6 +351,7 @@
 	} else {
 		$tsticky = $thread['sticky'];
 		$tclosed = $thread['closed'];
+		$tannc   = $thread['announcement'];
 	}
 	
 	$modoptions	= "";
@@ -359,6 +360,7 @@
 		
 		$selsticky = $tsticky ? "checked" : "";
 		$selclosed = $tclosed ? "checked" : "";
+		$seltannc  = $tannc   ? "checked" : "";
 		
 		$modoptions = 
 		"<tr>
@@ -367,7 +369,8 @@
 			</td>
 			<td class='tdbg2' colspan=2>
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
-				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label>
+				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
+				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
 			</td>
 		</tr>";
 	}

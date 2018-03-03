@@ -297,6 +297,40 @@
 		<?php
 
 	}
+	
+	/*
+		Global announcements
+	*/
+	$annc = $sql->fetchq("
+		SELECT t.id aid, t.title atitle, t.description adesc, t.firstpostdate date, t.forum, $userfields, r.readdate
+		FROM threads t
+		LEFT JOIN users            u ON t.user = u.id
+		LEFT JOIN announcementread r ON t.forum = r.forum AND r.user = {$loguser['id']}
+		WHERE t.forum = {$config['announcement-forum']}
+		ORDER BY t.firstpostdate DESC
+		LIMIT 1
+	");
+	
+	if($annc) {
+		?>
+		<table class='table'>
+			<tr>
+				<td colspan=2 class='tdbgh center fonts'>
+					Announcements
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2 center' style='width: 33px'>
+					<?=($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;")?>
+				</td>
+				<td class='tdbg1'>
+					<a href="announcement.php"><?=$annc['atitle']?></a> -- Posted by <?=getuserlink($annc)?> on <?=printdate($annc['date'])?>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<?php
+	}
 
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumlist="
@@ -445,7 +479,7 @@
 */
 		  $forumlist.="
 			<tr>
-				<td class='tdbg1 center' style='width: 4%'>$new</td>
+				<td class='tdbg1 center'>$new</td>
 				<td class='tdbg2'>
 					<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
 					<span class='fonts'>

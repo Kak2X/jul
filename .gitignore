@@ -11,6 +11,7 @@ lib/firewall.php
 # No testboard stuff
 # lib/config.php # nobody ended up updating config.sample.php
 backups/*.zip
+develop.sql
 
 # Attachments
 attachments/*

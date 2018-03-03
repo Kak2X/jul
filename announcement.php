@@ -11,21 +11,22 @@
 	
 	// Make sure the forum exists and we can access it
 	if ($forum) {
-		$fdata = $sql->fetchq("SELECT id, title, minpower FROM forums WHERE id = $forum");
-		if (!$fdata || ($fdata['minpower'] && $fdata['minpower'] > $loguser['powerlevel']))
+		$fdata = $sql->fetchq("SELECT id, title,minpower FROM forums WHERE id = $forum");
+		if (!$fdata || $fdata['minpower'] && $fdata['minpower'] > $loguser['powerlevel']) {
 			errorpage("Couldn't enter the forum. You don't have access to this restricted forum.", 'index.php', 'the index page');
+		}
+	} else {
+		$fdata = NULL;
+		$forum = $config['announcement-forum'];
+		if (!$forum) {
+			errorpage("No announcement forum defined.");
+		}
 	}
 	
 	if($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forum AND user = {$loguser['id']}"))
 		$ismod = 1;
-	$canpost = ($isadmin || ($ismod && $forum));
-	
-	/*
-	if ($action && !$canpost)
-		errorpage("Silly user, you have no permission to do this!");
-	if ($action && !$id)
-		errorpage("No announcement specified.");
-		*/
+	$canthread = ($isadmin || ($ismod && $forum));
+
 		
 	$smilies = readsmilies();
 	
@@ -36,10 +37,10 @@
 	<table width=100%>
 		<tr>
 			<td class='font'>
-				<a href=index.php><?=$config['board-name']?></a><?=($forum ? " - <a href='forum.php?id={$fdata['id']}'>".htmlspecialchars($fdata['title'])."</a>" : "")?> - Announcements
+				<a href=index.php><?=$config['board-name']?></a><?=($fdata ? " - <a href='forum.php?id={$fdata['id']}'>".htmlspecialchars($fdata['title'])."</a>" : "")?> - Announcements
 			</td>
 			<td class='fonts' align=right>
-				<?=($canpost ? "<a href='newannouncement.php?id=$forum'>Post new announcement</a>" : "")?>
+				<?=($canthread ? "<a href='newthread.php?id=$forum&a=1'>Post new announcement</a>" : "")?>
 			</td>
 		</tr>
 	</table>
@@ -48,64 +49,107 @@
 	loadtlayout();
 	
 	$ppp	= isset($_GET['ppp']) ? ((int) $_GET['ppp']) : ($loguser['id'] ? $loguser['postsperpage'] : $config['default-ppp']);
-	$ppp	= max(min($ppp, 500), 1); // yeah right
+	$ppp	= numrange($ppp, 1, 500); // yeah right
 	$min 	= $ppp * $page;
 	
-	// NOTE: This does not work well for forum announcements
-	// Accounting for forum announcements would require a separate table
-	if ($loguser['id'] && !$forum) {
-		$sql->query("UPDATE `users` SET `lastannouncement` = (SELECT MAX(`id`) FROM `announcements` WHERE `forum` = 0) WHERE `id` = '". $loguser['id'] ."'");
+	// Set better last read date
+	if ($loguser['id']) {
+		$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forum' LIMIT 1");
+		$thread = $sql->fetchq("SELECT id, firstpostdate FROM threads WHERE forum = $forum".(isset($fdata) ? " AND announcement = 1" : "")." ORDER BY firstpostdate DESC LIMIT 1");
+		
+		if ($loguser['id'] && $thread['firstpostdate'] > $readdate) {
+			// Set only the first post as marked so announcement replies won't get marked as read 
+			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".($thread['firstpostdate']++)."', `read` = '1'");
+		}
+		
+		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, $forum, ".ctime().") 
+		ON DUPLICATE KEY UPDATE readdate = VALUES(readdate)");
 	}
 	
-	
-	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM announcements WHERE date > ".(ctime() - 86400)." GROUP BY user");
+	// Syndrome detection
+	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
 	
 	
 	$ufields = userfields();
-	
-	$layouts = $sql->query("SELECT headid, signid FROM announcements WHERE forum = $forum ORDER BY id DESC LIMIT $min, $ppp");
+	$layouts = $sql->query("
+		SELECT p.headid, p.signid, MIN(p.id) pid 
+		FROM threads t
+		LEFT JOIN posts p ON p.thread = t.id
+		WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+		GROUP BY t.id
+		ORDER BY p.date DESC
+		LIMIT $min,$ppp
+	");
 	preplayouts($layouts);
 	
 	$avatars = $sql->query("
-		SELECT a.user, a.moodid, v.weblink
-		FROM announcements a
-		LEFT JOIN users_avatars v ON a.moodid = v.file
-		WHERE a.forum = $forum AND v.user = a.user
-		ORDER BY a.id DESC
-		LIMIT $min, $ppp
+		SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
+		FROM threads t
+		LEFT JOIN posts         p ON t.id     = p.thread
+		LEFT JOIN users_avatars v ON p.moodid = v.file
+		WHERE t.forum = $forum AND v.user = p.user ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+		GROUP BY t.id
+		ORDER BY p.date DESC
+		LIMIT $min,$ppp
 	");
 	$avatars = prepare_avatars($avatars);
 	
-	// The announcement system is basically a shrunk down version of the threads
-	// This may or may not get replaced depending on :effort: and willigness to break the compatibility even more
+	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
+	if ($showattachments) {
+		$attachments = $sql->fetchq("
+			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, MIN(p.id) pid
+			FROM threads t
+			LEFT JOIN posts p ON p.thread = t.id
+			LEFT JOIN attachments a ON p.id = a.post
+			WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")." AND a.id IS NOT NULL
+			GROUP BY t.id
+			ORDER BY p.date DESC
+			LIMIT {$min},{$ppp}
+		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+	}
+	
+	// Get every first post for every (announcement) thread in the forum
 	$anncs = $sql->query("
-		SELECT 	a.*, a.title atitle, 0 num,
-				u.id uid, u.name, $ufields, u.regdate
-		FROM announcements a
-		
-		LEFT JOIN users u ON a.user = u.id
-		WHERE a.forum = $forum
-		ORDER BY a.id DESC
+		SELECT t.title atitle, t.description adesc, MIN(p.id) pid, p.*,
+		       COUNT(p.id)-1 replies, u.id uid, u.name, $ufields, u.regdate
+		FROM threads t
+		LEFT JOIN posts p ON p.thread = t.id
+		LEFT JOIN users u ON p.user   = u.id
+		WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+		GROUP BY t.id
+		ORDER BY p.date DESC
 		LIMIT $min,$ppp
 	");
-	$annctotal = $sql->resultq("SELECT COUNT(*) FROM announcements WHERE forum = $forum");
-	$pagelinks = pagelist("?f=$forum", $annctotal, $ppp);
+	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = $forum ".(isset($fdata) ? "AND announcement = 1" : ""));
+	
+	
+	$pagelinks = pagelist("?f=$forum&ppp={$ppp}", $annctotal, $ppp);
 
-	$annclist = "<table class='table'><tr><td class='tdbgh center' width=150>User</td><td class='tdbgh center' colspan=2>Announcement</td></tr>";
+	$annclist = "
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center' style='width: 200px'>User</td>
+			<td class='tdbgh center' colspan=2>Announcement</td>
+		</tr>";
+		
 	for ($i = 0; $annc = $sql->fetch($anncs); ++$i) {
 		$annclist .= '<tr>';
-		//$annccount++;
 		$bg = $i % 2 + 1;
 		
-		if ($canpost) {
-		  $edit = "<a href='editannouncement.php?id={$annc['id']}'>Edit</a> | <a href='editannouncement.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editannouncement.php?id={$annc['id']}&action=noob&auth=".generate_token(35)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+		if ($showattachments && isset($attachments[$annc['id']])) {
+			$annc['attach'] = $attachments[$annc['id']];
+		}
+		
+		$edit = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
+		if ($canthread) {
+		  $edit .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_NOOB)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
 		  if ($isadmin) $ip = " | IP: {$annc['ip']}";
 		} else {
 			$edit = '&nbsp;';
 		}
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
-		$annc['text'] = "<center><b>{$annc['atitle']}</b></center><hr>{$annc['text']}";
+		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
 		$annc['piclink'] = $avatars[$annc['user']][$annc['moodid']];
 		$annclist .= threadpost($annc,$bg,$id);
 	}
@@ -113,5 +157,4 @@
 	echo "$pagelinks<table class='table'>$annclist</table>$pagelinks";
 	
 	pagefooter();
-
-?>
+	

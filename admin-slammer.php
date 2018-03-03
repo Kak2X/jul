@@ -45,7 +45,10 @@ else if ($_POST['knockout']) {
 	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1", false, $querycheck);
 	echo "Deleted user data.\n";
 	
-	$sql->query("DELETE FROM events WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50	
+	$sql->query("DELETE FROM announcementread WHERE user = '{$target_id}'");
+	$sql->query("DELETE FROM forumread WHERE user = '{$target_id}'");
+	$sql->query("DELETE FROM threadsread WHERE uid = '{$target_id}'");
+	$sql->query("DELETE FROM events WHERE user = '{$target_id}'", false, $querycheck);	
 	echo "Deleted events.\n";
 	
 

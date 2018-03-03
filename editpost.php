@@ -281,7 +281,7 @@
 	}
 	// Oh come on, noobing posts was/is a fun sport - Kak
 	else if ($ismod && $action == 'noob') {
-		check_token($_GET['auth'], 35);
+		check_token($_GET['auth'], TOKEN_NOOB);
 			
 		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '$id'");
 		errorpage("Post n00bed!", "thread.php?pid=$id#$id",'the post',0);

@@ -2,8 +2,9 @@
 	require 'lib/function.php';
 	
 	
-	$id 		= filter_int($_GET['id']);
-	$poll 		= filter_int($_GET['poll']);
+	$id           = filter_int($_GET['id']);
+	$poll         = filter_int($_GET['poll']);
+	$announcement = filter_int($_GET['announcement']);
 	
 	
 	// Stop this insanity.  Never index newthread.
@@ -72,6 +73,10 @@
 	$nosmilies		= filter_int($_POST['nosmilies']);
 	$nohtml			= filter_int($_POST['nohtml']);
 	$nolayout		= filter_int($_POST['nolayout']);
+	
+	$tsticky = filter_int($_POST['stick']);
+	$tclosed = filter_int($_POST['close']);
+	$tannc	 = (int) (filter_int($_POST['tannc']) || isset($_GET['a']));
 	
 	$iconpreview    = "";
 	
@@ -205,50 +210,56 @@
 					$signid = getpostlayoutid($sign);
 				}
 				
-				$sql->queryp("INSERT INTO `threads` (`forum`, `user`, `views`, `closed`, `sticky`, `title`, `description`, `icon`, `replies`, `firstpostdate`, `lastpostdate`, `lastposter`, `poll`) ".
-							 "VALUES                (:forum,  :user,  :views,  :closed,  :sticky,  :title,  :description,  :icon,  :replies,  :firstpostdate,  :lastpostdate,  :lastposter,  :poll)",
-						 [
-							'forum'				=> $id,
-							'user'				=> $user['id'],
-							
-							'closed'			=> 0,
-							'sticky'			=> 0,
-							
-							'poll'				=> $pollid,
-							
-							'title'				=> xssfilters($subject),
-							'description'		=> xssfilters($description),
-							'icon'				=> $posticon,
-							
-							'views'				=> 0,
-							'replies'			=> 0,
-							'firstpostdate'		=> $currenttime,
-							'lastpostdate'		=> $currenttime,
-							'lastposter'		=> $user['id'],
-							
-						 ], $querycheck);
+				if (!$ismod) {
+					$tclosed = 0;
+					$tsticky = 0;
+					$tannc   = 0;
+				}
+				
+				// Insert thread
+				$vals = [
+					'forum'				=> $id,
+					'user'				=> $user['id'],
+					
+					'closed'			=> $tclosed,
+					'sticky'			=> $tsticky,
+					'announcement'		=> $tannc,
+					
+					'poll'				=> $pollid,
+					
+					'title'				=> xssfilters($subject),
+					'description'		=> xssfilters($description),
+					'icon'				=> $posticon,
+					
+					'views'				=> 0,
+					'replies'			=> 0,
+					'firstpostdate'		=> $currenttime,
+					'lastpostdate'		=> $currenttime,
+					'lastposter'		=> $user['id'],
+				];
+				
+				$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
 				
 				$tid = $sql->insert_id();
 				
-				$sql->queryp("INSERT INTO `posts` (`thread`, `user`, `date`, `ip`, `num`, `headid`, `signid`, `moodid`, `text`, `tagval`, `options`) ".
-							 "VALUES              (:thread,  :user,  :date,  :ip,  :num,  :headid,  :signid,  :moodid,  :text,  :tagval,  :options)",
-						 [
-							'thread'			=> $tid,
-							'user'				=> $user['id'],
-							'date'				=> $currenttime,
-							'ip'				=> $_SERVER['REMOTE_ADDR'],
-							'num'				=> $numposts,
-							
-							'headid'			=> $headid,
-							'signid'			=> $signid,
-							'moodid'			=> $moodid,
-							
-							'text'				=> xssfilters($msg),
-							'tagval'			=> $tagval,
-							'options'			=> $nosmilies . "|" . $nohtml,
-							
-						 ], $querycheck);
-						 
+				// Insert post
+				$vals = [
+					'thread'			=> $tid,
+					'user'				=> $user['id'],
+					'date'				=> $currenttime,
+					'ip'				=> $_SERVER['REMOTE_ADDR'],
+					'num'				=> $numposts,
+					
+					'headid'			=> $headid,
+					'signid'			=> $signid,
+					'moodid'			=> $moodid,
+					
+					'text'				=> xssfilters($msg),
+					'tagval'			=> $tagval,
+					'options'			=> $nosmilies . "|" . $nohtml,
+				 ];
+				$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
+				
 				$pid = $sql->insert_id();
 				
 				if ($config['allow-attachments']) {
@@ -288,11 +299,12 @@
 		}
 		else {
 			
-			$reason = "You haven't entered your username and password correctly.";
-			if (!$limithit) 	$reason = "You are trying to post too rapidly.";
-			if (!$message) 		$reason = "You haven't entered a message.";
-			if (!$subject) 		$reason = "You haven't entered a subject.";
-			if (!$authorized) 	$reason = "You aren't allowed to post in this forum.";
+			if ($userid == -1)	   $reason = "You haven't entered your username and password correctly.";
+			else if (!$limithit)   $reason = "You are trying to post too rapidly.";
+			else if (!$message)    $reason = "You haven't entered a message.";
+			else if (!$subject)    $reason = "You haven't entered a subject.";
+			else if (!$authorized) $reason = "You aren't allowed to post in this forum.";
+			else $reason = "Unknown reason."; // oops
 			errorpage("Couldn't post the thread. $reason", "forum.php?id=$id", $forum['title'], 2);
 		}		
 		
@@ -335,6 +347,10 @@
 	$nohtmlchk	 	= $nohtml 		? " checked" : "";
 	$nolayoutchk 	= $nolayout 	? " checked" : "";
 
+	$selsticky = $tsticky ? "checked" : "";
+	$selclosed = $tclosed ? "checked" : "";
+	$seltannc  = $tannc   ? "checked" : "";
+	
 	$forumlink = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id=$id'>".htmlspecialchars($forum['title'])."</a></span>";
 
 	if ($loguser['id']) {
@@ -465,10 +481,30 @@
 			$autofocus[0] = 'autofocus'; // for 'subject'
 		}
 		
+	$modoptions	= "";
+	
+	if ($ismod) {
 		
+		$selsticky = $tsticky ? "checked" : "";
+		$selclosed = $tclosed ? "checked" : "";
+		$seltannc  = $tannc   ? "checked" : "";
+		
+		
+		$modoptions = 
+		"<tr>
+			<td class='tdbg1 center'>
+				<b>Moderator Options:</b>
+			</td>
+			<td class='tdbg2' colspan=2>
+				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
+				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
+				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
+			</td>
+		</tr>";
+	}		
 	
 ?>
-		
+
 	<?=$forumlink?>
 	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
@@ -632,6 +668,7 @@
 					<?=moodlayout(1, $loguser['id'], $moodid)?>
 				</td>
 			</tr>
+			<?=$modoptions?>
 		<?=quikattach($attach_key, $loguser['id'])?>
 		</table>
 		</form>

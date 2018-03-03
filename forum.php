@@ -166,63 +166,55 @@
 
 	$threadlist = "<table class='table'>";
 
-	// (Forum) Announcements
 	if ($id) {
+		// Main forum view: Get the last announcement from
+		// both the annc forum and the current forum
 		
-		// bah
-		$ac = array('0', $id);		// Query
-		$al = array('A','Forum a');	// Label
+		// Conditional labels
+		if ($id == $config['announcement-forum']) {
+			$ac = [$config['announcement-forum'], "0"]; // Don't show forum attachments in the annc forum
+		} else {
+			$ac = [$config['announcement-forum'], "$id AND t.announcement = 1"];
+		}
+		$al = ['A','Forum a'];
 		
 		for ($i = 0; $i < 2; ++$i) {
 			
 			$annc = $sql->fetchq("
-				SELECT a.id aid, a.date, a.title atitle, a.forum, $userfields
-				FROM announcements a
-				LEFT JOIN users u ON a.user = u.id
-				WHERE a.forum = {$ac[$i]}
-				ORDER BY date DESC
+				SELECT $userfields, t.id aid, t.title atitle, t.description adesc,
+				       t.firstpostdate date, t.forum, r.readdate
+				FROM threads t
+				LEFT JOIN users            u ON t.user = u.id
+				LEFT JOIN announcementread r ON t.forum = r.forum AND r.user = {$loguser['id']}
+				WHERE t.forum = {$ac[$i]}
+				ORDER BY t.firstpostdate DESC
 				LIMIT 1
 			");
 			
-			if($annc) {
-				$userlink = getuserlink($annc);
+			if ($annc) {
 				$threadlist .= 
 					"<tr>
-						<td colspan=7 class='tbl tdbgh center fonts'>
+						<td colspan=7 class='tdbgh center fonts'>
 							{$al[$i]}nnouncements
 						</td>
 					</tr>
 					<tr>
 						<td class='tdbg2 center'>
-							". ($loguser['lastannouncement'] < $annc['aid'] && $loguser['id'] ? $statusicons['new'] : "&nbsp;") ."
+							". ($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;") ."
 						</td>
 						<td class='tdbg1' colspan=6>
-							<a href=announcement.php?f={$annc['forum']}>{$annc['atitle']}</a> -- Posted by {$userlink} on ".printdate($annc['date'])."
+							<a href=announcement.php".($i ? "?f={$annc['forum']}" : "").">{$annc['atitle']}</a> -- Posted by ".getuserlink($annc)." on ".printdate($annc['date'])."
 						</td>
 					</tr>";
 			}
 		}
-		/*
-		if($annc = $sql->fetchq("SELECT user id,date,announcements.title,name,sex,powerlevel FROM announcements,users WHERE forum=$id AND user=users.id ORDER BY date DESC LIMIT 1")) {
-			$userlink = getuserlink($annc);
-			$threadlist .= "<tr>
-				<td class='tdbgh fonts center' colspan=7>Forum announcements</td>
-			</tr><tr>
-				<td class='tdbg2 center'>&nbsp;</td>
-				<td class='tdbg1' colspan=6><a href=announcement.php?f=$id>$annc[title]</a> -- Posted by {$userlink} on ".date($dateformat,$annc[date]+$tzoff)."</td>
-			</tr>";
-		}
-		*/
-    }
-    // Forum names
-    else
+    } else {
+		// Get forum names in threads by user / favourite list
 		$forumnames = $sql->getresultsbykey("SELECT id, title FROM forums WHERE !minpower OR minpower <= {$loguser['powerlevel']}");
-
+	}
 	
 	
 	// Get threads
-	
-	
 	if ($loguser['id']) {
 		$q_trval 	= ", r.read tread, r.time treadtime ";
 		$q_trjoin 	= "LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']} ";
@@ -378,6 +370,9 @@
 			Secondary thread status icon
 		*/
 		$sicon			= "";
+		if ($thread['announcement'] && (!$id || ($id != $config['announcement-forum']))) {
+			$sicon	.= "ann";
+		}
 		if ($thread['sticky'])	{
 			$threadtitle	= "<i>". $threadtitle ."</i>";
 			$sicon	.= "sticky";
@@ -385,11 +380,11 @@
 		
 		if ($thread['poll'])	$sicon	.= "poll";
 		if ($sicon)
-			$threadtitle	= $statusicons[$sicon] ." ". $threadtitle;
+			$threadtitle	= "<i>{$statusicons[$sicon]}</i> {$threadtitle}";
 
 		// Show forum name if not in a forum
 		if (!$id)
-			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>".$forumnames[$thread['forumid']]."</a>";
+			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>{$forumnames[$thread['forumid']]}</a>";
 
 		// Extra pages
 		$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);

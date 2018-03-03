@@ -9,8 +9,8 @@
 	$_POST['action'] 	= filter_string($_POST['action']);
 
 	$thread  = $sql->fetchq("
-		SELECT 	t.forum, t.closed, t.title, t.description, t.icon, t.replies, t.lastpostdate, t.lastposter, t.sticky, t.user,
-				f.minpower, f.id valid, f.specialscheme, f.specialtitle
+		SELECT 	t.forum, t.title, t.description, t.icon, t.replies, t.lastpostdate, t.lastposter,
+		        t.sticky, t.closed, t.announcement, t.user,	f.minpower, f.id valid, f.specialscheme, f.specialtitle
 		FROM threads t
 		LEFT JOIN forums f ON t.forum = f.id
 		WHERE t.id = $id
@@ -172,44 +172,48 @@
 		if (!$title) errorpage("Couldn't edit the thread. You haven't entered a subject.");
 		
 		
-		
-		if ($ismod) {
+		// Check if we can actually mod the forum we're trying to move this thread to
+		$forummove 	= filter_int($_POST['forummove']);
+		$destexists = $sql->fetchq("SELECT 1 FROM forums WHERE id = {$forummove}");
+		$destmod    = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forummove} and user = {$loguser['id']}");
+			
+		if ($ismod && $destexists && ($destmod || $loguser['powerlevel'] > 1)) {
 			$forummove 	= filter_int($_POST['forummove']);
 			$closed 	= filter_int($_POST['closed']);
 			$sticky 	= filter_int($_POST['sticky']);
+			$announcement = filter_int($_POST['announcement']);
 		} else { // Nice try, but no
 			$forummove	= $thread['forum'];
 			$closed		= $thread['closed'];
-			$sticky		= $thread['sticky'];	
+			$sticky		= $thread['sticky'];
+			$announcement = $thread['announcement'];
 		}
 		
 		
 		// Here we go
 		$sql->beginTransaction();
 		
-		$c = array();
+		$data = [
+			'title'        => htmlspecialchars($title),
+			'description'  => xssfilters(filter_string($_POST['description'])),
+			'icon'         => $icon,
+			'forum'        => $forummove,
+			'closed'       => $closed,
+			'sticky'       => $sticky,
+			'announcement' => $announcement,
+		];
+		$sql->queryp("UPDATE threads SET ".mysql::setplaceholders($data)." WHERE id = $id", $data);
 		
-		$sql->queryp("UPDATE `threads` SET `title` = :title, `description` = :desc, `forum` = :forum, `closed` = :closed, `icon` = :icon, `sticky` = :sticky WHERE `id` = $id",
-		[
-			'title'		=> htmlspecialchars($title),
-			'desc'		=> xssfilters(filter_string($_POST['description'], true)),
-			'icon'		=> $icon,
-			'forum'		=> $forummove,
-			'closed'	=> $closed,
-			'sticky'	=> $sticky
-		], $c);
-		
-		if($forummove != $thread['forum']) {
+		if ($forummove != $thread['forum']) {
 			$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id"); //$thread['replies'] + 1;
 			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
 			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum = $forummove ORDER BY lastpostdate DESC LIMIT 1");
-			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $c);
-			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id=$forummove", array($t2['lastpostdate'],$t2['lastposter']), $c);
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']));
+			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id=$forummove", array($t2['lastpostdate'],$t2['lastposter']));
 		}
-		if ($sql->checkTransaction($c))
-			errorpage("Thank you, {$loguser['name']}, for editing the thread.","thread.php?id=$id",'return to the thread');
-		else
-			errorpage("An error occurred while editing the thread.");
+		
+		$sql->commit();
+		errorpage("Thank you, {$loguser['name']}, for editing the thread.","thread.php?id=$id",'return to the thread');
 	}
 	else {
 		
@@ -217,6 +221,7 @@
 		
 		$check1[$thread['closed']]='checked=1';
 		$check2[$thread['sticky']]='checked=1';
+		$check3[$thread['announcement']]='checked=1';
 		
 		$forummovelist = doforumlist($thread['forum'], 'forummove'); // Return a pretty forum list
 		
@@ -269,7 +274,7 @@
 		if ($ismod) {
 			?>
 				<tr>
-					<td class='tdbg1 center' rowspan=2>&nbsp;</td>
+					<td class='tdbg1 center' rowspan=3>&nbsp;</td>
 					<td class='tdbg2'>
 						<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
 						<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>>Closed
@@ -279,6 +284,12 @@
 					<td class='tdbg2'>
 						<input type=radio class='radio' name=sticky value=0 <?=filter_string($check2[0])?>> Normal&nbsp; &nbsp;
 						<input type=radio class='radio' name=sticky value=1 <?=filter_string($check2[1])?>>Sticky
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg2'>
+						<input type=radio class='radio' name=announcement value=0 <?=filter_string($check3[0])?>> Normal Thread&nbsp; &nbsp;
+						<input type=radio class='radio' name=announcement value=1 <?=filter_string($check3[1])?>>Forum Announcement
 					</td>
 				</tr>
 				
@@ -307,4 +318,4 @@
 	}
 	
 	pagefooter();
-?>
+	

@@ -43,7 +43,13 @@
 
 		'sticky'		=> 'Sticky:',
 		'poll'			=> 'Poll:',
-		'stickypoll'	=> 'Sticky poll:'
+		'stickypoll'	=> 'Sticky poll:',
+		'ann'			=> 'Announcement:',
+		'annsticky'		=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annsticky' 	=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annstickypoll'	=> 'Announcement - Sticky poll:',
 	);
 	
 	//$schemetime	= -1; // mktime(9, 0, 0) - time();

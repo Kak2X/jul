@@ -494,7 +494,7 @@
 		if ($ismod || (!$banned && $post['user'] == $loguser['id'])) {
         	if ($ismod || ($id && !$thread['closed']))
 				$edit = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
-			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(35)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
+			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(TOKEN_NOOB)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
 			
 		}
 

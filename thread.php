@@ -514,8 +514,8 @@
 			$pforum  = $sql->resultq("SELECT minpower FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, mysql::USE_CACHE);
 		}
 		
-		$post['act'] = filter_int($act[$post['user']]);
-		$post['piclink'] = $avatars[$post['user']][$post['moodid']];
+		$post['act']     = filter_int($act[$post['user']]);
+		$post['piclink'] = filter_string($avatars[$post['user']][$post['moodid']]);
 
 		if (!$pforum || $pforum <= $loguser['powerlevel'])
 			$postlist .= threadpost($post, $bg, $forum['id'], $pthread);

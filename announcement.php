@@ -150,7 +150,7 @@
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		$annc['piclink'] = $avatars[$annc['user']][$annc['moodid']];
+		$annc['piclink'] = filter_string($avatars[$annc['user']][$annc['moodid']]);
 		$annclist .= threadpost($annc,$bg,$id);
 	}
 	

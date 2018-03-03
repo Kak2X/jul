@@ -119,18 +119,19 @@
 				$config['max-avatar-size-y'],     // limits
 				avatarpath($_GET['id'], 0)       // image path
 			);
-		}
-		if ($new_weblink) {
-			$sql->resultp("UPDATE users_avatars SET weblink = ? WHERE user = {$_GET['id']} AND file = 0", [$new_weblink]);
+		} else {
+			$res = false;
 		}
 		
+		$sql->resultp("UPDATE users_avatars SET weblink = ? WHERE user = {$_GET['id']} AND file = 0", [$new_weblink]);
+		
 		#errorpage("huh");
-		if ($new_weblink || $res){
+		#if ($new_weblink || $res){
 			//msg_holder::set_cookie("Default avatar updated!".DELAYED_CRAP);
 			return header("Location: editavatars.php?id={$_GET['id']}");
-		} else {
-			errorpage("Could not update the avatar.");
-		}
+		#} else {
+
+		#}
 	}
 
 	// Loop through the avatar and check if we want to change them

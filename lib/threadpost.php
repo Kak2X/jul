@@ -33,7 +33,7 @@
 
 		if ($config['allow-avatar-storage']) {
 			if ($post['piclink']) {
-				$set['picture'] = $post['piclink'];
+				$set['picture'] = escape_attribute($post['piclink']);
 				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
 			} else if (file_exists(avatarpath($post['uid'], $post['moodid']))) {
 				$set['picture'] = avatarpath($post['uid'], $post['moodid']);
@@ -45,10 +45,10 @@
 		} else {
 			// $set['picture'] doesn't seem to be used...
 			if ($post['moodid'] && $post['moodurl']) { // mood avatar
-				$set['picture'] = str_replace('$', $post['moodid'], htmlspecialchars($post['moodurl']));
+				$set['picture'] = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
 				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
 			} else if (isset($post['picture'])) { // default avatar
-				$set['picture'] = htmlspecialchars($post['picture']);
+				$set['picture'] = escape_attribute($post['picture']);
 				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
 			} else { // null
 				$set['userpic'] = $set['picture'] = "";

@@ -43,7 +43,14 @@ function save_avatar($qdata) {
 function delete_avatar($user, $file) {
 	global $sql;
 	$sql->query("DELETE from users_avatars WHERE user = {$user} AND file = {$file}");
-	unlink(avatarpath($user, $file));
+	if ($file && $file != 'm') {
+		$sql->query("UPDATE pmsgs SET moodid = 0 WHERE userfrom = {$user}");
+		$sql->query("UPDATE posts SET moodid = 0 WHERE user = {$user}");
+	}
+	$path = avatarpath($user, $file);
+	if (file_exists($path)) {
+		unlink($path);
+	}
 }
 
 const AVATARS_ALL = 0b1;
@@ -69,7 +76,7 @@ function prepare_avatars($sets) {
 	return $res;
 }
 
-function avatarpath($user, $file_id, $weblink = NULL) {return $weblink ? htmlspecialchars($weblink) : "userpic/{$user}/{$file_id}";}
+function avatarpath($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function setmoodavjs($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
 
@@ -130,7 +137,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		$ret = "
 		Avatar: <select name='moodid'>
 			{$txt}
-		</select><script>newavatarpreview({$loguser['id']},{$sel},\"".htmlspecialchars($moods[$sel]['weblink'])."\")</script>";
+		</select><script>newavatarpreview({$loguser['id']},{$sel},\"".escape_attribute($moods[$sel]['weblink'])."\")</script>";
 	} else {
 		
 		// Numeric "good luck with hosting" avatar mode
@@ -142,7 +149,7 @@ function moodlist($user, $sel = 0, $return = false) {
 			return $moods;
 		}
 		
-		$moodurl    = htmlspecialchars($loguser['moodurl']);
+		$moodurl    = escape_attribute($loguser['moodurl']);
 		$c[$sel]	= " checked";
 		$txt		= "";
 		

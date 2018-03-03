@@ -208,7 +208,7 @@
 				save_avatar([$id, 0, 'Default', 0, $weblink]);
 			} else {		
 				// File doesn't exist + blanking the URL = delete avatar
-				$sql->query("DELETE FROM users_avatars WHERE user = {$id} AND file = 0");
+				delete_avatar($id, 0);
 			}
 			
 		} else {

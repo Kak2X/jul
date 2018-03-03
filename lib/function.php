@@ -2013,6 +2013,30 @@ function array_column_by_key($array, $index){
 		return NULL;
 	}
 }
+// Modify userfields for PDO::FETCH_NAMED queries
+function set_userfields($alias, $prealias = NULL) {
+	global $userfields;
+	if ($prealias) {
+		// Get an array of fields
+		$txt = str_replace("u.", "", $userfields);
+		$set = array_map('trim', explode(',', $txt));
+		$max = count($set);
+		
+		
+		// Only insert placeholder'd elements
+		$txt = "";
+		for ($i = $j = 0; $i < $max; ++$i) {
+			$tag = "{$alias}{$set[$i]}";
+			if (isset($prealias[$tag])) {
+				$txt .= ($j ? ", " : "") . ":{$tag} {$set[$i]}";
+				++$j;
+			}
+		}
+	} else {
+		$txt = str_replace("u.", "{$alias}.", $userfields);
+	}
+	return $txt;
+}
 
 function preg_loop($before, $regex){
 	$after = preg_replace("'{$regex}'", "", $before);

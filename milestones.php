@@ -76,10 +76,14 @@
 // u1.name AS name1,u1.sex AS sex1,u1.powerlevel AS power1,u2.name AS name2,u2.sex AS sex2,u2.powerlevel AS power2,
 // AND u2.id=t.lastposter 
 	$milestones = $sql->query("
-		SELECT t.*, $userfields x, f.minpower as minpower, f.title as forumtitle 
+		SELECT t.*, f.minpower as minpower, f.title as forumtitle, 
+		       ".set_userfields('u1')." uid, 
+		       ".set_userfields('u2')." uid
 		FROM threads t
-		LEFT JOIN forums f ON f.id   = t.forum
-		LEFT JOIN users  u ON t.user = u.id
+		LEFT JOIN forums  f ON f.id         = t.forum
+		LEFT JOIN users  u1 ON t.user       = u1.id
+		LEFT JOIN users  u2 ON t.lastposter = u2.id
+
 		WHERE (t.id % $threads = 0 OR t.id = 1) AND ($ismod OR !ISNULL(f.id))
 		ORDER BY t.id ASC");
 	$threadstable = 
@@ -92,7 +96,7 @@
 			<td class='tdbgh center' width=60> Views</td>
 			<td class='tdbgh center' width=180> Last post</td>
 		</tr>";
-	while ($ms = $sql->fetch($milestones)) {
+	while ($ms = $sql->fetch($milestones, PDO::FETCH_NAMED)) {
 		$tmp2 = $ms['id'];
 		while (($tmp2 -= $threads) > $tmp1) {
 				$threadstable .= "<tr>
@@ -120,10 +124,11 @@
 				$threadlink .= '<br><span class="fonts" style="position: relative; top: -1px;">&nbsp;&nbsp;&nbsp;'
 							. "In <a href='forum.php?id=$ms[forum]'>".$ms['forumtitle']."</a>"
 							. '</span>';
-				$userlink = getuserlink($ms, $ms['user']); //"<a href='profile.php?id=$ms[user]'><span style='color: #". getnamecolor($ms['sex1'], $ms['power1']) ."'>{$ms['name1']}</span></a>";
-				//<a href='profile.php?id=$ms[user]'><span style='color: #". getnamecolor($ms['sex2'], $ms['power2']) ."'>{$ms['name2']}</span></a>
+				$threadauthor 	= getuserlink(array_column_by_key($ms, 0), $ms['user']);
+				$lastposter 	= getuserlink(array_column_by_key($ms, 1), $ms['lastposter']);
+
 				$lastpost = printdate($ms['lastpostdate'])."
-				<span class='fonts'><br>by ".getuserlink(NULL, $ms['lastposter'])."
+				<span class='fonts'><br>by {$lastposter}
 				<a href='thread.php?id={$ms['id']}&end=1'>{$statusicons['getlast']}</a>";
 
 				$replies 	= $ms['replies'];
@@ -134,7 +139,7 @@
 				<td class='tdbg1 center'>{$ms['id']}</td>
 				<td class='tdbg1 center' width=40px style='max-width:40px;max-height:30px;overflow:hidden;'>$tpic</td>
 				<td class='tdbg2'>$threadlink</td>
-				<td class='tdbg2 center'>$userlink</td>
+				<td class='tdbg2 center'>$threadauthor</td>
 				<td class='tdbg1 center'>$replies</td>
 				<td class='tdbg1 center'>$views</td>
 				<td class='tdbg1 center'>$lastpost</td>

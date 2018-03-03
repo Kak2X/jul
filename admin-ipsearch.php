@@ -147,8 +147,7 @@
 		
 		$pmsgs = $sql->queryp("
 			SELECT 	p.id, p.userfrom, p.userto, p.title, p.ip, p.date,
-					u1.name, u1.sex, u1.`powerlevel`, u1.aka, u1.birthday, u1.namecolor,
-					u2.name, u2.sex, u2.`powerlevel`, u2.aka, u2.birthday, u2.namecolor
+					".set_userfields('u1', 'uid').",".set_userfields('u2')." uid
 			FROM pmsgs p
 			LEFT JOIN users u1 ON p.userfrom = u1.id
 			LEFT JOIN users u2 ON p.userto   = u2.id

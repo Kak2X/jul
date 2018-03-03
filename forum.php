@@ -222,12 +222,12 @@
 		$q_trval = $q_trjoin = "";
 	}
 	
-	// these queries used to be full of unreadable fake explicit joins and asghfghbsafsadasahsgsahghassas
-	if($fav)
+	// Now with FETCH_NAMED capabilities
+	if ($fav) {
 		$threads = $sql->query("
-			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid,
-					u1.name      , u1.sex     , u1.powerlevel     , u1.aka     , u1.birthday    , u1.namecolor   ,
-					u2.name name2, u2.sex sex2, u2.powerlevel pwr2, u2.aka aka2, u2.birthday bd2, u2.namecolor nc2
+			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid,
+			        ".set_userfields('u1')." uid, 
+			        ".set_userfields('u2')." uid
 					$q_trval
 			
 			FROM threads t
@@ -243,11 +243,19 @@
 			LIMIT $min,$tpp			
 		");
 
-	else if ($user)
+	} else if ($user) {
+		$vals = [
+			'u1name'		=> $userdata['name'],		
+			'u1sex'			=> $userdata['sex'],
+			'u1powerlevel'	=> $userdata['powerlevel'],
+			'u1aka'			=> $userdata['aka'],
+			'u1birthday'	=> $userdata['birthday'],
+			'u1namecolor'	=> $userdata['namecolor']
+		];
 		$threads = $sql->queryp("
 			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid,
-					:u1name name,  :u1sex sex , :u1powerlevel powerlevel, :u1aka aka , :u1birthday birthday, :u1namecolor namecolor,
-					 u.name name2,  u.sex sex2,  u.powerlevel       pwr2,  u.aka aka2,  u.birthday      bd2,  u.namecolor nc2
+			        ".set_userfields('u1', $vals).", 
+			        ".set_userfields('u')." uid
 					$q_trval
 			
 			FROM threads t
@@ -258,22 +266,13 @@
 			WHERE t.user = {$user}
 			ORDER BY t.sticky DESC, t.lastpostdate DESC
 					
-			LIMIT $min,$tpp",
-			[
-				'u1name'		=> $userdata['name'],		
-				'u1sex'			=> $userdata['sex'],
-				'u1powerlevel'	=> $userdata['powerlevel'],
-				'u1aka'			=> $userdata['aka'],
-				'u1birthday'	=> $userdata['birthday'],
-				'u1namecolor'	=> $userdata['namecolor']
-			]
-		);
-	else
+			LIMIT $min,$tpp" ,$vals);
+	} else {
 		$threads = $sql->query("
 			SELECT 	t.*,
-					u1.name      , u1.sex     , u1.powerlevel     , u1.aka     , u1.birthday    , u1.namecolor   ,
-					u2.name name2, u2.sex sex2, u2.powerlevel pwr2, u2.aka aka2, u2.birthday bd2, u2.namecolor nc2
-					$q_trval
+			        ".set_userfields('u1')." uid, 
+			        ".set_userfields('u2')." uid
+			        $q_trval
 			
 			FROM threads t
 			LEFT JOIN users      u1 ON t.user       =  u1.id
@@ -285,7 +284,7 @@
 					
 			LIMIT $min,$tpp			
 		");
-
+	}
     $threadlist .= "<tr>
 		<td class='tdbgh center' width=30></td>
 		<td class='tdbgh center' colspan=2 width=*> Thread</td>
@@ -304,7 +303,7 @@
 					There are no threads to display.
 				</td>
 			</tr>";
-	} else for($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_ASSOC); ++$i) {
+	} else for($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
 		
 		// Sticky separator
 		if($sticklast && !$thread['sticky'])
@@ -411,20 +410,8 @@
 
 		if(!$thread['icon']) $posticon='&nbsp;';
 		
-		
-		// Userlinks
-		$lastposter_arr = array (
-			'id'			=> $thread['lastposter'],
-			'name'			=> $thread['name2'],
-			'sex'			=> $thread['sex2'],
-			'powerlevel'	=> $thread['pwr2'],
-			'aka'			=> $thread['aka2'],
-			'birthday'		=> $thread['bd2'],
-			'namecolor'		=> $thread['nc2']
-		);
-		
-		$threadauthor 	= getuserlink($thread, $thread['user']);
-		$lastposter 	= getuserlink($lastposter_arr);
+		$threadauthor 	= getuserlink(array_column_by_key($thread, 0), $thread['user']);
+		$lastposter 	= getuserlink(array_column_by_key($thread, 1), $thread['lastposter']);
 		
 		$threadlist .= 
 			"<tr>

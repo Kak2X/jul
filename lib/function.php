@@ -1651,7 +1651,7 @@ function admincheck() {
 	}
 }
 
-function adminlinkbar($sel = 'admin.php') {
+function adminlinkbar($sel = NULL) {
 	global $isadmin;
 
 	if (!$isadmin) return;

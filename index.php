@@ -335,7 +335,7 @@
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumlist="
 		<tr>
-			<td class='tdbgh center'>&nbsp;</td>
+			<td class='tdbgh center' width=50>&nbsp;</td>
 			<td class='tdbgh center'>Forum</td>
 			<td class='tdbgh center' width=80>Threads</td>
 			<td class='tdbgh center' width=80>Posts</td>

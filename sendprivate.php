@@ -70,8 +70,7 @@
 			
 			$headid = getpostlayoutid($head);
 			$signid = getpostlayoutid($sign);
-
-			$querycheck = array();
+			
 			$sql->queryp("INSERT INTO pmsgs (userto,userfrom,date,ip,msgread,headid,signid,moodid,title,text,tagval) ".
 						"VALUES (:userto,:userfrom,:date,:ip,:msgread,:headid,:signid,:moodid,:title,:text,:tagval)",
 				[
@@ -89,12 +88,9 @@
 					'title'			=> xssfilters($subject),
 					'text'			=> xssfilters($message),
 					'tagval'		=> $tagval,
-				], $querycheck);
+				]);
 			
-			if ($querycheck[0])
-				errorpage("Private message to $username sent successfully!",'private.php','your private message box',0);
-			else
-				errorpage("An error occurred while sending the PM.");
+			errorpage("Private message to $username sent successfully!",'private.php','your private message box',0);
 		} 
 		else {
 			

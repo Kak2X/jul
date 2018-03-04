@@ -19,62 +19,54 @@ if ($_POST['knockout'] && $_POST['knockout'] != $target_id) {
 	die();
 }
 else if ($_POST['knockout']) {
-	if (filter_string($_POST['auth']) != generate_token(18, $target_id)) {
-		echo "The token does not match. Cannot continue.\n\n</div>".redirect("admin-slammer.php", 'the slammer (for another go)', 2);
-		die;
-	}
-		
+	check_token($_POST['auth'], TOKEN_SLAMMER);
+	
 	echo "SLAM JAM:\n";
 	
-	$querycheck = array();
 	$sql->beginTransaction();
 
-	$sql->query("DELETE FROM threads WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50
+	$sql->query("DELETE FROM threads WHERE user = '{$target_id}'"); // LIMIT 50
 	echo "Deleted threads.\n";
 
 	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
-	$sql->query("DELETE FROM posts WHERE user = '{$target_id}'", false, $querycheck); // LIMIT 50
+	$sql->query("DELETE FROM posts WHERE user = '{$target_id}'"); // LIMIT 50
 	echo "Deleted posts.\n";
 	
 	// No PMs?
-	$sql->query("DELETE FROM pmsgs WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'", false, $querycheck);
+	$sql->query("DELETE FROM pmsgs WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'");
 	echo "Deleted private messages.\n";
 	
-	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1", false, $querycheck);
+	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1");
 	$sql->query("DELETE FROM users_avatars WHERE uid='{$target_id}'");
-	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1", false, $querycheck);
+	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1");
+	$sql->query("DELETE FROM postradar WHERE user = '{$target_id}' OR comp = '{$target_id}'");
 	echo "Deleted user data.\n";
 	
 	$sql->query("DELETE FROM announcementread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM forumread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM threadsread WHERE uid = '{$target_id}'");
-	$sql->query("DELETE FROM events WHERE user = '{$target_id}'", false, $querycheck);	
+	$sql->query("DELETE FROM events WHERE user = '{$target_id}'");	
 	echo "Deleted events.\n";
 	
 
+	$sql->commit();
+	echo "Success! Finishing job.\n";
+	deletefolder("userpic/{$target_id}");
+	
+	// Altering a table implies an autocommit
+	$new_maxid = intval($sql->resultq("SELECT id FROM users ORDER BY id DESC LIMIT 1"));
+	$sql->query("ALTER TABLE users AUTO_INCREMENT = {$new_maxid}");
+	echo "Max ID set to {$new_maxid}.\n";
 
-	if ($sql->checkTransaction($querycheck)) {
-		echo "Success! Finishing job.\n";
-		deletefolder("userpic/{$target_id}");
-		
-		// Altering a table implies an autocommit
-		$new_maxid = intval($sql->resultq("SELECT id FROM users ORDER BY id DESC LIMIT 1"));
-		$sql->query("ALTER TABLE users AUTO_INCREMENT = {$new_maxid}");
-		echo "Max ID set to {$new_maxid}.\n";
+	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $uinfo['lastip'] ."', `date` = '". ctime() ."', `reason` = 'Thanks for playing!'");
+	echo "Delivered IP ban to {$uinfo['lastip']}.\n";
 
-		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $uinfo['lastip'] ."', `date` = '". ctime() ."', `reason` = 'Thanks for playing!'");
-		echo "Delivered IP ban to {$uinfo['lastip']}.\n";
+	xk_ircsend("1|". xk(8) . $uinfo['name'] . xk(7). " (IP " . xk(8) . $uinfo['lastip'] . xk(7) .") is the latest victim of the new EZ BAN button(tm).");
 
-		xk_ircsend("1|". xk(8) . $uinfo['name'] . xk(7). " (IP " . xk(8) . $uinfo['lastip'] . xk(7) .") is the latest victim of the new EZ BAN button(tm).");
-
-		echo "\n</div>".redirect("admin-slammer.php", 'the slammer (for another go)', 2);
-		die();
-	} else {
-		die("One of the queries has failed. Operation aborted.\n");
-	}
-
-}
-else {
+	echo "\n</div>".redirect("admin-slammer.php", 'the slammer (for another go)', 2);
+	die();
+	
+} else {
 	
 	$threads 	= $sql->getarraybykey("SELECT id, forum, title FROM threads WHERE user = '{$target_id}'", 'id');
 	$posts 		= $sql->getarraybykey("SELECT id, thread FROM posts WHERE user = '{$target_id}'", 'id');
@@ -98,7 +90,7 @@ else {
 	</div>Press the button?
 	<form action="?" method="POST">
 		<input type="hidden" name="knockout" value="<?=$target_id?>">
-		<input type="hidden" name="auth" value="<?=generate_token(18, $target_id)?>">
+		<?= auth_tag(TOKEN_SLAMMER) ?>
 		<input type="submit" value="DO IT DAMMIT">
 	</form>
 	<?php

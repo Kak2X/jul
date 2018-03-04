@@ -259,6 +259,7 @@
   
 	else if ($action == 'delete'){
 		
+		$pcount = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
 		if (isset($_POST['reallydelete'])) {
 			check_token($_POST['auth']);
 			/*
@@ -268,20 +269,28 @@
 			}
 			*/
 			$sql->beginTransaction();
-			$querycheck = array();
-			$sql->query("DELETE FROM posts WHERE id = $id", false, $querycheck);
+			$sql->query("DELETE FROM posts WHERE id = $id");
 			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$id}");
-			$p = $sql->fetchq("SELECT id,user,date FROM posts WHERE thread=$threadid ORDER BY date DESC");
-			// TODO: This breaks when deleting the last post in a thread, since there is no id, user or date
-			//       Check if $p exists and delete the entire thread if it doesn't
-			$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id=$threadid", false, $querycheck);
-			$sql->query("UPDATE forums SET numposts=numposts-1 WHERE id={$forum['id']}", false, $querycheck);
 			
-			if ($sql->checkTransaction($querycheck)) {
-				remove_attachments($list, $id);
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
+			if ($pcount <= 1) {
+				// We have deleted the last remaining post from a thread
+				$sql->query("DELETE FROM threads WHERE id = {$threadid}");
+				// Update forum status
+				$t1 = $sql->fetchq("SELECT lastpostdate, lastposter	FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
+				$sql->queryp("UPDATE forums SET numposts=numposts-1,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", [filter_int($t1['lastpostdate']),filter_int($t1['lastposter'])]);
+			
 			} else {
-				errorpage("An error occurred while deleting the post.");
+				$p = $sql->fetchq("SELECT id,user,date FROM posts WHERE thread = {$threadid} ORDER BY date DESC");
+				$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id=$threadid");
+				$sql->query("UPDATE forums SET numposts=numposts-1 WHERE id={$forum['id']}");
+			}
+			
+			$sql->commit();
+			remove_attachments($list, $id);
+			if ($pcount <= 1) {
+				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","forum.php?id={$thread['forum']}","return to the forum",0);
+			} else {
+				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
 			}
 		}
 	
@@ -291,8 +300,9 @@
 			<tr>
 				<td class='tdbg1 center'>
 					Are you sure you want to <b>DELETE</b> this post?<br>
+					<?=($pcount <= 1 ? "<div class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i>.</div>" : "")?>
 					<br>
-					<input type='hidden' name=auth value="<?=generate_token()?>">
+					<?= auth_tag() ?>
 					<input type='submit' class=submit name=reallydelete value='Delete post'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
 				</td>
 			</tr>

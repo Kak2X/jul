@@ -55,26 +55,21 @@
 		
 		if (isset($_POST['dotrash'])) {
 			
-			check_token($_POST['auth'], 18);
+			check_token($_POST['auth'], TOKEN_SLAMMER);
 			
 			$sql->beginTransaction();
-			$queryresults = array();
 			
-			$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$config['trash-forum']} WHERE id='$id'", false, $queryresults);
+			$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$config['trash-forum']} WHERE id='$id'");
 			$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id");
 			$t1 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
 			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$config['trash-forum']} ORDER BY lastpostdate DESC LIMIT 1");
-			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
-			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$config['trash-forum']}", array($t2['lastpostdate'],$t2['lastposter']), $queryresults);
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']));
+			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$config['trash-forum']}", array($t2['lastpostdate'],$t2['lastposter']));
 
 			
 			// Yeah whatever
-			if ($sql->checkTransaction($queryresults))
-				errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
-			else
-				errorpage("An error occurred while trashing the thread.");
-			
-			
+			$sql->commit();
+			errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
 		
 		}			
 		
@@ -86,7 +81,7 @@
 					<td class='tdbg1 center'>
 						Are you sure you want to trash this thread?<br>
 						<input type='hidden' value='trashthread' name='action'>
-						<input type='hidden' name='auth' value='<?=generate_token(18)?>'>
+						<?= auth_tag(TOKEN_SLAMMER) ?>
 						<input type='submit' name='dotrash' value='Trash Thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
 					</td>
 				</tr>
@@ -98,7 +93,7 @@
 		
 		if (filter_bool($_POST['dodelete'])) {
 			
-			check_token($_POST['auth'], 18);
+			check_token($_POST['auth'], TOKEN_SLAMMER);
 			
 			// Double-confirm the checkbox 
 			$confirm = filter_bool($_POST['reallysure']);
@@ -107,23 +102,17 @@
 			
 			$sql->beginTransaction();
 			
-			$queryresults = array();
-			
-			$sql->query("DELETE FROM threads WHERE id={$id}", false, $queryresults);
-			$deleted = $sql->query("DELETE FROM posts WHERE thread = {$id}", false, $queryresults);
+			$sql->query("DELETE FROM threads WHERE id={$id}");
+			$deleted = $sql->query("DELETE FROM posts WHERE thread = {$id}");
 			$numdeletedposts = $sql->num_rows($deleted);
 			
 			// Update forum status
 			$t1 = $sql->fetchq("SELECT lastpostdate, lastposter	FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
-			$sql->queryp("UPDATE forums SET numposts=numposts-$numdeletedposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']), $queryresults);
+			$sql->queryp("UPDATE forums SET numposts=numposts-$numdeletedposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']));
 			
-			$result = $sql->checkTransaction($queryresults);
-			
+			$sql->commit();
 			$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$thread['forum']}");			
-			if ($result)
-				errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
-			else
-				errorpage("An error occurred while deleting the thread.");
+			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
 			
 		} else {
 			
@@ -140,7 +129,7 @@
 						<br>
 						<input type='checkbox' class=radio name='reallysure' value=1> <label for="reallysure">I'm sure</label><br>
 						<input type='hidden' name=deletethread VALUE=1>
-						<input type='hidden' name=auth value='<?=generate_token(18)?>'><br>
+						<?= auth_tag(TOKEN_SLAMMER) ?><br>
 						<input type='submit' name='dodelete' value='Delete thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
 					</td>
 				</tr>

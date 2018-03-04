@@ -172,8 +172,6 @@
 				
 				$sql->beginTransaction();
 				
-				$querycheck = array();
-				
 				// Process the poll data right away
 				if ($poll) {
 					$sql->queryp("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES (:question, :briefing, :closed, :doublevote)",
@@ -182,7 +180,7 @@
 							'briefing'			=> xssfilters($briefing),
 							'closed'			=> 0,
 							'doublevote'		=> $mltvote,
-						 ], $querycheck);
+						 ]);
 					
 					$pollid = $sql->insert_id();
 					
@@ -190,9 +188,10 @@
 					
 					for($c = 1; isset($chtext[$c]); ++$c) {
 						
-						if (!$chtext[$c] || !isset($chcolor[$c]))
+						if (!$chtext[$c] || !isset($chcolor[$c])) {
 							continue; // Just in case
-						$querycheck[] = $sql->execute($addchoice, array($pollid, $chtext[$c], $chcolor[$c]));
+						}
+						$sql->execute($addchoice, array($pollid, $chtext[$c], $chcolor[$c]));
 					}
 						
 				} else {
@@ -200,7 +199,7 @@
 				}
 				
 				
-				$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'", false, $querycheck);
+				$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'");
 				
 				if ($nolayout) {
 					$headid = 0;
@@ -273,27 +272,22 @@
 						`lastpostdate` = '$currenttime',
 						`lastpostuser` = '$userid',
 						`lastpostid`   = '$pid'
-					WHERE id = $id", false, $querycheck);
+					WHERE id = $id");
 
 				
 				
 				$whatisthis = $poll ? "Poll" : "Thread";
 				
-				if ($sql->checkTransaction($querycheck)) {
-					
-					xk_ircout(strtolower($whatisthis), $user['name'], array(
-						'forum'		=> $forum['title'],
-						'fid'		=> $forum['id'],
-						'thread'	=> str_replace("&lt;", "<", $subject),
-						'pid'		=> $pid,
-						'pow'		=> $forum['minpower'],
-					));
-					
-					errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
-					
-				} else {
-					errorpage("An error occurred while creating the ".strtolower($whatisthis).".");
-				}
+				$sql->commit();
+				xk_ircout(strtolower($whatisthis), $user['name'], array(
+					'forum'		=> $forum['title'],
+					'fid'		=> $forum['id'],
+					'thread'	=> str_replace("&lt;", "<", $subject),
+					'pid'		=> $pid,
+					'pow'		=> $forum['minpower'],
+				));
+				
+				errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
 				
 			}
 		}

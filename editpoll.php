@@ -113,12 +113,12 @@
 	if (isset($_POST['submit'])) {
 		check_token($_POST['auth']);
 
-		$sql->beginTransaction();
-		$querycheck = array();
-			
 		if (!isset($_POST['chtext']))		
 			errorpage("You haven't specified the options!");
 		
+		$sql->beginTransaction();
+			
+
 		$update = $sql->prepare("INSERT INTO poll_choices (id, poll, choice, color) VALUES (:id,:poll,:choice,:color)".
 								"ON DUPLICATE KEY UPDATE choice = VALUES(choice), color = VALUES(color)");
 		
@@ -127,22 +127,22 @@
 			
 			if (isset($_POST['remove'][$i]) || !$chtext[$i]){
 				// Remove all the votes associated with this, then the actual choice
-				$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = $i", false, $querycheck);
-				$sql->query("DELETE FROM poll_choices WHERE id = $i", false, $querycheck);
+				$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = $i");
+				$sql->query("DELETE FROM poll_choices WHERE id = $i");
 			} else {
 				
 				// If the text of the choice changes, nuke all votes
 				if (filter_string($origtext[$i]) != $chtext[$i]) {
-					$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = $i", false, $querycheck);
+					$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = $i");
 				}
 				// Update and insert in a single query
-				$querycheck[] = $sql->execute($update,
-					[
-						'id' 		=> $i,
-						'poll' 		=> $thread['poll'],
-						'choice' 	=> xssfilters($chtext[$i]),
-						'color' 	=> xssfilters($chcolor[$i]),
-					]);
+				$sql->execute($update,
+				[
+					'id' 		=> $i,
+					'poll' 		=> $thread['poll'],
+					'choice' 	=> xssfilters($chtext[$i]),
+					'color' 	=> xssfilters($chcolor[$i]),
+				]);
 			}
 		}
 		
@@ -152,14 +152,10 @@
 			'briefing' 		=> xssfilters($briefing),
 			'doublevote' 	=> $doublevote,
 			'closed' 		=> $pollclosed,
-		], $querycheck);
+		]);
 			
-
-		if ($sql->checkTransaction($querycheck)){
-			errorpage("Thank you, {$loguser['name']}, for editing the poll.","thread.php?id=$id",'return to the poll');
-		} else {
-			errorpage("An error occurred while editing the poll.");
-		}
+		$sql->commit();
+		errorpage("Thank you, {$loguser['name']}, for editing the poll.","thread.php?id=$id",'return to the poll');
 		
 	}
 	

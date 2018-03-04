@@ -26,10 +26,6 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	else
 		$_POST['specialscheme'] = filter_int($_POST['specialscheme']);
 	
-	$qadd = "title=:title,description=:description,catid=:catid,minpower=:minpower,minpowerthread=:minpowerthread,".
-			"minpowerreply=:minpowerreply,numthreads=:numthreads,numposts=:numposts,forder=:forder,".
-			"specialscheme=:specialscheme,specialtitle=:specialtitle,hidden=:hidden,pollstyle=:pollstyle";
-	
 	$values = array(
 		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
 		'description'		=> xssfilters(filter_string($_POST['description'], true)),
@@ -45,25 +41,23 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'hidden' 			=> filter_int($_POST['hideforum']),
 		'pollstyle' 		=> filter_int($_POST['pollstyle'])
 	);
-	$querycheck = array();
+	$qadd = mysql::setplaceholders($values);
 	if ($_GET['id'] <= -1) {
-		$sql->queryp("INSERT INTO `forums` SET $qadd, `lastpostid` = '0'", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not add the forum.");
+		$sql->queryp("INSERT INTO `forums` SET $qadd, `lastpostid` = '0'", $values);
 		$id	= $sql->insert_id();
 		trigger_error("Created new forum \"".$values['forumtitle']."\" with ID $id", E_USER_NOTICE);
 	} else {
-		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['id'] ."'", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not edit the forum.");
+		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['id'] ."'", $values);
 		$id	= $_GET['id'];
 		trigger_error("Edited forum ID $id", E_USER_NOTICE);
 	}
 
-	if ($_POST['edit'])
-		header("Location: ?id=". $id . $prevtext);
-	else
-		header("Location: ?".substr($prevtext, 1));
-
-	die();
+	if ($_POST['edit']) {
+		return header("Location: ?id=". $id . $prevtext);
+	} else {
+		return header("Location: ?".substr($prevtext, 1));
+	}
+	
 }
 elseif (isset($_POST['delete'])) {
 	#if (!$isadmin)
@@ -77,14 +71,13 @@ elseif (isset($_POST['delete'])) {
 		errorpage("No forum selected to delete.");
 	if ($mergeid <= 0)
 		errorpage("No forum selected to merge to.");
-
-	$querycheck = array();
+	
 	$sql->beginTransaction();
 	$counts = $sql->fetchq("SELECT `numthreads`, `numposts` FROM `forums` WHERE `id`='$id'");
-	$sql->query("UPDATE `threads` SET `forum`='$mergeid' WHERE `forum`='$id'", false, $querycheck);
-	$sql->query("UPDATE `announcements` SET `forum`='$mergeid' WHERE `forum`='$id'", false, $querycheck);
-	$sql->query("DELETE FROM `forummods` WHERE `forum`='$id'", false, $querycheck);
-	$sql->query("DELETE FROM `forums` WHERE `id`='$id'", false, $querycheck);
+	$sql->query("UPDATE `threads` SET `forum`='$mergeid' WHERE `forum`='$id'");
+	$sql->query("UPDATE `announcements` SET `forum`='$mergeid' WHERE `forum`='$id'");
+	$sql->query("DELETE FROM `forummods` WHERE `forum`='$id'");
+	$sql->query("DELETE FROM `forums` WHERE `id`='$id'");
 
 	$lastthread = $sql->fetchq("SELECT * FROM `threads` WHERE `forum`='$mergeid' ORDER BY `lastpostdate` DESC LIMIT 1");
 	$sql->query("UPDATE `forums` SET
@@ -93,44 +86,38 @@ elseif (isset($_POST['delete'])) {
 		`lastpostdate`='{$lastthread['lastpostdate']}',
 		`lastpostuser`='{$lastthread['lastposter']}',
 		`lastpostid`='{$lastthread['id']}'
-	WHERE `id`='$mergeid'", false, $querycheck);
+	WHERE `id`='$mergeid'");
 
-	if ($sql->checkTransaction($querycheck)) {
-		trigger_error("DELETED forum ID $id; merged into forum ID $mergeid", E_USER_NOTICE);
-		return header("Location: ?$prevtext");
-	} else {
-		errorpage("Could not delete the forum.");
-	}
+	$sql->commit();
+	trigger_error("DELETED forum ID $id; merged into forum ID $mergeid", E_USER_NOTICE);
+	return header("Location: ?$prevtext");
 }
 elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 	check_token($_POST['auth']);	
 	
-	$qadd = "name=:name,minpower=:minpower,corder=:corder";
-	
+
 	$values = array(
 		'name' 			=> xssfilters(filter_string($_POST['catname'], true)),
 		'minpower' 		=> filter_int($_POST['minpower']),
-		'corder' 			=> filter_int($_POST['catorder']), 
+		'corder' 		=> filter_int($_POST['catorder']), 
 	);
-	$querycheck = array();
+	$qadd = mysql::setplaceholders($values);
+	
 	if ($_GET['catid'] <= -1) {
-		$sql->queryp("INSERT INTO `categories` SET $qadd", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not add the category.");
+		$sql->queryp("INSERT INTO `categories` SET $qadd", $values);
 		$id	= $sql->insert_id();
 		trigger_error("Created new category \"".$values['name']."\" with ID $id", E_USER_NOTICE);
 	} else {
-		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values, $querycheck);
-		if (!$querycheck[0]) errorpage("Could not edit the category.");
+		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values);
 		$id	= $_GET['catid'];
 		trigger_error("Edited category ID $id", E_USER_NOTICE);
 	}
 
-	if ($_POST['catedit'])
-		header("Location: ?id=". $id . $prevtext);
-	else
-		header("Location: ?".substr($prevtext, 1));
-
-	die();
+	if ($_POST['catedit']) {
+		return header("Location: ?id=". $id . $prevtext);
+	} else {
+		return header("Location: ?".substr($prevtext, 1));
+	}
 }
 elseif (isset($_POST['catdelete'])) {
 	check_token($_POST['auth']);
@@ -143,17 +130,12 @@ elseif (isset($_POST['catdelete'])) {
 	if ($mergeid <= 0)
 		errorpage("No category selected to merge to.");
 	
-	$querycheck = array();
 	$sql->beginTransaction();
-	$sql->query("UPDATE forums SET catid = $mergeid WHERE catid = $id", false, $querycheck);
-	$sql->query("DELETE FROM categories WHERE id = $id", false, $querycheck);
-	
-	if ($sql->checkTransaction($querycheck)) {
-		trigger_error("DELETED category ID $id; merged into category ID $mergeid", E_USER_NOTICE);
-		return header("Location: ?$prevtext");
-	} else {
-		errorpage("Could not delete the category.");
-	}
+	$sql->query("UPDATE forums SET catid = $mergeid WHERE catid = $id");
+	$sql->query("DELETE FROM categories WHERE id = $id");
+	$sel->commit();
+	trigger_error("DELETED category ID $id; merged into category ID $mergeid", E_USER_NOTICE);
+	return header("Location: ?$prevtext");
 }
 
 $windowtitle = "Editing Forum List";

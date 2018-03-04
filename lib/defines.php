@@ -23,6 +23,7 @@
 	// Token list
 	const TOKEN_MAIN         = 20;
 	const TOKEN_LOGIN        = 10;
+	const TOKEN_SLAMMER      = 18;
 	const TOKEN_REGISTER     = 30;
 	const TOKEN_NOOB         = 35;
 	const TOKEN_USERDEL      = 65;

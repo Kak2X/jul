@@ -419,39 +419,30 @@
 		
 		// Threadpost
 		
-		loadtlayout();
+		$data = array(
+			// Text
+			'message' => $message,	
+			#'head'    => "",
+			#'sign'    => "",
+			// Post metadata
+			#'id'    => 0,
+			'forum' => $id,
+			#'ip'    => "",
+			#'num'   => "",
+			#'date'  => "",
+			// (mod) Options
+			'nosmilies' => $nosmilies,
+			'nohtml'    => $nohtml,
+			'nolayout'  => $nolayout,
+			'moodid'    => $moodid,
+			'noob'      => 0,
+			// Attachments
+			'attach_key'  => $attach_key,
+			#'attach_sel'  => "",
+		);
 		
-		$ppost = $user;
-		$ppost['uid']			= $userid;
-		$ppost['num']			= $numposts;
-		$ppost['posts']++;
-		$ppost['lastposttime']	= $currenttime;
-		$ppost['date']			= $currenttime;
-		$ppost['tagval']		= $tagval;
-		$ppost['noob']			= 0;
-		if ($nolayout) {
-			$ppost['headtext'] = "";
-			$ppost['signtext'] = "";
-		}
-		else {
-			$ppost['headtext']	= $rhead;
-			$ppost['signtext']	= $rsign;
-		}
-		
-		$ppost['moodid']		= $moodid;
-		$ppost['text']			= $message;
-		$ppost['options'] 		= $nosmilies . "|" . $nohtml;
-		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		$ppost['piclink']       = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$moodid}");
-		
-		if ($config['allow-attachments']) {
-			$ppost['attach']	= get_temp_attachments($attach_key, $loguser['id']);
-		}
-		
-		if ($isadmin)
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
 		$threadtype = ($poll ? 'poll' : 'thread');
-			
+
 			?>
 	<table class='table'>
 		<tr>
@@ -472,10 +463,8 @@
 			</td>
 		</tr>
 	</table>
-	<table class='table'>
-		<?=threadpost($ppost,1,$id)?>
-	</table>
-			<?php
+	<?= preview_post($user, $data, PREVIEW_NEW, NULL) ?>
+		<?php
 			$autofocus[1] = 'autofocus'; // for 'message'
 		} else {
 			$autofocus[0] = 'autofocus'; // for 'subject'

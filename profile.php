@@ -167,19 +167,23 @@
 	
 	$homepagename = htmlspecialchars($user['homepageurl']);
 	if($user['homepagename']) $homepagename = htmlspecialchars($user['homepagename'])."</a> - ".htmlspecialchars($user['homepageurl']);
+
 	
-	loadtlayout();
-	$user['headtext']=$user['postheader'];
-	$user['signtext']=$user['signature'];
-	$user['text'] = "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.";
-	$user['uid']	= $id;
-	$user['date']	= ctime();
-	$user['moodid'] = 0;
-	$user['options']= "0|0";
-	$user['num']	= 0;
-	$user['act']	= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > ".(ctime() - 86400)." AND user = $id");
-	$user['piclink']= $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$id} AND file = 0");
-	$user['noob']	= 0;
+	$data = array(
+		// Text
+		'message' => "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.",
+		// Post metadata
+		'forum'   => 0,
+		// (mod) Options
+		'nosmilies' => 0,
+		'nohtml'    => 0,
+		'nolayout'  => 0,
+		'moodid'    => 0,
+		'noob'      => 0,
+		// Attachments
+		'attach_key' => NULL,
+		#'attach_sel' => "",
+	);
 	
 	// so that layouts show up regardless of setting (for obvious reasons)
 	$loguser['viewsig'] = 1;
@@ -287,11 +291,7 @@
 	<tr><td class='tdbg1' width=150><b>User bio</td>			<td class='tdbg2'><?=dofilters(doreplace2(doreplace($user['bio'], $user['posts'], (ctime()-$user['regdate'])/86400, $id)))?>&nbsp;</td></tr>
 </table>
 <br>
-<table class='table'>
-<tr><td class='tdbgh center' colspan=2><center>Sample post</td></tr>
-	<?=threadpost($user, 1)?>
-</table>
-<br>
+<?= preview_post($user, $data, PREVIEW_PROFILE, "Sample post") ?>
 <table class='table'>
 	<tr><td class='tdbgh fonts center' colspan=2>Options</td></tr>
 	<tr>

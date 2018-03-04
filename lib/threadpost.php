@@ -143,7 +143,7 @@
 		return $post;
 	}
 	
-	function getpostlayoutid($text){
+	function getpostlayoutid($text) {
 		global $sql;
 		
 		// Everything breaks on transactions if $text is blank
@@ -156,6 +156,113 @@
 			$id = $sql->insert_id();
 		}
 		return $id;
+	}
+	
+	const PREVIEW_NEW     = 0;
+	const PREVIEW_EDITED  = 1;
+	const PREVIEW_PROFILE = 2;
+	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
+		global $sql, $loguser, $config, $isadmin;
+		
+		global $ip, $quote, $edit;
+		
+		// $user should be an array with user data
+		if (is_int($user)) {
+			if ($user == $loguser['id']) {
+				$user = $loguser;
+			} else {
+				$user = $sql->fetchq("SELECT * FROM users WHERE id = {$user}");
+			}
+		}
+		//$data           = array_merge($user, $data);
+		$currenttime    = ctime();
+		$numdays		= ($currenttime - $user['regdate']) / 86400;
+		
+		if ($flags == PREVIEW_EDITED) {
+			$posts     = $user['posts'];
+			$tags      = NULL;
+		} else {
+			if ($flags == PREVIEW_PROFILE) {
+				$posts	  = $user['posts'];
+			} else {
+				$posts    = $user['posts'] + 1;
+			}
+			$data['date'] = $currenttime;
+			$data['num']  = $posts;
+			$data['head'] = $user['postheader'];
+			$data['sign'] = $user['signature'];
+			$tags         = array();
+		}
+		
+		loadtlayout();
+
+		$ppost           = $user;
+		$ppost['posts']  = $posts;
+		$ppost['uid']    = $user['id'];
+		$ppost['num']    = $data['num'];
+		$ppost['date']   = $data['date'];
+		$ppost['moodid'] = $data['moodid'];
+		$ppost['noob']   = filter_int($data['noob']);
+		$ppost['text']   = doreplace($data['message'],$posts,$numdays,$user['id'],$tags);
+		$ppost['tagval'] = $tagval = json_encode($tags);
+
+		if ($data['nolayout']) {
+			$ppost['headtext'] = "";
+			$ppost['signtext'] = "";
+		} else {
+			$ppost['headtext'] = doreplace($data['head'],$posts,$numdays,$user['id']);	
+			$ppost['signtext'] = doreplace($data['sign'],$posts,$numdays,$user['id']);
+		}
+
+		//$ppost['text']			= $message;
+		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
+		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		
+		// Save ourselves a query if we're (somehow) not needing the picture link
+		if ($config['allow-avatar-storage']) {
+			$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$data['moodid']}");
+		} else {
+			$ppost['piclink']   = "";
+		}
+		
+		// Attachment stuff / edit marker
+		if ($flags == PREVIEW_EDITED) {
+			//$ppost['id'] = $data['id'];
+			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
+				$attach = get_saved_attachments($data['id']);
+				$ppost['attach'] = array_merge(filter_attachments($attach, $data['attach_sel']), get_temp_attachments($data['attach_key'], $user['id']));
+			}
+			// Edit marker
+			$ppost['edited']	= getuserlink($loguser);
+			$ppost['editdate'] 	= $currenttime;
+		} else if ($flags == PREVIEW_PROFILE) {
+			$data['ip'] = $user['lastip'];
+		} else {
+			//$ppost['id'] = 0; // Not used; should be setting up $quote
+			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
+				$ppost['attach'] = get_temp_attachments($data['attach_key'], $user['id']);
+			}
+			$data['ip'] = $_SERVER['REMOTE_ADDR'];
+		}
+		
+		$ip = $quote = $edit = "";
+		if ($isadmin) {
+			$ip = " | IP: <a href='admin-ipsearch.php?ip={$data['ip']}'>{$data['ip']}</a>";
+		}
+		
+		
+	return ($title ? "
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center'>
+				{$title}
+			</td>
+		</tr>
+	</table>" : "")."
+	<table class='table'>
+		".threadpost($ppost, 1, $data['forum'])."
+	</table>
+	<br>";
 	}
 
 function syndrome($num, $double=false, $bar=true){

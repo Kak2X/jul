@@ -70,7 +70,7 @@
 			$moodid		= filter_int($_POST['moodid']);
 			
 			
-			$user 		= $sql->fetchq("SELECT posts, regdate FROM users WHERE id = {$loguser['id']}");
+			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = {$loguser['id']}");
 			$numposts 	= $user['posts'];
 			$numdays 	= (ctime()-$user['regdate'])/86400;
 			$message 	= doreplace($message,$numposts,$numdays,$loguser['id']);
@@ -137,58 +137,28 @@
 				/*
 					Edit preview
 				*/
-			
-				loadtlayout();
-				$ppost = $sql->fetchq("SELECT * FROM users WHERE id = {$post['user']}");
-				//$head = stripslashes($head);
-				//$sign = stripslashes($sign);
-				//$message = stripslashes($message);
-				$ppost['id']		= $post['id'];	// Required for .topbar preview
-				$ppost['uid']		= $post['user'];
-				$ppost['num']		= $post['num'];
-				$ppost['date']		= $post['date'];
-				$ppost['tagval']	= $post['tagval'];
-				$ppost['noob']		= $post['noob'];
-				
-				$ppost['moodid']	= $moodid;
-				$ppost['headtext']	= $head;
-				$ppost['signtext']	= $sign;
-				$ppost['text']		= $message;
-				$ppost['options']	= $nosmilies . "|" . $nohtml;
-				$ppost['act'] 		= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$post['user']}");
-				$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$post['user']} AND file = {$moodid}");
-
-				// Edited notice
-				$ppost['edited']	= $edited;
-				$ppost['editdate'] 	= ctime();
-				
-				if ($config['allow-attachments']) {
-					// Attachments crap
-					$attach = get_saved_attachments($id);
-					$ppost['attach']    = array_merge(filter_attachments($attach, $attachsel), get_temp_attachments($attach_key, $post['user']));
-				}
-				
-				/*
-				echo "<pre>";
-				print_r($ppost['attach']);
-				die;*/
-	
-				if ($isadmin)
-					$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
-				
-				?>
-				<table class='table'>
-					<tr>
-						<td class='tdbgh center'>
-							Post preview
-						</td>
-					</tr>
-				</table>
-				<table class='table'>
-				<?=threadpost($ppost,1,$thread['forum'])?>
-				</table>
-				<br>
-				<?php
+				$data = array(
+					// Text
+					'message' => $message,	
+					'head'    => $head,
+					'sign'    => $sign,
+					// Post metadata
+					'id'      => $post['id'],
+					'forum'   => $thread['forum'],
+					'ip'      => $post['ip'],
+					'num'     => $post['num'],
+					'date'    => $post['date'],
+					// (mod) Options
+					'nosmilies' => $nosmilies,
+					'nohtml'    => $nohtml,
+					'nolayout'  => 0,
+					'moodid'    => $moodid,
+					'noob'      => $post['noob'],
+					// Attachments
+					'attach_key' => $id,
+					'attach_sel' => $attachsel,
+				);
+				print preview_post($user, $data, PREVIEW_EDITED);
 			}
 			
 		} else {

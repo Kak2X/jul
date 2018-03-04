@@ -297,57 +297,28 @@
 	$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id=$forumid'>".htmlspecialchars($forum['title'])."</a> - ".htmlspecialchars($thread['title'])."</span>";
 
 	if (isset($_POST['preview'])) {
-		
-		loadtlayout();
-		$ppost					= $user;
-		$ppost['posts']++;
-		$ppost['uid']			= $userid;
-		$ppost['num']			= $numposts;
-		$ppost['lastposttime']	= $currenttime;
-		$ppost['date']			= $currenttime;
-		$ppost['moodid']		= $moodid;
-		$ppost['noob']			= 0;
-		
-
-		if ($nolayout) {
-			$ppost['headtext'] = "";
-			$ppost['signtext'] = "";
-		} else {
-			$ppost['headtext'] = $rhead;
-			$ppost['signtext'] = $rsign;
-		}
-
-		$ppost['text']			= $message;
-		$ppost['options']		= $nosmilies . "|" . $nohtml;
-		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		$ppost['piclink']       = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$moodid}");
-		
-		if ($config['allow-attachments']) {
-			$ppost['attach']	= get_temp_attachments($id, $loguser['id']);
-		}
-		
-		if ($isadmin)
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
-	/*	
-		$chks = array("", "", "");
-		if ($nosmilies) $chks[0] = "checked";
-		if ($nolayout)  $chks[1] = "checked";
-		if ($nohtml)    $chks[2] = "checked";
-*/
-		?>
-		<table class='table'>
-			<tr>
-				<td class='tdbgh center'>
-					Post preview
-				</td>
-			</tr>
-		</table>
-		<table class='table'>
-			<?=threadpost($ppost,1,$thread['forum'])?>
-		</table>
-		<br>
-		<?php
-		
+		$data = array(
+			// Text
+			'message' => $message,	
+			#'head'    => "",
+			#'sign'    => "",
+			// Post metadata
+			#'id'      => 0,
+			'forum'   => $thread['forum'],
+			#'ip'      => "",
+			#'num'     => "",
+			#'date'    => "",
+			// (mod) Options
+			'nosmilies' => $nosmilies,
+			'nohtml'    => $nohtml,
+			'nolayout'  => $nolayout,
+			'moodid'    => $moodid,
+			'noob'      => 0,
+			// Attachments
+			'attach_key' => $id,
+			#'attach_sel' => "",
+		);
+		print preview_post($user, $data);
 	} else {
 		$tsticky = $thread['sticky'];
 		$tclosed = $thread['closed'];

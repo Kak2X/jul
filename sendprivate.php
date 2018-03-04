@@ -97,30 +97,33 @@
 				errorpage("An error occurred while sending the PM.");
 		} 
 		else {
-			loadtlayout();
-			$ppost 		= $loguser;
-
-			$ppost['uid']  		= $loguser['id'];
-			$ppost['date'] 		= ctime();
-			$ppost['headtext']	= $rhead;
-			$ppost['signtext'] 	= $rsign;
-			$ppost['text'] 		= $message;
-					
-			$ppost['moodid']	= $moodid;
-			$ppost['text']		= $message;
-			$ppost['options'] 	= "0|0";
-			$ppost['num'] 		= 0;
-			$ppost['noob'] 		= 0;
 			
-			$ppost['act'] 		= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$userid}");
-			$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$userid} AND file = {$moodid}");
-			if ($isadmin)
-				$ip = " | IP: <a href='admin-ipsearch.php?ip={$_SERVER['REMOTE_ADDR']}'>{$_SERVER['REMOTE_ADDR']}</a>";
+			$data = array(
+				// Text
+				'message' => $message,	
+				#'head'    => "",
+				#'sign'    => "",
+				// Post metadata
+				#'id'      => 0,
+				'forum'   => 0,
+				#'ip'      => "",
+				#'num'     => "",
+				#'date'    => "",
+				// (mod) Options
+				'nosmilies' => 0,
+				'nohtml'    => 0,
+				'nolayout'  => 0,
+				'moodid'    => $moodid,
+				'noob'      => 0,
+				// Attachments
+				'attach_key' => NULL,
+				#'attach_sel' => "",
+			);
 			
 			?>
 			<table class='table'><tr><td class='tdbgh center'>Message preview</td></tr></table>
-			<table class='table'><tr><td class='tdbg2'><b><?=$subject?></b></td></tr></table>
-			<table class='table'><?=threadpost($ppost,1)?></table>
+			<table class='table'><tr><td class='tdbg2 b'><?=$subject?></td></tr></table>
+			<?= preview_post($loguser, $data, PREVIEW_NEW, NULL) ?>
 			<?php
 		}
 

@@ -2,7 +2,7 @@
 function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.ban_expire';}
 
 function postcode($post,$set){
-	global  $ip, $quote, $edit, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
+	global  $controls, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 
 	
 	$exp     = calcexp($post['posts'],(ctime()-$post['regdate'])/86400);
@@ -47,7 +47,7 @@ function postcode($post,$set){
 							Posted on $postdate$threadline{$post['edited']}
 						</td>
 						<td style='float: right;'>
-							$quote$edit$ip
+							{$controls['quote']}{$controls['edit']}{$controls['ip']}
 						</td>
 					</tr>
 				</table>
@@ -71,5 +71,3 @@ function postcode($post,$set){
 	}
 	*/
 }
-
-?>

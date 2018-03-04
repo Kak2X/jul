@@ -3,7 +3,7 @@
 function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
 function postcode($post,$set){
-	global $ip, $quote, $edit;
+	global $controls['quote'];
 
 	$postnum = ($post['num'] ? " {$post['num']}/":'').$post['posts'];
 
@@ -24,8 +24,8 @@ function postcode($post,$set){
 			</td>
 			<td class='tbl tdbg{$set['bg']}' valign=top width=50% align=right>
 				<span class='fonts'> Posted on {$set['date']}$threadlink</span>
-				<br>{$quote}{$edit}
-				<br>{$ip}
+				<br>{$controls['quote']}{$controls['edit']}
+				<br>{$controls['ip']}
 			</td>
 		</tr>
 		<tr>

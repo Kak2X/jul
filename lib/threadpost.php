@@ -2,7 +2,7 @@
 	
 	function threadpost($post,$bg,$forum = 0,$pthread='') {
 		
-		global $config, $loguser, $quote, $edit, $ip, $sep, $tlayout, $blockedlayouts, $isadmin; //${"tablebg$bg"};
+		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -162,9 +162,7 @@
 	const PREVIEW_EDITED  = 1;
 	const PREVIEW_PROFILE = 2;
 	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
-		global $sql, $loguser, $config, $isadmin;
-		
-		global $ip, $quote, $edit;
+		global $sql, $controls, $loguser, $config, $isadmin;
 		
 		// $user should be an array with user data
 		if (is_int($user)) {
@@ -245,9 +243,10 @@
 			$data['ip'] = $_SERVER['REMOTE_ADDR'];
 		}
 		
-		$ip = $quote = $edit = "";
+		$controls = array();
+		$controls['ip'] = $controls['quote'] = $controls['edit'] = "";
 		if ($isadmin) {
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$data['ip']}'>{$data['ip']}</a>";
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$data['ip']}'>{$data['ip']}</a>";
 		}
 		
 		

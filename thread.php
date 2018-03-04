@@ -479,6 +479,7 @@
 		LIMIT $min,$ppp
 	");
 	
+	$controls['ip'] = "";
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		
 		// Post controls
@@ -486,20 +487,22 @@
 
 		$bg = $i % 2 + 1;
 
-		$quote = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
-		if ($id && ! $thread['closed'])
-			$quote	.= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
-
-		$edit = '';
+		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
+		if ($id && ! $thread['closed']) {
+			$controls['quote'] .= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
+		}
+		
+		$controls['edit'] = '';
 		if ($ismod || (!$banned && $post['user'] == $loguser['id'])) {
-        	if ($ismod || ($id && !$thread['closed']))
-				$edit = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
-			$edit    .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(TOKEN_NOOB)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
-			
+        	if ($ismod || ($id && !$thread['closed'])) {
+				$controls['edit'] = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
+			}
+			$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(TOKEN_NOOB)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
 		}
 
-		if ($isadmin)
-			$ip = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+		if ($isadmin) {
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+		}
 		
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];

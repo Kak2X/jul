@@ -6,7 +6,7 @@ function userfields(){
 
 
 function postcode($post,$set){
-	global $config, $ip, $quote, $edit, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
+	global $config, $controls, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 	
 	$exp		= calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
 	$lvl		= calclvl($exp);
@@ -99,7 +99,7 @@ function postcode($post,$set){
 								Posted on $postdate$threadlink{$post['edited']}
 							</td>
 							<td style='width: 255px' class='nobr'>
-								$quote$edit$ip
+								{$controls['quote']}{$controls['edit']}{$controls['ip']}
 							</td>
 						</tr>
 					</table>
@@ -143,7 +143,7 @@ function postcode($post,$set){
 									Posted on $postdate$threadlink{$post['edited']}
 								</td>
 								<td class='nobr' style='width: 255px'>
-									$quote$edit$ip
+									{$controls['quote']}{$controls['edit']}{$controls['ip']}
 								</td>
 							</tr>
 						</table>
@@ -207,7 +207,7 @@ function postcode($post,$set){
 								Posted on $postdate$threadlink{$post['edited']}
 							</td>
 							<td class='nobr' style='width: 255px'>
-								$quote$edit$ip
+								{$controls['quote']}{$controls['edit']}{$controls['ip']}
 							</td>
 						</tr>
 					</table>

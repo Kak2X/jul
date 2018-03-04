@@ -59,11 +59,12 @@
 	
 	switch ($_GET['sort']) {
 		case 'name': 	$sorting = "ORDER BY u.name"; break;
-		case 'reg':  	$sorting = "ORDER BY u.regdate"; break; // DESC
+		case 'reg':  	$sorting = "ORDER BY u.regdate"; break;
 		case 'exp':  	$sorting = ""; break;
-		case 'age':  	$sorting = "AND u.birthday ORDER BY u.birthday"; break; // ASC
+		case 'age':  	$sorting = "AND u.birthday ORDER BY u.birthday"; break; 
 		case '':
-		case 'posts':	$sorting = "ORDER BY u.posts"; break; // DESC
+		case 'posts':	$sorting = "ORDER BY u.posts"; break;
+		case 'act':		$sorting = "ORDER BY u.lastactivity"; break;
 		default: errorpage("No.");
 	}
 	if ($_GET['sort'] != 'exp')
@@ -72,7 +73,7 @@
 		$order = "";
 	
 	$users1 = $sql->query("
-		SELECT $userfields, u.regdate, u.posts, r.* 
+		SELECT $userfields, u.lastactivity, u.regdate, u.posts, r.* 
 		FROM users u
 		LEFT JOIN users_rpg r ON u.id = r.uid 
 		$where 
@@ -111,7 +112,9 @@ print "
 			<a href='memberlist.php?sort=exp$q$qpow$qsex$qord'>EXP</a> |
 			<a href='memberlist.php?sort=name$q$qpow$qsex$qord'>User name</a> |
 			<a href='memberlist.php?sort=reg$q$qpow$qsex$qord'>Registration date</a> |
+			<a href='memberlist.php?sort=act$q$qpow$qsex$qord'>Last activity</a> | 
 			<a href='memberlist.php?sort=age$q$qpow$qsex$qord'>Age</a>
+
 		</td>
 	</tr>
 	<tr>
@@ -153,6 +156,7 @@ print "
 	if(!$_GET['rpg']) {
 		print "
 			<td class='tdbgh center' width=200>Registered on</td>
+			<td class='tdbgh center' width=200>Last activity</td>
 			<td class='tdbgh center' width=60>Posts</td>
 			<td class='tdbgh center' width=35>Level</td>
 			<td class='tdbgh center' width=100>EXP</td></tr>
@@ -188,6 +192,7 @@ print "
 		if(!$_GET['rpg']){
 			$ulist.="
 				<td class='tdbg2 center'>".printdate($user['regdate'])."</td>
+				<td class='tdbg2 center'>".printdate($user['lastactivity'])."</td>
 				<td class='tdbg1 center'>{$user['posts']}</td>
 				<td class='tdbg1 center'>{$user['lvl']}</td>
 				<td class='tdbg1 center'>{$user['exp']}</td>

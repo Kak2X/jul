@@ -36,7 +36,7 @@
 			$ircreason = "";
 		}
 		
-		$ircmessage = "1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_POST['newip'] . xk(7) . $ircreason . ".";
+		$ircmessage = xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_POST['newip'] . xk(7) . $ircreason . ".";
 		ipban($_POST['newip'], $_POST['reason'], $ircmessage, IRC_STAFF, $_POST['expire'], $loguser['id']);
 		#setmessage("Added IP ban for {$_POST['newip']}.");
 		return header("Location: ?");	

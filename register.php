@@ -154,14 +154,18 @@
 		
 		$shortpass = (strlen($pass) < 8 && !$isadmin); 
 		
+		// Making sure
+		
 		//print "<table class='table'>";
 
 		if (!$samename && $pass && $pass != "123" && $username && !$shortpass && !$nomultis && !$badcode) {
 			
 			// The first user is super admin
-			$userlevel 		= $sql->num_rows($users) ? 0 : 4;	
+			$userlevel 		= $sql->num_rows($users) ? 0 : 4; // The first user is sysadminned automatically
 			$newuserid 		= $sql->resultq("SELECT MAX(id) FROM users") + 1;
-			$currenttime 	= ctime();	
+			$makedeluser    = ($config['deleted-user-id'] == $newuserid + 1);
+			$currenttime 	= ctime();
+			
 			
 			if (!$x_hacks['host'] && $regmode == 2) {
 				
@@ -189,24 +193,36 @@
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
 				$sql->beginTransaction();
 				
-				$sql->queryp("INSERT INTO `users` SET `name` = :name, `password` = :password, `powerlevel` = :powl, `lastip` = :ip, `lastactivity` = :lastactivity, `regdate` = :regdate, postsperpage = :postsperpage, threadsperpage = :threadsperpage",
-					[
-						'name'				=> $name,
-						'password'			=> getpwhash($pass, $newuserid),
-						'powl'				=> $userlevel,
-						'ip'				=> $_SERVER['REMOTE_ADDR'],
-						'lastactivity'		=> $currenttime,
-						'regdate'			=> $currenttime,
-						'threadsperpage'	=> $config['default-ppp'],
-						'postsperpage'		=> $config['default-tpp']
-					]);
+				$data = array(
+					'id'                => $newuserid,
+					'name'              => $name,
+					'password'          => getpwhash($pass, $newuserid),
+					'powerlevel'        => $userlevel,
+					'lastip'            => $_SERVER['REMOTE_ADDR'],
+					'lastactivity'      => $currenttime,
+					'regdate'           => $currenttime,
+					'threadsperpage'    => $config['default-ppp'],
+					'postsperpage'      => $config['default-tpp'],
+				);
+				$sql->queryp("INSERT INTO users SET ".mysql::setplaceholders($data), $data);
 				
-				
-				xk_ircout("user", $ircout['name'], $ircout);
-
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
+				xk_ircout("user", $ircout['name'], $ircout);
+				
+				// If the next user is the deleted user ID, make sure to automatically register it
+				if ($makedeluser) {
+					$sql->query("
+						INSERT INTO users (id, name, password, powerlevel, regdate) 
+						VALUES ({$config['deleted-user-id']}, 'Deleted user', 'X', -2, {$currenttime})
+					");
+					$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$config['deleted-user-id']}')");
+				}
+				
 				$sql->commit();
 				mkdir("userpic/$newuserid");
+				if ($makedeluser) {
+					mkdir("userpic/{$config['deleted-user-id']}");
+				}
 				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
 			}
 			
@@ -243,7 +259,7 @@
 		
 		pageheader();
 		
-		if ($regmode == 3)
+		if ($regmode == 3) {
 			$entercode = "
 		<tr>
 			<td class='tdbg1 center'>
@@ -256,12 +272,11 @@
 				<input type='regcode' name=regcode SIZE=15 MAXLENGTH=64>
 			</td>
 		</tr>";
-		
-		else $entercode = "";
-		
+		} else {
+			$entercode = "";
+		}
 ?>
-<body onload='window.document.REPLIER.username.focus()'>
-<form ACTION='register.php' NAME=REPLIER METHOD=POST>
+<form method="POST" action="register.php">
 	<br>
 	<table class='table'>
 		<tr><td class='tdbgh center' colspan=2>Login information</td></tr>
@@ -274,7 +289,7 @@
 				</div>
 			</td>
 			<td class='tdbg2' style='width: 50%'>
-				<input type='text' name=name SIZE=25 MAXLENGTH=25>
+				<input type='text' autofocus name=name SIZE=25 MAXLENGTH=25>
 			</td>
 		</tr>
 		

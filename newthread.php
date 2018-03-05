@@ -20,10 +20,7 @@
 			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
 	}
 	
-	$forumban       = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$id} AND user = {$loguser['id']}");
-	if ($forumban) {
-		errorpage("Sorry, but you are banned from this forum, and can not post.","thread.php?id=$id",$thread['title'],0);
-	}
+	check_forumban($id, $loguser['id']);
 	
 	$windowtitle = "{$config['board-name']} -- {$forum['title']} -- New Thread";
 	
@@ -102,212 +99,214 @@
 		} else {
 			$userid 	= checkuser($username,$password);
 			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
-			$forumban   = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$id} AND user = {$userid}");
 		}
 		
+		// some consistency with newreply.php
+		$error = '';
+		if ($userid == -1) {
+			$error	= "You haven't entered your username and password correctly.";
+		} else {
+			check_forumban($id, $userid);
+			
+			if (!$ismod) {
+				$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = $id and user = {$userid}");
+			}
+			
+			if ($user['powerlevel'] < $forum['minpowerthread'])
+				$error = "You aren't allowed to post in this forum.";
+			else if (!$message)   
+				$error = "You haven't entered a message.";
+			else if (!$subject)    
+				$error = "You haven't entered a subject.";
+			else if ($user['lastposttime'] > (ctime()-30))
+				$error	= "You are trying to post too rapidly.";	
+		}
 		
-		if (!$user || $user['powerlevel'] < 0) $userid = -1;
-
-		// can't be posting too fast now
-		$limithit 		= $user['lastposttime'] < (ctime()-30);
-		// can they post in this forum?
-		$authorized 	= $user['powerlevel'] >= $forum['minpowerthread'] && !$forumban;
-		// does the forum exist?
-		$forumexists 	= $forum['id'];
-
-		// ---
+		/*// ---
 		// lol i'm eminem
 		if (strpos($message , '[Verse ') !== FALSE) {
-			$authorized = false;
+			$error = "You aren't allowed to post in this forum.";
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
-			if ($userid) //if ($_COOKIE['loguserid'] > 0)
+			if ($userid != -1) //if ($_COOKIE['loguserid'] > 0)
 				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$userid}");
 			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 		}
-		// ---
+		// ---*/
 		
-		if($userid != -1 && $subject && $message && $forumexists && $authorized && $limithit) {
-			
-
-			if ($config['allow-attachments']) {
-				$attachids   = get_attachments_key("n{$id}", $userid); // Get the base key to identify the correct files
-				$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
-				$attach_key   = $attachids[1]; // String (base) key for file names
-				$attach_count = process_temp_attachments($attach_key, $userid); // Process the attachments and return the post-processed total
-				if ($attach_count) {
-					// Some files are attached; reconfirm the key
-					$input_tid = save_attachments_key($attach_id);
-				} else {
-					$attach_key = BLANK_KEY; // just in case
-				}
-				
-			}
-			
-			// The thread preview also needs this for threadpost()
-			
-			$msg 			= $message;
-			// squot(0,$msg);
-			$sign			= $user['signature'];
-			$head 			= $user['postheader'];
-			
-			$numposts 		= $user['posts'] + 1;
-			$numdays 		= (ctime()-$user['regdate']) / 86400;
-			
-			$tags			= array();
-			
-			$msg 			= doreplace($msg, $numposts, $numdays, $user['id'], $tags);
-			$rsign 			= doreplace($sign, $numposts, $numdays, $user['id']);
-			$rhead 			= doreplace($head, $numposts, $numdays, $user['id']);
-			
-			
-			$tagval			= json_encode($tags);
-			
-			if ($iconid != '-1' && isset($posticons[$iconid])) {
-				$posticon = $posticons[$iconid];
-			} else {
-				$posticon = $custposticon;
-			}
-			
-			$currenttime 	= ctime();
-			//$postnum 		= $numposts;
-			
-
-			if (isset($_POST['submit'])) {
-				#echo "key => {$attach_key}; count = {$attach_count}";
-				#die;
-				check_token($_POST['auth']);
-				
-				$sql->beginTransaction();
-				
-				// Process the poll data right away
-				if ($poll) {
-					$sql->queryp("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES (:question, :briefing, :closed, :doublevote)",
-						 [
-							'question'			=> xssfilters($question),
-							'briefing'			=> xssfilters($briefing),
-							'closed'			=> 0,
-							'doublevote'		=> $mltvote,
-						 ]);
-					
-					$pollid = $sql->insert_id();
-					
-					$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
-					
-					for($c = 1; isset($chtext[$c]); ++$c) {
-						
-						if (!$chtext[$c] || !isset($chcolor[$c])) {
-							continue; // Just in case
-						}
-						$sql->execute($addchoice, array($pollid, $chtext[$c], $chcolor[$c]));
-					}
-						
-				} else {
-					$pollid = 0;
-				}
-				
-				
-				$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'");
-				
-				if ($nolayout) {
-					$headid = 0;
-					$signid = 0;
-				} else {
-					$headid = getpostlayoutid($head);
-					$signid = getpostlayoutid($sign);
-				}
-				
-				if (!$ismod) {
-					$tclosed = 0;
-					$tsticky = 0;
-					$tannc   = 0;
-				}
-				
-				// Insert thread
-				$vals = [
-					'forum'				=> $id,
-					'user'				=> $user['id'],
-					
-					'closed'			=> $tclosed,
-					'sticky'			=> $tsticky,
-					'announcement'		=> $tannc,
-					
-					'poll'				=> $pollid,
-					
-					'title'				=> xssfilters($subject),
-					'description'		=> xssfilters($description),
-					'icon'				=> $posticon,
-					
-					'views'				=> 0,
-					'replies'			=> 0,
-					'firstpostdate'		=> $currenttime,
-					'lastpostdate'		=> $currenttime,
-					'lastposter'		=> $user['id'],
-				];
-				
-				$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
-				
-				$tid = $sql->insert_id();
-				
-				// Insert post
-				$vals = [
-					'thread'			=> $tid,
-					'user'				=> $user['id'],
-					'date'				=> $currenttime,
-					'ip'				=> $_SERVER['REMOTE_ADDR'],
-					'num'				=> $numposts,
-					
-					'headid'			=> $headid,
-					'signid'			=> $signid,
-					'moodid'			=> $moodid,
-					
-					'text'				=> xssfilters($msg),
-					'tagval'			=> $tagval,
-					'options'			=> $nosmilies . "|" . $nohtml,
-				 ];
-				$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
-				
-				$pid = $sql->insert_id();
-				
-				if ($config['allow-attachments']) {
-					save_attachments($attach_key, $userid, $pid);
-				}
-				
-				$sql->query("
-					UPDATE `forums` SET
-						`numthreads`   = `numthreads` + 1,
-						`numposts`     = `numposts` + 1,
-						`lastpostdate` = '$currenttime',
-						`lastpostuser` = '$userid',
-						`lastpostid`   = '$pid'
-					WHERE id = $id");
-
-				
-				
-				$whatisthis = $poll ? "Poll" : "Thread";
-				
-				$sql->commit();
-				xk_ircout(strtolower($whatisthis), $user['name'], array(
-					'forum'		=> $forum['title'],
-					'fid'		=> $forum['id'],
-					'thread'	=> str_replace("&lt;", "<", $subject),
-					'pid'		=> $pid,
-					'pow'		=> $forum['minpower'],
-				));
-				
-				errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
-				
-			}
+		if ($error) {
+			errorpage("Couldn't post the thread. $error", "forum.php?id=$id", $forum['title'], 2);
 		}
-		else {
+		
+		// All OK!
+		
+		if ($config['allow-attachments']) {
+			$attachids   = get_attachments_key("n{$id}", $userid); // Get the base key to identify the correct files
+			$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
+			$attach_key   = $attachids[1]; // String (base) key for file names
+			$attach_count = process_temp_attachments($attach_key, $userid); // Process the attachments and return the post-processed total
+			if ($attach_count) {
+				// Some files are attached; reconfirm the key
+				$input_tid = save_attachments_key($attach_id);
+			} else {
+				$attach_key = BLANK_KEY; // just in case
+			}
 			
-			if ($userid == -1)	   $reason = "You haven't entered your username and password correctly.";
-			else if (!$limithit)   $reason = "You are trying to post too rapidly.";
-			else if (!$message)    $reason = "You haven't entered a message.";
-			else if (!$subject)    $reason = "You haven't entered a subject.";
-			else if (!$authorized) $reason = "You aren't allowed to post in this forum.";
-			else $reason = "Unknown reason."; // oops
-			errorpage("Couldn't post the thread. $reason", "forum.php?id=$id", $forum['title'], 2);
-		}		
+		}
+		
+		// The thread preview also needs this for threadpost()
+		
+		$msg 			= $message;
+		// squot(0,$msg);
+		$sign			= $user['signature'];
+		$head 			= $user['postheader'];
+		
+		$numposts 		= $user['posts'] + 1;
+		$numdays 		= (ctime()-$user['regdate']) / 86400;
+		
+		$tags			= array();
+		
+		$msg 			= doreplace($msg, $numposts, $numdays, $user['id'], $tags);
+		$rsign 			= doreplace($sign, $numposts, $numdays, $user['id']);
+		$rhead 			= doreplace($head, $numposts, $numdays, $user['id']);
+		
+		
+		$tagval			= json_encode($tags);
+		
+		if ($iconid != '-1' && isset($posticons[$iconid])) {
+			$posticon = $posticons[$iconid];
+		} else {
+			$posticon = $custposticon;
+		}
+		
+		$currenttime 	= ctime();
+		//$postnum 		= $numposts;
+		
+
+		if (isset($_POST['submit'])) {
+			#echo "key => {$attach_key}; count = {$attach_count}";
+			#die;
+			check_token($_POST['auth']);
+			
+			$sql->beginTransaction();
+			
+			// Process the poll data right away
+			if ($poll) {
+				$sql->queryp("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES (:question, :briefing, :closed, :doublevote)",
+					 [
+						'question'			=> xssfilters($question),
+						'briefing'			=> xssfilters($briefing),
+						'closed'			=> 0,
+						'doublevote'		=> $mltvote,
+					 ]);
+				
+				$pollid = $sql->insert_id();
+				
+				$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
+				
+				for($c = 1; isset($chtext[$c]); ++$c) {
+					
+					if (!$chtext[$c] || !isset($chcolor[$c])) {
+						continue; // Just in case
+					}
+					$sql->execute($addchoice, array($pollid, $chtext[$c], $chcolor[$c]));
+				}
+					
+			} else {
+				$pollid = 0;
+			}
+			
+			
+			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'");
+			
+			if ($nolayout) {
+				$headid = 0;
+				$signid = 0;
+			} else {
+				$headid = getpostlayoutid($head);
+				$signid = getpostlayoutid($sign);
+			}
+			
+			if (!$ismod) {
+				$tclosed = 0;
+				$tsticky = 0;
+				$tannc   = 0;
+			}
+			
+			// Insert thread
+			$vals = [
+				'forum'				=> $id,
+				'user'				=> $user['id'],
+				
+				'closed'			=> $tclosed,
+				'sticky'			=> $tsticky,
+				'announcement'		=> $tannc,
+				
+				'poll'				=> $pollid,
+				
+				'title'				=> xssfilters($subject),
+				'description'		=> xssfilters($description),
+				'icon'				=> $posticon,
+				
+				'views'				=> 0,
+				'replies'			=> 0,
+				'firstpostdate'		=> $currenttime,
+				'lastpostdate'		=> $currenttime,
+				'lastposter'		=> $user['id'],
+			];
+			
+			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
+			
+			$tid = $sql->insert_id();
+			
+			// Insert post
+			$vals = [
+				'thread'			=> $tid,
+				'user'				=> $user['id'],
+				'date'				=> $currenttime,
+				'ip'				=> $_SERVER['REMOTE_ADDR'],
+				'num'				=> $numposts,
+				
+				'headid'			=> $headid,
+				'signid'			=> $signid,
+				'moodid'			=> $moodid,
+				
+				'text'				=> xssfilters($msg),
+				'tagval'			=> $tagval,
+				'options'			=> $nosmilies . "|" . $nohtml,
+			 ];
+			$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
+			
+			$pid = $sql->insert_id();
+			
+			if ($config['allow-attachments']) {
+				save_attachments($attach_key, $userid, $pid);
+			}
+			
+			$sql->query("
+				UPDATE `forums` SET
+					`numthreads`   = `numthreads` + 1,
+					`numposts`     = `numposts` + 1,
+					`lastpostdate` = '$currenttime',
+					`lastpostuser` = '$userid',
+					`lastpostid`   = '$pid'
+				WHERE id = $id");
+
+			
+			
+			$whatisthis = $poll ? "Poll" : "Thread";
+			
+			$sql->commit();
+			xk_ircout(strtolower($whatisthis), $user['name'], array(
+				'forum'		=> $forum['title'],
+				'fid'		=> $forum['id'],
+				'thread'	=> str_replace("&lt;", "<", $subject),
+				'pid'		=> $pid,
+				'pow'		=> $forum['minpower'],
+			));
+			
+			errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $subject, 0);
+			
+		}
 		
 	}
 	

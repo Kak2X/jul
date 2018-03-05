@@ -35,7 +35,7 @@
 		");
 	}
 	
-	$forumban       = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$forumid} AND user = {$loguser['id']}");
+	check_forumban($forumid, $loguser['id']);
 	
 	// Thread permissions for our sanity
 	$canviewforum 	= (!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']);
@@ -46,8 +46,6 @@
 		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.","thread.php?id=$id",$thread['title'],0);
 	} else if ($banned) {
 		errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id=$id",$thread['title'],0);
-	} else if ($forumban) {
-		errorpage("Sorry, but you are banned from this forum, and can not post.","thread.php?id=$id",$thread['title'],0);
 	} else if (!$canreply || (!$forum && !$ismod)) { // Thread in broken forum = No
 		errorpage("You are not allowed to post in this thread.","thread.php?id=$id",$thread['title'],0);
 	}
@@ -86,7 +84,6 @@
 		} else {
 			$userid 	= checkuser($username, $password);
 			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '{$userid}'");
-			$forumban   = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$forumid} AND user = {$userid}");
 		}
 		
 
@@ -94,19 +91,17 @@
 		if ($userid == -1) {
 			$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
 		} else {
+			check_forumban($forumid, $userid);
 			
-			$user	   = $sql->fetchq("SELECT * FROM users WHERE id='$userid'");
+			//$user	   = $sql->fetchq("SELECT * FROM users WHERE id='$userid'");
 			
-			if ($user['powerlevel'] >= 2)
-				$ismod = 1;
-			else if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$user['id']}"))
-				$ismod = 1;
-			else
-				$ismod = 0;
+			if (!$ismod) {
+				$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$userid}");
+			}
 			
 			if ($thread['closed'] && !$ismod)
 				$error	= 'The thread is closed and no more replies can be posted.';
-			if ($user['powerlevel'] < $forum['minpowerreply'] || $forumban) // or banned
+			if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
 				$error	= 'Replying in this forum is restricted, and you are not allowed to post in this forum.';
 			if (!$message)
 				$error	= "You didn't enter anything in the post.";

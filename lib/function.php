@@ -1412,6 +1412,40 @@ function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permane
 	}
 }
 
+function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
+	global $sql;
+	
+	if ($expire) {
+		$expire = ctime() + 3600 * $expire;
+	}
+			
+	$sql->queryp("
+		INSERT INTO forumbans (user, forum, date, banner, expire, reason)
+		VALUES(?,?,?,?,?)", [$user, $forum, ctime(), $banner, $expire, $reason]);
+		
+	if ($ircreason !== NULL){
+		xk_ircsend("{$destchannel}|{$ircreason}");
+	}
+}
+
+function check_forumban($forum, $user) {
+	if ($wban = is_banned($forum, $user)) {
+		$banner = ($wban['banner'] ? " by ".getuserlink($wban, $wban['uid']) : "");
+		$reason = ($wban['reason'] ? $wban['reason'] : "<i>No reason given.</i>");
+		errorpage("Sorry, but you have been banned{$banner} from posting in this forum.<br/>Reason: {$reason}");
+	}
+}
+
+function is_banned($forum, $user) {
+	global $sql, $userfields;
+	return $sql->fetchq("
+		SELECT f.id, f.banner, f.expire, f.reason, $userfields uid
+		FROM forumbans f
+		LEFT JOIN users u ON f.banner = u.id
+		WHERE f.user = {$user} AND f.forum = {$forum}
+	");
+}
+
 function fonlineusers($id){
 	global $loguser, $sql, $userfields, $isadmin, $ismod;
 

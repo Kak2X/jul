@@ -237,6 +237,7 @@
 			'name'			=> '',
 			'password'		=> '',
 			'viewsig'		=> 1,
+			'layout'        => 1, // Regular
 			'powerlevel' 	=> 0,
 			'signsep'		=> 0,
 			'dateformat'	=> $config['default-dateformat'],
@@ -1618,6 +1619,9 @@ function loadtlayout(){
 	global $loguser, $tlayout, $sql;
 	$tlayout    = $loguser['layout'] ? $loguser['layout'] : 1;
 	$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id = $tlayout");
+	if (!$layoutfile) {
+		errorpage("The thread layout you've been using has been removed by the administration.<br/>You need to <a href='editprofile.php'>choose a new one</a> before you'll be able to view threads.");
+	}
 	require "tlayouts/$layoutfile.php";
 }
 

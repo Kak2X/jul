@@ -3,7 +3,7 @@
 function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
 function postcode($post,$set){
-	global $controls['quote'];
+	global $controls;
 
 	$postnum = ($post['num'] ? " {$post['num']}/":'').$post['posts'];
 

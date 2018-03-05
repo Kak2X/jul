@@ -163,8 +163,7 @@
 	
 	// Lastest user registered
 	$lastuser = $sql->fetchq("SELECT $userfields FROM users u ORDER BY u.id DESC LIMIT 1");
-	if ($lastuser)
-		$lastuserurl = getuserlink($lastuser);
+	$lastuserurl = $lastuser ? getuserlink($lastuser) : "<i>None</i>";
 	
 	
 

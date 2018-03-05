@@ -84,7 +84,9 @@ function setmoodavjs($moodurl) { return "<script type='text/javascript'>setmooda
 // 1 -> inline
 // Layout selecttor
 function moodlayout($mode, $user, $sel = 0) {
-	global $config;
+	global $config, $loguser;
+	
+	if (!$user) return "";
 	
 	if (!$mode) {
 		return "
@@ -121,9 +123,14 @@ function moodlist($user, $sel = 0, $return = false) {
 		// If no default avatar was defined, make sure the default option blanks the avatar
 		if (isset($moods[0])) {
 			$moods[0]['title'] = "-Normal avatar-";
+			$default = '"'.escape_attribute($moods[$sel]['weblink']).'"';
 		} else {
 			$txt .= "<option value='0' onclick='newavatarpreview(0,0,true)'>-Normal avatar-</option>";
-			if (!$sel) $sel = "0, true"; // well it works
+			if ($sel) {
+				$default = '"'.escape_attribute($moods[$sel]['weblink']).'"';
+			} else {
+				$default = 'true'; // Hide the image
+			}
 		}
 		
 		// Select box, with now auto av preview update
@@ -137,7 +144,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		$ret = "
 		Avatar: <select name='moodid'>
 			{$txt}
-		</select><script>newavatarpreview({$loguser['id']},{$sel},\"".escape_attribute($moods[$sel]['weblink'])."\")</script>";
+		</select><script>newavatarpreview({$loguser['id']},{$sel},{$default})</script>";
 	} else {
 		
 		// Numeric "good luck with hosting" avatar mode

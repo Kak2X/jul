@@ -73,7 +73,7 @@
 	$tclosed = filter_int($_POST['close']);
 	$tannc	 = filter_int($_POST['tannc']);
 	
-
+	$userid = $loguser['id'];
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
 		
 		// Trying to post as someone else?
@@ -117,7 +117,7 @@
 		
 		// Process attachments removal
 		if ($config['allow-attachments']) {
-			process_temp_attachments($id, $loguser['id']);
+			process_temp_attachments($id, $userid);
 		}
 		
 		// All OK
@@ -171,7 +171,7 @@
 			$pid = $sql->insert_id();
 			
 			if ($config['allow-attachments']) {
-				save_attachments($id, $loguser['id'], $pid);
+				save_attachments($id, $userid, $pid);
 			}
 			
 			$modq = $ismod ? "`closed` = $tclosed, `sticky` = $tsticky, announcement = $tannc," : "";
@@ -380,7 +380,7 @@
 				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message, ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
-				<?=moodlayout(0, $loguser['id'], $moodid)?>
+				<?=moodlayout(0, $userid, $moodid)?>
 			</td>
 		</tr>
 		
@@ -399,11 +399,11 @@
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
 				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
-				<?=moodlayout(1, $loguser['id'], $moodid)?>
+				<?=moodlayout(1, $userid, $moodid)?>
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<?=quikattach($id, $loguser['id'])?>
+		<?=quikattach($id, $userid)?>
 	</table>
 	<br>
 	<table class='table'><?=$postlist?></table>

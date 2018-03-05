@@ -80,6 +80,7 @@
 	
 	$iconpreview    = "";
 	
+	$userid = $loguser['id'];	
 	// Attachment preview stuff
 	$input_tid  = "";
 	$attach_key   = BLANK_KEY;
@@ -92,7 +93,6 @@
 		
 		//print "<br><table class='table'>";
 		if ($loguser['id'] && !$password) {
-			$userid = $loguser['id'];
 			$user	= $loguser;
 		} else {
 			$userid 	= checkuser($username,$password);
@@ -113,8 +113,8 @@
 		if (strpos($message , '[Verse ') !== FALSE) {
 			$authorized = false;
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
-			if ($loguser['id']) //if ($_COOKIE['loguserid'] > 0)
-				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$loguser['id']}");
+			if ($userid) //if ($_COOKIE['loguserid'] > 0)
+				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$userid}");
 			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 		}
 		// ---
@@ -123,10 +123,10 @@
 			
 
 			if ($config['allow-attachments']) {
-				$attachids   = get_attachments_key("n{$id}", $loguser['id']); // Get the base key to identify the correct files
+				$attachids   = get_attachments_key("n{$id}", $userid); // Get the base key to identify the correct files
 				$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
 				$attach_key   = $attachids[1]; // String (base) key for file names
-				$attach_count = process_temp_attachments($attach_key, $loguser['id']); // Process the attachments and return the post-processed total
+				$attach_count = process_temp_attachments($attach_key, $userid); // Process the attachments and return the post-processed total
 				if ($attach_count) {
 					// Some files are attached; reconfirm the key
 					$input_tid = save_attachments_key($attach_id);
@@ -262,7 +262,7 @@
 				$pid = $sql->insert_id();
 				
 				if ($config['allow-attachments']) {
-					save_attachments($attach_key, $loguser['id'], $pid);
+					save_attachments($attach_key, $userid, $pid);
 				}
 				
 				$sql->query("
@@ -547,7 +547,7 @@
 					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
-					<?=moodlayout(0, $loguser['id'], $moodid)?>
+					<?=moodlayout(0, $userid, $moodid)?>
 				</td>
 			</tr>
 			
@@ -624,7 +624,7 @@
 					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"  <?=filter_string($autofocus[1])?>><?=htmlspecialchars($message)?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
-					<?=moodlayout(0, $loguser['id'], $moodid)?>
+					<?=moodlayout(0, $userid, $moodid)?>
 				</td>
 			</tr>
 
@@ -648,11 +648,11 @@
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk?> ><label for="nolayout" >Disable Layout</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label> | 
-					<?=moodlayout(1, $loguser['id'], $moodid)?>
+					<?=moodlayout(1, $userid, $moodid)?>
 				</td>
 			</tr>
 			<?=$modoptions?>
-		<?=quikattach($attach_key, $loguser['id'])?>
+		<?=quikattach($attach_key, $userid)?>
 		</table>
 		</form>
 		<?=$forumlink?>

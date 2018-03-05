@@ -86,8 +86,6 @@ function setmoodavjs($moodurl) { return "<script type='text/javascript'>setmooda
 function moodlayout($mode, $user, $sel = 0) {
 	global $config, $loguser;
 	
-	if (!$user) return "";
-	
 	if (!$mode) {
 		return "
 		<table style='border-spacing: 0px'>
@@ -110,6 +108,9 @@ function moodlist($user, $sel = 0, $return = false) {
 	global $config, $loguser;
 	
 	if ($config['allow-avatar-storage']) {
+		
+		if (!$user) return "";
+		
 		// Self stored avatar mode
 		$moods = getavatars($user, AVATARS_ALL);
 		
@@ -136,7 +137,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		// Select box, with now auto av preview update
 		foreach ($moods as $file => $data) {
 			$txt .= 
-			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$loguser['id']},{$file},\"".escape_attribute($data['weblink'])."\")'>".
+			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$user},{$file},\"".escape_attribute($data['weblink'])."\")'>".
 				htmlspecialchars($data['title']).
 			"</option>\n";
 		}
@@ -144,18 +145,21 @@ function moodlist($user, $sel = 0, $return = false) {
 		$ret = "
 		Avatar: <select name='moodid'>
 			{$txt}
-		</select><script>newavatarpreview({$loguser['id']},{$sel},{$default})</script>";
+		</select><script>newavatarpreview({$user},{$sel},{$default})</script>";
 	} else {
 		
 		// Numeric "good luck with hosting" avatar mode
 		$moods = array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-		if ($loguser['id'] == 1) {
+		if ($user == 1) {
 			$moods[99] = "special";
 		}
+		
 		if ($return) {
 			return $moods;
 		}
 		
+		// it's not the same if we're using alt credentials
+		$moodurl    = ($user == $loguser['id']) ? $loguser['moodurl'] : $sql->resultq("SELECT moodurl FROM users WHERE id = {$user}"); 
 		$moodurl    = escape_attribute($loguser['moodurl']);
 		$c[$sel]	= " checked";
 		$txt		= "";
@@ -163,18 +167,18 @@ function moodlist($user, $sel = 0, $return = false) {
 		// Choices display
 		$txt = "";
 		foreach($moods as $num => $name) {
-			$jsclick = (($loguser['id'] && $loguser['moodurl']) ? "onclick='avatarpreview({$loguser['id']},$num)'" : "");
+			$jsclick = (($loguser['id'] && $moodurl) ? "onclick='avatarpreview({$user},$num)'" : "");
 			$txt .= 
 				"<input type='radio' name='moodid' value='{$num}'". filter_string($c[$num]) ." id='mood{$num}' tabindex='". (9000 + $num) ."' style='height: 12px' {$jsclick}>
 				 <label for='mood{$num}' ". filter_string($c[$num]) ." style='font-size: 12px'>&nbsp;{$num}:&nbsp;{$name}</label><br>\r\n";
 		}
 		// Set the default image to start with
-		if (!$sel || !$loguser['id'] || !$loguser['moodurl'])
+		if (!$sel || !$user || !$moodurl)
 			$startimg = 'images/_.gif';
 		else
 			$startimg = str_replace('$', $sel, $moodurl);
 	
-		$ret = "<div class='font b'>Mood avatar list:</div>".$txt.setmoodavjs($loguser['moodurl']);
+		$ret = "<div class='font b'>Mood avatar list:</div>".$txt.setmoodavjs($moodurl);
 	}
 	
 	return include_js('avatars.js').$ret;

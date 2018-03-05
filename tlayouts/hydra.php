@@ -18,6 +18,7 @@ function postcode($post,$set){
 
 	$postdate  =  printdate($post['date']);
 
+	$threadlink = "";
 	if(filter_string($set['threadlink'])) 
 		$threadlink = ", in {$set['threadlink']}";
 
@@ -44,7 +45,7 @@ function postcode($post,$set){
 				<table class='fonts' style='clear: both; width: 100%;'>
 					<tr>
 						<td>
-							Posted on $postdate$threadline{$post['edited']}
+							Posted on $postdate$threadlink{$post['edited']}
 						</td>
 						<td style='float: right;'>
 							{$controls['quote']}{$controls['edit']}{$controls['ip']}

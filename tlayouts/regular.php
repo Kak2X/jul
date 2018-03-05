@@ -118,7 +118,8 @@ function postcode($post,$set){
 		
 	} else { // else if (!(in_array($post['uid'], $sidebars) && !$x_hacks['host']) || $loguser['viewsig'] == 0)
 	
-		//str_ireplace("&lt;br&gt;", "<br>", substr(htmlspecialchars($set['location']),10)).
+
+		$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
 		
 		// Default layout
 		
@@ -144,7 +145,7 @@ function postcode($post,$set){
 				$experience<br>
 				<br>
 				$since<br>
-				".str_replace("&lt;br&gt;", "<br>", htmlspecialchars($set['location']))."<br>
+				{$set['location']}<br>
 				<br>
 				$sincelastpost<br>
 				$lastactivity<br>

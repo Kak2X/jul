@@ -35,9 +35,8 @@
 				$post['ban_expire']
 			);
 			
-
-			// TODO: htmlspecialchars() here
-			$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
+			
+			$set['location'] = filter_string($post['location']) ? "<br>From: ". htmlspecialchars($post['location']) : ""; 
 
 			if ($config['allow-avatar-storage']) {
 				if ($post['piclink']) {

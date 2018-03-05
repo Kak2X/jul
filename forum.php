@@ -94,6 +94,10 @@
 			notAuthorizedError();
 		}
 		
+		if (!$ismod) {
+			$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$id} AND user = {$loguser['id']}");
+		}
+		
 		$threadcount 	= $forum['numthreads'];
 		$specialscheme 	= $forum['specialscheme'];
 		$specialtitle 	= $forum['specialtitle'];
@@ -125,15 +129,17 @@
     $min = $page*$tpp;
 	
 
-	$newthreadbar = $forumlist = '';
+	$newthreadbar = $forumlist = $modopt = '';
 	if ($id) {
 		$forumlist = doforumlist($id);
 		
 		// Make sure we can create polls
-		$newthreadbar =
-			"<td align=right class='fonts'>".
+		$newthreadbar = "".
 			(($forum['pollstyle'] != -2) ? "<a href='newthread.php?poll=1&id=$id'>$newpollpic</a>" : "<img src='images/nopolls.png' align='absmiddle'>")
-			." - <a href='newthread.php?id=$id'>$newthreadpic</a></td>";
+			." - <a href='newthread.php?id=$id'>$newthreadpic</a>";
+		if ($ismod) {
+			$modopt = " - <a href='admin-forumbans.php?forum={$id}'>Edit forum bans</a>";
+		}
 	}
 	
 	$infotable =
@@ -142,7 +148,10 @@
 				<td align=left class='font'>
 					<a href='index.php'>{$config['board-name']}</a> - ".htmlspecialchars($forum['title'])."
 				</td>
-				{$newthreadbar}
+				<td align=right class='fonts'>
+					{$newthreadbar}
+					{$modopt}
+				</td>
 			</tr>
 		</table>";
 		

@@ -134,7 +134,8 @@
 		      `ban_expire` < ".ctime()
 	);
 	
-	$sql->query("DELETE FROM `ipbans` WHERE `expire` != 0 AND `expire` < ".ctime());
+	$sql->query("DELETE FROM `ipbans`    WHERE `expire` != 0 AND `expire` < ".ctime());
+	$sql->query("DELETE FROM `forumbans` WHERE `expire` != 0 AND `expire` < ".ctime());
 	
 	$loguser = array();
 
@@ -1677,6 +1678,7 @@ function adminlinkbar($sel = NULL) {
 			'admin-editfilters.php' => "Edit Filters",
 			'admin-editforums.php'  => "Edit Forum List",
 			'admin-editmods.php'    => "Edit Forum Moderators",
+			'admin-forumbans.php'    => "Edit Forum Bans",
 		),
 		array(
 			'admin-threads.php'     => "ThreadFix",

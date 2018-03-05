@@ -20,6 +20,11 @@
 			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
 	}
 	
+	$forumban       = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$id} AND user = {$loguser['id']}");
+	if ($forumban) {
+		errorpage("Sorry, but you are banned from this forum, and can not post.","thread.php?id=$id",$thread['title'],0);
+	}
+	
 	$windowtitle = "{$config['board-name']} -- {$forum['title']} -- New Thread";
 	
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
@@ -97,14 +102,16 @@
 		} else {
 			$userid 	= checkuser($username,$password);
 			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
+			$forumban   = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$id} AND user = {$userid}");
 		}
 		
-		if(!$user || $user['powerlevel'] < 0) $userid = -1;
+		
+		if (!$user || $user['powerlevel'] < 0) $userid = -1;
 
 		// can't be posting too fast now
 		$limithit 		= $user['lastposttime'] < (ctime()-30);
 		// can they post in this forum?
-		$authorized 	= $user['powerlevel'] >= $forum['minpowerthread'];
+		$authorized 	= $user['powerlevel'] >= $forum['minpowerthread'] && !$forumban;
 		// does the forum exist?
 		$forumexists 	= $forum['id'];
 

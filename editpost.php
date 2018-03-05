@@ -32,7 +32,8 @@
 
 	$smilies = readsmilies();
 
-	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = {$thread['forum']}");
+	$forum      = $sql->fetchq("SELECT * FROM forums WHERE id = {$thread['forum']}");
+	$forumban   = $sql->resultq("SELECT 1 FROM forumbans WHERE forum = {$id} AND user = {$loguser['id']}");
 	
 	if ($loguser['powerlevel'] < $forum['minpower'] || (!$forum && !$ismod)) // Broken forum
 		errorpage("Sorry, but you are not allowed to do this in this restricted forum.", 'index.php' ,'return to the board', 0);
@@ -40,7 +41,7 @@
 	if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forum['id']} and user = {$loguser['id']}"))
 		$ismod = 1;
 	
-	if (!$ismod && ($thread['closed'] || $post['deleted'] || $loguser['id'] != $post['user']))
+	if ($forumban || (!$ismod && ($thread['closed'] || $post['deleted'] || $loguser['id'] != $post['user'])))
 		errorpage("You are not allowed to edit this post.", "thread.php?id=$threadid", "the thread", 0);
 	
 	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";

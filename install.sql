@@ -755,6 +755,26 @@ INSERT INTO `filters` (`id`, `type`, `method`, `enabled`, `forum`, `source`, `re
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `forumbans`
+--
+
+CREATE TABLE `forumbans` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` int(10) UNSIGNED NOT NULL,
+  `user` int(10) UNSIGNED NOT NULL,
+  `forum` int(10) UNSIGNED NOT NULL,
+  `banner` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `expire` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `reason` varchar(127) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `expire` (`expire`),
+  KEY `user` (`user`),
+  KEY `forum` (`forum`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `forummods`
 --
 

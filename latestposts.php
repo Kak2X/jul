@@ -8,24 +8,8 @@
 	if ($maxtime === false && $maxposts === false) $maxposts = 50; // Default
 	
 	$_GET['raw']	= filter_bool($_GET['raw']);
-	$_GET['lastid'] = filter_int($_GET['lastid']); // no notices or SQLi thank you
-/* 
-	$data	= $sql->query(
-		"SELECT p.id, p.user, p.date as date, f.title as ftitle, t.forum as fid, t.title as title, ".
-		"u.name as uname, u.sex as usex, u.powerlevel as upowerlevel ".
-		(($log) ? ", r.read AS tread, r.time as treadtime " : "").
-		"FROM `posts` p ".
-		"LEFT JOIN `threads` t ON p.thread = t.id ".
-		"LEFT JOIN `forums` f ON t.forum = f.id ".
-		"LEFT JOIN `users` u ON p.user = u.id ".
-		(($log) ? "LEFT JOIN threadsread r ON (t.id=r.tid AND r.uid=$loguser[id]) " : "").
-		"\n WHERE f.minpower <= '". $loguser['powerlevel'] ."' ".
-		"AND p.date >= ".(($maxtime !== false)  ? (ctime()-$maxtime) : (ctime()-86400*7))." ". // time limit here
-    (($_GET['lastid'])     ? "AND p.id > $_GET[lastid] ":"").
-		"\nORDER BY `id` DESC ".
-		(($maxposts !== false) ? "LIMIT 0, $maxposts" : '') // posts limit here
-	);
-	*/
+	$_GET['lastid'] = filter_int($_GET['lastid']);
+	
 	$data = $sql->query("
 		SELECT 	p.id, p.user, p.date, t.title, t.forum fid, f.title ftitle, $userfields x
 				".($loguser['id'] ? ", r.read AS tread, r.time as treadtime " : "")."
@@ -43,7 +27,6 @@
 		ORDER BY `id` DESC
 		".($maxposts ? "LIMIT 0, $maxposts" : '')); // posts limit here		
 	
-	$_count = $sql->num_rows($data);
 	$output	= "";
 	
 	if (!$_GET['raw']) {
@@ -95,29 +78,22 @@
 		
 	} else {
 		// JSON Output
-		$outarray	= array('id', 'ftitle', 'fid', 'title', 'name', 'powerlevel', 'sex', 'namecolor', 'date', 'user');
-		$outchunks 	= array();
+		require "lib/colors.php";
 		
 		$output = array(
 				'tzoff'		=> $tzoff,
 				'localtime' => ctime(),
-				'posts'		=> $sql->fetchAll($data, PDO::FETCH_ASSOC)
+				'posts'		=> array(), //$sql->fetchAll($data, PDO::FETCH_ASSOC)
 			);
-		/* 
-		for ($_counter = 1 ; $in = $sql->fetch($data); ++$_counter) {
-			$in['namecolor'] 	= getnamecolor($in['sex'], $in['powerlevel'], $in['namecolor']);
-			$in['title'] 		= str_replace("\\", "\\\\", $in['title']);
-			$temp	= array();
-			foreach($outarray as $outkey)
-				$temp[] = ('"'.$outkey . "\":\"" . htmlspecialchars($in[$outkey]) . '"');
-			$temp = "{".implode(",",$temp)."}".($_counter == $_count ? "" : ",");
-			$output	.= $temp;
+		
+		while ($in = $sql->fetch($data)) {
+			
+			$in['namecolor'] = getnamecolor($in['sex'], $in['powerlevel'], $in['namecolor']);
+			$output['posts'][] = $in;
 		}
-		*/
 		
 		//header("Content-type: text/plain", true);
 		header("Content-Type: application/json", true);
 		header("Ajax-request: ".IS_AJAX_REQUEST, true);
 		echo json_encode($output);
-		//print '{"tzoff": "'.$tzoff.'", "localtime": "'.ctime().'", "posts": ['.$output."]}";
 	}

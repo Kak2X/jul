@@ -129,7 +129,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		// Select box, with now auto av preview update
 		foreach ($moods as $file => $data) {
 			$txt .= 
-			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$loguser['id']},{$file},\"".htmlspecialchars($data['weblink'])."\")'>".
+			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$loguser['id']},{$file},\"".escape_attribute($data['weblink'])."\")'>".
 				htmlspecialchars($data['title']).
 			"</option>\n";
 		}
@@ -182,7 +182,7 @@ function get_minipic($user, $url = "") {
 			return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src='".avatarpath($user, 'm')."' align='absmiddle'>";
 		}
 	} else if ($url) {
-		return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src=\"".htmlspecialchars($url)."\" align='absmiddle'>";
+		return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src=\"".escape_attribute($url)."\" align='absmiddle'>";
 	}
 	
 	return "";

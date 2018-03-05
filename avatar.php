@@ -105,7 +105,7 @@ if ($me && $moods) {
 	foreach ($moods as $num => $x) {
 		
 		
-		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num},\"".htmlspecialchars($x['weblink'])."\")'";
+		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num},\"".escape_attribute($x['weblink'])."\")'";
 		if ($num == $_GET['start']) {
 			$selected = ' checked';
 			$confirm = $_GET['start']; // So no hidden or nonexisting avatars can be viewed

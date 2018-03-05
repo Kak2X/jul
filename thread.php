@@ -3,8 +3,9 @@
 	require_once 'lib/function.php';
 
 	
-	$id			= filter_int($_GET['id']);
-	$user		= filter_int($_GET['user']);
+	$id			 = filter_int($_GET['id']);
+	$_GET['pin'] = filter_int($_GET['pin']);
+	$user		 = filter_int($_GET['user']);
 	
 	$gotopost	= null;
 
@@ -469,7 +470,7 @@
 	// heh
 	$posts = $sql->query("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
-				p.text$sfields, p.edited, p.editdate, p.options, p.tagval,
+				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted,
 				u.id uid, u.name, $ufields, u.regdate
 		FROM posts p
 		
@@ -488,16 +489,39 @@
 		$bg = $i % 2 + 1;
 
 		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
-		if ($id && ! $thread['closed']) {
-			$controls['quote'] .= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
+		if (!$post['deleted']) {
+			if ($id && ! $thread['closed']) {
+				$controls['quote'] .= " | <a href='newreply.php?id=$id&postid={$post['id']}'>Quote</a>";
+			}
 		}
 		
 		$controls['edit'] = '';
-		if ($ismod || (!$banned && $post['user'] == $loguser['id'])) {
+		if ($ismod || (!$banned && !$post['deleted'] && $post['user'] == $loguser['id'])) {
+			$tokenstr = "&auth=".generate_token(TOKEN_NOOB);
+			
         	if ($ismod || ($id && !$thread['closed'])) {
 				$controls['edit'] = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
 			}
-			$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$post['id']}&action=noob&auth=".generate_token(TOKEN_NOOB)."'>".($post['noob'] ? "Un" : "")."n00b</a>";
+			
+			if ($post['deleted']) {
+				if ($ismod) {
+					// Post peeking feature
+					if ($post['id'] == $_GET['pin']) {
+						$post['deleted'] = false;
+						$controls['edit'] .= " | <a href='thread.php?pid={$post['id']}'>Unpeek</a>";
+					} else {
+						$controls['edit'] .= " | <a href='thread.php?pid={$post['id']}&pin={$post['id']}#{$post['id']}'>Peek</a>";
+					}
+				}
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Undelete</a>";
+			} else {
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+			}
+			if ($sysadmin && $config['allow-post-deletion']) {
+				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";
+			}
+			
 		}
 
 		if ($isadmin) {

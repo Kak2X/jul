@@ -41,7 +41,7 @@
 	$min = $_GET['ppp'] * $_GET['page'];
 
 	$posts = $sql->query(
-		 "SELECT p.id, p.thread, p.ip, p.date, p.num, t.title, f.minpower "
+		 "SELECT p.id, p.thread, p.ip, p.date, p.num, p.deleted, t.title, f.minpower "
 		."FROM posts p "
 		."LEFT JOIN threads t ON thread  = t.id "
 		."LEFT JOIN forums  f ON t.forum = f.id "
@@ -89,15 +89,17 @@
 			$threadlink = '(restricted)';
 		else
 			$threadlink = "<a href='thread.php?pid={$post['id']}#{$post['id']}'>".htmlspecialchars($post['title'])."</a>";
+		
+		$strike = ($post['deleted'] ? " style='text-decoration: line-through'" : "");
 
 		if (!$post['num']) $post['num'] = '?';
 
 		?>
 		<tr>
-			<td class='tdbg1 fonts center'><?=$post['id']?></td>
-			<td class='tdbg1 fonts center'><?=$post['num']?></td>
+			<td class='tdbg1 fonts center'<?=$strike?>><?=$post['id']?></td>
+			<td class='tdbg1 fonts center'<?=$strike?>><?=$post['num']?></td>
 			<td class='tdbg1 fonts center'><?=printdate($post['date'])?></td>
-			<td class='tdbg1 fonts'>#<a href="thread.php?id=<?=$post['thread']?>"><?=$post['thread']?></a> - <?=$threadlink?>
+			<td class='tdbg1 fonts'<?=$strike?>>#<a href="thread.php?id=<?=$post['thread']?>"><?=$post['thread']?></a> - <?=$threadlink?>
 			<?=($isadmin ? "</td><td class='tdbg1 fonts center'>{$post['ip']}" : "")?>
 		</tr>
 		<?php

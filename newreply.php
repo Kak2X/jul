@@ -78,7 +78,6 @@
 		
 		// Trying to post as someone else?
 		if ($loguser['id'] && !$password) {
-			$userid = $loguser['id'];
 			$user	= $loguser;
 		} else {
 			$userid 	= checkuser($username, $password);
@@ -215,59 +214,7 @@
 	*/
 	$postlist = "";
 	if ($canviewforum) {
-
-		//$qppp = $ppp + 1;
-		$posts = $sql->query("
-			SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.num
-			FROM posts p
-			LEFT JOIN users u ON p.user = u.id
-			WHERE p.thread = $id
-			ORDER BY p.id DESC
-			LIMIT ".($ppp + 1)."
-		");
-		$i = 0;
-		
-		$postlist = 
-		"<tr>
-			<td class='tdbgh center' colspan=2 style='font-weight:bold'>
-				Thread history
-			</td>
-		</tr>
-		<tr>
-			<td class='tdbgh center' width=150>User</td>
-			<td class='tdbgh center'>Post</td>
-		</tr>";
-		
-		
-		if ($sql->num_rows($posts)) {
-		
-			while ($post = $sql->fetch($posts)) {
-				
-				$bg = ((($i++) & 1) ? 'tdbg2' : 'tdbg1');
-				
-				if ($ppp-- > 0){
-					$postnum = ($post['num'] ? "{$post['num']}/" : '');
-					$userlink = getuserlink($post);
-					$postlist .=
-						"<tr>
-							<td class='tbl $bg' valign=top>
-								{$userlink}
-								<span class='fonts'><br>
-									Posts: $postnum{$post['posts']}
-								</span>
-							</td>
-							<td class='tbl $bg' valign=top>
-								".doreplace2(dofilters($post['text'], $thread['forum']), $post['options'])."
-							</td>
-						</tr>";
-				} else {
-					$postlist .= "<tr><td class='tdbgh center' colspan=2>This is a long thread. Click <a href='thread.php?id=$id'>here</a> to view it.</td></tr>";
-				}
-			}
-			
-		} else {
-			$postlist .= "<tr><td class='tdbg1 center' colspan=2><i>There are no posts in this thread.</i></td></tr>";
-		}
+		$postlist = thread_history($id, $ppp + 1);
 	}
 	
 	
@@ -287,11 +234,17 @@
 		Quoting something?
 	*/
 	if ($quoteid) {
-		$post = $sql->fetchq("SELECT user, text, thread FROM posts WHERE id = $quoteid");
-		$post['text'] = str_replace('<br>','\n',$post['text']);
-		$quoteuser = $sql->resultq("SELECT name FROM users WHERE id = {$post['user']}");
-		if($post['thread'] == $id) // Make sure the quote is in the same thread
+		$post = $sql->fetchq("
+			SELECT user, text, thread 
+			FROM posts 
+			WHERE id = $quoteid AND (".((int) $ismod)." OR deleted = 0)
+		");
+		if ($post && $post['thread'] == $id) { // Make sure the quote is in the same thread
+			$post['text'] = str_replace('<br>','\n',$post['text']);
+			$quoteuser = $sql->resultq("SELECT name FROM users WHERE id = {$post['user']}");
 			$message = "[quote={$quoteuser}]{$post['text']}[/quote]\r\n";
+			unset($post, $quoteuser);
+		}
 	}
 	
 	$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id=$forumid'>".htmlspecialchars($forum['title'])."</a> - ".htmlspecialchars($thread['title'])."</span>";
@@ -406,7 +359,7 @@
 		<?=quikattach($id, $userid)?>
 	</table>
 	<br>
-	<table class='table'><?=$postlist?></table>
+	<?=$postlist?>
 	</form>
 	<?=$barlinks?>
 <?php

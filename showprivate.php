@@ -45,6 +45,7 @@
 	$post['tagval'] = $msg['tagval'];
 	$post['num']	= 0;
 	$post['noob']	= 0;
+	$post['deleted'] = 0;
 	$post['act'] 	= $sql->resultq("SELECT COUNT(*) FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
 	$post['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$msg['moodid']}");
 	

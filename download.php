@@ -16,7 +16,7 @@
 	}
 	
 	$post = $sql->fetchq("
-		SELECT p.id pid, t.id tid, f.id fid, f.minpower
+		SELECT p.id pid, p.deleted, t.id tid, f.id fid, f.minpower
 		FROM posts p
 		LEFT JOIN threads t ON p.thread = t.id
 		LEFT JOIN forums  f ON t.forum  = f.id
@@ -25,6 +25,7 @@
 	
 	if (
 		   !$post // Post doesn't exist
+		|| (!$ismod && $post['deleted']) // Post deleted
 		|| (!$ismod && !$post['tid']) // Post in invalid thread 
 		|| (!$ismod && !$post['fid']) // Thread in invalid forum
 		|| $loguser['powerlevel'] < $post['minpower'] // Can't view forum

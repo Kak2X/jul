@@ -45,7 +45,8 @@
 		'trash-forum'			=> 3,
 		'announcement-forum'    => 4,
 		'deleted-user-id'		=> 2,
-		'allow-thread-deletion' => true,
+		'allow-thread-deletion' => true, // Allow permenent deletion of threads...
+		'allow-post-deletion'   => true, // ... or posts
 		'salt-string'			=> "sillysaltstring",		// Change me!
 		'enable-firewall'		=> true,					
 		'irc-reporting'			=> true,					// Report to IRC

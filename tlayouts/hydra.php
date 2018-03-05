@@ -28,7 +28,8 @@ function postcode($post,$set){
 
 	//$sidebars	= array(1, 16, 18, 19, 387);
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
-			
+	$height   = $post['deleted'] ? 0 : 220;	
+	
 	return 
 	"<table class='table'>
 		<tr>
@@ -55,7 +56,7 @@ function postcode($post,$set){
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top style='overflow: visible; width: 70%;' height=220 id='post{$post['id']}'>
+			<td class='tbl tdbg{$set['bg']}' valign=top style='overflow: visible; width: 70%;' height={$height} id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

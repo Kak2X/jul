@@ -40,7 +40,7 @@
 	if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forum['id']} and user = {$loguser['id']}"))
 		$ismod = 1;
 	
-	if (!$ismod && ($thread['closed'] || $loguser['id'] != $post['user']))
+	if (!$ismod && ($thread['closed'] || $post['deleted'] || $loguser['id'] != $post['user']))
 		errorpage("You are not allowed to edit this post.", "thread.php?id=$threadid", "the thread", 0);
 	
 	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
@@ -252,14 +252,12 @@
 	// Oh come on, noobing posts was/is a fun sport - Kak
 	else if ($ismod && $action == 'noob') {
 		check_token($_GET['auth'], TOKEN_NOOB);
-			
 		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '$id'");
-		errorpage("Post n00bed!", "thread.php?pid=$id#$id",'the post',0);
+		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "thread.php?pid=$id#$id",'the post',0);
 	}
   
 	else if ($action == 'delete'){
 		
-		$pcount = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
 		if (isset($_POST['reallydelete'])) {
 			check_token($_POST['auth']);
 			/*
@@ -268,6 +266,43 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
 			}
 			*/
+			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$id}");
+			if ($post['deleted']) {
+				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+			} else {
+				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+			}
+		}
+		
+		if ($post['deleted']) {
+			$message = "Do you want to undelete this post?";
+			$btntext = "Yes";
+		} else {
+			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$btntext = "Delete post";
+		}
+	
+		?>
+		<form action='editpost.php?action=delete&id=<?=$id?>' method='POST'>
+		<table class='table'>
+			<tr>
+				<td class='tdbg1 center'>
+					<?= $message ?><br>
+					<br>
+					<?= auth_tag() ?>
+					<input type='submit' class='submit' name='reallydelete' value='<?=$btntext?>'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
+				</td>
+			</tr>
+		</table>
+		</form>
+		<?php
+	}
+	else if ($action == 'erase' && $sysadmin && $config['allow-post-deletion']){
+		
+		$pcount = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
+		if (isset($_POST['reallyerase'])) {
+			check_token($_POST['auth'], TOKEN_SLAMMER);
+			
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM posts WHERE id = $id");
 			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$id}");
@@ -295,20 +330,23 @@
 		}
 	
 		?>
-		<form action='editpost.php?action=delete&id=<?=$id?>' method='POST'>
+		<form action='editpost.php?action=erase&id=<?=$id?>' method='POST'>
 		<table class='table'>
 			<tr>
 				<td class='tdbg1 center'>
-					Are you sure you want to <b>DELETE</b> this post?<br>
-					<?=($pcount <= 1 ? "<div class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i>.</div>" : "")?>
+					Are you sure you want to <b>permanently DELETE</b> this post from the database?<br>
+					<?=($pcount <= 1 ? "<div class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</div>" : "")?>
 					<br>
-					<?= auth_tag() ?>
-					<input type='submit' class=submit name=reallydelete value='Delete post'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
+					<?= auth_tag(TOKEN_SLAMMER) ?>
+					<input type='submit' class='submit' name='reallyerase' value='Delete post'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
 				</td>
 			</tr>
 		</table>
 		</form>
 		<?php
+	}
+	else {
+		errorpage("No valid action specified.","thread.php?id={$threadid}#{$threadid}","return to the post",0);
 	}
 
 	pagefooter();

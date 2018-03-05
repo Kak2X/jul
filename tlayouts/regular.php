@@ -128,6 +128,29 @@ function postcode($post,$set){
 			$csskey = "_".$post['headid'];
 		
 		$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
+		$height   = $post['deleted'] ? 0 : 220;
+		
+		if ($post['deleted']) {
+			$height  = 0;
+			$sidebar = "&nbsp;";
+		} else {
+			$height = 220;
+			$sidebar = "
+				{$set['userrank']}
+				$syndrome<br>
+				$level$bar<br>
+				{$set['userpic']}<br>
+				". (filter_bool($hacks['noposts']) ? "" : "$poststext$postnum$posttotal<br>") ."
+				$experience<br>
+				<br>
+				$since<br>
+				".str_replace("&lt;br&gt;", "<br>", htmlspecialchars($set['location']))."<br>
+				<br>
+				$sincelastpost<br>
+				$lastactivity<br>
+				<br>
+			";
+		}
 		
 		return 
 		"<div style='position:relative'>
@@ -151,22 +174,10 @@ function postcode($post,$set){
 				</tr>
 				<tr>
 					<td class='tbl tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} fonts' valign=top>
-						{$set['userrank']}
-						$syndrome<br>
-						$level$bar<br>
-						{$set['userpic']}<br>
-						". (filter_bool($hacks['noposts']) ? "" : "$poststext$postnum$posttotal<br>") ."
-						$experience<br>
-						<br>
-						$since<br>
-						".str_replace("&lt;br&gt;", "<br>", htmlspecialchars($set['location']))."<br>
-						<br>
-						$sincelastpost<br>
-						$lastactivity<br>
-						<br>
+						{$sidebar}
 						<img src='images/_.gif' width=200 height=1>
 					</td>
-					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' valign=top height=220 id='post{$post['id']}'>
+					<td class='tbl tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' valign=top height={$height} id='post{$post['id']}'>
 						{$post['headtext']}
 						{$post['text']}
 						{$set['attach']}

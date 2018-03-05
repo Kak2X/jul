@@ -12,7 +12,8 @@ function postcode($post,$set){
 		$threadlink = ", in {$set['threadlink']}";
 	
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
-		
+	$height   = $post['deleted'] ? 0 : 60;
+	
 	// We don't show the .topbar declaration since there's no CSS allowed anyway
 	return 
 	"<table class='table'>
@@ -29,7 +30,7 @@ function postcode($post,$set){
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top height=60 colspan=2 id='post{$post['id']}'>
+			<td class='tbl tdbg{$set['bg']}' valign=top height={$height} colspan=2 id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

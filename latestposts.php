@@ -11,7 +11,7 @@
 	$_GET['lastid'] = filter_int($_GET['lastid']);
 	
 	$data = $sql->query("
-		SELECT 	p.id, p.user, p.date, t.title, t.forum fid, f.title ftitle, $userfields x
+		SELECT 	p.id, p.user, p.date, p.deleted, t.title, t.forum fid, f.title ftitle, $userfields x
 				".($loguser['id'] ? ", r.read AS tread, r.time as treadtime " : "")."
 		FROM `posts` p
 		
@@ -42,11 +42,12 @@
 			} else {
 				$newpost = "";
 			}
+			$strike = ($in['deleted'] ? " style='text-decoration: line-through'" : "");
 			$output	.= "
 				<tr>
-					<td class='tdbg2 center'>". $in['id'] ."</td>
-					<td class='tdbg2 center'><a href='forum.php?id=". $in['fid'] ."'>". htmlspecialchars($in['ftitle']) ."</a></td>
-					<td class='tdbg1'>$newpost<a href='thread.php?pid=". $in['id'] ."&r=1#". $in['id'] ."'>". htmlspecialchars($in['title']) ."</a></td>
+					<td class='tdbg2 center'{$strike}>{$in['id']}</td>
+					<td class='tdbg2 center'{$strike}><a href='forum.php?id={$in['fid']}'>". htmlspecialchars($in['ftitle']) ."</a></td>
+					<td class='tdbg1'{$strike}>{$newpost}<a href='thread.php?pid={$in['id']}&r=1#{$in['id']}'>". htmlspecialchars($in['title']) ."</a></td>
 					<td class='tdbg1 center'>".getuserlink($in, $in['user'])."</td>
 					<td class='tdbg2 center'>". timeunits(ctime() - $in['date']) ."</td>
 				</tr>";

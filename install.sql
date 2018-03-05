@@ -1239,6 +1239,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `options` char(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0|0',
   `edited` text COLLATE utf8mb4_unicode_ci,
   `editdate` int(11) unsigned DEFAULT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `thread` (`thread`),
   KEY `date` (`date`),

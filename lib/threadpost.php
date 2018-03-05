@@ -12,69 +12,80 @@
 				$blockedlayouts = 0;
 		}
 		
-		$post = setlayout($post);
 		
 		$set['bg']    = $bg; //${"tablebg$bg"};
-
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
-
-		$set['userrank'] = getrank(
-			filter_int($post['useranks']), 
-			filter_string($post['title']),
-			$post['posts'],
-			$post['powerlevel'],
-			$post['ban_expire']
-		);
-		
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);
+		
+		$post = setlayout($post);	
+		
+		if ($post['deleted']) { // Note: if a post is pinned we don't count it as deleted
+			$post['text'] = "(Post deleted)";
+			$set['userrank'] = $set['location'] = "";
+			$set['picture']  = $set['userpic']  = "";
+			$set['attach'] = "";
+		} else {
+		
+			$set['userrank'] = getrank(
+				filter_int($post['useranks']), 
+				filter_string($post['title']),
+				$post['posts'],
+				$post['powerlevel'],
+				$post['ban_expire']
+			);
+			
 
-		$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
+			// TODO: htmlspecialchars() here
+			$set['location'] = filter_string($post['location']) ? "<br>From: {$post['location']}" : "";
 
-		if ($config['allow-avatar-storage']) {
-			if ($post['piclink']) {
-				$set['picture'] = escape_attribute($post['piclink']);
-				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
-			} else if (file_exists(avatarpath($post['uid'], $post['moodid']))) {
-				$set['picture'] = avatarpath($post['uid'], $post['moodid']);
-				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
+			if ($config['allow-avatar-storage']) {
+				if ($post['piclink']) {
+					$set['picture'] = escape_attribute($post['piclink']);
+					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
+				} else if (file_exists(avatarpath($post['uid'], $post['moodid']))) {
+					$set['picture'] = avatarpath($post['uid'], $post['moodid']);
+					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
+				} else {
+					$set['picture'] = $set['userpic'] = "";
+				}
+				
 			} else {
-				$set['picture'] = $set['userpic'] = "";
+				// $set['picture'] doesn't seem to be used...
+				if ($post['moodid'] && $post['moodurl']) { // mood avatar
+					$set['picture'] = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
+					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
+				} else if (isset($post['picture'])) { // default avatar
+					$set['picture'] = escape_attribute($post['picture']);
+					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
+				} else { // null
+					$set['userpic'] = $set['picture'] = "";
+				}
+			}
+
+			if ($post['signtext']) {
+				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
 			}
 			
-		} else {
-			// $set['picture'] doesn't seem to be used...
-			if ($post['moodid'] && $post['moodurl']) { // mood avatar
-				$set['picture'] = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
-				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
-			} else if (isset($post['picture'])) { // default avatar
-				$set['picture'] = escape_attribute($post['picture']);
-				$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
-			} else { // null
-				$set['userpic'] = $set['picture'] = "";
+			if (filter_array($post['attach'])) {
+				$set['attach'] = attachfield($post['attach'], ($isadmin || $post['uid'] == $loguser['id']));
+			} else {
+				$set['attach'] = "";
 			}
+			
+			$post['text'] = doreplace2($post['text'], $post['options']);
 		}
 
-		if($post['signtext']) {
-			$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
-		}
-
-		if($pthread) { 
+		// Thread marker for posts by thread / favourites view
+		if ($pthread) { 
 			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
 		}
 
-		$post['text'] = doreplace2($post['text'], $post['options']);
 		
 		if (filter_int($post['editdate'])) {
 			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
 		} else {
 			$post['edited'] = "";
-		}
-		
-		if (filter_array($post['attach'])) {
-			$set['attach'] = attachfield($post['attach'], ($isadmin || $post['uid'] == $loguser['id']));
-		} else {
-			$set['attach'] = "";
 		}
 		
 		return dofilters(postcode($post,$set), $forum);
@@ -99,47 +110,45 @@
 		global $sql,$loguser,$postl,$blockedlayouts;
 		
 		
-		if($loguser['viewsig']!=1) { // Autoupdate
+		if ($loguser['viewsig']!=1) { // Autoupdate
 			$post['headid']=$post['signid']=0;
 		}
-		
-		//$blocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$post['uid']}", 0, 0, true); // Enable caching
 
-		if(!$loguser['viewsig'] || isset($blockedlayouts[$post['uid']])){ // Disabled
+		if (!$loguser['viewsig'] || $post['deleted'] || isset($blockedlayouts[$post['uid']])) { // Disabled
 			$post['headtext']=$post['signtext']='';
 			return $post;
 		}
 
-		if($loguser['viewsig']!=2){ // Not Autoupdate
-			if($headid=filter_int($post['headid'])) {
+		if ($loguser['viewsig']!=2) { // Not Autoupdate
+			if ($headid=filter_int($post['headid'])) {
 				// just in case
 				if($postl[$headid] === NULL) $postl[$headid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$headid");
 				$post['headtext']=$postl[$headid];
 			}
-			if($signid=filter_int($post['signid'])) {
+			if ($signid=filter_int($post['signid'])) {
 				// just in case
 				if($postl[$signid] === NULL) $postl[$signid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$signid");
 				$post['signtext']=$postl[$signid];
 			}
 		}
 
-		$post['headtext']=settags($post['headtext'],filter_string($post['tagval']));
-		$post['signtext']=settags($post['signtext'],filter_string($post['tagval']));
+		$post['headtext'] = settags($post['headtext'],filter_string($post['tagval']));
+		$post['signtext'] = settags($post['signtext'],filter_string($post['tagval']));
 
-		if($loguser['viewsig']==2){ // Autoupdate
-			$post['headtext']=doreplace($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
-			$post['signtext']=doreplace($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+		if ($loguser['viewsig'] == 2) { // Autoupdate
+			$post['headtext'] = doreplace($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+			$post['signtext'] = doreplace($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
-		if ($post['headid'])
+		if ($post['headid']) {
 			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_{$post['headid']}", $post['headtext']);
-		else
+		} else {
 			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['headtext']);
-		
-		$post['headtext']=doreplace2($post['headtext']);
-		$post['signtext']=doreplace2($post['signtext']);
-		//	$post['text']=doreplace2($post['text'], $post['options']);
+		}
+		$post['headtext'] = doreplace2($post['headtext']);
+		$post['signtext'] = doreplace2($post['signtext']);
+		//	$post['text'] = doreplace2($post['text'], $post['options']);
 		return $post;
 	}
 	
@@ -212,7 +221,7 @@
 			$ppost['signtext'] = doreplace($data['sign'],$posts,$numdays,$user['id']);
 		}
 
-		//$ppost['text']			= $message;
+		$ppost['deleted']       = 0;
 		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
 		
@@ -263,6 +272,70 @@
 	</table>
 	<br>";
 	}
+	
+function thread_history($thread, $num) {
+	global $sql, $userfields;
+	
+	$posts = $sql->query("
+		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, p.num
+		FROM posts p
+		LEFT JOIN users u ON p.user = u.id
+		WHERE p.thread = $thread
+		ORDER BY p.id DESC
+		LIMIT {$num}
+	");
+	$i = 0;
+	
+	$postlist = "";
+
+	
+	if ($sql->num_rows($posts)) {
+		
+		$postlist .= "
+		<tr>
+			<td class='tdbgh center' style='width: 150px'>User</td>
+			<td class='tdbgh center'>Post</td>
+		</tr>";
+	
+		while ($post = $sql->fetch($posts)) {
+			
+			$bg = (($i++) % 2) + 1; //((($i++) & 1) ? 'tdbg2' : 'tdbg1');
+			
+			if ($num-- > 0){
+				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
+				$userlink = getuserlink($post);
+				$message  = $post['deleted'] ? '(Post deleted)' : doreplace2(dofilters($post['text'], $thread['forum']), $post['options']);
+				$postlist .=
+					"<tr>
+						<td class='tdbg$bg' valign=top>
+							{$userlink}
+							<span class='fonts'><br>
+								Posts: {$postnum}{$post['posts']}
+							</span>
+						</td>
+						<td class='tdbg$bg' valign=top>
+							{$message}
+						</td>
+					</tr>";
+			} else {
+				$postlist .= "<tr><td class='tdbgh center' colspan=2>This is a long thread. Click <a href='thread.php?id={$thread}'>here</a> to view it.</td></tr>";
+			}
+		}
+		
+	} else {
+		$postlist .= "<tr><td class='tdbg1 center' colspan=2><i>There are no posts in this thread.</i></td></tr>";
+	}
+	
+	return "
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center' colspan=2 style='font-weight:bold'>
+				Thread history
+			</td>
+		</tr>
+		{$postlist}
+	</table>";
+}
 
 function syndrome($num, $double=false, $bar=true){
 	$bar	= false;

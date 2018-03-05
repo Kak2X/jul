@@ -124,7 +124,7 @@
 	
 	
 	$pagelinks = pagelist("?f=$forum&ppp={$ppp}", $annctotal, $ppp);
-	$controls['edit'] = $controls['ip'] = $controls['edit'] = "";
+	$controls['quote'] = $controls['ip'] = $controls['edit'] = "";
 
 	$annclist = "
 	<table class='table'>

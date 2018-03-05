@@ -1121,7 +1121,6 @@ function checkuser($name, $pass){
 	
 	//if ($user['password'] !== getpwhash($pass, $user['id'])) {
 	if (!password_verify(sha1($user['id']).$pass, $user['password'])) {
-		die("fuck");
 		// Also check for the old md5 hash, allow a login and update it if successful
 		// This shouldn't impact security (in fact it should improve it)
 		if (!$hacks['password_compatibility'])

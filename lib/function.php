@@ -242,6 +242,7 @@
 			'signsep'		=> 0,
 			'dateformat'	=> $config['default-dateformat'],
 			'dateshort'		=> $config['default-dateshort'],
+			'timezone'      => 0,
 			'tzoff'			=> 0,
 			'scheme'		=> 0,
 			'title'			=> '',

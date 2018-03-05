@@ -92,7 +92,7 @@
 	}
 
 	// Action links
-	$sneek = "";
+	$sneek = $lastip = $sendpmsg = "";
 	if ($loguser['id']) {
 		$token = generate_token(32);
 		$sendpmsg = " | <a href='sendprivate.php?userid=$id'>Send private message</a>".

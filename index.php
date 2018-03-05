@@ -44,9 +44,8 @@
 		die;
 	} */
 	
-	pageheader();
-		
-	
+
+
 	if ($loguser['id'] && isset($_GET['action'])) {
 		
 		switch ($_GET['action']) {
@@ -67,6 +66,9 @@
 		die;
 	}
 
+	// Move it after the auto-redirect actions, otherwise the redirect breaks
+	pageheader();
+		
 	$postread = readpostread($loguser['id']);
 	
 	/*

@@ -1507,8 +1507,13 @@ function jspageexpand($start, $end) {
 */
 
 function redirect($url, $msg, $delay){
-	if($delay < 1) $delay = 1;
-	return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=$delay;URL=$url>";
+	global $config;
+	if ($config['no-redirects']) {
+		return "";
+	} else {
+		if ($delay < 1) $delay = 1;
+		return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=$delay;URL=$url>";
+	}
 }
 
 function postradar($userid){

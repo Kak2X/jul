@@ -1421,7 +1421,7 @@ function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel =
 			
 	$sql->queryp("
 		INSERT INTO forumbans (user, forum, date, banner, expire, reason)
-		VALUES(?,?,?,?,?)", [$user, $forum, ctime(), $banner, $expire, $reason]);
+		VALUES(?,?,?,?,?,?)", [$user, $forum, ctime(), $banner, $expire, $reason]);
 		
 	if ($ircreason !== NULL){
 		xk_ircsend("{$destchannel}|{$ircreason}");
@@ -2130,6 +2130,10 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 	}
 	
 	return $pagelinks;
+}
+
+function ban_expire($name) {
+	return "WIP";
 }
 
 

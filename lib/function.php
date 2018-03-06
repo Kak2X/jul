@@ -268,6 +268,8 @@
 	$isadmin   = (int) ($loguser['powerlevel'] >= 3);
 	$sysadmin  = (int) ($loguser['powerlevel'] >= 4);
 	
+	
+	$isfullmod = $ismod;
 	// >_>
 	$isChristmas = (date('n') == 12);
 	

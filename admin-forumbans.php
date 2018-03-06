@@ -5,12 +5,13 @@ require 'lib/function.php';
 $_GET['forum'] 		= filter_int($_GET['forum']);
 $_GET['edit'] 		= filter_int($_GET['edit']);
 
-
+// Process edit actions right away
 if ($_GET['forum']) {
 	
-	$forum = $sql->fetchq("SELECT id, title FROM forums WHERE id = {$_GET['forum']}");
-	if (!$forum) {
-		errorpage("This forum doesn't exist.");
+	// Make sure the forum is valid (and that we have access to it)
+	$forum = $sql->fetchq("SELECT id, title, minpower FROM forums WHERE id = {$_GET['forum']}");
+	if (!$forum || ($forum['minpower'] && $loguser['powerlevel'] < $forum['minpower'])) {
+		errorpage("Couldn't access the forum. Either it doesn't exist or you don't have access to it.", 'index.php', 'the index page', 0);
 	}
 	$ismod = $ismod || $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$_GET['forum']} and user = {$loguser['id']}");
 
@@ -34,7 +35,6 @@ if ($_GET['forum']) {
 	} else if (isset($_POST['save'])) {
 		// Create / Edit a ban
 		check_token($_POST['auth']);
-		
 		if (!$ismod) {
 			errorpage("You aren't allowed to edit this forum's bans.");
 		}
@@ -73,10 +73,42 @@ if ($_GET['forum']) {
 		}
 		return header("Location: ?forum={$_GET['forum']}");
 	}
-	
-	$addlink = "";
+} else {
+	// Stop non global-mods immediately from using the forum list feature
+	if (!$isfullmod) {
+		errorpage("No forum selected.");
+	}
+
+}
+
+
+
+// Topmost select box to change the forum bans we're editing
+if ($isfullmod) {
+	$forumlist = "
+	<form method='GET'>
+	<div class='font center'>
+		Forum list: ".doforumlist($_GET['forum'], $name = 'forum', $shownone = '--- Select a forum ---')."
+		<input type='submit' class='submit' value='Go'>
+	</div>
+	</form>";
+} else {
+	$forumlist = "";
+}
+
+
+
+
+
+if (!$_GET['forum']) {
+	pageheader("Forum bans");
+	print adminlinkbar().$forumlist;
+	errorpage("Select a forum from the list above to edit its banned users.");
+} else {
+
 	if ($ismod) {
 		$windowtitle = "Editing forum bans";
+		// Deletion / addition actions at the bottom of the table
 		$addlink = "
 		<tr>
 			<td class='tdbgc'>
@@ -89,10 +121,11 @@ if ($_GET['forum']) {
 		</tr>";
 	} else {
 		$windowtitle = "Forum bans";
+		$addlink = $forumlist = "";
 	}
 	
-	pageheader("{$config['board-name']} -- {$windowtitle}");
-	print adminlinkbar();
+	pageheader("{$config['board-name']} -- {$windowtitle} - {$forum['title']}");
+	print adminlinkbar().$forumlist;
 	
 	// Ban list
 	$forumbans = $sql->query("
@@ -104,15 +137,19 @@ if ($_GET['forum']) {
 		ORDER BY date ASC
 	");
 	
-	$txt = "";
-	$editban = array();
-	for ($i = 0; $ban = $sql->fetch($forumbans, PDO::FETCH_NAMED); ++$i) {
-		if ($_GET['edit'] == $ban['id']) {
-			$editban = $ban;
-		}
+	$txt     = "";
+	$ban     = array();
+	for ($i = 0; $x = $sql->fetch($forumbans, PDO::FETCH_NAMED); ++$i) {
 		$bg = ($i % 2) + 1;
+		
+		// Confirm the ban we're viewing
+		if ($_GET['edit'] == $x['id']) {
+			$ban = $x;
+		}
+		
+		// Don't show edit/delete links to non mods
 		if ($ismod) {
-			$editlink = "<input type='checkbox' name='delban[]' value='{$ban['id']}'> - <a href='?forum={$_GET['forum']}&edit={$ban['id']}'>Edit</a>";
+			$editlink = "<input type='checkbox' name='delban[]' value='{$x['id']}'> - <a href='?forum={$_GET['forum']}&edit={$x['id']}'>Edit</a>";
 		} else {
 			$editlink = ($i+1);
 		}
@@ -120,11 +157,11 @@ if ($_GET['forum']) {
 		$txt .= "
 		<tr>
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
-			<td class='tdbg{$bg} center'>".($ban['user'] ? getuserlink(array_column_by_key($ban, 0), $ban['user']) : "Autoban")."</td>
-			<td class='tdbg{$bg} center'>".printdate($ban['date'])."</td>
-			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($ban, 1), $ban['banner'])."</td>
-			<td class='tdbg{$bg} center'>".($ban['reason'] ? $ban['reason'] : "&mdash;")."</td>
-			<td class='tdbg{$bg} center'>".($ban['expire'] ? timeunits2($ban['expire'] - ctime()) : "Permanent" )."</td>
+			<td class='tdbg{$bg} center'>".($x['user'] ? getuserlink(array_column_by_key($x, 0), $x['user']) : "Autoban")."</td>
+			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
+			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($x, 1), $x['banner'])."</td>
+			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
+			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
 		</tr>";
 	}
 	
@@ -135,12 +172,12 @@ if ($_GET['forum']) {
 	<table class="table">
 		<tr><td class="tdbgh center b" colspan=6>Forum bans for <a href="forum.php?id=<?=$forum['id']?>?>"><?= htmlspecialchars($forum['title']) ?></a> (Total: <?= $i ?>)</td></tr>
 		<tr>
-			<td class="tdbgc center">#</td>
-			<td class="tdbgc center">User</td>
-			<td class="tdbgc center">Date</td>
-			<td class="tdbgc center">Banned by</td>
+			<td class="tdbgc center" style="width: 10px">#</td>
+			<td class="tdbgc center" style="width: 15%">User</td>
 			<td class="tdbgc center">Reason</td>
-			<td class="tdbgc center">Ban duration</td>
+			<td class="tdbgc center" style="width: 15%">Banned by</td>
+			<td class="tdbgc center" style="width: 200px">Date</td>
+			<td class="tdbgc center" style="width: 300px">Ban duration</td>
 		</tr>
 		<?= $txt ?>
 		<?= $addlink ?>
@@ -148,11 +185,11 @@ if ($_GET['forum']) {
 	</form>
 <?php
 
-	// Edit window
-	if ($ismod && ($editban || $_GET['edit'] == -1)) {
+	// Add / edit a forum ban
+	if ($ismod && ($ban || $_GET['edit'] == -1)) {
 		
 		if ($_GET['edit'] == -1) {
-			$editban = array(
+			$ban = array(
 				'user' => 0,
 				'expire' => 0,
 				'reason' => '',
@@ -171,19 +208,19 @@ if ($_GET['forum']) {
 		<tr>
 			<td class="tdbg1 center b">User</td>
 			<td class="tdbg2">
-				<?= user_select('user', $editban['user'], 'powerlevel < 2') ?>
+				<?= user_select('user', $ban['user'], 'powerlevel < 2') ?>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">Ban duration</td>
 			<td class="tdbg2">
-				<?= ban_hours('expire', $editban['expire']) ?>
+				<?= ban_hours('expire', $ban['expire']) ?>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">Reason</td>
 			<td class="tdbg2">
-				<input type="text" name="reason" value="<?= htmlspecialchars($editban['reason']) ?>" maxlength=127 style="width: 450px">
+				<input type="text" name="reason" value="<?= htmlspecialchars($ban['reason']) ?>" maxlength=127 style="width: 450px">
 			</td>
 		</tr>
 		<tr>
@@ -200,18 +237,6 @@ if ($_GET['forum']) {
 	</center>
 <?php
 	}
-	
-	
-	
-} else {
-	
-	// Only mod or up can view the forum list
-	if (!$ismod) {
-		errorpage("Sorry, but you're not a global moderator.");
-	}
-	
-	errorpage("Forum list not implemented.");
-	
 }
 
 pagefooter();

@@ -42,8 +42,8 @@
 				if ($post['piclink']) {
 					$set['picture'] = escape_attribute($post['piclink']);
 					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
-				} else if (file_exists(avatarpath($post['uid'], $post['moodid']))) {
-					$set['picture'] = avatarpath($post['uid'], $post['moodid']);
+				} else if (file_exists(avatar_path($post['uid'], $post['moodid']))) {
+					$set['picture'] = avatar_path($post['uid'], $post['moodid']);
 					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
 				} else {
 					$set['picture'] = $set['userpic'] = "";

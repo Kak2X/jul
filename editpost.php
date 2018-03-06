@@ -206,7 +206,7 @@
 				<td class='tdbg2' width=800px valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
 				<td class='tdbg2' width=* rowspan=3>
-					<?=moodlayout(0, $post['user'], $moodid)?>
+					<?=mood_layout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>
@@ -242,7 +242,7 @@
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
-					<?=moodlayout(1, $post['user'], $moodid)?>
+					<?=mood_layout(1, $post['user'], $moodid)?>
 				</td>
 				<?=quikattach($attach_key, $post['user'], $post['id'], $attachsel)?>
 			</tr>

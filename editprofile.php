@@ -180,12 +180,12 @@
 			}		
 			// Upload a new minipic
 			else if (filter_int($_FILES['minipic']['size'])){
-				imageupload(
+				upload_avatar(
 					$_FILES['minipic'], 
 					$config['max-minipic-size-bytes'], 
 					$config['max-minipic-size-x'], 
 					$config['max-minipic-size-y'], 
-					avatarpath($id, 'm') // minipic path
+					avatar_path($id, 'm') // minipic path
 				);
 			}
 			
@@ -195,15 +195,15 @@
 				delete_avatar($id, 0);
 			}
 			else if (filter_int($_FILES['picture']['size'])){
-				imageupload(
+				upload_avatar(
 					$_FILES['picture'], 
 					$config['max-avatar-size-bytes'], 
 					$config['max-avatar-size-x'], 
 					$config['max-avatar-size-y'], 
-					avatarpath($id, 0),
+					avatar_path($id, 0),
 					[$id, 0, 'Default', 0, $weblink]
 				);
-			} else if ($weblink || file_exists(avatarpath($id, 0))) {
+			} else if ($weblink || file_exists(avatar_path($id, 0))) {
 				// Make sure we don't accidentaly delete the entire avatar if we just blank the URL
 				save_avatar([$id, 0, 'Default', 0, $weblink]);
 			} else {		

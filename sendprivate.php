@@ -193,7 +193,7 @@
 				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($message)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
-				<?=moodlayout(0, $loguser['id'], $moodid)?>
+				<?=mood_layout(0, $loguser['id'], $moodid)?>
 			</td>
 		</tr>
 			
@@ -203,7 +203,7 @@
 				<input type='hidden' name=auth VALUE="<?=generate_token()?>">
 				<input type='submit' class=submit name=submit VALUE='Send message'>
 				<input type='submit' class=submit name=preview VALUE='Preview message'>&nbsp;&nbsp;&nbsp;
-				<?=moodlayout(1, $loguser['id'], $moodid)?>
+				<?=mood_layout(1, $loguser['id'], $moodid)?>
 			</td>
 		</tr>
 	</table>

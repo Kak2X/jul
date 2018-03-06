@@ -1,6 +1,6 @@
 <?php
 
-function imageupload($file, $maxsize, $x, $y, $dest = false, $qdata = NULL){
+function upload_avatar($file, $maxsize, $x, $y, $dest = false, $qdata = NULL){
 	global $config;
 	if (!$config['allow-avatar-storage']) return false;
 	
@@ -47,7 +47,7 @@ function delete_avatar($user, $file) {
 		$sql->query("UPDATE pmsgs SET moodid = 0 WHERE userfrom = {$user}");
 		$sql->query("UPDATE posts SET moodid = 0 WHERE user = {$user}");
 	}
-	$path = avatarpath($user, $file);
+	$path = avatar_path($user, $file);
 	if (file_exists($path)) {
 		unlink($path);
 	}
@@ -55,7 +55,7 @@ function delete_avatar($user, $file) {
 
 const AVATARS_ALL = 0b1;
 const AVATARS_NOHIDDEN = 0b10;
-function getavatars($user, $flags = 0) {
+function get_avatars($user, $flags = 0) {
 	global $sql;
 	return $sql->fetchq("
 		SELECT file, title, hidden, weblink
@@ -76,14 +76,14 @@ function prepare_avatars($sets) {
 	return $res;
 }
 
-function avatarpath($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
+function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
-function setmoodavjs($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
+function set_mood_avatar_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
 
 // 0 -> side
 // 1 -> inline
 // Layout selecttor
-function moodlayout($mode, $user, $sel = 0) {
+function mood_layout($mode, $user, $sel = 0) {
 	global $config, $loguser;
 	
 	if (!$mode) {
@@ -91,7 +91,7 @@ function moodlayout($mode, $user, $sel = 0) {
 		<table style='border-spacing: 0px'>
 			<tr>
 				<td class='nobr' style='max-width: 150px'>
-					".($config['allow-avatar-storage'] ? "" : moodlist($user, $sel))."
+					".($config['allow-avatar-storage'] ? "" : mood_list($user, $sel))."
 				</td>
 				<td>
 					<img src='images/_.gif' id='prev'>
@@ -99,12 +99,12 @@ function moodlayout($mode, $user, $sel = 0) {
 			</tr>
 		</table>";
 	} else if ($config['allow-avatar-storage']) {
-		return moodlist($user, $sel); // Select box on self-storage only
+		return mood_list($user, $sel); // Select box on self-storage only
 	}
 	return "";
 }
 
-function moodlist($user, $sel = 0, $return = false) {
+function mood_list($user, $sel = 0, $return = false) {
 	global $config, $loguser;
 	
 	if ($config['allow-avatar-storage']) {
@@ -112,7 +112,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		if (!$user) return "";
 		
 		// Self stored avatar mode
-		$moods = getavatars($user, AVATARS_ALL);
+		$moods = get_avatars($user, AVATARS_ALL);
 		
 		if ($return) {
 			return array_column($moods, 'title');
@@ -178,7 +178,7 @@ function moodlist($user, $sel = 0, $return = false) {
 		else
 			$startimg = str_replace('$', $sel, $moodurl);
 	
-		$ret = "<div class='font b'>Mood avatar list:</div>".$txt.setmoodavjs($moodurl);
+		$ret = "<div class='font b'>Mood avatar list:</div>".$txt.set_mood_avatar_js($moodurl);
 	}
 	
 	return include_js('avatars.js').$ret;
@@ -190,7 +190,7 @@ function get_minipic($user, $url = "") {
 	global $config;
 	if ($config['allow-avatar-storage']) {
 		if (has_minipic($user)) {
-			return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src='".avatarpath($user, 'm')."' align='absmiddle'>";
+			return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src='".avatar_path($user, 'm')."' align='absmiddle'>";
 		}
 	} else if ($url) {
 		return "<img style='max-width: {$config['max-minipic-size-x']}px;max-height: {$config['max-minipic-size-y']}px' src=\"".escape_attribute($url)."\" align='absmiddle'>";
@@ -199,10 +199,10 @@ function get_minipic($user, $url = "") {
 	return "";
 }
 
-function has_minipic($user) { return is_file(avatarpath($user, 'm')); }
+function has_minipic($user) { return is_file(avatar_path($user, 'm')); }
 function del_minipic($user) {
 	if (has_minipic($user)) {
-		return unlink(avatarpath($user, 'm'));
+		return unlink(avatar_path($user, 'm'));
 	} else {
 		return false;
 	}

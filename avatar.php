@@ -18,7 +18,7 @@ if ($config['allow-avatar-storage']) {
 		// Admins get to see all of the avatars 
 		// not like it matters when you can just access the userpic folder directly, but :V
 		$flags = AVATARS_ALL | ($isadmin ? 0 : AVATARS_NOHIDDEN);
-		$moods = getavatars($_GET['id'], $flags);
+		$moods = get_avatars($_GET['id'], $flags);
 	} else {
 		$moods = false;
 	}
@@ -91,7 +91,7 @@ if ($me && $moods) {
 		
 		$moodurl  = htmlspecialchars($me['moodurl']);
 		$startimg = str_replace('$', $_GET['start'], $moodurl);
-		print setmoodavjs($moodurl);
+		print set_mood_avatar_js($moodurl);
 		
 		$header_text = $moodurl;
 		$avtype = ""; // use avatarpreview()
@@ -126,7 +126,7 @@ if ($me && $moods) {
 	
 	// Alternative header text
 	if ($config['allow-avatar-storage']) {
-		$startimg = $confirm != -1 ? avatarpath($me['id'], $confirm, $moods[$confirm]['weblink']) : "images/_.gif";
+		$startimg = $confirm != -1 ? avatar_path($me['id'], $confirm, $moods[$confirm]['weblink']) : "images/_.gif";
 	}
 	
 	$ret = "<tr>

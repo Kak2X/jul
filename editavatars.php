@@ -84,12 +84,12 @@
 		
 		$qdata = [$_GET['id'], $newid, $title, $hidden, $weblink];
 		if ($validfile) {
-			$res = imageupload(
+			$res = upload_avatar(
 				$file, // the file
 				$config['max-avatar-size-bytes'], // some
 				$config['max-avatar-size-x'], // image
 				$config['max-avatar-size-y'], // limits
-				avatarpath($_GET['id'], $newid), // image path
+				avatar_path($_GET['id'], $newid), // image path
 				$qdata // db data (user id, file id, title,...)
 			);
 		} else {
@@ -112,12 +112,12 @@
 		$new_weblink = xssfilters(trim(filter_string($_POST["weblink0"])));
 		
 		if (filter_array($_FILES['new0']) && !$_FILES['new0']['error']) {
-			$res = imageupload(
+			$res = upload_avatar(
 				$_FILES['new0'],               // the file
 				$config['max-avatar-size-bytes'], // some
 				$config['max-avatar-size-x'],     // image
 				$config['max-avatar-size-y'],     // limits
-				avatarpath($_GET['id'], 0)       // image path
+				avatar_path($_GET['id'], 0)       // image path
 			);
 		} else {
 			$res = false;
@@ -135,7 +135,7 @@
 	}
 
 	// Loop through the avatar and check if we want to change them
-	$usermood = getavatars($_GET['id'], AVATARS_ALL);
+	$usermood = get_avatars($_GET['id'], AVATARS_ALL);
 	foreach ($usermood as $file => $data) {
 		
 		if (isset($_POST["del{$file}"])){
@@ -170,12 +170,12 @@
 			// Conditional in case you just want to update the avatar name
 			if (filter_int($_FILES["new{$file}"]['size'])){
 				
-				$res = imageupload(
+				$res = upload_avatar(
 					$_FILES["new{$file}"],            // the file
 					$config['max-avatar-size-bytes'], // some
 					$config['max-avatar-size-x'],     // image
 					$config['max-avatar-size-y'],     // limits
-					avatarpath($_GET['id'], $file)    // image path
+					avatar_path($_GET['id'], $file)    // image path
 				);
 				#errorpage("huh");
 				if ($res){
@@ -326,7 +326,7 @@
 				<!-- <tr><td class='tdbgh center' colspan=2>{$data['title']}</td></tr> -->
 				
 				<tr>
-					<td class='tdbg2 avatarbox' style='background-image: url(\"".avatarpath($user, $file, $data['weblink'])."\");' colspan=2></td>
+					<td class='tdbg2 avatarbox' style='background-image: url(\"".avatar_path($user, $file, $data['weblink'])."\");' colspan=2></td>
 				</tr>
 				
 				<tr>

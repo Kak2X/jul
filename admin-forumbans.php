@@ -127,15 +127,46 @@ if (!$_GET['forum']) {
 	pageheader("{$config['board-name']} -- {$windowtitle} - {$forum['title']}");
 	print adminlinkbar().$forumlist;
 	
+	//--
+	$_POST['searchreason']      = filter_string($_POST['searchreason']);
+	$_POST['searchuser']        = filter_int($_POST['searchuser']);
+	$_POST['page']              = filter_int($_POST['page']);
+
+	$formlink = "?forum={$_GET['forum']}";
+	if (!isset($_GET['ppp'])) {
+		$ppp = 100;
+	} else {
+		$ppp = max(min(((int) $_GET['ppp']), 500), 1);
+		$formlink .= "&ppp={$ppp}";
+	}
+	
+	
+	// Query values
+	$outres = array();
+	$qsearch = "";
+	if ($_POST['searchreason']) {
+		$outres['reason'] = "%{$_POST['searchreason']}%";
+		$qsearch .= " AND f.reason LIKE :reason";
+	}
+	if ($_POST['searchuser']) {
+		//$userid   = $sql->resultp("SELECT id FROM users WHERE name = ?", [$_POST['searchuser']]);
+		$qsearch .= " AND f.user = {$_POST['searchuser']}";
+	}
+	//--
+	
 	// Ban list
-	$forumbans = $sql->query("
+	$total  = $sql->resultp("SELECT COUNT(*) FROM forumbans f WHERE f.forum = {$_GET['forum']} {$qsearch}", $outres);
+	$_POST['page'] = numrange($_POST['page'], 0, ceil($total / $ppp) - 1); // Restrict to real values
+	
+	$forumbans = $sql->queryp("
 		SELECT f.*, ".set_userfields('u1')." uid, ".set_userfields('u2')." uid
 		FROM forumbans f
 		LEFT JOIN users u1 ON f.user   = u1.id
 		LEFT JOIN users u2 ON f.banner = u2.id
-		WHERE f.forum = {$_GET['forum']}
-		ORDER BY date ASC
-	");
+		WHERE f.forum = {$_GET['forum']} {$qsearch}
+		ORDER BY f.date DESC
+		LIMIT ".($_POST['page'] * $ppp).",$ppp
+	", $outres);
 	
 	$txt     = "";
 	$ban     = array();
@@ -165,10 +196,51 @@ if (!$_GET['forum']) {
 		</tr>";
 	}
 	
-
-	
 ?>
-	<form method="POST" action="?forum=<?=$_GET['forum']?>&edit=<?=$_GET['edit']?>">
+	<center>
+	<form method="POST" action="<?=$formlink?>">
+	<table class="table" style="max-width: 800px">
+		<tr>
+			<td class='tdbgh' style='width: 130px'>&nbsp;</td>
+			<td class='tdbgh'>&nbsp;</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center b'>
+				Search user:
+			</td>
+			<td class='tdbg2'>
+				<?= user_select('searchuser', $_POST['searchuser'], 'powerlevel < 2') ?>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center b'>
+				Search reason:
+			</td>
+			<td class='tdbg2'>
+				<input type='text' name='searchreason' size=72 value="<?= htmlspecialchars($_POST['searchreason']) ?>">
+			</td>
+		</tr>
+		<tr id="pagetr">
+			<td class='tdbg1 center b'>
+				Display page:
+			</td>
+			<td class='tdbg2'>
+				<?= page_select($total, $ppp) ?>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg2'></td>
+			<td class='tdbg2'>
+				<input type='submit' class='submit' name='dosearch' value='Search'>
+			</td>
+		</tr>
+	</table>
+	</center>
+	</form>
+	
+	<br>	
+	
+	<form method="POST" action="<?=$formlink?>&edit=<?=$_GET['edit']?>">
 	<table class="table">
 		<tr><td class="tdbgh center b" colspan=6>Forum bans for <a href="forum.php?id=<?=$forum['id']?>?>"><?= htmlspecialchars($forum['title']) ?></a> (Total: <?= $i ?>)</td></tr>
 		<tr>
@@ -202,7 +274,7 @@ if (!$_GET['forum']) {
 ?>
 	<br>
 	<center>
-	<form method="POST" action="?forum=<?=$_GET['forum']?>&edit=<?=$_GET['edit']?>">
+	<form method="POST" action="<?=$formlink?>>&edit=<?=$_GET['edit']?>">
 	<table class="table" style="max-width: 600px">
 		<tr><td class="tdbgh center b" colspan=2><?= $title ?></tr></td>
 		<tr>

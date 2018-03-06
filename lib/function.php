@@ -2134,6 +2134,17 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 	return $pagelinks;
 }
 
+function page_select($total, $ppp) {
+	$page     = filter_int($_POST['page']);
+	$pages    = ceil($total / $ppp);
+	$pagectrl = "";
+	for ($i = 0; $i < $pages;) {
+		$selected = ($page == $i) ? " selected" : "";
+		$pagectrl .= "<option value='{$i}'{$selected}>".(++$i)."</option>\r\n";
+	}
+	return "<select name='page'>{$pagectrl}</select>";
+}
+
 function ban_hours($name, $time = 0, $condition = true) {
 		$val = ($condition && $time) ? ceil(($time - ctime()) / 3600) : 0;
 		

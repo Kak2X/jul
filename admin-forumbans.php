@@ -112,14 +112,14 @@ if ($_GET['forum']) {
 		}
 		$bg = ($i % 2) + 1;
 		if ($ismod) {
-			$editlink = "<a href='?forum={$_GET['forum']}&edit={$ban['id']}'>Edit</a>";
+			$editlink = "<input type='checkbox' name='delban[]' value='{$ban['id']}'> - <a href='?forum={$_GET['forum']}&edit={$ban['id']}'>Edit</a>";
 		} else {
 			$editlink = ($i+1);
 		}
 		
 		$txt .= "
 		<tr>
-			<td class='tdbg{$bg} center fonts' style='width: 60px'><input type='checkbox' name='delban[]' value='{$ban['id']}'> - {$editlink}</td>
+			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
 			<td class='tdbg{$bg} center'>".($ban['user'] ? getuserlink(array_column_by_key($ban, 0), $ban['user']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($ban['date'])."</td>
 			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($ban, 1), $ban['banner'])."</td>
@@ -162,37 +162,6 @@ if ($_GET['forum']) {
 			$title = "Edit ban";
 		}
 		
-		// Create a list of users we can add
-		$userlist = "<option value='0'>Select a user...</option>\r\n";
-		$users1 = $sql->query("SELECT `id`, `name` FROM `users` WHERE `powerlevel` < 2 ORDER BY `name`");
-		while($user = $sql->fetch($users1)) {
-			$selected = ($editban['user'] == $user['id']) ? " selected" : "";
-			$userlist .= "<option value='{$user['id']}'{$selected}>{$user['name']}</option>\r\n";
-		}
-		
-		// Hours left before the user is unbanned
-		$ban_val = ($editban['expire'] ? ceil(($editban['expire'] - ctime()) / 3600) : 0);
-		
-		$ban_select = array(
-			$ban_val => timeunits2($ban_val * 3600),
-			0		 => "*Permanent",
-			1		 => "1 hour",
-			3		 => "3 hours",
-			6		 => "6 hours",
-			24		 => "1 day",
-			72		 => "3 days",
-			168		 => "1 week",
-			336		 => "2 weeks",
-			774		 => "1 month",
-			1488	 => "2 months"
-		);
-		ksort($ban_select);
-		
-		$sel_b[$ban_val] = "selected";
-		$ban_hours = "";
-		foreach($ban_select as $i => $x){
-			$ban_hours .= "<option value=$i ".filter_string($sel_b[$i]).">$x</option>";
-		}
 ?>
 	<br>
 	<center>
@@ -202,17 +171,13 @@ if ($_GET['forum']) {
 		<tr>
 			<td class="tdbg1 center b">User</td>
 			<td class="tdbg2">
-				<select name="user" autofocus>
-					<?= $userlist ?>
-				</select>
+				<?= user_select('user', $editban['user'], 'powerlevel < 2') ?>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">Ban duration</td>
 			<td class="tdbg2">
-				<select name="expire">
-					<?= $ban_hours ?>
-				</select>
+				<?= ban_hours('expire', $editban['expire']) ?>
 			</td>
 		</tr>
 		<tr>

@@ -2132,10 +2132,50 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 	return $pagelinks;
 }
 
-function ban_expire($name) {
-	return "WIP";
+function ban_hours($name, $time = 0, $condition = true) {
+		$val = ($condition && $time) ? ceil(($time - ctime()) / 3600) : 0;
+		
+		$selector = array(
+			$val     => timeunits2($val*3600),
+			0        => "*** Permanent ***",
+			1        => "1 hour",
+			3        => "3 hours",
+			6        => "6 hours",
+			24       => "1 day",
+			72       => "3 days",
+			168      => "1 week",
+			336      => "2 weeks",
+			774      => "1 month",
+			1488     => "2 months",
+			4464     => "6 months",
+			89280    => "SA Ban",
+		);
+		ksort($selector); // Place the $val entry in the correct position
+		
+		$sel[$val] = " selected";
+		
+		// Fill out the select box
+		$out = "";
+		foreach($selector as $i => $x){
+			$out .= "<option value=$i".filter_string($sel[$i]).">$x</option>";
+		}
+		return "<select name='{$name}'>{$out}</select>";
 }
 
+function user_select($name, $sel = 0, $condition = '1') {
+	global $sql;
+	$userlist = "";
+	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` WHERE {$condition} ORDER BY `name`");
+	while($x = $sql->fetch($users)) {
+		$selected = ($x['id'] == $sel) ? " selected" : "";
+		$userlist .= "<option value='{$x['id']}'{$selected}>{$x['name']} -- [{$x['powerlevel']}]</option>\r\n";
+	}
+	return "
+	<select name='{$name}' size='1'>
+		<option value='0'>Select a user...</option>
+		{$userlist}
+	</select>";
+}
 
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;

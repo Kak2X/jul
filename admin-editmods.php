@@ -58,13 +58,6 @@ if (isset($_POST['action'])) {
 			</tr>";
 		}
 	}
-	// Create a list of Normal+ or up users we can add
-	$userlist = "<option value='0'>Select a user...</option>\r\n";
-	$users1 = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` WHERE `powerlevel` > '".(isset($_POST['showall']) ? "-1" : "0")."' ORDER BY `name`");
-	while($user = $sql->fetch($users1))
-		$userlist .= "<option value='{$user['id']}'>[{$user['powerlevel']}] -- {$user['name']}</option>\r\n";
-	
-	$authtag = "<input type='hidden' name='auth' value='".generate_token()."'>";
 
 ?>
 
@@ -78,7 +71,7 @@ if (isset($_POST['action'])) {
 </table>
 
 <form action="admin-editmods.php" method="POST">
-<?=$authtag?>
+<?= auth_tag() ?>
 <br>
 <table class='table'>
 	<tr><td class='tdbgh center' colspan="2">Add Moderator:</td></tr>
@@ -91,7 +84,7 @@ if (isset($_POST['action'])) {
 	<tr>
 		<td class='tdbg1 center' width=15%>User:</td>
 		<td class='tdbg2' width=85%>
-			<select name="addmoduser" size="1"><?=$userlist?></select>
+			<?= user_select('addmoduser', 0, 'powerlevel > '.(isset($_POST['showall']) ? '-1' : '0')) ?>
 			<?=(isset($_POST['showall']) ? 
 				"<input type='submit' class='submit' name='hidesome' value='Show Normal+ and above'>" : 
 				"<span class='fonts'>(note: this only shows Member+ and above)</span> <input type='submit' class='submit' name='showall' value='Show All'>")
@@ -111,7 +104,7 @@ if (isset($_POST['action'])) {
 	if ($forumselectforrem) {
 		?>
 	<form action="admin-editmods.php" method="POST">
-	<?=$authtag?>
+	<?= auth_tag() ?>
 	<table class='table'>
 		<tr><td class='tdbgh center' colspan="2">Remove Moderator:</td></tr>
 		<tr>

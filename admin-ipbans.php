@@ -187,18 +187,7 @@
 		<tr>
 			<td class='tdbg1 center b'>Duration</td>
 			<td class='tdbg2'>
-				<select name='expire'>
-					<option value='0'>*Permanent</option>
-					<option value='1'>1 hour</option>
-					<option value='3'>3 hours</option>
-					<option value='6'>6 hours</option>
-					<option value='24'>1 day</option>
-					<option value='72'>3 days</option>
-					<option value='168'>1 week</option>
-					<option value='336'>2 weeks</option>
-					<option value='744'>1 month</option>
-					<option value='1488'>2 months</option>
-				</select>
+				<?= ban_hours('expire', 0) ?>
 			</td>
 		</tr>
 		<tr><td class='tdbg2' colspan='2'><input type='submit' class='submit' name='ipban' value='IP Ban'></td></tr>

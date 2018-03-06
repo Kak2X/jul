@@ -466,34 +466,7 @@
 			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);
 			
 			// Hours left before the user is unbanned
-			$ban_val 	= (
-				$userdata['powerlevel'] == -1 && $userdata['ban_expire'] ? 
-				ceil(($userdata['ban_expire'] - ctime()) / 3600) : 
-				0
-			);
-			
-			$ban_select = array(
-				$ban_val => timeunits2($ban_val*3600),
-				0		 => "*Permanent",
-				1		 => "1 hour",
-				3		 => "3 hours",
-				6		 => "6 hours",
-				24		 => "1 day",
-				72		 => "3 days",
-				168		 => "1 week",
-				336		 => "2 weeks",
-				774		 => "1 month",
-				1488	 => "2 months"
-			);
-			ksort($ban_select); // Place the $ban_val entry in the correct position
-			
-			$sel_b[$ban_val] = "selected";
-			
-			$ban_hours = "<select name='ban_hours'>";
-			foreach($ban_select as $i => $x){
-				$ban_hours .= "<option value=$i ".filter_string($sel_b[$i]).">$x</option>";
-			}
-			$ban_hours .= "</select> (has effect only for Banned users)";
+			$ban_hours = ban_hours('ban_hours', $userdata['ban_expire'], ($userdata['powerlevel'] == -1))." (has effect only for Banned users)";
 		}
 
 		

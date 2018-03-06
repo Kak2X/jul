@@ -54,7 +54,7 @@
 		'backup-folder'			=> 'backups',				// Folder containing backups, relative to the ab root
 		'backup-threshold'		=> 15,						// Days before a backup is considered old
 		'force-lastip-match'	=> false,					// Force logout on IP changes
-		'no-redirects'          => true,                    // Stop auto redirect on error messages
+
 		
 		// File uploads
 		'allow-attachments'     => true,                    // Enables the attachment feature
@@ -76,6 +76,7 @@
 		'always-show-debug'		=> true,					// Always show error/query list regardless of powerlevel
 		'force-user-id'			=> false,						
 		'allow-rereggie'		=> false,
+		'no-redirects'          => true,                    // Stop auto redirect on error messages
 		
 		// Defaults
 		'server-time-offset' 	=> 3 * 3600,

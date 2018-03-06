@@ -15,31 +15,86 @@ if ($_GET['forum']) {
 	$ismod = $ismod || $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$_GET['forum']} and user = {$loguser['id']}");
 
 	
-	
-	// Create / Edit / Delete a filter
-	if (isset($_POST['save'])) {
+	if (isset($_POST['dodel'])) {
+		// Delete (multiple) bans
+		check_token($_POST['auth']);
+		if (!$ismod) {
+			errorpage("You aren't allowed to edit this forum's bans.");
+		}
+		
+		// Make sure we're deleting forum bans off the correct forum
+		if (!empty($_POST['delban'])){
+			$del = $sql->prepare("DELETE FROM forumbans WHERE id = ? AND forum = {$_GET['forum']}");
+			foreach ($_POST['delban'] as $ban) {
+				$sql->execute($del, [$ban]);
+			}
+		}
+		return header("Location: ?forum={$_GET['forum']}");
+		
+	} else if (isset($_POST['save'])) {
+		// Create / Edit a ban
+		check_token($_POST['auth']);
 		
 		if (!$ismod) {
 			errorpage("You aren't allowed to edit this forum's bans.");
 		}
 		
+		if ($_GET['edit'] != -1) {
+			$data = $sql->fetchq("SELECT * FROM forumbans WHERE id = {$_GET['edit']}");
+			if (!$data) {
+				errorpage("You're trying to edit a nonexisting ban or the selected ban has already expired.");
+			}
+		}
+		
 		$_POST['user']      = filter_int($_POST['user']);
 		$_POST['expire']    = filter_int($_POST['expire']);
-		$_POST['reason']    = filter_string($_POST['user']);
+		$_POST['reason']    = filter_string($_POST['reason']);
 		
-		if ($_GET['edit'] != -1 && !$sql->resultq("SELECT 1 FROM forumbans WHERE id = {$_GET['id']}")) {
-			errorpage("You're trying to edit a nonexisting ban or the selected ban has already expired.");
-		}
-		$username = $sql->resultq("SELECT name FROM users WHERE id = {$_POST['user']}");
-		if (!$username) {
+		$user = $sql->fetchq("SELECT name, powerlevel FROM users WHERE id = {$_POST['user']}");
+		if (!$user) {
 			errorpage("This user doesn't exist.");
+		} else if ($user['powerlevel'] >= 2) {
+			errorpage("uh no");
 		}
+		
 		// All OK!
-		$ircreason  = $_POST['reason'] ? " for the following reason: {$_POST['reason']}" : "";
-		$ircmessage = xk(8) . $loguser['name'] . xk(7) ." added forum ban for ". xk(8) . $username . xk(7) ." in ". xk(8) . $forum['name'] . xk(7) . $ircreason .".";;
-		forumban($_POST['user'], $_GET['forum'], $_POST['reason'], $ircmessage, IRC_STAFF, $_POST['expire'], $loguser['id']);
+		if ($_GET['edit'] == -1) {
+			$ircreason  = $_POST['reason'] ? " for the following reason: {$_POST['reason']}" : "";
+			$ircmessage = xk(8) . $loguser['name'] . xk(7) ." added forum ban for ". xk(8) . $user['name'] . xk(7) ." in ". xk(8) . $forum['title'] . xk(7) . $ircreason .".";;
+			forumban($_GET['forum'], $_POST['user'], $_POST['reason'], $ircmessage, IRC_STAFF, $_POST['expire'], $loguser['id']);
+		} else {
+			$values = array(
+				'user'   => $_POST['user'],
+				'expire' => ctime() + 3600 * $_POST['expire'],
+				'reason' => $_POST['reason'],
+			);
+			$sql->queryp("UPDATE forumbans SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['edit']}", $values);
+			xk_ircsend(IRC_STAFF."|". xk(8) . $loguser['name'] . xk(7) ." updated the forum ban for ". xk(8) . $user['name'] . xk(7) ." in ". xk(8) . $forum['title'] . xk(7) .".");
+		}
+		return header("Location: ?forum={$_GET['forum']}");
 	}
 	
+	$addlink = "";
+	if ($ismod) {
+		$windowtitle = "Editing forum bans";
+		$addlink = "
+		<tr>
+			<td class='tdbgc'>
+				<input type='submit' class='submit' style='padding: 0px; font-size: 10px' name='dodel' value='Delete selected'>
+				".auth_tag()."
+			</td>
+			<td class='tdbgc center' colspan=5>
+				<a href='?forum={$_GET['forum']}&edit=-1'>&lt;&lt; Add a new ban &gt;&gt;</a>
+			</td>
+		</tr>";
+	} else {
+		$windowtitle = "Forum bans";
+	}
+	
+	pageheader("{$config['board-name']} -- {$windowtitle}");
+	print adminlinkbar();
+	
+	// Ban list
 	$forumbans = $sql->query("
 		SELECT f.*, ".set_userfields('u1')." uid, ".set_userfields('u2')." uid
 		FROM forumbans f
@@ -49,12 +104,12 @@ if ($_GET['forum']) {
 		ORDER BY date ASC
 	");
 	
-	// Ban list
 	$txt = "";
-	$sel = array();
+	$editban = array();
 	for ($i = 0; $ban = $sql->fetch($forumbans, PDO::FETCH_NAMED); ++$i) {
-		if ($_GET['edit'] == $ban['id']) $sel = $ban;
-		
+		if ($_GET['edit'] == $ban['id']) {
+			$editban = $ban;
+		}
 		$bg = ($i % 2) + 1;
 		if ($ismod) {
 			$editlink = "<a href='?forum={$_GET['forum']}&edit={$ban['id']}'>Edit</a>";
@@ -64,7 +119,7 @@ if ($_GET['forum']) {
 		
 		$txt .= "
 		<tr>
-			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
+			<td class='tdbg{$bg} center fonts' style='width: 60px'><input type='checkbox' name='delban[]' value='{$ban['id']}'> - {$editlink}</td>
 			<td class='tdbg{$bg} center'>".($ban['user'] ? getuserlink(array_column_by_key($ban, 0), $ban['user']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($ban['date'])."</td>
 			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($ban, 1), $ban['banner'])."</td>
@@ -73,18 +128,10 @@ if ($_GET['forum']) {
 		</tr>";
 	}
 	
-	$addlink = "";
-	if ($ismod) {
-		$windowtitle = "Editing forum bans";
-		$addlink = "<tr><td class='tdbgc center' colspan=6><a href='?forum={$_GET['forum']}&edit=-1'>&lt;&lt; Add a new ban &gt;&gt;</td></tr>";
-	} else {
-		$windowtitle = "Forum bans";
-	}
-	
-	pageheader("{$config['board-name']} -- {$windowtitle}");
-	print adminlinkbar();
+
 	
 ?>
+	<form method="POST" action="?forum=<?=$_GET['forum']?>&edit=<?=$_GET['edit']?>">
 	<table class="table">
 		<tr><td class="tdbgh center b" colspan=6>Forum bans for <a href="forum.php?id=<?=$forum['id']?>?>"><?= htmlspecialchars($forum['title']) ?></a> (Total: <?= $i ?>)</td></tr>
 		<tr>
@@ -98,51 +145,87 @@ if ($_GET['forum']) {
 		<?= $txt ?>
 		<?= $addlink ?>
 	</table>
+	</form>
 <?php
 
 	// Edit window
-	if ($ismod && ($sel || $_GET['edit'] == -1)) {
+	if ($ismod && ($editban || $_GET['edit'] == -1)) {
+		
+		if ($_GET['edit'] == -1) {
+			$editban = array(
+				'user' => 0,
+				'expire' => 0,
+				'reason' => '',
+			);
+			$title = "Add a new ban";
+		} else {
+			$title = "Edit ban";
+		}
+		
+		// Create a list of users we can add
+		$userlist = "<option value='0'>Select a user...</option>\r\n";
+		$users1 = $sql->query("SELECT `id`, `name` FROM `users` WHERE `powerlevel` < 2 ORDER BY `name`");
+		while($user = $sql->fetch($users1)) {
+			$selected = ($editban['user'] == $user['id']) ? " selected" : "";
+			$userlist .= "<option value='{$user['id']}'{$selected}>{$user['name']}</option>\r\n";
+		}
+		
+		// Hours left before the user is unbanned
+		$ban_val = ($editban['expire'] ? ceil(($editban['expire'] - ctime()) / 3600) : 0);
+		
+		$ban_select = array(
+			$ban_val => timeunits2($ban_val * 3600),
+			0		 => "*Permanent",
+			1		 => "1 hour",
+			3		 => "3 hours",
+			6		 => "6 hours",
+			24		 => "1 day",
+			72		 => "3 days",
+			168		 => "1 week",
+			336		 => "2 weeks",
+			774		 => "1 month",
+			1488	 => "2 months"
+		);
+		ksort($ban_select);
+		
+		$sel_b[$ban_val] = "selected";
+		$ban_hours = "";
+		foreach($ban_select as $i => $x){
+			$ban_hours .= "<option value=$i ".filter_string($sel_b[$i]).">$x</option>";
+		}
 ?>
 	<br>
 	<center>
 	<form method="POST" action="?forum=<?=$_GET['forum']?>&edit=<?=$_GET['edit']?>">
 	<table class="table" style="max-width: 600px">
-		<tr><td class="tdbgh center b" colspan=2>Add a new ban (mockup)</tr></td>
+		<tr><td class="tdbgh center b" colspan=2><?= $title ?></tr></td>
 		<tr>
 			<td class="tdbg1 center b">User</td>
 			<td class="tdbg2">
 				<select name="user" autofocus>
-					<option value=0 selected>--- Select an user ---</option>
+					<?= $userlist ?>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">Ban duration</td>
 			<td class="tdbg2">
-				<select name="user" autofocus>
-					<option value='0'>*Permanent</option>
-					<option value='1'>1 hour</option>
-					<option value='3'>3 hours</option>
-					<option value='6'>6 hours</option>
-					<option value='24'>1 day</option>
-					<option value='72'>3 days</option>
-					<option value='168'>1 week</option>
-					<option value='336'>2 weeks</option>
-					<option value='744'>1 month</option>
-					<option value='1488'>2 months</option>
+				<select name="expire">
+					<?= $ban_hours ?>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">Reason</td>
 			<td class="tdbg2">
-				<input type="text" name="reason" value="<?= htmlspecialchars("") ?>" maxlength=127 style="width: 450px">
+				<input type="text" name="reason" value="<?= htmlspecialchars($editban['reason']) ?>" maxlength=127 style="width: 450px">
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center b">&nbsp;</td>
 			<td class="tdbg2">
 				<input type="submit" class="submit" name="save" value="Save settings">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 		

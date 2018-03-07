@@ -51,7 +51,7 @@
 		errorpage($tx, "forum.php?id={$t['forum']}", 'return to the forum');
 	}
 
-	
+	$onlineusers = "";
 	// Favorites view
 	if ($fav) {
 		if (!$loguser['id']) {
@@ -98,6 +98,9 @@
 			$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$id} AND user = {$loguser['id']}");
 		}
 		
+		// TODO: Generic online users layout generator
+		$onlineusers = "<table class='table'><td class='tdbg1 fonts center'>".fonlineusers($id)."</table>";
+		
 		$threadcount 	= $forum['numthreads'];
 		$specialscheme 	= $forum['specialscheme'];
 		$specialtitle 	= $forum['specialtitle'];
@@ -114,6 +117,7 @@
 	$windowtitle = $config['board-name']." -- ".$forum['title'];
 	
 	pageheader($windowtitle, $specialscheme, $specialtitle);
+	print $onlineusers;
 
 	$hotcount = $sql->resultq('SELECT hotcount FROM misc');
 	if ($hotcount <= 0) $hotcount = 0xFFFF;

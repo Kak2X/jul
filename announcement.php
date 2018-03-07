@@ -82,17 +82,19 @@
 	");
 	preplayouts($layouts);
 	
-	$avatars = $sql->query("
-		SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
-		FROM threads t
-		LEFT JOIN posts         p ON t.id     = p.thread
-		LEFT JOIN users_avatars v ON p.moodid = v.file
-		WHERE t.forum = $forum AND v.user = p.user ".(isset($fdata) ? "AND t.announcement = 1" : "")."
-		GROUP BY t.id
-		ORDER BY p.date DESC
-		LIMIT $min,$ppp
-	");
-	$avatars = prepare_avatars($avatars);
+	if ($config['allow-avatar-storage']) {
+		$avatars = $sql->query("
+			SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
+			FROM threads t
+			LEFT JOIN posts         p ON t.id     = p.thread
+			LEFT JOIN users_avatars v ON p.moodid = v.file
+			WHERE t.forum = $forum AND v.user = p.user ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+			GROUP BY t.id
+			ORDER BY p.date DESC
+			LIMIT $min,$ppp
+		");
+		$avatars = prepare_avatars($avatars);
+	}
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
@@ -149,7 +151,9 @@
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		$annc['piclink'] = filter_string($avatars[$annc['user']][$annc['moodid']]);
+		if ($config['allow-avatar-storage']) {
+			$annc['piclink'] = filter_string($avatars[$annc['user']][$annc['moodid']]);
+		}
 		$annclist .= threadpost($annc,$bg,$id);
 	}
 	

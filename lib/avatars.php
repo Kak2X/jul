@@ -56,15 +56,35 @@ function delete_avatar($user, $file) {
 const AVATARS_ALL = 0b1;
 const AVATARS_NOHIDDEN = 0b10;
 function get_avatars($user, $flags = 0) {
-	global $sql;
-	return $sql->fetchq("
-		SELECT file, title, hidden, weblink
-		FROM users_avatars
-		WHERE user = {$user}
-		".($flags & AVATARS_ALL ? "" : " AND file != 0")."
-		".($flags & AVATARS_NOHIDDEN ? " AND hidden = 0" : "")."
-		ORDER by file ASC
-	", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+	global $sql, $config;
+	if ($config['allow-avatar-storage']) {
+		if (!$user) {
+			return array();
+		}
+		return $sql->fetchq("
+			SELECT file, title, hidden, weblink
+			FROM users_avatars
+			WHERE user = {$user}
+			".($flags & AVATARS_ALL ? "" : " AND file != 0")."
+			".($flags & AVATARS_NOHIDDEN ? " AND hidden = 0" : "")."
+			ORDER by file ASC
+		", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
+	} else {
+		// Source defines
+		$moods = array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
+		if ($flags & AVATAR_ALL == 0) {
+			unset($moods[0]);
+		}
+		if ($user == 1) {
+			$moods[99] = "special";
+		}
+		// dual compatibility
+		$out = array();
+		for ($i = 1; $i < 17; ++$i) {
+			$out[$i] = ['title' => $moods[$i], 'hidden' => 0, 'weblink' => ''];
+		}
+		return $out;
+	}
 }
 
 function prepare_avatars($sets) {
@@ -78,7 +98,7 @@ function prepare_avatars($sets) {
 
 function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
-function set_mood_avatar_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
+function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
 
 // 0 -> side
 // 1 -> inline
@@ -90,7 +110,7 @@ function mood_layout($mode, $user, $sel = 0) {
 		return "
 		<table style='border-spacing: 0px'>
 			<tr>
-				<td class='nobr' style='max-width: 150px'>
+				<td class='font nobr' style='max-width: 150px'>
 					".($config['allow-avatar-storage'] ? "" : mood_list($user, $sel))."
 				</td>
 				<td>
@@ -107,78 +127,69 @@ function mood_layout($mode, $user, $sel = 0) {
 function mood_list($user, $sel = 0, $return = false) {
 	global $config, $loguser;
 	
-	if ($config['allow-avatar-storage']) {
-		
-		if (!$user) return "";
-		
-		// Self stored avatar mode
-		$moods = get_avatars($user, AVATARS_ALL);
-		
-		if ($return) {
-			return array_column($moods, 'title');
-		}
-		
-		$c[$sel] = "selected";
-		$txt     = "";
-		
-		// If no default avatar was defined, make sure the default option blanks the avatar
+	$moods = get_avatars($user, AVATARS_ALL);
+	if ($return) {
+		return array_column($moods, 'title');
+	}
+	if (!$moods) { // Will always return in stored avatar mode if logged out
+		return "";
+	}
+	
+	$c[$sel]	= " checked";
+	$txt		= "";
+	
+	if ($config['allow-avatar-storage']) { // Self stored avatar mode
+		// If no default avatar was defined, make sure the default option blanks the avatar (true option)
 		if (isset($moods[0])) {
 			$moods[0]['title'] = "-Normal avatar-";
 			$default = '"'.escape_attribute($moods[$sel]['weblink']).'"';
 		} else {
 			$txt .= "<option value='0' onclick='newavatarpreview(0,0,true)'>-Normal avatar-</option>";
-			if ($sel) {
-				$default = '"'.escape_attribute($moods[$sel]['weblink']).'"';
-			} else {
-				$default = 'true'; // Hide the image
-			}
+			// Selecting a non-default avatar should still set the real default
+			$default = $sel ? '"'.escape_attribute($moods[$sel]['weblink']).'"' : 'true';
 		}
 		
 		// Select box, with now auto av preview update
 		foreach ($moods as $file => $data) {
+			$jsclick = " onclick='newavatarpreview({$user},{$file},\"".escape_attribute($data['weblink'])."\")'";
 			$txt .= 
-			"<option value='{$file}' ".filter_string($c[$file])." onclick='newavatarpreview({$user},{$file},\"".escape_attribute($data['weblink'])."\")'>".
+			"<option value='{$file}'". filter_string($c[$file]) ."{$jsclick}>".
 				htmlspecialchars($data['title']).
-			"</option>\n";
+			"</option>\r\n";
 		}
 		
 		$ret = "
 		Avatar: <select name='moodid'>
 			{$txt}
 		</select><script>newavatarpreview({$user},{$sel},{$default})</script>";
-	} else {
 		
-		// Numeric "good luck with hosting" avatar mode
-		$moods = array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-		if ($user == 1) {
-			$moods[99] = "special";
+	} else { // Numeric "good luck with hosting" avatar mode
+	
+		// fetch the mood url if we're using alt credentials (or are posting while logged out)
+		if (!$user) {
+			$moodurl = "";
+		} else if ($user == $loguser['id']) {
+			$moodurl = $loguser['moodurl'];
+		} else {
+			$moodurl = $sql->resultq("SELECT moodurl FROM users WHERE id = {$user}");
 		}
-		
-		if ($return) {
-			return $moods;
-		}
-		
-		// it's not the same if we're using alt credentials
-		$moodurl    = ($user == $loguser['id']) ? $loguser['moodurl'] : $sql->resultq("SELECT moodurl FROM users WHERE id = {$user}"); 
-		$moodurl    = escape_attribute($loguser['moodurl']);
-		$c[$sel]	= " checked";
-		$txt		= "";
+		$moodurl    = escape_attribute($moodurl);
+
 		
 		// Choices display
-		$txt = "";
-		foreach($moods as $num => $name) {
-			$jsclick = (($loguser['id'] && $moodurl) ? "onclick='avatarpreview({$user},$num)'" : "");
+		foreach ($moods as $num => $data) {
+			$jsclick = ($user && $moodurl) ? "onclick='avatarpreview({$user},{$num})'" : "";
 			$txt .= 
 				"<input type='radio' name='moodid' value='{$num}'". filter_string($c[$num]) ." id='mood{$num}' tabindex='". (9000 + $num) ."' style='height: 12px' {$jsclick}>
-				 <label for='mood{$num}' ". filter_string($c[$num]) ." style='font-size: 12px'>&nbsp;{$num}:&nbsp;{$name}</label><br>\r\n";
+				 <label for='mood{$num}'". filter_string($c[$num]) ." style='font-size: 12px'>&nbsp;{$num}:&nbsp;{$data['title']}</label><br>\r\n";
 		}
 		// Set the default image to start with
-		if (!$sel || !$user || !$moodurl)
+		if (!$sel || !$moodurl) {
 			$startimg = 'images/_.gif';
-		else
+		} else {
 			$startimg = str_replace('$', $sel, $moodurl);
-	
-		$ret = "<div class='font b'>Mood avatar list:</div>".$txt.set_mood_avatar_js($moodurl);
+		}
+		$ret = "<div class='b'>Mood avatar list:</div>".$txt.set_mood_url_js($moodurl);
 	}
 	
 	return include_js('avatars.js').$ret;

@@ -10,19 +10,14 @@ require 'lib/function.php';
 
 pageheader("Mood Avatar Preview", NULL, NULL, true); // Small header
 
+$_GET['id'] = filter_int($_GET['id']);
+
+// Admins get to see all of the avatars 
+// not like it matters when you can just access the userpic folder directly, but :V
+$flags = AVATARS_ALL | ($isadmin ? 0 : AVATARS_NOHIDDEN);
+$moods = get_avatars($_GET['id'], $flags);
 
 if ($config['allow-avatar-storage']) {
-	
-	// Determine if we're viewing an avatar set
-	if ($_GET['id']) {
-		// Admins get to see all of the avatars 
-		// not like it matters when you can just access the userpic folder directly, but :V
-		$flags = AVATARS_ALL | ($isadmin ? 0 : AVATARS_NOHIDDEN);
-		$moods = get_avatars($_GET['id'], $flags);
-	} else {
-		$moods = false;
-	}
-	
 	// The user list
 	$users = $sql->query("
 		SELECT u.id, u.name, COUNT(*) avcount
@@ -31,16 +26,7 @@ if ($config['allow-avatar-storage']) {
 		".($isadmin ? "" : "WHERE a.hidden = 0")."
 		GROUP BY u.id
 	");
-
 } else {
-	$_GET['id'] = filter_int($_GET['id']);
-	$moods	= array(1 => "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-	
-	// compat. hack
-	for ($i = 1; $i < 17; ++$i) {
-		$moods[$i] = array('title' => $moods[$i], 'weblink' => '');
-	}
-	
 	// Build the select box options for the user selection
 	$users = $sql->query("
 		SELECT id, name, moodurl 
@@ -51,7 +37,7 @@ if ($config['allow-avatar-storage']) {
 }
 
 
-$me = false;
+$me      = false;
 $options = '';
 
 while ($u = $sql->fetch($users)) {
@@ -84,26 +70,19 @@ if ($me && $moods) {
 		if ($_GET['start'] < 1) {
 			$_GET['start'] = 1;
 		}
-		// >_>
-		if ($loguser['id'] == 1 && $me['id'] == 1) {
-			$moods[99] = array('title' => "special", 'weblink' => '');
-		}
 		
 		$moodurl  = htmlspecialchars($me['moodurl']);
 		$startimg = str_replace('$', $_GET['start'], $moodurl);
-		print set_mood_avatar_js($moodurl);
+		print set_mood_url_js($moodurl);
 		
 		$header_text = $moodurl;
 		$avtype = ""; // use avatarpreview()
 	}
 	
-
-	
 	// Mood avatar selection
 	$txt     = "";
 	$confirm = -1;
 	foreach ($moods as $num => $x) {
-		
 		
 		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num},\"".escape_attribute($x['weblink'])."\")'";
 		if ($num == $_GET['start']) {
@@ -139,7 +118,7 @@ if ($me && $moods) {
 			<b>Mood avatar list:</b><br>
 			{$txt}
 		</td>
-		<td class='tdbg2 center' width=400px>
+		<td class='tdbg2 center' style='width: 400px'>
 			<img src=\"$startimg\" id=prev>
 		</td>
 	</tr>";

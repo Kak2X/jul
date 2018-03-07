@@ -188,9 +188,9 @@ if (!$_GET['forum']) {
 		$txt .= "
 		<tr>
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
-			<td class='tdbg{$bg} center'>".($x['user'] ? getuserlink(array_column_by_key($x, 0), $x['user']) : "Autoban")."</td>
+			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($x, 0), $x['user'])."</td>
 			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
-			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($x, 1), $x['banner'])."</td>
+			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(array_column_by_key($x, 1), $x['banner']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
 			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
 		</tr>";

@@ -305,6 +305,7 @@
 	</tr>
 	<tr>
 		<td class='tdbg2 fonts center' colspan=2>
+			<a href="forumbansbyuser.php?id=<?=$id?>">View forum bans to this user</a> | 
 			<a href="postsbyuser.php?id=<?=$id?>">List posts by this user</a> |
 			<a href="postsbytime.php?id=<?=$id?>">Posts by time of day</a> |
 			<a href="postsbythread.php?id=<?=$id?>">Posts by thread</a> | 

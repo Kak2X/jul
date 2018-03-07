@@ -405,7 +405,7 @@
 			if ($loguser['pagestyle'])
 				$belowtitle[] = $pagelinks;
 			else
-				$threadtitle .= " <span class='fonts'>({$pagelinks})</span>";
+				$threadtitle .= " <span class='pagelinks fonts'>({$pagelinks})</span>";
 		}
 		
 		// The thread description has its own line though

@@ -1,42 +1,113 @@
 <?php
+	const POST_LIMIT    = 5000;
+	const PROJECT_LIMIT = true;
+	
 	require 'lib/function.php';
 	
-	$id		= filter_int($_GET['id']);
-	$action = filter_string($_GET['action']); // I am a bad person
-	$user = $sql->fetchq("SELECT * FROM users WHERE id = $id");
-	$windowtitle = "{$config['board-name']} -- Profile for {$user['name']}";
-
-//	if ($_GET['id'] == 1 && !$x_hacks['host']) {
-//		print "$header<br><center><img src='http://earthboundcentral.com/wp-content/uploads/2009/01/m3deletede.png'></center><br>$footer";
-//		printtimedif($startingtime);
-//		die();
-//	}
-
+	$_GET['id']		= filter_int($_GET['id']);
+	$_GET['action'] = filter_string($_GET['action']);
+	
+	$user = $sql->fetchq("SELECT * FROM users WHERE id = {$_GET['id']}");
 	if (!$user) {
 		errorpage("The specified user doesn't exist.");
 	}
+	
+	$windowtitle = "{$config['board-name']} -- Profile for {$user['name']}";
 
-	$isblocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = $id");
-	if ($loguser['id'] && $action) {
-		check_token($_GET['auth'], 32);
-		switch ($action) {
-			case 'blocklayout':
-				if ($isblocked) {
-					$sql->query("DELETE FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = $id");
-					$txt = "Layout unblocked!";
-				} else {
-					$sql->query("INSERT INTO blockedlayouts (user, blocked) VALUES ({$loguser['id']}, $id)");
-					$txt = "Layout blocked!";
-				}
-				break;
-			default: return header("Location: profile.php?id=$id");
+//	if ($_GET['id'] == 1 && !$x_hacks['host']) {
+//		pageheader();
+//		print "<br><center><img src='http://earthboundcentral.com/wp-content/uploads/2009/01/m3deletede.png'></center><br>";
+//		pagefooter();
+//	}
+
+
+	if ($loguser['id']) {
+		$layoutblocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$_GET['id']}");
+		if ($_GET['action']) {
+			check_token($_GET['auth'], TOKEN_NOOB);
+			switch ($_GET['action']) {
+				case 'blocklayout':
+					if ($layoutblocked) {
+						$sql->query("DELETE FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$_GET['id']}");
+						$txt = "Layout unblocked!";
+					} else {
+						$sql->query("INSERT INTO blockedlayouts (user, blocked) VALUES ({$loguser['id']}, {$_GET['id']})");
+						$txt = "Layout blocked!";
+					}
+					break;
+				default: return header("Location: profile.php?id={$_GET['id']}");
+			}
+			errorpage($txt ,"profile.php?id={$_GET['id']}","{$user['name']}'s profile",0);
 		}
-		errorpage($txt ,"profile.php?id=$id","{$user['name']}'s profile",0);
 	}
 	
 	pageheader($windowtitle);
 	
-/*  User ratings (disabled)
+	$numdays = (ctime() - $user['regdate']) / 86400;
+	$userlink = getuserlink($user, 0, '', true);	// With minipic
+
+	// Also known as
+	if ($user['aka'] && $user['aka'] != $user['name']) {
+		$aka = htmlspecialchars($user['aka']);
+	} else {
+		$aka = NULL;
+	}
+	
+	// Banned until
+	if ($user['powerlevel'] == -1 && $user['ban_expire']) {
+		$bantime = printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-ctime())." remaining)";
+	} else {
+		$bantime = NULL;
+	}
+	
+	// Total posts
+	if (isset($_GET['lol'])) {
+		$user['posts'] = mt_rand(1562, 15702);
+		$maxposts = $user['posts'] + mt_rand(200, $user['posts']);
+	}
+	$postavg 	= sprintf("%01.2f", $user['posts'] / $numdays);
+	//// Projected date
+	$projtext   = "";
+	if ($user['posts']) {
+		$topposts = POST_LIMIT * (PROJECT_LIMIT ? 1 : ceil($user['posts'] / POST_LIMIT));
+		// regtime * remaining posts / posts
+		$projdate = ctime() + (ctime() - $user['regdate']) * ($topposts - $user['posts']) / ($user['posts']);
+		if (
+			$projdate > ctime() && 
+			$projdate < 2000000000 && 
+			(!PROJECT_LIMIT || $user['posts'] < POST_LIMIT)
+		) {
+			$projtext = " -- Projected date for {$topposts} posts: ".printdate($projdate);
+		}
+	}
+	//// Postbar
+	$images = array(
+		'left'  => "images/{$numdir}barleft.gif",
+		'on'    => "images/{$numdir}bar-on.gif",
+		'off'   => "images/{$numdir}bar-off.gif",
+		'right' => "images/{$numdir}barright.gif",
+	);
+	if (!isset($_GET['lol'])) {
+		$maxposts 		= $sql->resultq("SELECT MAX(posts) FROM users");
+		if (!$maxposts) $maxposts = 1;
+	}
+	$bar = drawprogressbar(116, 8, floor(($user['posts'] / $maxposts) * 100), $images);
+	
+	// Total threads
+	$threadsposted 	= $sql->resultq("SELECT COUNT(*) FROM threads WHERE user = {$_GET['id']}");
+	
+	// EXP
+	$exp 		= calcexp($user['posts'], $numdays);
+	$lvl 		= calclvl($exp);
+	$expleft 	= calcexpleft($exp);
+	$expstatus 	= "Level: {$lvl}<br>EXP: {$exp} (for next level: {$expleft})";
+	if ($user['posts'] > 0) {
+		$expstatus .= "<br>Gain: ".calcexpgainpost($user['posts'], $numdays)." EXP per post, ".calcexpgaintime($user['posts'],$numdays)." seconds to gain 1 EXP when idle";
+	}
+	
+	// User rating (disabled)
+	$ratingstatus = "";
+	/*
 	$users1=$sql->query("SELECT id,posts,regdate FROM users");
 	while($u=$sql->fetch_array($users1)){
 		$u['level']=calclvl(calcexp($u['posts'],(ctime()-$u['regdate'])/86400));
@@ -46,7 +117,7 @@
 
 	$ratescore=0;
 	$ratetotal=0;
-	$ratings=$sql->query("SELECT userfrom,rating FROM userratings WHERE userrated=$id");
+	$ratings=$sql->query("SELECT userfrom,rating FROM userratings WHERE userrated={$_GET['id']}");
 	while($rating=@$sql->fetch($ratings)){
 		$ratescore+=$rating['rating']*$users[$rating['userfrom']]['level'];
 		$ratetotal+=$users[$rating['userfrom']]['level'];
@@ -58,117 +129,136 @@
 	} else { 
 		$ratingstatus="None";
 	}
-	if($loguserid and $logpwenc and $loguserid!=$id)
-		$ratelink=" | <a href=rateuser.php?id=$id>Rate user</a>";
-*/
-	$ratelink = "";
-	$ratingstatus = "";
+	if($loguserid and $logpwenc and $loguserid!=$_GET['id'])
+		$ratelink=" | <a href=rateuser.php?id={$_GET['id']}>Rate user</a>";
+	*/
 	
-	$maxposts 		= $sql->resultq("SELECT posts FROM users ORDER BY posts DESC LIMIT 1");
-	$userrank 		= getrank($user['useranks'],$user['title'],$user['posts'],$user['powerlevel'],$user['ban_expire']);
-	$threadsposted 	= $sql->resultq("SELECT COUNT(id) FROM threads WHERE user = $id");
-	if (!$maxposts) $maxposts = 1;
-	//$i = 0;
-	
-	
-	// Forum last post
-	if($user['posts']) {
+	// Last post
+	if ($user['posts']) {
 		$lastpostdate = printdate($user['lastposttime']);
-
-		//$postsfound=$sql->resultq("SELECT count(id) AS cnt FROM posts WHERE user=$id",0,"cnt");
-		// TODO: Why not just ORDER BY date DESC?
-		$post = $sql->fetchq("SELECT id, thread FROM posts WHERE user = $id AND date = {$user['lastposttime']}");
-
-		if ($post && $thread = $sql->fetchq("SELECT title,forum FROM threads WHERE id = {$post['thread']}")) {
-			$forum = $sql->fetchq("SELECT id,title,minpower FROM forums WHERE id = {$thread['forum']}");
-			if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel'])
-				$lastpostlink = ", in a restricted forum";
-			else
-				$lastpostlink = ", in <a href=thread.php?pid={$post['id']}#{$post['id']}>".htmlspecialchars($thread['title'])."</a> (<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>)";
+		$postsfound = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$_GET['id']}");
+		$post = $sql->fetchq("
+			SELECT p.id, t.title ttitle, f.id fid, f.title ftitle, f.minpower
+			FROM posts p
+			INNER JOIN threads t ON p.thread = t.id
+			INNER JOIN forums  f ON t.forum  = f.id
+			WHERE p.user = {$_GET['id']} AND p.date = {$user['lastposttime']}
+		");
+		if (!$post || ($post['minpower'] && $post['minpower'] > $loguser['powerlevel'])) {
+			$lastpostlink = ", in a restricted forum";
+		} else {
+			$threadtitle  = htmlspecialchars($post['ttitle']);
+			$forumtitle   = htmlspecialchars($post['ftitle']);
+			$lastpostlink = ", in <a href='thread.php?pid={$post['id']}#{$post['id']}'>{$threadtitle}</a> (<a href='forum.php?id={$post['fid']}'>{$forumtitle}</a>)";
 		}
 	} else {
 		$lastpostdate = "None";
 		$lastpostlink = "";
+		$postsfound   = 0;
+	}
+	
+	// Last activity (IP info)
+	if ($isadmin && $user['lastip']) {
+		$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
 	}
 
-	// Action links
-	$sneek = $lastip = $sendpmsg = "";
-	if ($loguser['id']) {
-		$token = generate_token(32);
-		$sendpmsg = " | <a href='sendprivate.php?userid=$id'>Send private message</a>".
-					" | <a href='profile.php?id=$id&action=blocklayout&auth=$token'>".($isblocked ? "Unb" : "B")."lock layout</a>";
-		if($isadmin){
-			if($user['lastip'])
-				$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
-			$sneek = "<tr><td class='tdbg1 fonts center' colspan=2><a href='private.php?id={$id}' style='font-style:italic;'>View private messages</a> |"
-				." <a href='forum.php?fav=1&user={$id}' style='font-style:italic;'>View favorites</a> |"
-				//." <a href='rateuser.php?action=viewvotes&id={$id}' style='font-style:italic;'>View votes</a> |"
-				." <a href='editprofile.php?id={$id}' style='font-style:italic;'>Edit user</a>";
-		}
+	// Email address
+	$email = urlencode(htmlspecialchars($user['email']));
+	$email = "<a href=\"mailto:{$email}\">{$email}</a>";
+	switch ($user['privateemail']) {
+		case 0: break; // Public
+		case 1:
+			if (!$loguser['id']) $email = "Email witheld from guests. Log in to see it.";
+			break;
+		case 2:
+			if (!$isadmin || $loguser['id'] != $_GET['id']) $email = "<i>Private</i>";
+			break;
 	}
-
-	$aim = str_replace(" ", "+", $user['aim']);
-	$schname = $sql->resultq("SELECT name FROM schemes WHERE id=$user[scheme]");
-	$numdays = (ctime()-$user['regdate'])/86400;
-
-	$user['signature']  = doreplace($user['signature'],$user['posts'],$numdays, $id);
-	$user['postheader'] = doreplace($user['postheader'],$user['posts'],$numdays, $id);
 	
-	$picture = $moodavatar = "";
-	if ($user['picture']) $picture = "<img src=\"".htmlspecialchars($user['picture'])."\">";
-	if (
-		( $config['allow-avatar-storage'] && $sql->resultq("SELECT COUNT(*) FROM users_avatars WHERE user = {$id}")) ||
-		(!$config['allow-avatar-storage'] && $user['moodurl'])
-	) $moodavatar = " | <a href='avatar.php?id=$id' class=\"popout\" target=\"_blank\">Preview mood avatar</a>";
+	// Homepage
+	$homepagename = ($user['homepagename'] ? htmlspecialchars($user['homepagename'])."</a> - " : "").htmlspecialchars($user['homepageurl']);	
 	
-	
+	// ICQ
 	if (!$user['icq']) {
-		$user['icq'] 	= "";
-		$icqicon 		= "";
+		$user['icq'] = $icqicon = "";
 	} else {
 		$icqicon = "<a href=\"http://wwp.icq.com/{$user['icq']}#pager\"><img src=\"http://wwp.icq.com/scripts/online.dll?icq={$user['icq']}&img=5\" border=0></a>";
 	}
 	
-	$userlink = getuserlink($user, 0, '', true);	// With minipic
+	// AIM screen name
+	if ($user['aim']) {
+		$aimnum = str_replace(" ", "+", $user['aim']);
+		$aimlink = "<a href=\"aim:goim?screenname=".htmlspecialchars($aimnum)."\">".htmlspecialchars($user['aim'])."</a>";
+	} else {
+		$aimlink = "";
+	}
 	
+	//Timezone offset
 	$tzoffset = $user['timezone'];
 	$tzoffrel = $tzoffset - $loguser['timezone'];
-	$tzdate   = date($loguser['dateformat'],ctime()+$tzoffset*3600);
+	$tzdate   = date($loguser['dateformat'], ctime() + $tzoffset * 3600);
+	
+	// Birthday
 	if($user['birthday']){
 		$birthday = date("l, F j, Y", $user['birthday']);
 		$age = "(".floor((ctime()-$user['birthday'])/86400/365.2425)." years old)";
 	} else {
 		$birthday = $age = "";
 	}
-
-	// RPG fun shit
-	$exp 		= calcexp($user['posts'],(ctime()-$user['regdate'])/86400);
-	$lvl 		= calclvl($exp);
-	$expleft 	= calcexpleft($exp);
-	$expstatus 	= "Level: $lvl<br>EXP: $exp (for next level: $expleft)";
 	
-	if($user['posts'] > 0)
-		$expstatus .= "<br>Gain: ".calcexpgainpost($user['posts'],(ctime()-$user['regdate'])/86400)." EXP per post, ".calcexpgaintime($user['posts'],(ctime()-$user['regdate'])/86400)." seconds to gain 1 EXP when idle";
-	$postavg 	= sprintf("%01.2f",$user['posts']/(ctime()-$user['regdate'])*86400);
-	$totalwidth = 116;
-	$barwidth 	= floor(($user['posts']/$maxposts) * $totalwidth);
-	$baron = $baroff = "";
-	if ($barwidth < 0) $barwidth = 0;
-	if ($barwidth) $baron = "<img src='images/{$numdir}bar-on.gif' width=$barwidth height=8>";
-	if ($barwidth < $totalwidth) $baroff = "<img src=images/{$numdir}bar-off.gif width=".($totalwidth-$barwidth)." height=8>";
-	$bar = "<img src='images/{$numdir}barleft.gif'>$baron$baroff<img src='images/{$numdir}barright.gif'><br>";
+	$profile = [
+		'General information' => [
+			#'Username'      => htmlspecialchars($user['name']),
+			'Also known as'	=> $aka,
+			'Banned until'  => $bantime,
+			'Total posts'   => "{$user['posts']} ({$postsfound} found, {$postavg} per day) {$projtext}<br>{$bar}",
+			'Total threads' => $threadsposted,
+			'EXP'           => $expstatus,
+			#'User rating'   => $ratingstatus,
+			'Registered on' => printdate($user['regdate'])." (".floor($numdays)." days ago)",
+			'Last post'     => "{$lastpostdate}{$lastpostlink}",
+			'Last activity' => printdate($user['lastactivity']).$lastip,	
+		],
+		
+		'Contact information' => [
+			'Email address'   => $email,
+			'Homepage'        => "<a href=\"".htmlspecialchars($user['homepageurl'])."\">{$homepagename}</a>",
+			'ICQ number'      => "{$user['icq']}{$icqicon}",
+			'AIM screen name' => $aimlink,
+		],
+		
+		'User settings' => [
+			'Timezone offset' => "{$tzoffset} hours from the server, {$tzoffrel} hours from you (current time: {$tzdate})",
+			'Items per page'  => "{$user['threadsperpage']} threads, {$user['postsperpage']} posts",
+			'Color scheme'    => $sql->resultq("SELECT name FROM schemes WHERE id = {$user['scheme']}"),
+		],
+		
+		'Personal information' => [
+			'Real name' => htmlspecialchars($user['realname']),
+			'Location'  => str_ireplace("&lt;br&gt;", "<br>", htmlspecialchars($user['location'])),
+			'Birthday'  => "{$birthday} {$age}",
+			'User bio'  => dofilters(doreplace2(doreplace($user['bio'], $user['posts'], $numdays, $_GET['id']))),
+		],
+	];
 	
+	/*
+		Equipped items
+	*/
+	$shops 	= $sql->getresultsbykey("SELECT id, name FROM itemcateg");
+	$equip  = getuseritems($_GET['id'], true);
+	$shoplist = "";
+	foreach ($shops as $shopid => $shopname) {
+		$shoplist .= "
+			<tr>
+				<td class='tdbg1 fonts center'>{$shopname}</td>
+				<td class='tdbg2 fonts center' style='width: 100%'>".filter_string($equip[$shopid]['name'])."&nbsp;</td>
+			</tr>
+		";
+	}
 	
-	$topposts = 5000;
-	if($user['posts']) $projdate = ctime()+(ctime()-$user['regdate'])*($topposts-$user['posts'])/($user['posts']);
-	if(!$user['posts'] || $user['posts'] >= $topposts || $projdate > 2000000000 || $projdate < ctime()) $projdate="";
-	else $projdate = " -- Projected date for $topposts posts: ".printdate($projdate);
-
-	
-	$homepagename = htmlspecialchars($user['homepageurl']);
-	if($user['homepagename']) $homepagename = htmlspecialchars($user['homepagename'])."</a> - ".htmlspecialchars($user['homepageurl']);
-
-	
+	/*
+		Post preview
+	*/
 	$data = array(
 		// Text
 		'message' => "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.",
@@ -185,95 +275,67 @@
 		#'attach_sel' => "",
 	);
 	
-	// so that layouts show up regardless of setting (for obvious reasons)
-	$loguser['viewsig'] = 1;
-	$blockedlayouts[$id] = NULL;
 	
-	
-	// shop/rpg such
-	$eq = $sql->fetchq("SELECT * FROM users_rpg WHERE uid = $id");
-	$shops 	= $sql->getresultsbykey("SELECT id, name FROM itemcateg");
-	$q 		= "";
-	foreach ($shops as $shopid => $shopname) $q .= " OR id = ".filter_int($eq['eq'.$shopid]);
-	//$shops = $sql->query('SELECT * FROM itemcateg ORDER BY corder');
-	//$itemids = array_unique(array($eq['eq1'], $eq['eq2'], $eq['eq3'], $eq['eq4'], $eq['eq5'], $eq['eq6'], $eq['eq7']));
-	//$itemids = implode(',', $itemids);
-	$items = $sql->getarraybykey("SELECT * FROM items WHERE id=0$q", 'id');
-	$shoplist = "";
-	foreach ($shops as $shopid => $shopname) {
-		$shoplist.="
-			<tr>
-				<td class='tdbg1 fonts center'>$shopname</td>
-				<td class='tdbg2 fonts center' width=100%>".filter_string($items[$eq['eq'.$shopid]]['name'])."&nbsp;</td>
-			</tr>
-		";
-	}
+/*
+	Profile options
+*/
+	// Base
+	$options = [
+		0 => [
+			"Show posts"                => ["thread.php?user={$_GET['id']}"],
+			"View threads by this user" => ["forum.php?user={$_GET['id']}"],
+		],
+		1 => [
+			"View forum bans to this user" => ["forumbansbyuser.php?id={$_GET['id']}"],
+			"List posts by this user"      => ["forum.php?user={$_GET['id']}"],
+			"List posts by this user"      => ["postsbyuser.php?id={$_GET['id']}"],
+			"Posts by time of day"         => ["postsbytime.php?id={$_GET['id']}"],
+			"Posts by thread"              => ["postsbythread.php?id={$_GET['id']}"],
+			"Posts by forum"               => ["postsbyforum.php?id={$_GET['id']}"],
+		],
+	];
+	if ($loguser['id']) {
+		$token = generate_token(TOKEN_NOOB);
+		$un_b = ($layoutblocked ? "Unb" : "B");
 		
-	/* extra munging for whatever reason */
-	$email = urlencode(htmlspecialchars($user['email']));
-	$email = "<a href=\"mailto:$email\">$email</a>";
-
-	switch ($user['privateemail']) {
-		case 0: break; // Public
-		case 1:
-			if (!$loguser['id']) $email = "Email witheld from guests. Log in to see it.";
-			break;
-		case 2:
-			if (!$isadmin || $loguser['id'] != $id) $email = "<i>Private</i>";
-			break;
+		$options[0]["Send private message"] = ["sendprivate.php?userid={$_GET['id']}"];
+		$options[0]["{$un_b}lock layout"]   = ["profile.php?id={$_GET['id']}&action=blocklayout&auth={$token}"];
+		/*if ($loguser['id'] != $_GET['id']) {
+			$options[0]["Rate user"] = ["rateuser.php?id={$_GET['id']}"];
+		}*/
+		if ($isadmin) {
+			$italic = "style='font-style: italic'";
+			$options[2] = [
+				"View private messages" => ["private.php?id={$_GET['id']}", $italic],
+				"View favorites"        => ["forum.php?fav=1&user={$_GET['id']}", $italic],
+				#"View votes"            => ["rateuser.php?action=viewvotes&id={$_GET['id']}", $italic],
+				"Edit user"             => ["editprofile.php?id={$_GET['id']}", $italic],
+			];
+		}
 	}
-	// AKA
-	if ($user['aka'] && $user['aka'] != $user['name']) {
-		$aka = "<tr><td class='tdbg1' width=150><b>Also known as</td><td class='tdbg2'>".htmlspecialchars($user['aka'])."</td></tr>";
-	} else {
-		$aka = "";
+	if (
+		( $config['allow-avatar-storage'] && $sql->resultq("SELECT COUNT(*) FROM users_avatars WHERE user = {$_GET['id']}")) ||
+		(!$config['allow-avatar-storage'] && $user['moodurl'])
+	) {
+		$options[0]["Preview mood avatar"] = ["avatar.php?id={$_GET['id']}", "class='popout' target='_blank'"];	
 	}
-	if ($user['powerlevel'] == -1 && $user['ban_expire']) {
-		$bantime =  "<tr><td class='tdbg1' width=150><b>Banned until</td><td class='tdbg2'>".printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-ctime())." remaining)</td></tr>";
-	} else {
-		$bantime = "";
-	}
-	
 	
 ?>
 <div>Profile for <?=$userlink?></div>
 <table cellpadding=0 cellspacing=0 border=0>
 	<tr>
 		<td width=100% valign=top>
-		
-		<table class='table'>
-			<tr><td class='tdbgh center' colspan=2>General information</td></tr>
-			<!-- <td class='tdbg1' width=150><b>Username</td>			<td class='tdbg2'><?=$user['name']?><tr> -->
-			<?=$aka.$bantime?>
-			<tr><td class='tdbg1' width=150><b>Total posts</td>			<td class='tdbg2'><?=$user['posts']?> (<?=$postavg?> per day) <?=$projdate?><br><?=$bar?></td></tr>
-			<tr><td class='tdbg1' width=150><b>Total threads</td>		<td class='tdbg2'><?=$threadsposted?></td></tr>
-			<tr><td class='tdbg1' width=150><b>EXP</td>					<td class='tdbg2'><?=$expstatus?></td></tr>
-			<!--<tr><td class='tdbg1' width=150><b>User rating</td>			<td class='tdbg2'><?=$ratingstatus?></td></tr>-->
-			<tr><td class='tdbg1' width=150><b>Registered on</td>		<td class='tdbg2'><?=printdate($user['regdate'])?> (<?=floor((ctime()-$user['regdate'])/86400)?> days ago)</td></tr>
-			<tr><td class='tdbg1' width=150><b>Last post</td>			<td class='tdbg2'><?=$lastpostdate?><?=$lastpostlink?></td></tr>
-			<tr><td class='tdbg1' width=150><b>Last activity</td>		<td class='tdbg2'><?=printdate($user['lastactivity'])?><?=$lastip?></td></tr>
-		</table>
+		<?= profile_table($profile, 'General information') ?>
 		<br>
-		<table class='table'>
-			<tr><td class='tdbgh center' colspan=2>Contact information</td></tr>
-			<tr><td class='tdbg1' width=150><b>Email address</td>		<td class='tdbg2'><?=$email?>&nbsp;</td></tr>
-			<tr><td class='tdbg1' width=150><b>Homepage</td>			<td class='tdbg2'><a href="<?=htmlspecialchars($user['homepageurl'])?>"><?=$homepagename?></a>&nbsp;</td></tr>
-			<tr><td class='tdbg1' width=150><b>ICQ number</td>			<td class='tdbg2'><?=$user['icq']?> <?=$icqicon?>&nbsp;</td></tr>
-			<tr><td class='tdbg1' width=150><b>AIM screen name</td>		<td class='tdbg2'><a href="aim:goim?screenname=<?=htmlspecialchars($aim)?>"><?=htmlspecialchars($user['aim'])?></a>&nbsp;</td></tr>
-		</table>
+		<?= profile_table($profile, 'Contact information') ?>
 		<br>
-		<table class='table'>
-			<tr><td class='tdbgh center' colspan=2>User settings</td></tr>
-			<tr><td class='tdbg1' width=150><b>Timezone offset</td>		<td class='tdbg2'><?=$tzoffset?> hours from the server, <?=$tzoffrel?> hours from you (current time: <?=$tzdate?>)</td></tr>
-			<tr><td class='tdbg1' width=150><b>Items per page</td>		<td class='tdbg2'><?=$user['threadsperpage']?> threads, <?=$user['postsperpage']?> posts</td></tr>
-			<tr><td class='tdbg1' width=150><b>Color scheme</td>		<td class='tdbg2'><?=$schname?></td></tr>
-		</table>
+		<?= profile_table($profile, 'User settings') ?>
 	</td>
 	<td>&nbsp;&nbsp;&nbsp;</td>
 	<td valign=top>
 		<table class='table'>
 			<tr><td class='tdbgh center'>RPG status</td></tr>
-			<tr><td class='tdbg1'><img src='status.php?u=<?=$id?>'></td></tr>
+			<tr><td class='tdbg1'><img src='status.php?u=<?=$_GET['id']?>'></td></tr>
 		</table>
 		<br>
 		<table class='table'>
@@ -283,38 +345,44 @@
 	</td>
 </table>
 <br>
-<table class='table'>
-	<tr><td class='tdbgh center' colspan=2>Personal information</td></tr>
-	<tr><td class='tdbg1' width=150><b>Real name</td>			<td class='tdbg2'><?=$user['realname']?>&nbsp;</td></tr>
-	<tr><td class='tdbg1' width=150><b>Location</td>			<td class='tdbg2'><?=$user['location']?>&nbsp;</td></tr>
-	<tr><td class='tdbg1' width=150><b>Birthday</td>			<td class='tdbg2'><?=$birthday?> <?=$age?>&nbsp;</td></tr>
-	<tr><td class='tdbg1' width=150><b>User bio</td>			<td class='tdbg2'><?=dofilters(doreplace2(doreplace($user['bio'], $user['posts'], (ctime()-$user['regdate'])/86400, $id)))?>&nbsp;</td></tr>
-</table>
+<?= profile_table($profile, 'Personal information') ?>
 <br>
 <?= preview_post($user, $data, PREVIEW_PROFILE, "Sample post") ?>
 <table class='table'>
-	<tr><td class='tdbgh fonts center' colspan=2>Options</td></tr>
-	<tr>
-		<td class='tdbg2 fonts center' colspan=2>
-			<a href="thread.php?user=<?=$id?>">Show posts</a> | 
-			<a href="forum.php?user=<?=$id?>">View threads by this user</a>
-			<?=$sendpmsg?>
-			<?=$ratelink?>
-			<?=$moodavatar?>
-		</td>
-	</tr>
-	<tr>
-		<td class='tdbg2 fonts center' colspan=2>
-			<a href="forumbansbyuser.php?id=<?=$id?>">View forum bans to this user</a> | 
-			<a href="postsbyuser.php?id=<?=$id?>">List posts by this user</a> |
-			<a href="postsbytime.php?id=<?=$id?>">Posts by time of day</a> |
-			<a href="postsbythread.php?id=<?=$id?>">Posts by thread</a> | 
-			<a href="postsbyforum.php?id=<?=$id?>">Posts by forum</td><?=$sneek?>
-		</td>
-	</tr>
+	<tr><td class='tdbgh fonts center'>Options</td></tr>
+	<?= profile_controls($options, 0) ?>
+	<?= profile_controls($options, 1) ?>
+	<?= profile_controls($options, 2) ?>
 </table>
 <?php
 
-  pagefooter();
+	pagefooter();
   
-?>
+  
+function profile_table($arr, $head) {
+	$out = "";
+	foreach ($arr[$head] as $field => $val) {
+		if ($val !== NULL) {
+			$out .= "<tr><td class='tdbg1 b' style='width: 150px'>{$field}</td><td class='tdbg2'>{$val}</td></tr>\r\n";
+		}
+	}
+	return "
+	<table class='table'>
+		<tr><td class='tdbgh center' colspan=2>{$head}</td></tr>
+		{$out}
+	</table>";
+}
+
+function profile_controls($arr, $key, $colspan=1) {
+	if (!isset($arr[$key])) { // Restricted set
+		return "";
+	}
+	$out = "";
+	foreach ($arr[$key] as $field => $val) {
+		if ($val !== NULL) {
+			$attr = isset($val[1]) ? " {$val[1]}" : "";
+			$out .= ($out ? " | " : "")."<a href=\"{$val[0]}\"{$attr}>{$field}</a>\r\n";
+		}
+	}
+	return "<tr><td class='tdbg2 fonts center' colspan={$colspan}>{$out}</td></tr>";
+}

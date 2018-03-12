@@ -207,6 +207,7 @@
 				$sql->queryp("INSERT INTO users SET ".mysql::setplaceholders($data), $data);
 				
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
+				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, {$currenttime} FROM forums");
 				xk_ircout("user", $ircout['name'], $ircout);
 				
 				// If the next user is the deleted user ID, make sure to automatically register it

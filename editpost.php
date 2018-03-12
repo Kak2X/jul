@@ -259,23 +259,6 @@
 	}
   
 	else if ($action == 'delete'){
-		
-		if (isset($_POST['reallydelete'])) {
-			check_token($_POST['auth']);
-			/*
-			if ($loguserid == 1162) { // not like it matters since he's banned anyway <:3
-				xk_ircsend("1|The jceggbert5 dipshit tried to delete another post: ". $id);
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
-			}
-			*/
-			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$id}");
-			if ($post['deleted']) {
-				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid=$id#$id","return to the thread",0);
-			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid=$id#$id","return to the thread",0);
-			}
-		}
-		
 		if ($post['deleted']) {
 			$message = "Do you want to undelete this post?";
 			$btntext = "Yes";
@@ -283,28 +266,35 @@
 			$message = "Are you sure you want to <b>DELETE</b> this post?";
 			$btntext = "Delete post";
 		}
-	
-		?>
-		<form action='editpost.php?action=delete&id=<?=$id?>' method='POST'>
-		<table class='table'>
-			<tr>
-				<td class='tdbg1 center'>
-					<?= $message ?><br>
-					<br>
-					<?= auth_tag() ?>
-					<input type='submit' class='submit' name='reallydelete' value='<?=$btntext?>'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
-				</td>
-			</tr>
-		</table>
-		</form>
-		<?php
+		$form_link = "editpost.php?action=delete&id={$id}";
+		$buttons       = array(
+			0 => [$btntext],
+			1 => ["Cancel", "thread.php?pid={$id}#{$id}"]
+		);
+		
+		if (confirmpage($message, $form_link, $buttons)) {
+			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$id}");
+			if ($post['deleted']) {
+				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+			} else {
+				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+			}
+		}
 	}
 	else if ($action == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		
-		$pcount = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
-		if (isset($_POST['reallyerase'])) {
-			check_token($_POST['auth'], TOKEN_SLAMMER);
-			
+		$pcount  = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
+		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
+		if ($pcount <= 1) {
+			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
+		}
+		$form_link = "editpost.php?action=erase&id={$id}";
+		$buttons       = array(
+			0 => ["Delete post"],
+			1 => ["Cancel", "thread.php?pid={$id}#{$id}"]
+		);
+		
+		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM posts WHERE id = $id");
 			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$id}");
@@ -330,26 +320,10 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
 			}
 		}
-	
-		?>
-		<form action='editpost.php?action=erase&id=<?=$id?>' method='POST'>
-		<table class='table'>
-			<tr>
-				<td class='tdbg1 center'>
-					Are you sure you want to <b>permanently DELETE</b> this post from the database?<br>
-					<?=($pcount <= 1 ? "<div class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</div>" : "")?>
-					<br>
-					<?= auth_tag(TOKEN_SLAMMER) ?>
-					<input type='submit' class='submit' name='reallyerase' value='Delete post'> - <a href='thread.php?pid=<?=$id?>#<?=$id?>'>Cancel</a>
-				</td>
-			</tr>
-		</table>
-		</form>
-		<?php
 	}
 	else {
 		errorpage("No valid action specified.","thread.php?id={$threadid}#{$threadid}","return to the post",0);
 	}
 
 	pagefooter();
-?>
+	

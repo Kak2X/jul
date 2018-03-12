@@ -1678,6 +1678,55 @@ function errorpage($text, $redirurl = '', $redir = '', $redirtimer = 4) {
 	pagefooter();
 }
 
+function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN) {
+	
+	// Get the indicator
+	static $i = 0; // just in case
+	$key = "nk_page_confirm".($i++);
+	$status = filter_bool($_POST[$key]);
+	
+	if ($status) { // All ok; do not print anything (unless the token is bad, that is)
+		check_token($_POST['auth'], $token);
+		return true;
+	}
+	
+	if ($buttons !== NULL) {
+		$commands = "";
+		for ($i = 0, $cnt = count($buttons); $i < $cnt; ++$i) {
+			if ($i) {
+				$commands .= " - ";
+			}
+			// Support both links and buttons
+			if (!isset($buttons[$i][1])) {
+				$commands .= "<input type='submit' class='submit' name='{$key}' value=\"{$buttons[$i][0]}\">";
+			} else {
+				$commands .= "<a href=\"{$buttons[$i][1]}\">{$buttons[$i][0]}</a>";
+			}
+		}
+	} else {
+		$commands = "<input type='submit' class='submit' name='{$key}' value='Yes'> - <a href='#' onclick='window.history.go(-1); return false;'>No</a>";
+	}
+	
+	if (!defined('HEADER_PRINTED')) {
+		pageheader();
+	}	
+?>
+	<form method="POST" action="<?= $form_link ?>">
+	<center>
+	<div class="table center tdbg1" style="max-width: 600px">
+		<?= $message ?><br/>
+		<br/>
+		<?= $commands ?><br/>
+		<?= auth_tag($token) ?>
+	</div>
+	</center>
+	</form>
+<?php
+
+	pagefooter();
+	return false;
+}
+
 function admincheck() {
 	global $isadmin;
 	if (!$isadmin) {

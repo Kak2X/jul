@@ -53,10 +53,14 @@
 		
 		pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);
 		
-		if (isset($_POST['dotrash'])) {
-			
-			check_token($_POST['auth'], TOKEN_SLAMMER);
-			
+		$message       = "Are you sure you want to trash this thread?";
+		$form_link     = "editthread.php?action=trashthread&id={$id}";
+		$buttons       = array(
+			0 => ["Trash Thread"],
+			1 => ["Cancel", "thread.php?id={$id}"]
+		);
+		
+		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {		
 			$sql->beginTransaction();
 			
 			$sql->query("UPDATE threads SET sticky=0, closed=1, forum={$config['trash-forum']} WHERE id='$id'");
@@ -65,40 +69,34 @@
 			$t2 = $sql->fetchq("SELECT lastpostdate,lastposter FROM threads WHERE forum={$config['trash-forum']} ORDER BY lastpostdate DESC LIMIT 1");
 			$sql->queryp("UPDATE forums SET numposts=numposts-$numposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array($t1['lastpostdate'],$t1['lastposter']));
 			$sql->queryp("UPDATE forums SET numposts=numposts+$numposts,numthreads=numthreads+1,lastpostdate=?,lastpostuser=? WHERE id={$config['trash-forum']}", array($t2['lastpostdate'],$t2['lastposter']));
-
 			
 			// Yeah whatever
 			$sql->commit();
 			errorpage("Thread successfully trashed.","thread.php?id=$id",'return to the thread');
 		
-		}			
-		
-		
-		?>
-		<table class='table'>
-			<form action='editthread.php?action=trashthread&id=<?=$id?>' name='trashcompactor' method='POST'>
-				<tr>
-					<td class='tdbg1 center'>
-						Are you sure you want to trash this thread?<br>
-						<input type='hidden' value='trashthread' name='action'>
-						<?= auth_tag(TOKEN_SLAMMER) ?>
-						<input type='submit' name='dotrash' value='Trash Thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
-					</td>
-				</tr>
-			</form>
-		</table>
-		<?php
+		}
 	}
 	else if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
+		pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);	
+
+		$message = "
+			<big><b>DANGER ZONE</b></big><br>
+			<br>
+			Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
+			<br><input type='hidden' name='deletethread' value=1>
+			<input type='checkbox' class='radio' name='reallysure' id='reallysure' value=1> <label for='reallysure'>I'm sure</label>
+		";
+		$form_link     = "editthread.php?id={$id}";
+		$buttons       = array(
+			0 => ["Delete thread"],
+			1 => ["Cancel", "thread.php?id={$id}"]
+		);
 		
-		if (filter_bool($_POST['dodelete'])) {
-			
-			check_token($_POST['auth'], TOKEN_SLAMMER);
-			
+		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {	
 			// Double-confirm the checkbox 
-			$confirm = filter_bool($_POST['reallysure']);
-			if (!$confirm) return header("Location: thread.php?id=$id");
-			
+			if (!filter_bool($_POST['reallysure'])) {
+				errorpage("You haven't confirmed the choice.", "thread.php?id={$id}", 'the thread');
+			}
 			
 			$sql->beginTransaction();
 			
@@ -113,29 +111,6 @@
 			$sql->commit();
 			$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$thread['forum']}");			
 			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
-			
-		} else {
-			
-			pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);	
-			
-			?>
-			<table class='table'>
-			<form action='editthread.php?id=<?=$id?>' method='post'>
-				<tr>
-					<td class='tdbg1 center'>
-						<big><b>DANGER ZONE</b></big><br>
-						<br>
-						Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
-						<br>
-						<input type='checkbox' class=radio name='reallysure' value=1> <label for="reallysure">I'm sure</label><br>
-						<input type='hidden' name=deletethread VALUE=1>
-						<?= auth_tag(TOKEN_SLAMMER) ?><br>
-						<input type='submit' name='dodelete' value='Delete thread'> -- <a href='thread.php?id=<?=$id?>'>Cancel</a>
-					</td>
-				</tr>
-			</form>
-			</table>
-			<?php
 			
 		}
 	}

@@ -35,30 +35,17 @@
 		if (!$_GET['id']) {
 			errorpage("No event selected for deletion.",'calendar.php', 'return to the calendar',0);
 		}
-		if (isset($_POST['reallydelete'])) {
-			check_token($_POST['auth']);
+		
+		$message   = "Are you sure you want to <b>DELETE</b> this event?";
+		$form_link = "event.php?action=delete&id={$_GET['id']}";
+		$buttons       = array(
+			0 => ["Delete event"],
+			1 => ["Cancel", "calendar.php?event={$_GET['id']}"]
+		);
+		if (confirmpage($message, $form_link, $buttons)) {
 			$sql->query("DELETE FROM events WHERE id = {$_GET['id']}");
 			errorpage("Thank you, {$loguser['name']}, for deleting the event.","calendar.php","return to the calendar",0);
 		}
-		
-		pageheader();
-		
-		?>
-		<form action='event.php?action=delete&id=<?=$_GET['id']?>' method='POST'>
-		<table class='table'>
-			<tr>
-				<td class='tdbg1 center'>
-					Are you sure you want to <b>DELETE</b> this event?<br>
-					<br>
-					<input type='hidden' name=auth value="<?=generate_token()?>">
-					<input type='submit' class=submit name=reallydelete value='Delete event'> - <a href='calendar.php?event=<?=$_GET['id']?>'>Cancel</a>
-				</td>
-			</tr>
-		</table>
-		</form>
-		<?php
-		
-		pagefooter();
 	}
 	
 	
@@ -105,15 +92,15 @@
 	<table class="table">
 		<tr><td class="tdbgh center" colspan=2><b><?=(!$_GET['id'] ? "New Event" : "Editing Event #{$_GET['id']}")?></b></td></tr>
 		<tr>
-			<td class='tdbg1 center'><b>Event title:</b></td>
+			<td class='tdbg1 center b'>Event title:</td>
 			<td class='tdbg2'><input type="text" name="title" size=80 maxlength=200 value="<?=htmlspecialchars($event['title'])?>"></td>
 		</tr>
 		<tr>
-			<td class='tdbg1 center'><b>Message:</b></td>
+			<td class='tdbg1 center b'>Message:</td>
 			<td class='tdbg2'><textarea wrap=virtual name=message ROWS=6 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($event['text'])?></textarea></td>
 		</tr>
 		<tr>
-			<td class='tdbg1 center'><b>Event date:</b></td>
+			<td class='tdbg1 center b'>Event date:</td>
 			<td class='tdbg2'>
 				<input type="text" name="m" value="<?=$event['m']?>" size=1 maxlength=2 style='text-align: right'>- 
 				<input type="text" name="d" value="<?=$event['d']?>" size=1 maxlength=2 style='text-align: right'>- 
@@ -124,12 +111,12 @@
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
 			<td class='tdbg2'>
-				<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+				<?= auth_tag() ?>
 				<input type='submit' class=submit name=submit VALUE="Edit event">
 			</td>
 		</tr>		
 		<tr>
-			<td class='tdbg1 center'><b>Options:</b></td>
+			<td class='tdbg1 center b'>Options:</td>
 			<td class='tdbg2'>
 				<input type='checkbox' name="private" id="private" value="1" <?=($event['private'] ? "checked" : "")?>><label for="private">Private</label>
 			</td>

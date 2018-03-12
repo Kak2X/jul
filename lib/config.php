@@ -65,10 +65,10 @@
 		'avatar-limit'			=> 64, // set false to disable
 		'max-minipic-size-x'	=> 16,
 		'max-minipic-size-y'	=> 16,
-		'max-minipic-size-bytes'=> 10240,
+		'max-minipic-size-bytes'=> 1024 * 20, // 20 KB
 		'max-avatar-size-x'		=> 200,
 		'max-avatar-size-y'		=> 200,
-		'max-avatar-size-bytes' => 102400,
+		'max-avatar-size-bytes' => 1024 * 300, // 300 KB
 		
 		
 		// Debugging

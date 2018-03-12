@@ -491,3 +491,20 @@ function resize_image($image, $max_width, $max_height) {
 	}
 	return $dst_image;
 }
+
+function upload_error($file) {
+	$err = filter_int($file['error']);
+	$x = "Sorry, but the file could not be uploaded.<br/>";
+	switch ($err) {
+		case 0: return false;
+		case 1: errorpage("{$x}The file you're trying to upload is too large."); // over php.ini
+		case 2: errorpage("{$x}The file you're trying to upload is too large."); // over hidden tag
+		case 3: errorpage("{$x}The file wasn't uploaded properly."); // partial upload
+		case 4: errorpage("{$x}No file was selected."); // blank file input
+		case 5: errorpage("{$x}An internal PHP error occurred."); // oops
+		case 6: errorpage("{$x}An internal PHP error occurred."); // oops
+		case 7: errorpage("{$x}An internal PHP error occurred."); // oops
+		case 8: errorpage("{$x}An internal PHP error occurred."); // oops
+		default: errorpage("Unknown error (id #{$err}).");
+	}
+}

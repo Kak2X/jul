@@ -46,6 +46,10 @@ img { border:none; }
 	border:      none !important;
 	font-weight: bold !important;
 	padding:     0px;
+	font-size:   10px !important;
+}
+.buttonlink:hover {
+	cursor: pointer;
 }
 
 /* ? */

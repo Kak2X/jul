@@ -122,8 +122,20 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
 		}
 		
-		$headlinks.='
-		<a href="javascript:document.logout.submit()">Logout</a>
+		// Now with logout workaround when JS is disabled
+		$logout = '
+		<form action="login.php" method="post" name="logout" style="display: inline">
+			<noscript>
+				<style>#logoutlink{display: none;}</style>
+				<input type="submit" name="njout" class="tdbg1 buttonlink" value="Logout">
+			</noscript>
+			<a id="logoutlink" href="javascript:document.logout.submit()">Logout</a>
+			<input type="hidden" name="action" value="logout">
+			'.auth_tag(TOKEN_LOGIN).'
+		</form>';
+		
+		$headlinks.= $logout.'
+		<!-- <a href="javascript:document.logout.submit()">Logout</a> -->
 		- <a href="editprofile.php">Edit profile</a>
 		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
 		- <a href="postradar.php">Post radar</a>
@@ -459,10 +471,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<?=$overlay?>
 		<center>
 			<table class='table'>
-				<form action='login.php' method='post' name='logout'>
-					<input type='hidden' name='action' value='logout'>
-					<?= auth_tag(TOKEN_LOGIN) ?>
-				</form>
 				<tr>
 					<td class='tbl tdbg1 center' colspan=3><?=$config['board-title']?>
 						<span class='fonts'>

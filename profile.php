@@ -105,33 +105,37 @@
 		$expstatus .= "<br>Gain: ".calcexpgainpost($user['posts'], $numdays)." EXP per post, ".calcexpgaintime($user['posts'],$numdays)." seconds to gain 1 EXP when idle";
 	}
 	
-	// User rating (disabled)
-	$ratingstatus = "";
-	/*
-	$users1=$sql->query("SELECT id,posts,regdate FROM users");
-	while($u=$sql->fetch_array($users1)){
-		$u['level']=calclvl(calcexp($u['posts'],(ctime()-$u['regdate'])/86400));
-		if ($u['posts']<0 or $u['regdate']>ctime()) $u['level']=1;
-		$users[$u['id']]=$u;
+	// User rating
+	$ratingstatus = NULL;
+	if ($config['enable-ratings']) {
+		// Ratings work based on the RPG level
+		// higher your level is, more points are given
+		
+		$ratescore = 0;
+		$ratetotal = 0;
+		$ratings = $sql->query("
+			SELECT r.rating, u.posts, u.regdate
+			FROM userratings r
+			LEFT JOIN users u ON r.userfrom = u.id
+			WHERE r.userrated = {$_GET['id']}
+		");
+		$numvotes   = $sql->num_rows($ratings);
+		while ($x = $sql->fetch($ratings)) {
+			if ($x['posts'] < 0 || $x['regdate'] > ctime()) {
+				$level = 1;
+			} else {
+				$level = calclvl(calcexp($x['posts'], (ctime() - $x['regdate']) / 86400));
+			}
+			$ratescore += $x['rating'] * $level;
+			$ratetotal += $level;
+		}
+		if ($ratetotal) {
+			$ratetotal *= 10;
+			$ratingstatus = (floor($ratescore * 1000 / $ratetotal) / 100)." ({$ratescore}/{$ratetotal}, {$numvotes} votes)";
+		} else {
+			$ratingstatus = "None";
+		}
 	}
-
-	$ratescore=0;
-	$ratetotal=0;
-	$ratings=$sql->query("SELECT userfrom,rating FROM userratings WHERE userrated={$_GET['id']}");
-	while($rating=@$sql->fetch($ratings)){
-		$ratescore+=$rating['rating']*$users[$rating['userfrom']]['level'];
-		$ratetotal+=$users[$rating['userfrom']]['level'];
-	}
-	$ratetotal*=10;
-	$numvotes=mysql_num_rows($ratings);
-	if($ratetotal) {
-		$ratingstatus=(floor($ratescore*1000/$ratetotal)/100)." ($ratescore/$ratetotal, $numvotes votes)";
-	} else { 
-		$ratingstatus="None";
-	}
-	if($loguserid and $logpwenc and $loguserid!=$_GET['id'])
-		$ratelink=" | <a href=rateuser.php?id={$_GET['id']}>Rate user</a>";
-	*/
 	
 	// Last post
 	if ($user['posts']) {
@@ -214,7 +218,7 @@
 			'Total posts'   => "{$user['posts']} ({$postsfound} found, {$postavg} per day) {$projtext}<br>{$bar}",
 			'Total threads' => $threadsposted,
 			'EXP'           => $expstatus,
-			#'User rating'   => $ratingstatus,
+			'User rating'   => $ratingstatus,
 			'Registered on' => printdate($user['regdate'])." (".floor($numdays)." days ago)",
 			'Last post'     => "{$lastpostdate}{$lastpostlink}",
 			'Last activity' => printdate($user['lastactivity']).$lastip,	
@@ -300,17 +304,21 @@
 		
 		$options[0]["Send private message"] = ["sendprivate.php?userid={$_GET['id']}"];
 		$options[0]["{$un_b}lock layout"]   = ["profile.php?id={$_GET['id']}&action=blocklayout&auth={$token}"];
-		/*if ($loguser['id'] != $_GET['id']) {
+		if ($config['enable-ratings'] && $loguser['id'] != $_GET['id']) {
 			$options[0]["Rate user"] = ["rateuser.php?id={$_GET['id']}"];
-		}*/
+		}
 		if ($isadmin) {
 			$italic = "style='font-style: italic'";
 			$options[2] = [
 				"View private messages" => ["private.php?id={$_GET['id']}", $italic],
 				"View favorites"        => ["forum.php?fav=1&user={$_GET['id']}", $italic],
-				#"View votes"            => ["rateuser.php?action=viewvotes&id={$_GET['id']}", $italic],
+				"View votes"            => ["rateuser.php?action=viewvotes&id={$_GET['id']}", $italic],
 				"Edit user"             => ["editprofile.php?id={$_GET['id']}", $italic],
 			];
+			
+			if (!$config['enable-ratings']) {
+				$options[2]['View votes'] = NULL;
+			}
 		}
 	}
 	if (

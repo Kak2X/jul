@@ -1821,7 +1821,8 @@ CREATE TABLE IF NOT EXISTS `userratings` (
   `userfrom` smallint(5) unsigned NOT NULL DEFAULT '0',
   `userrated` smallint(5) unsigned NOT NULL DEFAULT '0',
   `rating` smallint(5) NOT NULL DEFAULT '0',
-  KEY `userrated` (`userrated`)
+  KEY `userrated` (`userrated`),
+  UNIQUE KEY `userfrom` (`userfrom`,`userrated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

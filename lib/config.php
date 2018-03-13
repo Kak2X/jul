@@ -54,6 +54,7 @@
 		'backup-folder'			=> 'backups',				// Folder containing backups, relative to the ab root
 		'backup-threshold'		=> 15,						// Days before a backup is considered old
 		'force-lastip-match'	=> false,					// Force logout on IP changes
+		'enable-ratings'        => true,					// Enables users to rate others
 
 		
 		// File uploads

@@ -229,7 +229,7 @@
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2' colspan=2>
-					<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+					<?= auth_tag() ?>
 					<input type='submit' class=submit name=submit VALUE="Edit post">
 					<input type='submit' class=submit name=preview VALUE="Preview post">
 				</td>
@@ -253,7 +253,7 @@
 	}
 	// Oh come on, noobing posts was/is a fun sport - Kak
 	else if ($ismod && $action == 'noob') {
-		check_token($_GET['auth'], TOKEN_NOOB);
+		check_token($_GET['auth'], TOKEN_MGET);
 		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '$id'");
 		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "thread.php?pid=$id#$id",'the post',0);
 	}

@@ -24,7 +24,7 @@
 	if ($loguser['id']) {
 		$layoutblocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$_GET['id']}");
 		if ($_GET['action']) {
-			check_token($_GET['auth'], TOKEN_NOOB);
+			check_token($_GET['auth'], TOKEN_MGET);
 			switch ($_GET['action']) {
 				case 'blocklayout':
 					if ($layoutblocked) {
@@ -299,7 +299,7 @@
 		],
 	];
 	if ($loguser['id']) {
-		$token = generate_token(TOKEN_NOOB);
+		$token = generate_token(TOKEN_MGET);
 		$un_b = ($layoutblocked ? "Unb" : "B");
 		
 		$options[0]["Send private message"] = ["sendprivate.php?userid={$_GET['id']}"];

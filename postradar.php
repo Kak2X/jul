@@ -72,7 +72,7 @@
 	<tr>
 		<td class='tdbg1 center'>&nbsp;</td>
 		<td class='tdbg2'>
-			<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+			<?= auth_tag() ?>
 			<input type='submit' class=submit name=submit1 VALUE="Submit and continue">
 			<input type='submit' class=submit name=submit2 VALUE="Submit and finish">
 		</td>

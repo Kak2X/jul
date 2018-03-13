@@ -17,7 +17,7 @@
 				<br>This page is intended to repair threads with broken reply counts. Please don't flood it with requests.
 				<br>This problem causes "phantom pages" (e.g., too few or too many pages displayed).
 				<br>&nbsp;
-				<br><input type='submit' class=submit name="run" value="Start"><input type='hidden' name="auth" value="<?=generate_token()?>">
+				<br><input type='submit' class=submit name="run" value="Start"><?= auth_tag() ?>
 				<br>&nbsp;
 			</td></tr>
 		</table>

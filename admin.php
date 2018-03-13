@@ -164,7 +164,7 @@
 			<td class='tdbg1 center' width='200'>&nbsp;</td>
 			<td class='tdbg2'>
 				<input type='submit' class=submit name='submit' value='Submit changes'>
-				<input type='hidden' name=auth value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 	</table>

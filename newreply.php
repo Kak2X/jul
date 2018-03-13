@@ -340,7 +340,7 @@
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
 			<td class='tdbg2' colspan=2>
-				<input type='hidden' name=auth value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 				<input type='submit' class=submit name=submit VALUE="Submit reply">
 				<input type='submit' class=submit name=preview VALUE="Preview reply">
 			</td>

@@ -545,7 +545,7 @@
 		<tr>
 			<td class='tdbg1 center' style='width: 40%'>&nbsp;</td>
 			<td class='tdbg2' style='width: 60%'>
-		<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+		<?= auth_tag() ?>
 		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
 		</td>
 	</table>

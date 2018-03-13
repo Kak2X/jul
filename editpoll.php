@@ -335,7 +335,7 @@
 			<td class='tdbg2'>
 				<input type='submit' class='submit' value='Edit poll' name='submit'>&nbsp;
 				<input type='submit' class='submit' value='Preview poll' name='preview'>&nbsp;
-				<input type='hidden' name='auth' value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 	</table>

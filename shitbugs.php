@@ -12,7 +12,7 @@
 	$expower = ($loguser['id'] == 1);
 	
 	if ($expower && isset($_GET['banip'])) {
-		check_token($_GET['auth'], 20, $_GET['banip']);
+		check_token($_GET['auth'], TOKEN_BANNER, $_GET['banip']);
 		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_GET['banip'] ."', `reason`='Abusive/unwelcome activity', `date` = '". ctime() ."', `banner` = '{$loguser['id']}'");// or print mysql_error();
 		xk_ircsend("1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_GET['banip'] . xk(7) .".");
 		return header("Location: ?");
@@ -23,10 +23,10 @@
 	$clearbutton = '&nbsp;';
 	if ($expower) {
 		if (isset($_POST['clear'])) {
-			check_token($_POST['auth'], 40);
+			check_token($_POST['auth'], TOKEN_SLAMMER);
 			$query = $sql->query("TRUNCATE `minilog`");
 		}
-		$clearbutton = "<br><form style='margin: 0px; padding: 0px;' action='?' method='post'><input type='submit' class=submit name='clear' value='Clear log'><input type='hidden' name='auth' value='".generate_token(40)."'></form><br>";
+		$clearbutton = "<br><form style='margin: 0px; padding: 0px;' action='?' method='post'><input type='submit' class=submit name='clear' value='Clear log'>".auth_tag(TOKEN_SLAMMER)."</form><br>";
 	}
 
 	$banflagnames[    1]	= "union<br>select";
@@ -99,7 +99,7 @@
 			if ($data['banned'])
 				$tempout .= "<td class='tdbg1 fonts center'><span style='color: #f88; font-weight: bold;'>Banned</span></td>";
 			elseif ($expower)
-				$tempout .= "<td class='tdbg1 fonts center'><a href='?banip={$data['ip']}&auth=".generate_token(20, $data['ip'])."'>Ban</a></td>";
+				$tempout .= "<td class='tdbg1 fonts center'><a href='?banip={$data['ip']}&auth=".generate_token(TOKEN_BANNER, $data['ip'])."'>Ban</a></td>";
 			else
 				$tempout .= "<td class='tdbg1 fonts center'>&nbsp;</td>";
 

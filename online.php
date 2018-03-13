@@ -25,7 +25,7 @@
 	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 /* || $loguser['id'] == 5 || $loguser['id'] == 2100*/);
 
 	if ($banorama && filter_string($_GET['banip'])) {
-		check_token($_POST['auth'], 45, $_GET['banip']);
+		check_token($_POST['auth'], TOKEN_BANNER, $_GET['banip']);
 		// Just in case
 		$sql->queryp("INSERT INTO `ipbans` SET `ip` = :ip, `reason` = :reason, `date` = :date, `banner` = :banner",
 		[
@@ -111,7 +111,7 @@
 		<?php
 
 		if ($banorama)
-			$ipban	= "<span class='fonts'><br>[<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=".generate_token(45, $user['lastip'])."'>Ban</a> - <a href='http://google.com/search?q={$user['lastip']}'>G</a>]</span>";
+			$ipban	= "<span class='fonts'><br>[<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=".generate_token(TOKEN_BANNER, $user['lastip'])."'>Ban</a> - <a href='http://google.com/search?q={$user['lastip']}'>G</a>]</span>";
 		else $ipban = "";
 		
 		if($isadmin)
@@ -188,7 +188,7 @@
 
 
 		if ($banorama && !$guest['banned'])
-			$ipban	= "<a href='?banip=$guest[ip]&auth=" . generate_token(45, $guest['ip']) ."'>Ban</a> - ";
+			$ipban	= "<a href='?banip={$guest['ip']}&auth=" . generate_token(TOKEN_BANNER, $guest['ip']) ."'>Ban</a> - ";
 		elseif ($guest['banned'])
 		 	$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
 		else

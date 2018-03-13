@@ -561,7 +561,7 @@
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2' colspan=2>
 					<input type='hidden' name=action VALUE=postthread>
-					<input type='hidden' name=auth   VALUE="<?=generate_token()?>">
+					<?= auth_tag() ?>
 					<?= $input_tid ?>
 					<input type='submit' class=submit name=submit VALUE="Submit thread">
 					<input type='submit' class=submit name=preview VALUE="Preview thread">
@@ -637,7 +637,7 @@
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td><td class='tdbg2' colspan=2>
 					<input type='hidden' name=action VALUE=postthread>
-					<input type='hidden' name=auth VALUE="<?=generate_token()?>">
+					<?= auth_tag() ?>
 					<?= $input_tid ?>
 					<input type='submit' class=submit name=submit VALUE="Submit poll">
 					<input type='submit' class=submit name=preview VALUE="Preview poll">

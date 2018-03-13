@@ -181,7 +181,7 @@ if ($_GET['delete']) {
 		<tr>
 			<td class='tdbgc center'>
 				<input type="submit" name="delete" value="DELETE FORUM"> or <a href="?">Cancel</a>
-				<input type="hidden" name="auth" value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 	</table>
@@ -263,7 +263,7 @@ else if ($_GET['id']) {
 		<tr>
 			<td class='tdbgc center' colspan=6>
 				<input type="submit" name="edit" value="Save and continue">&nbsp;<input type="submit" name="edit2" value="Save and close">
-				<input type="hidden" name="auth" value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 
@@ -293,7 +293,7 @@ else if ($_GET['catdelete']) {
 		<tr>
 			<td class='tdbgc center'>
 				<input type="submit" name="catdelete" value="DELETE CATEGORY"> or <a href="?">Cancel</a>
-				<input type="hidden" name="auth" value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 	</table>
@@ -332,7 +332,7 @@ else if ($_GET['catid']) {
 		<tr>
 			<td class='tdbgc center' colspan=6>
 				<input type="submit" name="catedit" value="Save and continue">&nbsp;<input type="submit" name="catedit2" value="Save and close">
-				<input type="hidden" name="auth" value="<?=generate_token()?>">
+				<?= auth_tag() ?>
 			</td>
 		</tr>
 

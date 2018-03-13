@@ -38,7 +38,7 @@
 	
 	// Quickmod
 	if ($ismod && substr($_GET['action'], 0, 1) == 'q') {
-		check_token($_GET['auth'], 32);
+		check_token($_GET['auth'], TOKEN_MGET);
 		switch ($_GET['action']) {
 			case 'qstick':   $update = 'sticky=1'; break;
 			case 'qunstick': $update = 'sticky=0'; break;
@@ -275,7 +275,7 @@
 					<td class='tdbg1'>&nbsp;</td>
 					<td class='tdbg2'>
 						<input type='hidden' name=action VALUE=editthread>
-						<input type='hidden' name=auth value='<?=generate_token()?>'>
+						<?= auth_tag() ?>
 						<input type='submit' class=submit name=submit VALUE="Edit thread"></td></tr>
 		</table></FORM>
 		<?php

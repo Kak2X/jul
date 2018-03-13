@@ -137,7 +137,7 @@
 					</table>
 					
 					<br><input type='submit' class='submit' value='Execute action' name='go'>
-					<br><input type='hidden' name='auth' value="<?= generate_token() ?>">&nbsp;
+					<br><?= auth_tag() ?>&nbsp;
 				</center></td>
 			</tr>
 			

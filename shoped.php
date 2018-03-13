@@ -186,7 +186,10 @@
 			<tr><td class='tdbgc center' colspan=6><img src="images/_.gif" height=6 width=6></td></tr>
 
 			<tr>
-				<td class='tdbgc center' colspan=2><input type="submit" name="edit" value="Save"><input type="hidden" name="auth" value="<?=generate_token()?>"</td>
+				<td class='tdbgc center' colspan=2>
+					<input type="submit" name="edit" value="Save">
+					<?= auth_tag() ?>
+				</td>
 				<td class='tdbgh center'> Coins </td>
 				<td class='tdbg1'><input type="text" name="coins" maxlength="8" size="10" value="<?=$item['coins']?>" class="right"> <img src="images/coin.gif" align="absmiddle"></td>
 				<td class='tdbgh center'> G.Coins </td>

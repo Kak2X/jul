@@ -7,8 +7,6 @@
 	*/
 	require 'lib/function.php';
 	
-	const T_SHOP = 14;
-	
 	$id		= filter_int($_GET['id']);
 	$cat 	= filter_int($_GET['cat']);
 	$action = filter_string($_GET['action']);
@@ -43,7 +41,7 @@
 	$GP = $st['GP'];
 	
 	if ($action == "buy") {
-		check_token($_GET['auth'], T_SHOP);
+		check_token($_GET['auth'], TOKEN_SHOP);
 		
 		$item = $sql->fetchq("SELECT * FROM items WHERE id = $id AND hidden = $hidden");
 		if (!$item || $item['coins'] > $GP || $item['gcoins'] > $user['gcoins'])
@@ -57,7 +55,7 @@
 		
 	}
 	else if ($action == "sell") {
-		check_token($_GET['auth'], T_SHOP);
+		check_token($_GET['auth'], TOKEN_SHOP);
 		
 		// "The has been unequipped and sold"
 		if (!$user['eq'.$cat])
@@ -115,7 +113,7 @@
 		$eq 	= $sql->resultq("SELECT eq$cat FROM users_rpg WHERE uid = {$loguser['id']}");
 		$eqitem = $sql->fetchq("SELECT * FROM items WHERE id = $eq");
 		
-		$token  = generate_token(T_SHOP);
+		$token  = generate_token(TOKEN_SHOP);
 ?>
 	<script>
 		function preview(user,item,cat,name){

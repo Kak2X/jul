@@ -11,11 +11,6 @@
 	
 	$meta['noindex'] = true;
 	
-	const T_REGISTER = 40;
-
-	//$ipstart=substr($userip,0,6);
-	//print $header;
-
 	$regmode = $sql->resultq("SELECT regmode FROM misc");
 	
 	/*
@@ -34,7 +29,7 @@
 	
 	if($_POST['action']=='Register') {
 		 
-		check_token($_POST['auth'], T_REGISTER);
+		check_token($_POST['auth'], TOKEN_REGISTER);
 		
 		$name = filter_string($_POST['name'], true);
 		$pass = filter_string($_POST['pass']);
@@ -319,7 +314,7 @@
 			<td class='tdbg2'>
 				<input type='hidden' name=action VALUE="Register">
 				<input type='submit' class=submit name=submit VALUE="Register account">
-				<input type='hidden' name=auth value="<?=generate_token(T_REGISTER)?>">
+				<?=auth_tag(TOKEN_REGISTER)?>
 			</td>
 		</tr>
 	</table>

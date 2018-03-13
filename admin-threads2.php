@@ -17,7 +17,7 @@
 				<br>This page is intended to repair threads with broken 'last reply' times/users.
 				<br>This problem causes bumped threads that shouldn't be, especially with badly deleted posts.
 				<br>&nbsp;
-				<br><input type='submit' class=submit name="run" value="Start"><input type='hidden' name="auth" value="<?=generate_token()?>">
+				<br><input type='submit' class=submit name="run" value="Start"><?= auth_tag() ?>
 				<br>&nbsp;
 			</td></tr>
 		</table>

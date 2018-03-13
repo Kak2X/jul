@@ -113,7 +113,7 @@
 	
 	?>
 	<form method='POST' action='admin-ipbans.php'>
-	<input type='hidden' name='auth' value='<?= generate_token() ?>'>
+	<?= auth_tag() ?>
 
 	<table class='table'>
 		<tr>

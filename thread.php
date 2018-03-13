@@ -27,8 +27,6 @@
 	$action = filter_string($_GET['vact']);
 	$choice = filter_int($_GET['vote']);
 	
-	const T_VOTE = 20;
-	
 	if ($id && $action) {
 		
 		// does the poll exist?
@@ -38,7 +36,7 @@
 
 		$poll = $sql->fetchq("SELECT * FROM poll WHERE id = $pollid");
 		
-		check_token($_GET['auth'], T_VOTE);
+		check_token($_GET['auth'], TOKEN_VOTE);
 
 		// no wrong poll bullshit
 		$valid = $sql->resultq("SELECT COUNT(*) FROM `poll_choices` WHERE `poll` = '$pollid' AND `id` = '$choice'");
@@ -224,7 +222,7 @@
 
 			$fulledit = "<a href='editthread.php?id={$id}'>Edit thread<a>";
 			$linklist = array();
-			$link = "<a href='editthread.php?id={$id}&auth=".generate_token(32)."&action";
+			$link = "<a href='editthread.php?id={$id}&auth=".generate_token(TOKEN_MGET)."&action";
 
 			if (!$thread['sticky'])
 				$linklist[] = "$link=qstick'>Stick</a>";
@@ -237,7 +235,7 @@
 				$linklist[] = "$link=qunclose'>Open</a>";
 
 			if ($thread['forum'] != $config['trash-forum'])
-				$linklist[] = "$link=trashthread'>Trash</a>";
+				$linklist[] = "<a href='editthread.php?id={$id}&action=trashthread'>Trash</a>";
 
 			//$linklist[] = "$link=delete'>Delete</a>";
 			$linklist = implode(' | ', $linklist);
@@ -305,7 +303,7 @@
 		$tvotes_c = isset($pollvotes[""]) ? $pollvotes[""] : 0;
 		$tvotes_i = isset($pollinflu[""]) ? $pollvotes[""] : 0;
 
-		$confirm = generate_token(T_VOTE);
+		$confirm = generate_token(TOKEN_VOTE);
 
 		$pollcs = $sql->query("SELECT * FROM poll_choices WHERE poll = {$poll['id']}");
 		
@@ -365,7 +363,7 @@
 		if ($ismod)
 			$polledit = "-- <a href='editpoll.php?id=$id'>Edit poll</a>";
 		else if ($loguser['id'] == $thread['user'])
-			$polledit = "-- <a href='editpoll.php?id=$id&close&auth=".generate_token(35)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
+			$polledit = "-- <a href='editpoll.php?id=$id&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
 		else
 			$polledit = "";
 
@@ -498,7 +496,7 @@
 		
 		$controls['edit'] = '';
 		if ($ismod || (!$banned && !$post['deleted'] && $post['user'] == $loguser['id'])) {
-			$tokenstr = "&auth=".generate_token(TOKEN_NOOB);
+			$tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
         	if ($ismod || ($id && !$thread['closed'])) {
 				$controls['edit'] = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";

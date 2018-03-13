@@ -170,12 +170,12 @@
 			if (!$x_hacks['host'] && $regmode == 2) {
 				
 				$sql->queryp("
-					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `time` = :time",
+					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `date` = :date",
 					[
 						'name'		=> $name,
 						'password'	=> getpwhash($pass, $newuserid),
 						'ip'		=> $_SERVER['REMOTE_ADDR'],
-						'time'		=> $currenttime,
+						'date'		=> $currenttime,
 					]);
 
 			//		$sql->query("INSERT INTO `ipbans` SET `ip` = '$ipaddr', `reason` = 'Automagic ban', `banner` = 'Acmlmboard'");
@@ -191,7 +191,7 @@
 				
 				// No longer useful
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
-				$sql->beginTransaction();
+				$sql->insert_id();
 				
 				$data = array(
 					'id'                => $newuserid,

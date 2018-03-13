@@ -1777,8 +1777,8 @@ function adminlinkbar($sel = NULL) {
 		array(
 			'admin-ipsearch.php'    => "IP Search",
 			'admin-ipbans.php'      => "IP Bans",
-		//	'admin-pendingusers.php'=> "Pending Users",
-		//	'admin-slammer.php'     => "EZ Ban Button",
+			'admin-pendingusers.php'=> "Pending Users",
+			'admin-slammer.php'     => "EZ Ban Button",
 			'admin-deluser.php'     => "Delete User",
 		)
 	);

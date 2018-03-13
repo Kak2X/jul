@@ -1098,11 +1098,13 @@ INSERT INTO `misc` () VALUES ();
 --
 
 CREATE TABLE IF NOT EXISTS `pendingusers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` text COLLATE utf8mb4_unicode_ci,
   `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `time` int(11) unsigned NOT NULL,
-  KEY `time` (`time`)
+  `date` int(11) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `time` (`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1291,6 +1293,26 @@ CREATE TABLE IF NOT EXISTS `postsday` (
 
 
 -- --------------------------------------------------------
+
+--
+-- Table structure for table `powerups`
+--
+
+CREATE TABLE IF NOT EXISTS `powerups` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `powl_dest` smallint(6) NOT NULL,
+  `user` int(10) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+   KEY `user` (`user`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `postsday`
+--
+
+
+-- --------------------------------------------------------
+
 
 --
 -- Table structure for table `ranks`

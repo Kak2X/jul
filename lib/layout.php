@@ -349,7 +349,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			$inputborder   = $tableborder;
 		}
 		$css.="
-		textarea,input,select{
+		textarea,input,select,button{
 		  border:	#$inputborder solid 1px;
 		  background:#000000;
 		  color:	#$formtextcolor;
@@ -359,12 +359,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  background:#000000;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		.radio{
+		input[type=radio]{
 		  border:	none;
 		  background:none;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		.submit{
+		input[type=submit],button{
 		  border:	#$inputborder solid 2px;
 		  font:	10pt $font;}
 		";

@@ -103,9 +103,11 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	/*
 		Make me a local mod!
 	*/
-	$lolz = $sql->resultq("SELECT powl_dest FROM powerups WHERE user = {$loguser['id']}");
-	if ($lolz) {
-		$config['board-title'].= "<br><a href='powerup.php'>Make me a {$pwlnames[$lolz]}!</a>";
+	if ($loguser['id']) {
+		$lolz = $sql->resultq("SELECT powl_dest FROM powerups WHERE user = {$loguser['id']}");
+		if ($lolz) {
+			$config['board-title'].= "<br><a href='powerup.php'>Make me a {$pwlnames[$lolz]}!</a>";
+		}
 	}
 	
 	

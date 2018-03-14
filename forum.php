@@ -466,9 +466,9 @@
 	pagefooter();
 
 function notAuthorizedError() {
-	global $log;
-	$rreason = (($log) ? 'don\'t have access to it' : 'are not logged in');
-	$redir = (($log) ? 'index.php' : 'login.php');
-	$rtext = (($log) ? 'the index page' : 'log in (then try again)');
+	global $loguser;
+	$rreason = ($loguser['id'] ? 'don\'t have access to it' : 'are not logged in');
+	$redir = ($loguser['id'] ? 'index.php' : 'login.php');
+	$rtext = ($loguser['id'] ? 'the index page' : 'log in (then try again)');
 	errorpage("Couldn't enter this restricted forum, as you {$rreason}.", $redir, $rtext);
 }

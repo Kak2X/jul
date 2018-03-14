@@ -306,7 +306,11 @@
 		<td class='tdbgh center' width=150> Last post</td>
 	</tr>";
 
-	$sticklast = 0;
+	$sticklast    = 0;
+	$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);
+	$maxfromend   = (($loguser['pagestyle']) ? 20 : 10);
+		
+	$_GET['page'] = 0; // horrible hack for pagelist()
 
 	if ($sql->num_rows($threads) <= 0) {
 		$threadlist .= 
@@ -315,7 +319,7 @@
 					There are no threads to display.
 				</td>
 			</tr>";
-	} else for($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
+	} else for ($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
 		
 		// Sticky separator
 		if($sticklast && !$thread['sticky'])
@@ -398,10 +402,6 @@
 			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>{$forumnames[$thread['forumid']]}</a>";
 
 		// Extra pages
-		$maxfromstart = (($loguser['pagestyle']) ?  9 :  4);
-		$maxfromend   = (($loguser['pagestyle']) ? 20 : 10);
-		
-		$_GET['page'] = 0; // horrible hack
 		$pagelinks = pagelist("thread.php?id={$thread['id']}", $thread['replies'] + 1, $ppp, $maxfromstart, $maxfromend);
 		
 		if($thread['replies'] >= $ppp) {

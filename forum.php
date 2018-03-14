@@ -98,8 +98,7 @@
 			$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$id} AND user = {$loguser['id']}");
 		}
 		
-		// TODO: Generic online users layout generator
-		$onlineusers = "<table class='table'><td class='tdbg1 fonts center'>".fonlineusers($id)."</table>";
+		$onlineusers = "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum)."</table>";
 		
 		$threadcount 	= $forum['numthreads'];
 		$specialscheme 	= $forum['specialscheme'];

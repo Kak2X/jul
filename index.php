@@ -91,64 +91,8 @@
 		$blist .= "$userurl ($y)"; 
 	}
 	
-	/*
-		Online users
-	*/
-	$onlinetime = ctime() - 300;	// 5 Minutes
-	$onusers = $sql->query("
-		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
-		FROM users u
-		WHERE lastactivity > $onlinetime OR lastposttime > $onlinetime AND ($ismod OR !hideactivity)
-		ORDER BY name
-	");
-	$numonline = $sql->num_rows($onusers);
-	$tnumonline = ($numonline !=1 ? 's' : '' );
-
-	$onlineusersa	= array();
-	while($onuser = $sql->fetch($onusers)) {
-		
-		//$namecolor=explode("=", getnamecolor($onuser['sex'],$onuser['powerlevel']));
-		//$namecolor=$namecolor[1];
-		//$namelink="<a href=profile.php?id=$onuser[id] style='color: #$namecolor'>$onuser[name]</a>";
-
-		$namelink = getuserlink($onuser);
-		$minipic  = get_minipic($onuser['id'], $onuser['minipic']);
-		
-		// Posted using alternate credentials / without using cookies?
-		if($onuser['nologpost']) {
-			$namelink = "($namelink)";
-		}		
-		
-		if($onuser['hideactivity'])
-			$namelink="[$namelink]";	
-		$onlineusersa[] = "{$minipic} $namelink";
-	}
-
-	$onlineusers = $onlineusersa ? ': '. implode(", ", $onlineusersa) : '';
-	
-	/*
-		Online guests
-	*/
-	if (!$isadmin) {
-		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests WHERE date > $onlinetime");
-		$onlineguests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"") : "";
-	} else {
-		// Detailed view of tor/proxy/bots
-		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
-		$ginfo = array_fill(0, 4, 0);
-		for ($numguests = 0; $onguest = $sql->fetch($onguests); ++$numguests) {
-			if      ($onguest['flags'] & BPT_TOR) 		$ginfo[2]++;
-			else if ($onguest['flags'] & BPT_IPBANNED) 	$ginfo[0]++;
-			else if ($onguest['flags'] & BPT_BOT) 		$ginfo[3]++;
-			//if ($onguest['flags'] & BPT_PROXY) 		$ginfo[1]++;
-		}
-		$specinfo = array('IP banned', 'Proxy', 'Tor banned', 'bots');
-		$guestcat = array();
-		for ($i = 0; $i < 4; ++$i)
-			if ($ginfo[$i])
-				$guestcat[] = $ginfo[$i] . " " . $specinfo[$i];
-		$onlineguests = $numguests ? " | <nobr>$numguests guest".($numguests>1?"s":"").($guestcat ? " (".implode(",", $guestcat).")" : "") : "";
-	}
+	// Do not move this below the records updates
+	$onlineusers = onlineusers();
 
 	/*
 		Are we logged in?
@@ -179,12 +123,13 @@
 	$misc = $sql->fetchq('SELECT maxpostsday, maxpostshour, maxusers FROM misc');
 	
 	// Have we set a new record?
-	if($posts['d'] > $misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday  = {$posts['d']}, maxpostsdaydate  = ".ctime());
-	if($posts['h'] > $misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour = {$posts['h']}, maxpostshourdate = ".ctime());
-	if($numonline  > $misc['maxusers']) {
+	if ($posts['d'] > $misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday  = {$posts['d']}, maxpostsdaydate  = ".ctime());
+	if ($posts['h'] > $misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour = {$posts['h']}, maxpostshourdate = ".ctime());
+	// $numon is currently thrown out by onlineusers() as a global variable
+	if ($numon  > $misc['maxusers']) {
 		$sql->queryp("UPDATE misc SET maxusers = :num, maxusersdate = :date, maxuserstext = :text",
 			[
-				'num'	=> $numonline,
+				'num'	=> $numon,
 				'date'	=> ctime(),
 				'text'	=> $onlineusers,
 			]);
@@ -238,7 +183,7 @@
 				</td>
 			<tr>
 				<td class='tdbg1 fonts center'>
-					<?=$numonline?> user<?=$tnumonline?> currently online<?=$onlineusers?><?=$onlineguests?> 
+					<?= $onlineusers ?>
 				</td>
 			</tr>
 		</table>

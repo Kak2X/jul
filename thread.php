@@ -209,8 +209,7 @@
 	pageheader($windowtitle, $specialscheme, $specialtitle);
 
 	if ($id && !$thread_error) {
-		// TODO: Generic online users layout generator
-		print "<table class='table'><td class='tdbg1 fonts center'>".fonlineusers($forumid)."</table>";
+		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum, $thread)."</table>";
 		if ($sql->resultq("SELECT 1 FROM forummods WHERE forum='$forumid' and user = '{$loguser['id']}'"))
 			$ismod = true;
 	}	

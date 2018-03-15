@@ -439,7 +439,7 @@
 	else       $searchon = "thread={$id}";
 
 	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT headid, signid FROM posts WHERE {$searchon} LIMIT $min, $ppp");
+	$layouts = $sql->query("SELECT headid, signid FROM posts WHERE {$searchon} ORDER BY id ASC LIMIT $min, $ppp");
 	preplayouts($layouts);
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
@@ -449,7 +449,7 @@
 			FROM posts p
 			LEFT JOIN attachments a ON p.id = a.post
 			WHERE p.{$searchon} AND a.id IS NOT NULL
-			ORDER BY p.id
+			ORDER BY p.id ASC
 			LIMIT {$min},{$ppp}
 		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 	}
@@ -460,7 +460,7 @@
 			FROM posts p
 			LEFT JOIN users_avatars v ON p.moodid = v.file
 			WHERE p.{$searchon} AND v.user = p.user
-			ORDER BY p.id DESC
+			ORDER BY p.id ASC
 			LIMIT {$min},{$ppp}
 		");
 		$avatars = prepare_avatars($avatars);

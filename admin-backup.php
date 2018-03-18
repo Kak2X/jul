@@ -115,7 +115,7 @@
 			
 			<tr>
 				<td class='tdbg1'><center>
-					<br>There are <?= $numfiles ?> backup archive(s) saved in total<?= $lastdate ? ", last on ".printdate($lastdate, PRINT_DATE) : "" ?>
+					<br>There are <?= $numfiles ?> backup archive(s) saved in total<?= $lastdate ? ", last on ".printdate($lastdate, true) : "" ?>
 					<br><?= $oldbackups ? "$oldbackups of these backups are considered old (older than {$config['backup-threshold']} days)" : "" ?>
 					<br>&nbsp;
 					<table class="font">

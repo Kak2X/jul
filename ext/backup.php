@@ -117,8 +117,9 @@
 		}
 		
 		// Determine field names for this table
-		$handle = fopen("{$config['backup-folder']}/tmp/$table", 'w');
-		$cols 	= $sql->fetchq("
+		$openfile = "temp/cbak_{$table}"; //"{$config['backup-folder']}/tmp/$table";
+		$handle   = fopen($openfile, 'w');
+		$cols = $sql->fetchq("
 			SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 			WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$table'
 		", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
@@ -143,7 +144,7 @@
 		fwrite($handle, ";");
 		fclose($handle);
 		
-		echo $zip->addFile("{$config['backup-folder']}/tmp/$table", "$table.sql") ? "OK!" : "ERROR!";
+		echo $zip->addFile($openfile, "$table.sql") ? "OK!" : "ERROR!";
 
 	}
 	echo "\n\nFinalizing file...";
@@ -151,7 +152,7 @@
 	
 	echo "\nRemoving temporary files...\n";
 	foreach($tables as $table){
-		unlink("{$config['backup-folder']}/tmp/$table");
+		unlink("temp/cbak_{$table}");
 	}
 	
 	print "\nTime taken: ".number_format(microtime(true)-$startingtime, 6)." seconds.";

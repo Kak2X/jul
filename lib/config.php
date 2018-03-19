@@ -55,12 +55,14 @@
 		'backup-threshold'		=> 15,						// Days before a backup is considered old
 		'force-lastip-match'	=> false,					// Force logout on IP changes
 		'enable-ratings'        => true,					// Enables users to rate others
-		'onlineusers-on-thread' => false,                    // Use AB 2.064 style online users
+		'onlineusers-on-thread' => false,                   // Use AB 2.064 style online users
+
 		
 		// File uploads
-		'allow-attachments'     => true,                    // Enables the attachment feature
-		'hide-attachments'      => false,                   // Do not show attachments in threads (only works when allow-attachments is false)
-		'attach-max-size'       => 2 * 1048576,	// 2 MB 	// Max size for attachments
+		'allow-attachments'      => true,                    // Enables the attachment feature
+		'attachments-all-origin' => false,                   // Disable origin/referer check for attachments
+		'hide-attachments'       => false,                   // Do not show attachments in threads (only works when allow-attachments is false)
+		'attach-max-size'        => 2 * 1048576,	// 2 MB  // Max size for attachments
 		
 		'allow-avatar-storage' 	=> true,                    // Enables the board-storage of avatars and minipic. If disabled, it will use the vanilla Jul avatar system.
 		'avatar-limit'			=> 64, // set false to disable

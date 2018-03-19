@@ -1,6 +1,12 @@
 <?php
 
 	require "lib/function.php";
+	
+	if (!$config['attachments-all-origin'] && !SAME_ORIGIN) {
+		print "<title>{$config['board-name']}</title>";
+		print "To continue to the attachment, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
+		die;
+	}
 
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['info']   = filter_bool($_GET['info']);

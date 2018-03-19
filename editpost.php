@@ -157,7 +157,7 @@
 					'moodid'    => $moodid,
 					'noob'      => $post['noob'],
 					// Attachments
-					'attach_key' => $id,
+					'attach_key' => $attach_key,
 					'attach_sel' => $attachsel,
 				);
 				print preview_post($user, $data, PREVIEW_EDITED);

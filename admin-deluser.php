@@ -50,9 +50,8 @@
 			// Since we're moving all posts to the deleted user account, include the user's name as a "signature"
 			$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
 			$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
-			$sql->query("UPDATE posts SET user     = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
+			$sql->query("UPDATE posts    SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
 			$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
-			
 			
 			$sql->query("UPDATE threads     SET user         = {$config['deleted-user-id']} WHERE user=$id");
 			$sql->query("UPDATE threads     SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");
@@ -72,7 +71,7 @@
 			$sql->query("DELETE FROM forumread WHERE user = $id");
 			$sql->query("DELETE FROM threadsread WHERE uid = $id");
 			
-			$delusertext .= "\r\n<tr><td class='tdbg1 center' width=120>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
+			$delusertext .= "\r\n<tr><td class='tdbg1 center' style='width: 120px'>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
 			$delusercnt++;
 			
 		}
@@ -80,7 +79,7 @@
 		
 		// Since we're sure the queries have succeeded, now delete the userpic folders
 		// Not done on post-delete refresh
-		foreach($dellist as $id) {
+		foreach ($dellist as $id) {
 			deletefolder("userpic/{$id}");
 		}
 

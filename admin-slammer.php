@@ -24,13 +24,12 @@ else if ($_POST['knockout']) {
 	echo "SLAM JAM:\n";
 	
 	$sql->beginTransaction();
-
+	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
+	$sql->query("DELETE FROM posts WHERE user = '{$target_id}' OR id IN (SELECT id FROM threads WHERE user = '{$target_id}')"); // LIMIT 50
+	echo "Deleted posts.\n";
+	
 	$sql->query("DELETE FROM threads WHERE user = '{$target_id}'"); // LIMIT 50
 	echo "Deleted threads.\n";
-
-	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
-	$sql->query("DELETE FROM posts WHERE user = '{$target_id}'"); // LIMIT 50
-	echo "Deleted posts.\n";
 	
 	// No PMs?
 	$sql->query("DELETE FROM pmsgs WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'");
@@ -45,13 +44,21 @@ else if ($_POST['knockout']) {
 	$sql->query("DELETE FROM announcementread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM forumread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM threadsread WHERE uid = '{$target_id}'");
+	echo "Deleted postread data.\n";
+	
 	$sql->query("DELETE FROM events WHERE user = '{$target_id}'");	
 	echo "Deleted events.\n";
 	
-
 	$sql->commit();
 	echo "Success! Finishing job.\n";
 	deletefolder("userpic/{$target_id}");
+	echo "Deleted userpics.\n";
+	
+	$attachids = $sql->getresults("SELECT id FROM attachments WHERE user = '{$target_id}'");
+	if ($attachids) {
+		remove_attachments($attachids);
+	}
+	echo "Deleted attachments.\n";
 	
 	// Altering a table implies an autocommit
 	$new_maxid = intval($sql->resultq("SELECT id FROM users ORDER BY id DESC LIMIT 1"));

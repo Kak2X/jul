@@ -1248,10 +1248,7 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	
 	$minipic		= $useicon ? get_minipic($u['id'], filter_string($u['minipic'])) : "";
 	
-	$class = $urlclass ? " class='{$urlclass}'" : "";
-	
-	
-	return "{$minipic}<a style='color:#{$namecolor}'{$class} href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
+	return "{$minipic}<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
 }
 
 function getnamecolor($sex, $powl, $namecolor = ''){
@@ -1485,7 +1482,7 @@ function onlineusers($forum = NULL, $thread = NULL){
 	$onusers		= $sql->query("
 		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
 		FROM users u
-		WHERE (lastactivity > $onlinetime OR lastposttime > $onlinetime){$check} AND ($ismod OR !hideactivity)
+		WHERE (lastactivity > $onlinetime OR lastposttime > $onlinetime){$check} AND (".((int) $ismod)." OR !hideactivity)
 		ORDER BY name
 	");
 	/*
@@ -1523,7 +1520,7 @@ function onlineusers($forum = NULL, $thread = NULL){
 	$guests = $bpt_info = "";
 	if (!$isadmin) {
 		// Standard guest counter view
-		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > $onlinetime AND lastforum = $forum");
+		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > {$onlinetime} AND lastforum = ".filter_int($forum['id']));
 	} else {
 		// Detailed view of BPT (Bot/Proxy/Tor) flags
 		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
@@ -1648,6 +1645,8 @@ function postradar($userid){
 	return $race;
 }
 
+
+
 /* useless function, leftover that should have never been used in the first place
 function loaduser($id,$type){
 	global $sql;
@@ -1731,7 +1730,7 @@ function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN)
 	
 	if ($status) { // All ok; do not print anything (unless the token is bad, that is)
 		check_token($_POST['auth'], $token);
-		return true;
+		return "<input type='hidden' name='{$key}' value='1'>";
 	}
 	
 	if ($buttons !== NULL) {

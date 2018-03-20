@@ -140,15 +140,15 @@
 		if ($loguser['id']) {
 			
 			// Unread posts count
-			$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forumid'");
+			$readdate = (int) $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forumid'");
 			
 			if ($thread['lastpostdate'] > $readdate)
 				$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
 
 			$unreadcount = $sql->resultq("
-				SELECT COUNT(*) FROM threads t
-				LEFT JOIN threadsread r ON t.id = r.tid
-				WHERE r.uid = {$loguser['id']} AND r.read = 0 AND t.lastpostdate > $readdate AND t.forum = $forumid
+				SELECT COUNT(*) FROM `threads`
+				WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '{$loguser['id']}' AND `read` = '1')
+				AND `lastpostdate` > '{$readdate}' AND `forum` = '{$forumid}'
 			");
 			
 			if ($unreadcount == 0)

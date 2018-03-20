@@ -326,23 +326,20 @@
 	if ($loguser['id']) {
 		$qadd = array();
 		foreach ($forums as $forum) {
-			if (!isset($postread[$forum['id']])) continue;
-			$qadd[] = "(lastpostdate > '{$postread[$forum['id']]}' AND forum = '{$forum['id']}')\r\n";
+			$qadd[] = "(lastpostdate > '".filter_int($postread[$forum['id']])."' AND forum = '{$forum['id']}')\r\n";
 		}
-		
-		if ($qadd)
+		if ($qadd) {
 			$qadd = "(".implode(' OR ', $qadd).")";
-		else
+		} else {
 			$qadd = "1";
-
+		}
 		$forumnew = $sql->getresultsbykey("
-			SELECT forum, COUNT(*) AS unread
-			FROM threads t
+			SELECT forum, COUNT(*) AS unread 
+			FROM threads t 
 			LEFT JOIN threadsread tr ON (tr.tid = t.id AND tr.uid = {$loguser['id']})
-			WHERE (ISNULL(`read`) OR `read` != 1) AND $qadd
+			WHERE (`read` IS NULL OR `read` != 1) AND ({$qadd}) 
 			GROUP BY forum
 		");
-		
 	}
 
 	// Category filtering

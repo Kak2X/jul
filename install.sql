@@ -861,6 +861,7 @@ CREATE TABLE IF NOT EXISTS `guests` (
   `date` int(11) NOT NULL DEFAULT '0',
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `lastthread` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `flags` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

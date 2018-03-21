@@ -1041,7 +1041,7 @@ DROP TABLE IF EXISTS `pm_foldersread`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `pm_foldersread` (
   `user` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `folder` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `folder` tinyint(3) NOT NULL DEFAULT '0',
   `readdate` int(10) NOT NULL DEFAULT '0',
   UNIQUE KEY `userforum` (`user`,`folder`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

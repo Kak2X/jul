@@ -29,7 +29,7 @@
 		$badposts = $sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$_GET['id']}");
 		// Show the confirmation box to trigger the trash thread action, but only if thread deletion is enabled
 		if ($badposts) {
-			if (!$config['allow-thread-deletion'] && !$sysadmin) {
+			if (!$config['allow-thread-deletion'] || !$sysadmin) {
 				errorpage("A thread with ID #{$_GET['id']} doesn't exist, but there are {$badposts} post(s) associated with it.", "showprivate.php?id={$_GET['id']}", 'the thread');
 			}
 			$message = "It's impossible to edit a broken PM thread. You have to delete the invalid posts, or merge them to another thread.";

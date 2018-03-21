@@ -184,9 +184,10 @@
 					'ip'	=> $_SERVER['REMOTE_ADDR']
 				);
 				
+				
 				// No longer useful
 				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
-				$sql->insert_id();
+				$sql->beginTransaction();
 				
 				$data = array(
 					'id'                => $newuserid,

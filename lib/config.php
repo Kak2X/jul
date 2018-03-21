@@ -7,7 +7,7 @@
 	
 	$sqldebuggers = array('127.0.0.1');
 	
-	const BOARD_VERSION = 'v1.92 (13/3/2018)';
+	const BOARD_VERSION = 'v1.92 (21/3/2018)';
 	
 	$config = array(
 	
@@ -77,6 +77,7 @@
 		// Debugging
 		'enable-sql-debugger'	=> true,					// (stub to set option in mysql.php)
 		'always-show-debug'		=> true,					// Always show error/query list regardless of powerlevel
+		'allow-debug-dump'	        => true,                    // Allow mysqldump script
 		'force-user-id'			=> false,						
 		'allow-rereggie'		=> false,
 		'no-redirects'          => true,                    // Stop auto redirect on error messages

@@ -39,7 +39,7 @@ img { border:none; }
 .nobr,div.lastpost {white-space:nowrap}
 
 /* Small font setup */
-.fonts,.fontt,div.lastpost{font-size:10px}
+.fonts,.fontt,div.lastpost{font-size:10px !important}
 
 /* Used to display buttons with the look of a link */
 .buttonlink {

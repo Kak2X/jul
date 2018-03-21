@@ -19,7 +19,7 @@ a:hover { color: #CECAFE; }
 .tdbg1,.tdbg2,.tdbgc,.tdbgh	{ border-right: 1px solid #000; border-bottom: 1px solid #000; }
 .table { border-top: #000 1px solid; border-left: #000 1px solid; }
 .font { font: 13px 'verdana', sans-serif; }
-.fonts { font: 10px 'verdana', sans-serif; }
+.fonts { font: 10px 'verdana', sans-serif !important;}
 .fontt { font: 10px 'tahoma', serif; }
 
 textarea,input,select,button {

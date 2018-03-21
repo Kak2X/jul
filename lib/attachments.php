@@ -1,6 +1,6 @@
 <?php
 
-function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
+function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) {
 	global $config, $numdir, $sql;
 	
 	if (!$config['allow-attachments'] || !$user) {
@@ -20,7 +20,7 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 			<td class='tdbg{$cell}'>
 				".htmlspecialchars($metadata['filename'])."
 			</td>
-			<td class='tdbg{$cell}'>{$metadata['size']}</td>
+			<td class='tdbg{$cell}'>".sizeunits($metadata['size'])."</td>
 			<td class='tdbg{$cell}'>
 				<input type='checkbox' name='remove{$i}' value=1>
 				<label for='remove{$i}'>Remove</a><br>
@@ -34,7 +34,7 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 	$out_conf = "";
 	if ($showpost !== NULL) {
 		$j = $i;
-		$attach = get_saved_attachments($showpost);
+		$attach = get_saved_attachments($showpost, $pm);
 		if ($attach) {
 			$out_conf .= "<tr><td class='tdbgh center b' colspan=3>Files uploaded</td></tr>";
 		}
@@ -103,7 +103,7 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL) {
 </tr>";
 }
 
-function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL, $editmode = false) {
+function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL, $extra = "") {
 
 	if ($is_image) { // An image
 		$thumb = ($imgprev !== NULL ? $imgprev : attachment_name($id, true));
@@ -124,10 +124,10 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 	<table class='attachment-box'>
 		<tr>
 		<td class='attachment-box-thumb' rowspan=2>
-			<$w href='download.php?id={$id}'><img src='{$thumb}'></$w>
+			<$w href='download.php?id={$id}{$extra}'><img src='{$thumb}'></$w>
 		</td>
 		<td class='attachment-box-text fonts'>
-			<div><$w href='download.php?id={$id}'>{$filename}</$w></div>
+			<div><$w href='download.php?id={$id}{$extra}'>{$filename}</$w></div>
 			<div>Size:<span style='float: right'>".sizeunits($size)."</span></div>
 			<div>Views:<span style='float: right'>{$views}</span></div>
 		</td>
@@ -147,11 +147,11 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 // once confirmed, they are simply identified by index
 
 // Assumes to receive an array of elements fetched off the DB
-function attachfield($list, $editmode = false) {
+function attachfield($list, $extra = "") {
 	$out = "";
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
-		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $editmode);
+		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $extra);
 	}
 	/* if ($editmode) {
 		$out .= "
@@ -200,22 +200,33 @@ function process_temp_attachments($key, $user, $extrasize = 0) {
 }
 
 
-function get_saved_attachments($post) {
+function get_saved_attachments($post, $pm = false) {
 	global $sql;
 	return $sql->getarray("
-		SELECT a.post, a.id, a.filename, a.size, a.views, a.is_image
+		SELECT a.post, a.pm, a.id, a.filename, a.size, a.views, a.is_image
 		FROM attachments a
-		WHERE a.post = {$post}"
+		WHERE a.".($pm ? "pm" : "post")." = {$post}"
 	, mysql::USE_CACHE);
+}
+
+function get_saved_attachments_ids($post, $pm = false) {
+	global $sql;
+	if (!$post) {
+		return [];
+	} else if (is_array($post)) {
+		return $sql->getresults("SELECT id FROM attachments WHERE ".($pm ? "pm" : "post")." IN (".implode(',', $post).")");
+	} else {
+		return $sql->getresults("SELECT id FROM attachments WHERE ".($pm ? "pm" : "post")." = {$post}");
+	}
 }
 
 
 
-function process_saved_attachments($post) {
+function process_saved_attachments($post, $pm = false) {
 	// Mark the already confirmed attachment just for deletion (will be properly removed on submit)
 	// Recycle the same query which will be used later in quikattach()
 	$extrasize = 0;
-	$attach = get_saved_attachments($post);
+	$attach = get_saved_attachments($post, $pm);
 	$attachsel = array();
 	foreach ($attach as $x) {
 		if (isset($_POST["removec{$x['id']}"])) {
@@ -289,7 +300,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 
 // Check if any current attachments are in the temp folder
 // and move them to the proper attachment folder and save to the DB
-function save_attachments($thread, $user, $post_id) {
+function save_attachments($thread, $user, $post_id, $assoc = 'post') {
 	global $sql;
 	for ($i = 0; true; ++$i) {
 		$path = attachment_tempname($thread, $user, $i);
@@ -300,7 +311,7 @@ function save_attachments($thread, $user, $post_id) {
 		// Save the metadata to the database
 		$metadata = get_attachment_metadata($path);
 		$sqldata = [
-			'post'     => $post_id,
+			$assoc     => $post_id,
 			'user'     => $user,
 			'mime'     => $metadata['mime'],
 			'filename' => $metadata['filename'],
@@ -373,10 +384,10 @@ function remove_temp_attachments($thread, $user, $list) {
 	}
 }
 
-function remove_attachments($list, $post = NULL) {
+function remove_attachments($list, $post = NULL, $field = 'post') {
 	global $sql;
 	if ($post !== NULL) {
-		$sql->query("DELETE FROM attachments WHERE post = {$post}");
+		$sql->query("DELETE FROM attachments WHERE {$field} = {$post}");
 	} else {
 		$sql->query("DELETE FROM attachments WHERE id IN (".implode(',', $list).")");
 	}

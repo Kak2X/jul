@@ -145,14 +145,13 @@
 			LIMIT ".($_POST['ppp'] * $_POST['page']).", {$_POST['ppp']}
 		", [$_POST['ip']]);
 		
-		$pmsgs = $sql->queryp("
-			SELECT 	p.id, p.userfrom, p.userto, p.title, p.ip, p.date,
-					".set_userfields('u1', 'uid').",".set_userfields('u2')." uid
-			FROM pmsgs p
-			LEFT JOIN users u1 ON p.userfrom = u1.id
-			LEFT JOIN users u2 ON p.userto   = u2.id
+		$pms = $sql->queryp("
+			SELECT p.*, $userfields uid, t.title
+			FROM pm_posts p
+			LEFT JOIN users      u ON p.user   = u.id
+			LEFT JOIN pm_threads t ON p.thread = t.id 
 			WHERE p.ip LIKE ?
-			$mgroup $msort
+			$pgroup $psort
 			LIMIT ".($_POST['ppp'] * $_POST['page']).", {$_POST['ppp']}
 		", [$_POST['ip']]);
 
@@ -173,7 +172,7 @@
 <br>
 <table class='table'>
 	<tr>
-		<td class='tdbgh center' colspan=8><b>Users: <?=$sql->num_rows($users)?></b><tr>
+		<td class='tdbgh center b' colspan=8>Users: <?=$sql->num_rows($users)?><tr>
 		<td class='tdbgc center'>id</td>
 		<td class='tdbgc center'>Name</td>
 		<td class='tdbgc center'>Registered on</td>
@@ -204,7 +203,7 @@
 
 <table class='table'>
 	<tr>
-		<td class='tdbgh center' colspan=5><b>Posts: <?=$sql->num_rows($posts)?></b><tr>
+		<td class='tdbgh center b' colspan=5>Posts: <?=$sql->num_rows($posts)?><tr>
 		<td class='tdbgc center'>id</td>
 		<td class='tdbgc center'>Posted by</td>
 		<td class='tdbgc center'>Thread</td>
@@ -226,33 +225,25 @@
 
 <table class='table'>
 	<tr>
-		<td class='tdbgh center b' colspan=6>Private messages: <?=$sql->num_rows($pmsgs)?><tr>
+		<td class='tdbgh center b' colspan=5>Private messages: <?=$sql->num_rows($posts)?><tr>
 		<td class='tdbgc center'>id</td>
-		<td class='tdbgc center'>Sent by</td>
-		<td class='tdbgc center'>Sent to</td>
-		<td class='tdbgc center'>Title</td>
+		<td class='tdbgc center'>Posted by</td>
+		<td class='tdbgc center'>PM Thread</td>
 		<td class='tdbgc center'>Date</td>
 		<td class='tdbgc center'>IP</td>
 	</tr>
-<?php
-		for($c = 0; $pmsg = $sql->fetch($pmsgs, PDO::FETCH_NAMED); ++$c) {
-			if ($loguser['id'] == 1 || ($pmsg['userfrom'] != 1 && $pmsg['userto'] != 1)) {
-?>
+<?php for($c = 0; $pm = $sql->fetch($pms); ++$c) { ?>
 	<tr>
-		<td class='tdbg2 center'><?=$pmsg['id']?></td>
-		<td class='tdbg1 center'><?=getuserlink(array_column_by_key($pmsg, 0), $pmsg['userfrom'])?></td>
-		<td class='tdbg1 center'><?=getuserlink(array_column_by_key($pmsg, 1), $pmsg['userto'])?></td>
-		<td class='tdbg1 center'><a href="showprivate.php?id=<?=$pmsg['id']?>"><?=htmlspecialchars($pmsg['title'])?></a></td>
-		<td class='tdbg1 center nobr'><?=printdate($pmsg['date'])?></td>
-		<td class='tdbg2 center'><?=$pmsg['ip']?></td>
+		<td class='tdbg2 center'><?=$pm['id']?></td>
+		<td class='tdbg1 center'><?=getuserlink($pm, $pm['user'])?></td>
+		<td class='tdbg1 center'><a href="showprivate.php?id=<?=$pm['thread']?>"><?=htmlspecialchars($pm['title'])?></a></td>
+		<td class='tdbg1 center nobr'><?=printdate($pm['date'])?></td>
+		<td class='tdbg2 center'><?=$pm['ip']?></td>
 	</tr>
-<?php	
-			}
-		}
-
-?>
+<?php }	?>
 </table>
-</form>
+<br>
+
 <?php
 	}
 

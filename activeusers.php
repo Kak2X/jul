@@ -12,15 +12,15 @@
 	if (!$_GET['type']) $_GET['type'] = 'post';
 	
 	// Can't view sent/received PMs if we're not logged in
-	if (($_GET['type'] == 'pm' || $_GET['type'] == 'pms') && !$loguser['id'])
+	if (($_GET['type'] == 'pm' || $_GET['type'] == 'pmt') && !$loguser['id']) {
 		$_GET['type'] = 'post';
-
+	}
 	// Activity type selection
 	$linklist[0] = "<a href=\"?type=post&time={$_GET['time']}\">posts made</a>";
 	$linklist[1] = "<a href=\"?type=thread&time={$_GET['time']}\">new threads</a>";
 	if ($loguser['id']) {
-		$linklist[2] = "<a href=\"?type=pms&time={$_GET['time']}\">PMs sent by you</a>";
-		$linklist[3] = "<a href=\"?type=pm&time={$_GET['time']}\">PMs sent to you</a>";
+		$linklist[2] = "<a href=\"?type=pm&time={$_GET['time']}\">PMs sent</a>";
+		$linklist[3] = "<a href=\"?type=pmt&time={$_GET['time']}\">new conversations</a>";
 	}
 	
 	// Time boundary
@@ -44,7 +44,7 @@
 			$column      = "Posts"; // Column title for progress bar
 			$column2     = "posts"; // Describes what the total is for in the table footer
 			$stat        = "most active posters"; // Type description (top-left)
-			$linklist[0] = "posts made"; // disallow selection of selected type
+			$linklist[0] = strip_tags($linklist[0]); // disallow selection of selected type
 			break;
 			
 		case 'thread':
@@ -58,37 +58,35 @@
 			$column      = "Threads"; // Column title for progress bar
 			$column2     = "threads"; // Describes what the total is for in the table footer
 			$stat        = "most thread creators"; // Type description (top-left)
-			$linklist[1] = "new threads"; // disallow selection of selected type
+			$linklist[1] = strip_tags($linklist[1]); // disallow selection of selected type
 			break;
 
-		case 'pms':
-			$posters = $sql->query("
-				{$query} 
-				LEFT JOIN pmsgs p ON p.userfrom = {$loguser['id']}
-				WHERE p.userto = u.id ".
-				($_GET['time'] ? "AND p.date > {$qtime}" : "")." 
-				{$endp}
-			");
-			$desc        = "PMs sent to"; // Table title
-			$column      = "PMs"; // Column title for progress bar
-			$column2     = "PMs"; // Describes what the total is for in the table footer
-			$stat        = "who you've sent the most messages to"; // Type description (top-left)
-			$linklist[2] = "PMs sent by you"; // disallow selection of selected type
-			break;
-			
 		case 'pm':
 			$posters = $sql->query("
 				{$query} 
-				LEFT JOIN pmsgs p ON p.userto = {$loguser['id']}
-				WHERE p.userfrom = u.id ".
-				($_GET['time'] ? "AND p.date > {$qtime}" : "")." 
+				LEFT JOIN pm_posts p ON u.id = p.user ".
+				($_GET['time'] ? "WHERE p.date > {$qtime}" : "")." 
 				{$endp}
 			");
-			$desc        = "PMs recieved from"; // Table title
+			$desc        = "PMs sent"; // Table title
 			$column      = "PMs"; // Column title for progress bar
 			$column2     = "PMs"; // Describes what the total is for in the table footer
-			$stat        = "most message senders"; // Type description (top-left)
-			$linklist[3] = "PMs sent to you"; // disallow selection of selected type
+			$stat        = "who sent the most messages"; // Type description (top-left)
+			$linklist[2] = strip_tags($linklist[2]); // disallow selection of selected type
+			break;
+	
+		case 'pmt':
+			$posters = $sql->query("
+				{$query} 
+				LEFT JOIN pm_threads t ON u.id = t.user ".
+				($_GET['time'] ? "WHERE t.firstpostdate > {$qtime}" : "")." 
+				{$endp}
+			");
+			$desc        = "Conversations started"; // Table title
+			$column      = "Threads"; // Column title for progress bar
+			$column2     = "threads"; // Describes what the total is for in the table footer
+			$stat        = "most conversation creators"; // Type description (top-left)
+			$linklist[3] = strip_tags($linklist[3]); // disallow selection of selected type
 			break;
 			
 		default: // No bonus!
@@ -148,7 +146,7 @@
 	// Table title and column desc
 	?>
 	<table class='table'>
-		<tr><td class='tdbgc center' colspan=6><b><?=$desc?><?=$timespan?></b></td></tr>
+		<tr><td class='tdbgc center b' colspan=6><?=$desc?><?=$timespan?></td></tr>
 		<tr>
 			<td class='tdbgh center' style='width: 30px'>#</td>
 			<td class='tdbgh center' colspan=2>Username</td>

@@ -17,6 +17,7 @@
 		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
 		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
 		$set['date']     = printdate($post['date']);
+		if (!isset($post['num'])) $post['num'] = 0;
 		
 		$post = setlayout($post);	
 		
@@ -67,7 +68,7 @@
 			}
 			
 			if (filter_array($post['attach'])) {
-				$set['attach'] = attachfield($post['attach'], ($isadmin || $post['uid'] == $loguser['id']));
+				$set['attach'] = attachfield($post['attach'], ($forum < 0 ? "&pm" : ""), ($isadmin || $post['uid'] == $loguser['id']));
 			} else {
 				$set['attach'] = "";
 			}
@@ -86,6 +87,8 @@
 		} else {
 			$post['edited'] = "";
 		}
+		
+		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
 		
 		return dofilters(postcode($post,$set), $forum);
 	}
@@ -169,6 +172,7 @@
 	const PREVIEW_NEW     = 0;
 	const PREVIEW_EDITED  = 1;
 	const PREVIEW_PROFILE = 2;
+	const PREVIEW_PM      = 3;
 	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
 		global $sql, $controls, $loguser, $config, $isadmin;
 		
@@ -205,7 +209,7 @@
 		$ppost           = $user;
 		$ppost['posts']  = $posts;
 		$ppost['uid']    = $user['id'];
-		$ppost['num']    = $data['num'];
+		$ppost['num']    = filter_int($data['num']); // Not sent on PMs
 		$ppost['date']   = $data['date'];
 		$ppost['moodid'] = $data['moodid'];
 		$ppost['noob']   = filter_int($data['noob']);
@@ -235,7 +239,7 @@
 		if ($flags == PREVIEW_EDITED) {
 			//$ppost['id'] = $data['id'];
 			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
-				$attach = get_saved_attachments($data['id']);
+				$attach = get_saved_attachments($data['id'], isset($data['attach_pm']));
 				$ppost['attach'] = array_merge(filter_attachments($attach, $data['attach_sel']), get_temp_attachments($data['attach_key'], $user['id']));
 			}
 			// Edit marker
@@ -272,12 +276,22 @@
 	<br>";
 	}
 	
-function thread_history($thread, $num) {
+function thread_history($thread, $num, $pm = false) {
 	global $sql, $userfields;
 	
+	if ($pm) {
+		$table = "pm_posts";
+		$link  = "showprivate";
+		$nf    = "0 ";
+	} else {
+		$table = "posts";
+		$link  = "thread";
+		$nf    = "p.";
+	}
+	
 	$posts = $sql->query("
-		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, p.num
-		FROM posts p
+		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, {$nf}num
+		FROM {$table} p
 		LEFT JOIN users u ON p.user = u.id
 		WHERE p.thread = $thread
 		ORDER BY p.id DESC
@@ -317,7 +331,7 @@ function thread_history($thread, $num) {
 						</td>
 					</tr>";
 			} else {
-				$postlist .= "<tr><td class='tdbgh center' colspan=2>This is a long thread. Click <a href='thread.php?id={$thread}'>here</a> to view it.</td></tr>";
+				$postlist .= "<tr><td class='tdbgh center' colspan=2>This is a long thread. Click <a href='{$link}.php?id={$thread}'>here</a> to view it.</td></tr>";
 			}
 		}
 		

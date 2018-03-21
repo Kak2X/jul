@@ -41,7 +41,7 @@
 
 
 function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $forum, $numcols,
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $numcols,
 			$isadmin, $issuper, $sysadmin, $isChristmas;
 			
 	// Load images right away
@@ -137,7 +137,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		</form>';
 		
 		$headlinks.= $logout.'
-		<!-- <a href="javascript:document.logout.submit()">Logout</a> -->
 		- <a href="editprofile.php">Edit profile</a>
 		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
 		- <a href="postradar.php">Post radar</a>
@@ -154,8 +153,20 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			case 'forum.php':
 			case 'thread.php':
 				// Since we're supposed to have $forum when we browse these pages...
+				global $forum;
 				if (isset($forum['id']))
 					$headlinks .= " - <a href='index.php?action=markforumread&forumid={$forum['id']}'>Mark forum read</a>";
+				break;
+				
+			case 'private.php':
+				global $u;
+				if ($loguser['id'] == $u) {
+					$tokenstr = "&auth=".generate_token(TOKEN_MGET);
+					if (!default_pm_folder($_GET['dir'], DEFAULTPM_GROUPS)) {
+						$headlinks .= " - <a href='?action=markfolderread&dir={$_GET['dir']}{$tokenstr}'>Mark folder as read</a>";
+					}
+					$headlinks .= " - <a href='?action=markallfoldersread{$tokenstr}'>Mark all folders as read</a>";
+				}
 				break;
 		}
 		
@@ -191,30 +202,41 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	/*
 		Unread PMs box
 	*/
-	$new		= '&nbsp;';
 	$privatebox = "";
 	// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
 	// This box only shows up when a new PM is found, so it's optimized for that
 	if ($loguser['id'] && !in_array($scriptname, array("private.php","index.php")) ) {
-
+		$lastthread = $sql->query("
+			SELECT t.id
+			FROM pm_threads t
+			INNER JOIN pm_access       a ON t.id         = a.thread
+			LEFT  JOIN pm_foldersread fr ON a.folder     = fr.folder AND a.user = fr.user
+			LEFT  JOIN pm_threadsread tr ON t.id         = tr.tid    AND tr.uid = {$loguser['id']}
+			WHERE a.user = {$loguser['id']} 
+			  AND (!tr.read OR tr.read IS NULL)			  
+			  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
+			ORDER BY t.lastpostdate DESC
+		");
+		$unreadcount = $sql->num_rows($lastthread);
 		
-		$unreadpm = $sql->fetchq("
-			SELECT COUNT(p.id) cnt, p.date, $userfields
-			FROM pmsgs p
-			INNER JOIN users u ON p.userfrom = u.id
-			WHERE p.userto = {$loguser['id']} AND p.msgread = 0
-			ORDER BY p.id DESC
-		");	
-		
-		if ($unreadpm['cnt']) {
+		if ($unreadcount) {
+			$tid = $sql->result($lastthread);
+			$lastpost = $sql->fetchq("
+				SELECT p.id pid, p.date, $userfields
+				FROM pm_posts p
+				LEFT JOIN users u ON p.user = u.id
+				WHERE p.thread = {$tid}
+				ORDER BY p.date DESC
+				LIMIT 1
+			");
 			$privatebox = "
 				<tr>
 					<td colspan=3 class='tbl tdbg2 center fonts'>
-						{$statusicons['new']} <a href=private.php>You have {$unreadpm['cnt']} new private message".($unreadpm['cnt'] == 1 ? 's' : '')."</a> -- Last unread message from ".getuserlink($unreadpm)." on ".date($loguser['dateformat'], $unreadpm['date'] + $loguser['tzoff'])."
+						{$statusicons['new']} <a href='private.php'>You have {$unreadcount} new private message".($unreadcount != 1 ? 's' : '')."</a> -- <a href='showprivate.php?pid={$lastpost['pid']}#{$lastpost['pid']}'>Last unread message</a> from ".getuserlink($lastpost)." on ".printdate($lastpost['date'])."
 					</td>
-				</tr>";
+				</tr>";			
+			
 		}
-
 	}
 	
 	

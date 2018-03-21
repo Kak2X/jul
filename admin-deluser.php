@@ -51,13 +51,15 @@
 			$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
 			$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
 			$sql->query("UPDATE posts    SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
-			$sql->query("UPDATE pmsgs SET userfrom = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE userfrom = $id");
+			$sql->query("UPDATE pm_posts SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
 			
 			$sql->query("UPDATE threads     SET user         = {$config['deleted-user-id']} WHERE user=$id");
 			$sql->query("UPDATE threads     SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");
+			$sql->query("UPDATE pm_threads  SET user         = {$config['deleted-user-id']} WHERE user=$id");
+			$sql->query("UPDATE pm_threads  SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");
 			$sql->query("UPDATE forums      SET lastpostuser = {$config['deleted-user-id']} WHERE lastpostuser=$id");
 			$sql->query("UPDATE events      SET user         = {$config['deleted-user-id']} WHERE user=$id");
-			$sql->query("UPDATE pmsgs       SET userto       = {$config['deleted-user-id']} WHERE userto=$id");
+			$sql->query("UPDATE pm_access   SET user         = {$config['deleted-user-id']}, folder = 0 WHERE user=$id");
 			$sql->query("UPDATE attachments SET user         = {$config['deleted-user-id']} WHERE user=$id");
 			$sql->query("UPDATE users       SET posts        = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}");
 			
@@ -70,6 +72,10 @@
 			$sql->query("DELETE FROM announcementread WHERE user = $id");
 			$sql->query("DELETE FROM forumread WHERE user = $id");
 			$sql->query("DELETE FROM threadsread WHERE uid = $id");
+			$sql->query("DELETE FROM pm_threadsread WHERE uid = $id");
+			$sql->query("DELETE FROM pm_foldersread WHERE user = $id");
+			$sql->query("DELETE FROM pm_folders WHERE user = $id");
+			
 			
 			$delusertext .= "\r\n<tr><td class='tdbg1 center' style='width: 120px'>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
 			$delusercnt++;

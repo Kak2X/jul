@@ -44,8 +44,8 @@ function delete_avatar($user, $file) {
 	global $sql;
 	$sql->query("DELETE from users_avatars WHERE user = {$user} AND file = {$file}");
 	if ($file && $file != 'm') {
-		$sql->query("UPDATE pmsgs SET moodid = 0 WHERE userfrom = {$user}");
-		$sql->query("UPDATE posts SET moodid = 0 WHERE user = {$user}");
+		$sql->query("UPDATE pm_posts SET moodid = 0 WHERE user = {$user}");
+		$sql->query("UPDATE posts    SET moodid = 0 WHERE user = {$user}");
 	}
 	$path = avatar_path($user, $file);
 	if (file_exists($path)) {

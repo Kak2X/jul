@@ -190,58 +190,48 @@
 	<?php
 
 	// Displays total PMs along with unread unlike layout.php
-	$new = '&nbsp;';
 	$privatebox = '';
 	if ($loguser['id']) {
-		
-		$pms = $sql->getresultsbykey("
-			SELECT msgread, COUNT(*) num
-			FROM pmsgs
-			WHERE userto = {$loguser['id']}
-			GROUP BY msgread
+		$new     = '&nbsp;';
+		$lastmsg = "";
+		// Get number of PM threads, and a count of those with unread posts
+		$data = $sql->fetchq("
+			SELECT COUNT(*) total,
+			       COUNT(tr.read OR t.lastpostdate < fr.readdate) tread,
+				   MAX(t.lastpostdate) lastpostdate
+			FROM pm_threads t
+			INNER JOIN pm_access       a ON t.id     = a.thread
+			LEFT  JOIN pm_foldersread fr ON a.folder = fr.folder AND a.user = fr.user
+			LEFT  JOIN pm_threadsread tr ON t.id     = tr.tid    AND tr.uid = {$loguser['id']}
+			WHERE a.user = {$loguser['id']}
 		");
 		
-		// 0 -> unread ; 1 -> read
-		$totalpms = filter_int($pms[0]) + filter_int($pms[1]);
-
-		if ($totalpms) {
-			
-			if ($pms[0]) $new = $statusicons['new'];
-
-			$pmsg = $sql->fetchq("
-				SELECT p.date, p.id pid, $userfields
-				FROM pmsgs p
-				INNER JOIN users u ON u.id = p.userfrom
-				WHERE p.userto = {$loguser['id']}". (($pms[0]) ? " AND p.msgread = 0": "") ."
-				ORDER BY p.id DESC
-				LIMIT 1
+		if ($data['total']) {
+			if ($data['tread'] != $data['total']) {
+				$new = $statusicons['new'];
+			}
+			$thread = $sql->fetchq("
+				SELECT t.id tid, $userfields
+				FROM pm_threads t
+				INNER JOIN pm_access a ON t.id         = a.thread
+				INNER JOIN users     u ON t.lastposter = u.id
+				WHERE t.lastpostdate = {$data['lastpostdate']} AND a.user = {$loguser['id']}
 			");
-
-			$namelink = getuserlink($pmsg);
-			$lastmsg = "<a href='showprivate.php?id={$pmsg['pid']}'>Last ". (($pms[0]) ? "unread " : "") ."message</a> from $namelink on ".printdate($pmsg['date']);
-		} else {
-			$lastmsg = "";
-		}
-		
+			$lastmsg = "<a href='showprivate.php?id={$thread['tid']}&lpt={$data['lastpostdate']}'>Last post</a> sent by ".getuserlink($thread)." on ".printdate($data['lastpostdate']);
+		}		
 		?><br>
 			<table class='table'>
+				<tr><td class='tdbgh fonts center' colspan=2>Private messages</td></tr>
 				<tr>
-					<td class='tdbgh fonts center' colspan=2>
-						Private messages
-					</td>
-				</tr>
-				<tr>
-					<td class='tdbg1 center'>
-						<?=$new?>
-					</td>
+					<td class='tdbg1 center'><?=$new?></td>
 					<td class='tdbg2'>
-						<a href='private.php'>Private messages</a> -- You have <?=$totalpms?> private messages (<?=(int) $pms[0]?> new). <?=$lastmsg?>
+						<a href='private.php'>Private messages</a> -- You have <?= $data['total'] ?> private conversations (<?= ($data['total'] - $data['tread']) ?> new). <?=$lastmsg?>
 					</td>
 				</tr>
 			</table>
 		<br>
 		<?php
-
+	
 	}
 	
 	/*

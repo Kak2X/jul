@@ -82,13 +82,16 @@
 	<?php
 echo //tblinfo('posts_text').
 	tblinfo('posts')
+	.tblinfo('pm_posts')
 	//.tblinfo('pmsgs_text')
-	.tblinfo('pmsgs')
 	.tblinfo('postlayouts')
 	.tblinfo('threads')
 	.tblinfo('users')
 	.tblinfo('forumread')
 	.tblinfo('threadsread')
+	.tblinfo('pm_threads')
+	.tblinfo('pm_threadsread')
+	.tblinfo('pm_foldersread')
 	.tblinfo('postradar')
 	.tblinfo('ipbans')
 	.tblinfo('defines')

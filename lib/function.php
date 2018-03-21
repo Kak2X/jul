@@ -1645,7 +1645,97 @@ function postradar($userid){
 	return $race;
 }
 
+const DEFAULTPM_DEFAULT = 0b1;
+const DEFAULTPM_GROUPS  = 0b10;
+function default_pm_folder($folder, $flags = DEFAULTPM_GROUPS) {
+	$arr = [1 => [PMFOLDER_MAIN, PMFOLDER_TRASH], 2 => [PMFOLDER_ALL, PMFOLDER_TO, PMFOLDER_BY]];
+	if ($flags == (DEFAULTPM_DEFAULT | DEFAULTPM_GROUPS)) { 
+		return in_array($folder, $arr[1] + $arr[2]);
+	}
+	return in_array($folder, $arr[$flags]);
+}
 
+const PMSELECT_ALL     = 0b1;
+const PMSELECT_JS      = 0b10;
+const PMSELECT_MERGE   = 0b100;
+const PMSELECT_SHOWCNT = 0b1000;
+function pm_folder_select($name, $user, $sel = 0, $flags = 0) {
+	global $loguser, $sql;
+	
+	$default = array(
+		'Groups' => [
+			PMFOLDER_ALL    => ["All conversations"],
+			PMFOLDER_BY     => ["Conversations created"],
+			PMFOLDER_TO     => ["Conversations you take part in"],
+		],
+		'Default folders' => [
+			PMFOLDER_MAIN   => ["Default folder"],
+			PMFOLDER_TRASH  => ["The Trash&trade;"],
+		]
+	);	
+	if (!($flags & PMSELECT_ALL)) { // Hide "simulated" folders
+		unset($default['Groups']);
+	}
+
+	$groups = $preopt = $nosel = $js = "";
+	if ($flags & PMSELECT_MERGE) {
+		$preopt = "<option value='-100' selected>Choose a folder to merge into...</option>";
+		$nosel  = "WHERE folder != {$sel}";
+	}
+	if ($flags & PMSELECT_JS) {
+		$idparam = ($loguser['id'] != $user) ? "id={$user}&" : "";
+		$js = "onChange=\"parent.location='private.php?{$idparam}dir='+this.options[this.selectedIndex].value\"";
+	}
+	if ($flags & PMSELECT_SHOWCNT) {
+		// Calculate totals for each folder
+		$totals = $sql->getresultsbykey("SELECT folder, COUNT(*) FROM pm_access WHERE user = {$user} GROUP BY folder");
+		$totals[PMFOLDER_ALL] = array_sum($totals);
+		if (!isset($totals[PMFOLDER_TRASH])) $totals[PMFOLDER_TRASH] = 0;
+		if (!isset($totals[PMFOLDER_MAIN]))  $totals[PMFOLDER_MAIN]  = 0;
+		$totals[PMFOLDER_BY] = $sql->resultq("SELECT COUNT(*) FROM pm_threads WHERE user = {$user}");
+		$totals[PMFOLDER_TO] = $totals[PMFOLDER_ALL] - $totals[PMFOLDER_BY];
+		// Unread indicators
+		$unread = $sql->getresultsbykey("
+			SELECT a.folder, COUNT(*) 
+			FROM pm_threads t
+			INNER JOIN pm_access       a ON t.id     = a.thread
+			LEFT  JOIN pm_foldersread fr ON a.folder = fr.folder AND a.user = fr.user
+			LEFT  JOIN pm_threadsread tr ON t.id     = tr.tid    AND tr.uid = {$user}
+			WHERE a.user = {$user} 
+			  AND (!tr.read OR tr.read IS NULL)			  
+			  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
+			GROUP BY a.folder
+		");
+		$unread[PMFOLDER_ALL] = array_sum($unread);
+	}
+	$newtxt = $pmcount = "";
+	foreach ($default as $optgroup => $data) {
+		$groups .= "<optgroup label='{$optgroup}'>";
+		foreach ($data as $id => $x) {
+			if ($flags & PMSELECT_SHOWCNT) {
+				$pmcount = " ({$totals[$id]} PMs)";
+				$newtxt  = filter_int($unread[$id]) ? "[{$unread[$id]} NEW] " : "";
+			}
+			$groups .= "<option value='{$id}' ".($sel == $id ? "selected" : "").">{$newtxt}{$x[0]}{$pmcount}</option>";
+		}
+		$groups .= "</optgroup>";
+	}
+	$folders = $sql->query("SELECT folder, title FROM pm_folders {$nosel} ORDER BY ord ASC, id ASC");
+	$custom = "";
+	while ($x = $sql->fetch($folders)) {
+		if ($flags & PMSELECT_SHOWCNT) {
+			$pmcount = " (".filter_int($totals[$x['folder']])." PMs)";
+			$newtxt  = filter_int($unread[$x['folder']]) ? "[{$unread[$x['folder']]} NEW] " : "";
+		}
+		$custom .= "<option value='{$x['folder']}' ".($sel == $x['folder'] ? "selected" : "").">{$newtxt}".htmlspecialchars($x['title'])."{$pmcount}</option>";
+	}
+	return "
+	<select name='{$name}'{$js}>
+		{$preopt}
+		{$groups}
+		<optgroup label='Custom folders'>{$custom}</optgroup>
+	</select>";
+}
 
 /* useless function, leftover that should have never been used in the first place
 function loaduser($id,$type){
@@ -1821,7 +1911,7 @@ function adminlinkbar($sel = NULL) {
 			'admin-ipsearch.php'    => "IP Search",
 			'admin-ipbans.php'      => "IP Bans",
 			'admin-pendingusers.php'=> "Pending Users",
-			'admin-slammer.php'     => "EZ Ban Button",
+//			'admin-slammer.php'     => "EZ Ban Button",
 			'admin-deluser.php'     => "Delete User",
 		)
 	);

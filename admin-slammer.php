@@ -32,7 +32,9 @@ else if ($_POST['knockout']) {
 	echo "Deleted threads.\n";
 	
 	// No PMs?
-	$sql->query("DELETE FROM pmsgs WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'");
+	$sql->query("DELETE FROM pm_posts WHERE user = '{$target_id}' OR id IN (SELECT id FROM pm_threads WHERE user = '{$target_id}')");
+	$sql->query("DELETE FROM pm_threads WHERE user = '{$target_id}'");
+	$sql->query("DELETE FROM pm_folders WHERE user = '{$target_id}'");
 	echo "Deleted private messages.\n";
 	
 	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1");
@@ -44,6 +46,8 @@ else if ($_POST['knockout']) {
 	$sql->query("DELETE FROM announcementread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM forumread WHERE user = '{$target_id}'");
 	$sql->query("DELETE FROM threadsread WHERE uid = '{$target_id}'");
+	$sql->query("DELETE FROM pm_threadsread WHERE uid = '{$target_id}'");
+	$sql->query("DELETE FROM pm_foldersread WHERE user = '{$target_id}'");
 	echo "Deleted postread data.\n";
 	
 	$sql->query("DELETE FROM events WHERE user = '{$target_id}'");	

@@ -32,6 +32,13 @@
 	const TOKEN_USERDEL      = 65;
 	
 	
+	const PMFOLDER_MAIN   = 0;
+	const PMFOLDER_ALL   = -1;
+	const PMFOLDER_TO    = -2;
+	const PMFOLDER_BY    = -3;
+	const PMFOLDER_TRASH = -4;
+	
+	
 	$pwlnames = array(
 		'-2'=>'Permabanned',
 		'-1'=>'Banned', 

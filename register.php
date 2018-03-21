@@ -196,8 +196,8 @@
 					'lastip'            => $_SERVER['REMOTE_ADDR'],
 					'lastactivity'      => $currenttime,
 					'regdate'           => $currenttime,
-					'threadsperpage'    => $config['default-ppp'],
-					'postsperpage'      => $config['default-tpp'],
+					'threadsperpage'    => $config['default-tpp'],
+					'postsperpage'      => $config['default-ppp'],
 				);
 				$sql->queryp("INSERT INTO users SET ".mysql::setplaceholders($data), $data);
 				

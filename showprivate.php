@@ -157,29 +157,27 @@
 	/*
 		Thread controls
 	*/
-	$modfeats = '';
+	$linklist = $fulledit = "";
 	if ($isadmin || ($loguser['id'] == $thread['user'] && $config['allow-pmthread-edit'])) {
-		$linklist = "";	
 		$link = "<a href='editpmthread.php?id={$_GET['id']}&auth=".generate_token(TOKEN_MGET)."&action";
 		if (!$thread['closed']) {
 			$linklist .= "$link=qclose'>Close</a>";
 		} else {
 			$linklist .= "$link=qunclose'>Open</a>";
 		}
-			
-		if ($loguser['id'] != $thread['user']) {
-			$head = "Sneak mode";
-		} else {
-			$head = "Thread options";
-			if ($access['folder'] != PMFOLDER_TRASH) {
-				$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
-			}
-			$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=movethread'>Move</a>";
-		}
-		
-		$fulledit = "<a href='editpmthread.php?id={$_GET['id']}'>Edit thread<a>";
-		$modfeats = "<tr><td class='tdbgc fonts' colspan=2>{$head}: $linklist -- $fulledit</td></tr>";
+		$fulledit = " -- <a href='editpmthread.php?id={$_GET['id']}'>Edit thread<a>";
 	}
+	if ($access) { // Moving a thread on a different folder should be always possible
+		if ($access['folder'] != PMFOLDER_TRASH) {
+			$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
+		}
+		$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=movethread'>Move</a>";
+		$head = "Thread options";
+	} else {
+		$head = "Sneak mode";
+	}
+	$modfeats = "<tr><td class='tdbgc fonts' colspan=2>{$head}: {$linklist} {$fulledit}</td></tr>";
+	
 
 
 	$errormsgs = '';

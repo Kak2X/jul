@@ -83,6 +83,7 @@
 		'force-user-id'			=> false,						
 		'allow-rereggie'		=> false,
 		'no-redirects'          => true,                    // Stop auto redirect on error messages
+		'compat-test'           => true,                    // Enable compatiblity layer
 		
 		// Defaults
 		'server-time-offset' 	=> 3 * 3600,

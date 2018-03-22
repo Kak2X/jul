@@ -9,7 +9,6 @@ if (!$loguser['id']) {
 if($loguser['powerlevel'] <= -2) {
 	errorpage("You are permabanned and cannot send private messages.",'private.php','your private message box',0);
 }
-$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='private.php'>Private messages</a>";
 
 $_GET['id'] = filter_int($_GET['id']);
 
@@ -18,8 +17,7 @@ if ($_GET['id']) {
 	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
 
-
-
+	
 	$thread = $sql->fetchq("SELECT closed, title, user, lastposter FROM pm_threads WHERE id = {$_GET['id']}");
 	if (!$thread) {
 		errorpage("Nice try. Next time, wait until someone makes the conversation <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
@@ -36,9 +34,7 @@ if ($_GET['id']) {
 		errorpage("You are not allowed to post in this thread.","thread.php?id={$_GET['id']}",$thread['title'],0);
 	}
 	
-	$ppp	= isset($_GET['ppp']) ? ((int) $_GET['ppp']) : ($loguser['id'] ? $loguser['postsperpage'] : $config['default-ppp']);
-	$ppp	= max(min($ppp, 500), 1);
-
+	$ppp = get_ppp();
 	
 	$_POST['message']   = filter_string($_POST['message']);
 	
@@ -204,6 +200,13 @@ if ($_GET['id']) {
 	$nolayoutchk    = $_POST['nolayout']  ? "checked" : "";
 	$nohtmlchk      = $_POST['nohtml']    ? "checked" : "";
 	
+	$links = array(
+		"Private messages" => "private.php",
+		$thread['title']   => "showprivate.php?id={$_GET['id']}",
+		"New reply"        => NULL,
+	);
+	$barlinks = dobreadcrumbs($links); 
+	
 	?>
 	<?=$barlinks?>
 	<form method="POST" action="?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
@@ -295,10 +298,7 @@ else {
 			$error = "You have entered too many usernames.";
 		} else if ($loguser['lastpmtime'] > (ctime()-30)) {
 			$error	= "You are trying to post too rapidly.";
-		} else if (
-			!default_pm_folder($_POST['folder'], DEFAULTPM_DEFAULT) &&
-			!$sql->resultq("SELECT COUNT(*) FROM pm_folders WHERE user = {$loguser['id']} AND folder = {$_POST['folder']}")
-		) {
+		} else if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
 			$error = "You have selected a nonexisting folder.";
 		} else {
 			$error = "";
@@ -479,6 +479,12 @@ else {
 		$selclosed = $_POST['tclosed'] ? "checked" : "";
 		$modoptions = " - <input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Disable replies</label>";
 	}		
+	
+	$links = array(
+		"Private messages" => "private.php",
+		"New conversation" => NULL,
+	);
+	$barlinks = dobreadcrumbs($links); 
 	
 ?>
 

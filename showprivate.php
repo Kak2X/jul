@@ -12,8 +12,9 @@
 	$_GET['pid']  = filter_int($_GET['pid']); // Post ID in thread
 	
 	$_GET['dir']  = isset($_GET['dir']) ? (int) $_GET['dir'] : PMFOLDER_ALL; // Marks the folder we selected the thread (for next/previous thread navigation)
-	$_GET['user'] = ($isadmin && isset($_GET['user'])) ? (int) $_GET['user'] : $loguser['id']; // ^ but for the user we're choosing
-	$navparam = "&dir={$_GET['dir']}".($_GET['user'] != $loguser['id'] ? "&user={$_GET['user']}" : "");
+	$_GET['user'] = $isadmin ? filter_int($_GET['user']) : 0; // ^ but for the user we're choosing
+	$navparam = '&'.opt_param(['dir', 'user']);
+	if (!isset($_GET['user'])) $_GET['user'] = $loguser['id'];
 	
 	$_GET['pin'] = filter_int($_GET['pin']);
 	$_GET['lpt'] = filter_int($_GET['lpt']);
@@ -31,8 +32,7 @@
 		return header("Location: ?pid={$gotopost}{$navparam}#{$gotopost}");
 	}
 	
-	$ppp	= isset($_GET['ppp']) ? ((int) $_GET['ppp']) : ($loguser['id'] ? $loguser['postsperpage'] : $config['default-ppp']);
-	$ppp	= max(min($ppp, 500), 1);
+	$ppp	= get_ppp();
 	
 	// Linking to a post ID
 	if ($_GET['pid']) {
@@ -82,13 +82,10 @@
 		
 		// An admin sneaking in shouldn't ever update the last read stats
 		if ($access) {
-			if (!default_pm_folder($access['folder'], DEFAULTPM_DEFAULT)) { // filter out main and trash
-				$validfolder = $sql->resultq("SELECT COUNT(*) FROM pm_folders WHERE user = {$loguser['id']} AND folder = {$access['folder']}");
-				if (!$validfolder) {
-					trigger_error("A PM thread was located in an invalid PM folder (user's name: {$loguser['name']} [#{$loguser['id']}]; folder #{$access['folder']}). The thread has been moved to the default folder.", E_USER_NOTICE);
-					$access['folder'] = PMFOLDER_MAIN;
-					$sql->query("UPDATE pm_access SET folder = ".PMFOLDER_MAIN." WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-				}
+			if (!valid_pm_folder($access['folder'], $loguser['id'])) {
+				trigger_error("A PM thread was located in an invalid PM folder (user's name: {$loguser['name']} [#{$loguser['id']}]; folder #{$access['folder']}). The thread has been moved to the default folder.", E_USER_NOTICE);
+				$access['folder'] = PMFOLDER_MAIN;
+				$sql->query("UPDATE pm_access SET folder = ".PMFOLDER_MAIN." WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
 			}
 			
 			// Unread posts count
@@ -340,4 +337,3 @@
 		$threadforumlinks";
 	
 	pagefooter();
-	

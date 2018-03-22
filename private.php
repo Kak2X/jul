@@ -1,14 +1,5 @@
 <?php
 	
-	// No-JS Compatibility
-	if (isset($_POST['setdir'])) {
-		if (!isset($_POST['idparam'])) 		$_POST['idparam'] 		= "";
-		if (!isset($_POST['folderjump'])) 	$_POST['folderjump'] 	= PMFOLDER_ALL;
-		header("Location: private.php?{$_POST['idparam']}&dir={$_POST['folderjump']}");
-		die;
-	}
-	
-	
 	require 'lib/function.php';
 	
 	$meta['noindex'] = true;
@@ -20,29 +11,21 @@
 	$_GET['action']  = filter_string($_GET['action']);
 	
 	// Viewing someone else?
-	if ($isadmin && $_GET['id']) {
-		$valid      = $sql->resultq("SELECT 1 FROM users WHERE id = {$_GET['id']}");
-		if (!$valid) {
-			errorpage("This user doesn't exist!");
-		}
-		
-		$u 			= $_GET['id'];
-		$idparam 	= "id={$_GET['id']}";
-		$navlink    = "&dir={$_GET['dir']}&user={$_GET['id']}";
+	if (!$isadmin || !valid_user($_GET['id'])) {
+		$u = $loguser['id'];
+		$_GET['id'] = 0;
 	} else {
-		$u 			= $loguser['id'];
-		$idparam 	= '';
-		$navlink    = "&dir={$_GET['dir']}";
+		$u = $_GET['user'] = $_GET['id'];
 	}
+	$idparam = opt_param(['id']);
+	$navlink = '&'.opt_param(['dir', 'user']);
 	
 	if ($u == $loguser['id'] && $_GET['action']) {
 		check_token($_GET['auth'], TOKEN_MGET);
 		
 		switch ($_GET['action']) {
 			case 'markfolderread':
-				// Don't do this for "groups" or nonexisting folders
-				$valid = $sql->resultq("SELECT COUNT(*) FROM pm_folders WHERE folder = {$_GET['dir']} AND user = {$loguser['id']}");
-				if (!default_pm_folder($_GET['dir'], DEFAULTPM_DEFAULT) && !$valid) {
+				if (!valid_pm_folder($_GET['dir'], $loguser['id'])) {
 					errorpage("This folder isn't valid.");
 				}
 				$sql->query("
@@ -71,14 +54,10 @@
 	pageheader("Private Messages");
 	
 	
-	$ppp = (isset($_GET['ppp']) ? ((int) $_GET['ppp']) : (($loguser['id']) ? $loguser['postsperpage'] : $config['default-ppp']));
-	$ppp = max(min($ppp, 500), 1);
-
-	$tpp = (isset($_GET['tpp']) ? ((int) $_GET['tpp']) : (($loguser['id']) ? $loguser['threadsperpage'] : $config['default-tpp']));
-	$tpp = max(min($tpp, 500), 1);
-
-	$page = filter_int($_GET['page']);
-    $min  = $page * $tpp;
+	$ppp  = get_ppp();
+	$tpp  = get_tpp();
+	$_GET['page'] = filter_int($_GET['page']);
+    $min = $_GET['page'] * $tpp;
 	
 	
 	/*
@@ -97,11 +76,8 @@
 			$qwhere = " AND t.user = {$u}";
 			break;
 		default: // Folders
-			if (!default_pm_folder($_GET['dir'], DEFAULTPM_DEFAULT)) {
-				$valid = $sql->resultq("SELECT 1 FROM pm_folders WHERE user = {$u} AND folder = {$_GET['dir']}");
-				if (!$valid) {
-					errorpage("Cannot access the folder. It either doesn't exist or it isn't for you.",'private.php','your private message box',0);
-				}
+			if (!valid_pm_folder($_GET['dir'], $u)) {
+				errorpage("Cannot access the folder. It either doesn't exist or it isn't for you.",'private.php','your private message box',0);
 			}
 			$qwhere = " AND a.folder = {$_GET['dir']}";
 	}
@@ -246,27 +222,14 @@
 	/*
 		Folder selection & other controls
 	*/
-	if ($u != $loguser['id']) {
-		$users_p = htmlspecialchars($sql->resultq("SELECT `name` FROM `users` WHERE `id` = $u"))."'s p";
-	} else {
-		$users_p = "P";
-	}
-	
-	$infotable =
-		"<table style='width: 100%'>
-			<tr>
-				<td class='font'>
-					<a href='index.php'>{$config['board-name']}</a> - {$users_p}rivate messages - 
-					<form method='POST' action='?' style='display: inline'>
-						".pm_folder_select('folderjump', $u, $_GET['dir'], PMSELECT_ALL | PMSELECT_JS | PMSELECT_SHOWCNT)."
-					</form>
-				</td>
-				<td class='fonts right'>
-					<a href='sendprivate.php?dir={$_GET['dir']}'>New conversation</a> - 
-					<a href='privatefolders.php'>Edit folders</a>
-				</td>
-			</tr>
-		</table>";
+	$users_p = ($u != $loguser['id']) ? htmlspecialchars(load_user($u)['name'])."'s p" : "P";
+	$links = array(
+		"{$users_p}rivate messages" => NULL,
+	);
+	$right = pm_folder_select('dir', $u, $_GET['dir'], PMSELECT_ALL | PMSELECT_JS | PMSELECT_SHOWCNT)." - 
+		<a href='sendprivate.php?dir={$_GET['dir']}'>New conversation</a> - 
+		<a href='privatefolders.php'>Manage folders</a>";
+	$infotable = dobreadcrumbs($links, $right);
 	
 	print "
 	{$infotable}
@@ -286,4 +249,3 @@
 	";
 	
 	pagefooter();
-	

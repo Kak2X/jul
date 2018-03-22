@@ -32,11 +32,19 @@
 	const TOKEN_USERDEL      = 65;
 	
 	
-	const PMFOLDER_MAIN   = 0;
+	const PMFOLDER_MAIN  =  0;
 	const PMFOLDER_ALL   = -1;
 	const PMFOLDER_TO    = -2;
 	const PMFOLDER_BY    = -3;
 	const PMFOLDER_TRASH = -4;
+	
+	$pmfoldernames = array(
+		PMFOLDER_MAIN  => "Default folder",
+		PMFOLDER_ALL   => "All conversations",
+		PMFOLDER_TO    => "Conversations you take part in",
+		PMFOLDER_BY    => "Conversations created",
+		PMFOLDER_TRASH => "The Trash&trade;"
+	);
 	
 	
 	$pwlnames = array(

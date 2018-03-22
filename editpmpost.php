@@ -156,7 +156,12 @@
 		$selsmilies = $nosmilies ? "checked" : "";
 		$selhtml    = $nohtml    ? "checked" : "";	
 		
-		$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='private.php'>Private messages</a> - <a href='showprivate.php?pid={$_GET['id']}#{$_GET['id']}'>".htmlspecialchars($thread['title'])."</a> - Edit post";
+		$links = array(
+			"Private messages" => "private.php",
+			$thread['title']   => "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",
+			"Edit post"        => NULL,
+		);
+		$barlinks = dobreadcrumbs($links); 
 
 		?>
 		<?=$barlinks?>

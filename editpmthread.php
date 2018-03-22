@@ -101,8 +101,7 @@
 		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {	
 			// Double-confirm the checkbox 
 			$_POST['folder'] = filter_int($_POST['folder']);
-			$valid  = $sql->resultq("SELECT COUNT(*) FROM pm_folders WHERE user = {$loguser['id']} AND folder = {$_POST['folder']}");
-			if (default_pm_folder($_POST['folder'], DEFAULTPM_DEFAULT) || $valid) {
+			if (valid_pm_folder($_POST['folder'], $loguser['id'])) {
 				$sql->query("UPDATE pm_access SET folder = {$_POST['folder']} WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
 			} else {
 				errorpage("Invalid folder selected.");
@@ -139,6 +138,13 @@
 		}
 	}
 	else {
+		
+		// We are increasing the limit since admins can edit the ACL
+		// This is because the thread owner (which usually is $loguser['id']) is normally omitted from the list
+		if ($isadmin) {
+			$config['pmthread-dest-limit']++;
+		}
+		
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
 			
@@ -172,11 +178,12 @@
 			$badusers = "";
 			foreach ($userlist as $x) {
 				$x = trim($x);
-				$valid    = $sql->resultp("SELECT id FROM users WHERE name = ? AND id != {$loguser['id']}", [$x]);
-				if (!$valid) {
-					$badusers .= "<li>{$x}</li>";
-				} else {
+				if (!$isadmin && $loguser['name'] == $x) { // having "the following users don't exist: yourself" is kind of weird
+					errorpage("You are automatically added as a partecipant. You can't add yourself manually.");
+				} else if ($valid = valid_user($x)) {
 					$destid[$valid] = $valid; // no duplicates please
+				} else {
+					$badusers .= "<li>{$x}</li>";
 				}
 			}
 			if ($badusers) {
@@ -194,12 +201,12 @@
 			$sql->queryp("UPDATE pm_threads SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 			//-- Insert ACL --
 			// Remove users missing from the list (except yourself)
-			$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']} AND user NOT in (".implode(',', $destid).", {$loguser['id']})");
+			$noshow = $isadmin ? 0 : $loguser['id']; // display everybody if admin
+			$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']} AND user NOT in (".implode(',', $destid).", {$noshow})");
 			$acl = $sql->prepare("INSERT IGNORE INTO pm_access (thread, user, folder) VALUES (?,?,?)"); // Do not replace existing values
 			foreach ($destid as $in) {
 				$sql->execute($acl, [$_GET['id'], $in, PMFOLDER_MAIN]);
 			}
-			//$sql->execute($acl, [$_GET['id'], $loguser['id'], $access['folder']]);
 			//--
 			$sql->commit();
 			errorpage("Thank you, {$loguser['name']}, for editing the thread.","showprivate.php?id={$_GET['id']}",'return to the thread');
@@ -216,12 +223,21 @@
 			SELECT u.name 
 			FROM pm_access a
 			INNER JOIN users u ON a.user = u.id
-			WHERE a.thread = {$_GET['id']} AND a.user != {$loguser['id']}
+			WHERE a.thread = {$_GET['id']}".($isadmin ? "" : " AND a.user != {$loguser['id']}")."
 		");
 		//--
 		pageheader();
 		
+		$links = array(
+			"Private messages" => "private.php",
+			$thread['title']   => "showprivate.php?id={$_GET['id']}",
+			"Edit thread"      => NULL,
+		);
+		$barlinks = dobreadcrumbs($links); 
+		$other_p  = $isadmin ? "P" : "Other p";
+		
 		?>
+		<?= $barlinks ?>
 		<form method="POST" action='?id=<?=$_GET['id']?>'>
 		<table class='table'>
 			<tr>
@@ -242,7 +258,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td class='tdbg1 center b'>Other partecipants:</td>
+				<td class='tdbg1 center b'><?=$other_p?>artecipants:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='text' name=users SIZE=60 MAXLENGTH=100 VALUE="<?=implode('; ', $accesslist)?>">
 					<span class='fonts'>Max <?= $config['pmthread-dest-limit'] ?> users allowed. Multiple users separated with a semicolon.</span>
@@ -272,6 +288,7 @@
 			</tr>
 		</table>
 		</form>
+		<?= $barlinks ?>
 		<?php
 	}
 	

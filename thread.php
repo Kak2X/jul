@@ -196,6 +196,7 @@
 		$thread['title'] = "Posts by {$uname}";
 		$windowtitle = "Posts by {$uname}";
 		$forum['id'] = 0;
+		$forum['title'] = "";
 		$tlinks = '';
 	}
 	else {

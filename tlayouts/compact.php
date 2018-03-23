@@ -16,7 +16,7 @@ function postcode($post,$set){
 	
 	// We don't show the .topbar declaration since there's no CSS allowed anyway
 	return 
-	"<table class='table'>
+	"<table class='table' id='{$post['id']}'>
 		<tr>
 			<td class='tbl tdbg{$set['bg']} vatop'>
 				<div class='mobile-avatar'>{$set['userpic']}</div>

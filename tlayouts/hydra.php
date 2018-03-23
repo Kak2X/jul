@@ -31,7 +31,7 @@ function postcode($post,$set){
 	$height   = $post['deleted'] ? 0 : 220;	
 	
 	return 
-	"<table class='table'>
+	"<table class='table' id='{$post['id']}'>
 		<tr>
 			<td class='tbl tdbg{$set['bg']}' valign=top rowspan=2 style='width: 20% !important;'>
 				{$noobspan}{$set['userlink']}</span>

@@ -1714,7 +1714,7 @@ CREATE TABLE `tlayouts` (
 
 LOCK TABLES `tlayouts` WRITE;
 /*!40000 ALTER TABLE `tlayouts` DISABLE KEYS */;
-INSERT INTO `tlayouts` VALUES (1,0,'Regular','regular'),(2,2,'Compact','compact'),(3,99,'Hydra\'s Layout&trade;','hydra'),(4,1,'Regular with numgfx','regular');
+INSERT INTO `tlayouts` VALUES (1,1,'Regular','regular'),(2,3,'Compact','compact'),(3,5,'Hydra\'s Layout&trade;','hydra'),(4,2,'Regular with number/bar graphics','regular'),(5,6,'EZBoard-like','ezboard'),(6,7,'Extended','regular'),(7,8,'Wide','postwide'),(8,9,'RPG','rpg'),(9,10,'UBB-like','ubb'),(10,11,'VBB-like','vbb'),(11,4,'Compact Vertical','vertical');
 /*!40000 ALTER TABLE `tlayouts` ENABLE KEYS */;
 UNLOCK TABLES;
 

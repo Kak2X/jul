@@ -26,6 +26,28 @@
 	
 	pageheader($windowtitle);
 	
+	if (isset($_GET['tl'])) {
+		$loguser['layout'] = (int) $_GET['tl']; 
+		$data = array(
+			// Text
+			'message' => "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.",
+			// Post metadata
+			'forum'   => 0,
+			// (mod) Options
+			'nosmilies' => 0,
+			'nohtml'    => 0,
+			'nolayout'  => 0,
+			'moodid'    => 0,
+			'noob'      => 0,
+			// Attachments
+			'attach_key' => NULL,
+			#'attach_sel' => "",
+		);
+		print preview_post($user, $data, PREVIEW_PROFILE, "Thread layout #{$_GET['tl']}");
+		pagefooter();
+	}
+	
+	
 	$numdays = (ctime() - $user['regdate']) / 86400;
 	$userlink = getuserlink($user, 0, '', true);	// With minipic
 

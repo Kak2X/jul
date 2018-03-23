@@ -116,8 +116,10 @@
 			$post['headid']=$post['signid']=0;
 		}
 
-		if (!$loguser['viewsig'] || $post['deleted'] || isset($blockedlayouts[$post['uid']])) { // Disabled
+		$post['blockedlayout'] = isset($blockedlayouts[$post['uid']]);
+		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout']) { // Disabled
 			$post['headtext']=$post['signtext']='';
+			$post['headid']=$post['signid']=0;
 			return $post;
 		}
 

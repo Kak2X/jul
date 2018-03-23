@@ -30,7 +30,7 @@
 	$smallfont  = '<font class="fonts">';
 	$tinyfont   = '<font class="fontt">';
 	foreach(array('1','2','c','h') as $celltype){
-		$cell="<td class='tbl tdbg$celltype font";
+		$cell="<td class='tdbg$celltype";
 		$celln="tccell$celltype";
 		$$celln     =$cell." center'";
 		${$celln.'s'} =$cell."s center'";

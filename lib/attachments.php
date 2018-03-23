@@ -66,6 +66,15 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 		
 	}
 	
+	// Display fields option
+	// Doesn't cut out attachments above the limit if they are already uploaded
+	$numfields = max(1, filter_int($_POST['attachfields']));
+	$uploadinpt = "";
+	do {
+		$uploadinpt .= "<input type='file' class='w' name='attachment{$i}'><br/>";
+		++$i;
+	} while ($i < $numfields);
+	
 	return "".
 "<tr>
 	<td class='tdbg1 center b'>
@@ -94,7 +103,8 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 			</tr>
 			<tr>
 				<td colspan=3>
-					<input type='file' class='w' name='attachment{$i}'>
+					Show <input type='text' name='attachfields' class='right' value='{$numfields}' size='5' maxlength='2'> fields
+					{$uploadinpt}
 				</td>
 			</tr>
 		</table>
@@ -110,12 +120,6 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 	} else { // Not an image
 		$thumb = "images/defaultthumb.png";
 	}
-	$controls = "";
-	/*
-	$controls = $editmode ? 
-		"<a href='attachment.php?id={$id}&action=edit'>Edit</a> - ".
-		"<a href='attachment.php?id={$id}&action=delete'>Delete</a> "
-		: "";*/
 	
 	// id 0 is a magic value used for post previews
 	$w = $id ? 'a' : 'b';
@@ -132,11 +136,7 @@ function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgpre
 			<div>Views:<span style='float: right'>{$views}</span></div>
 		</td>
 	</tr>
-	<tr>
-		<td class='attachment-box-controls fonts right'>
-			{$controls}
-		</td>
-	</tr>
+	<tr><td class='attachment-box-controls fonts right'></td></tr>
 	</table>";
 	
 	
@@ -153,16 +153,6 @@ function attachfield($list, $extra = "") {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $extra);
 	}
-	/* if ($editmode) {
-		$out .= "
-		<table class='attachment-box-addnew fonts'>
-			<tr>
-				<td>
-					<a href='attachment.php?action=add'><big>[+]</big><br/><br/>Add attachment</a>
-				</td>
-			</tr>
-		</table>";
-	}*/
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
@@ -188,14 +178,19 @@ function process_temp_attachments($key, $user, $extrasize = 0) {
 	}
 	
 	// Upload current attachment
-	if (
-		   !filter_int($_POST["remove{$i}"])   // Make sure it's not marked to be removed beforehand
-		&& isset($_FILES["attachment{$i}"])    // The attachment should exist
-		&& !$_FILES["attachment{$i}"]['error'] // ""
-	) {
-		upload_attachment($_FILES["attachment{$i}"], $key, $user, $total, $extrasize);
-		++$total;
-	}
+	$showopt = max(1, filter_int($_POST['attachfields']));
+	do {
+		if (
+			   !filter_int($_POST["remove{$i}"])   // Make sure it's not marked to be removed beforehand
+			&& isset($_FILES["attachment{$i}"])    // The attachment should exist
+			&& !$_FILES["attachment{$i}"]['error'] // same deal
+		) {
+			upload_attachment($_FILES["attachment{$i}"], $key, $user, $total, $extrasize);
+			++$total;
+		}
+		++$i;
+	} while ($i < $showopt);
+	
 	return $total;
 }
 

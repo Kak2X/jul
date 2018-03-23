@@ -20,25 +20,8 @@
 //		pagefooter();
 //	}
 
-
 	if ($loguser['id']) {
 		$layoutblocked = $sql->resultq("SELECT 1 FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$_GET['id']}");
-		if ($_GET['action']) {
-			check_token($_GET['auth'], TOKEN_MGET);
-			switch ($_GET['action']) {
-				case 'blocklayout':
-					if ($layoutblocked) {
-						$sql->query("DELETE FROM blockedlayouts WHERE user = {$loguser['id']} AND blocked = {$_GET['id']}");
-						$txt = "Layout unblocked!";
-					} else {
-						$sql->query("INSERT INTO blockedlayouts (user, blocked) VALUES ({$loguser['id']}, {$_GET['id']})");
-						$txt = "Layout blocked!";
-					}
-					break;
-				default: return header("Location: profile.php?id={$_GET['id']}");
-			}
-			errorpage($txt ,"profile.php?id={$_GET['id']}","{$user['name']}'s profile",0);
-		}
 	}
 	
 	pageheader($windowtitle);
@@ -303,7 +286,7 @@
 		$un_b = ($layoutblocked ? "Unb" : "B");
 		
 		$options[0]["Send private message"] = ["sendprivate.php?userid={$_GET['id']}"];
-		$options[0]["{$un_b}lock layout"]   = ["profile.php?id={$_GET['id']}&action=blocklayout&auth={$token}"];
+		$options[0]["{$un_b}lock layout"]   = ["blocklayout.php?id={$_GET['id']}&action=block&auth={$token}"];
 		if ($config['enable-ratings'] && $loguser['id'] != $_GET['id']) {
 			$options[0]["Rate user"] = ["rateuser.php?id={$_GET['id']}"];
 		}
@@ -313,6 +296,7 @@
 				"View private messages" => ["private.php?id={$_GET['id']}", $italic],
 				"View favorites"        => ["forum.php?fav=1&user={$_GET['id']}", $italic],
 				"View votes"            => ["rateuser.php?action=viewvotes&id={$_GET['id']}", $italic],
+				"View blocked layouts"  => ["blocklayout.php?action=view&id={$_GET['id']}", $italic],
 				"Edit user"             => ["editprofile.php?id={$_GET['id']}", $italic],
 			];
 			

@@ -141,7 +141,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
-		- <a href="forum.php?fav=1">Favorites</a>';
+		- <a href="forum.php?fav=1">Favorites</a>
+		- <a href="blocklayout.php">Blocked layouts</a>';
 		
 		// Page-specific addendums
 		switch ($scriptname) {

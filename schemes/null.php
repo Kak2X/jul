@@ -1,5 +1,4 @@
 <?php
 	/* null scheme */
-	$formcss=0;
-	$nullscheme=1;
-?>
+	$formcss    = 0;
+	$nullscheme = 1;

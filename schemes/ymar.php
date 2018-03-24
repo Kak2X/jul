@@ -2,8 +2,8 @@
 	$formcss		= 0;		# formcss makes forms black with tableborder borders; using cssextra below is easier
 	$numcols		= 100;		# same thing, more or less
 
-	$bgimage		= 'images/ymar/beegee.png';
-	$config['board-title']		= '<img src="images/ymar/title.jpg" title="Hello! (Image source: http://tinyurl.com/267s62v)">';	# comment this out for normal banner
+	$bgimage		= 'schemes/ymar/beegee.png';
+	$config['board-title']		= '<img src="schemes/ymar/title.jpg" title="Hello! (Image source: http://tinyurl.com/267s62v)">';	# comment this out for normal banner
 
 	$bgcolor		= '84ace9';   
 	$textcolor		= '000912';   
@@ -16,7 +16,7 @@
 	$tableborder	= 'f4d9b3'; 
 	$tableheadtext	= '1e1200';   
 	$tableheadbg	= 'e9941c';   
-#	$tableheadbg	= 'fffaa6 url(images/ymar/headbg.png?x=1)';
+#	$tableheadbg	= 'fffaa6 url(schemes/ymar/status/headbg.png?x=1)';
 
 	$categorybg		= 'e9941c';   
 	$tablebg1		= 'ffc082';   
@@ -36,23 +36,23 @@
 	$nmcol[1]		= array('-1' => '888888', '662244', '884455', '910369', '570040', );	# F
 	$nmcol[2]		= array('-1' => '888888', '32126d', '522c97', '4b9d15', '5f4b00', );	# N/A
 
-	$newthreadpic	= '<img src="images/ymar/newthread.png" align="absmiddle">';
-	$newreplypic	= '<img src="images/ymar/newreply.png" align="absmiddle">';
-	$newpollpic		= '<img src="images/ymar/newpoll.png" align="absmiddle">';
-	$closedpic		= '<img src="images/ymar/threadclosed.png" align="absmiddle">';
+	$newthreadpic	= '<img src="schemes/ymar/status/newthread.png" align="absmiddle">';
+	$newreplypic	= '<img src="schemes/ymar/status/newreply.png" align="absmiddle">';
+	$newpollpic		= '<img src="schemes/ymar/status/newpoll.png" align="absmiddle">';
+	$closedpic		= '<img src="schemes/ymar/status/threadclosed.png" align="absmiddle">';
 
 #	$numdir			= 'ccs/';																# /numgfx/<dir>/ for number images | Kept css, looks nice
 	$numdir			= 'ymar/';																# I wonder if this will look better
 #	$numfil			= 'numpurple';															# numgfx graphic set
 
 	# Status icons for threads, should be self-explanatory
-	$statusicons['new']			= '<img src="images/ymar/new.png">';
-	$statusicons['newhot']		= '<img src="images/ymar/newhot.png">';
-	$statusicons['newoff']		= '<img src="images/ymar/newoff.png">';
-	$statusicons['newhotoff']	= '<img src="images/ymar/newhotoff.png">';
-	$statusicons['hot']			= '<img src="images/ymar/hot.png">';
-	$statusicons['hotoff']		= '<img src="images/ymar/hotoff.png">';
-	$statusicons['off']			= '<img src="images/ymar/off.png">';
+	$statusicons['new']			= '<img src="schemes/ymar/status/new.png">';
+	$statusicons['newhot']		= '<img src="schemes/ymar/status/newhot.png">';
+	$statusicons['newoff']		= '<img src="schemes/ymar/status/newoff.png">';
+	$statusicons['newhotoff']	= '<img src="schemes/ymar/status/newhotoff.png">';
+	$statusicons['hot']			= '<img src="schemes/ymar/status/hot.png">';
+	$statusicons['hotoff']		= '<img src="schemes/ymar/status/hotoff.png">';
+	$statusicons['off']			= '<img src="schemes/ymar/status/off.png">';
 
 
 	# Extra CSS included at the bottom of a page

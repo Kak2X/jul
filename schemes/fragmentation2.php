@@ -11,11 +11,11 @@
 	$numcols		= 100;		# Width of text entry, just use css extra again
 
 	# Banner; comment for default
-	$config['board-title']		= '<img src="images/pointlessbannerv2-2.png" title="Illegal in 10 states!">';
+	$config['board-title']		= '<img src="schemes/fragmentation2/pointlessbannerv2-2.png" title="Illegal in 10 states!">';
 
 	# Page background color, background image, and text color
 	$bgcolor		= '000810';
-	$bgimage		= 'images/f2/bg.png';
+	$bgimage		= 'schemes/fragmentation2/bg.png';
 	$textcolor		= 'EEEEEE';	
 
 	# Links
@@ -25,7 +25,7 @@
 	$linkcolor4		= 'CCE8FF'; # Hover
 
 	$tableborder	= '000011'; # Border color for tables
-	$tableheadtext	= '002549'; # Table header text color
+	#$tableheadtext	= '002549'; # Table header text color
 	$tableheadbg	= '000921'; # Table header background (you can use images)
 	$categorybg		= '002864'; # Category BG
 	$tablebg1		= '001E4B'; # Table cell 1 background
@@ -74,8 +74,8 @@
 	# Extra CSS included at the bottom of a page
 
 	$css_extra		= "
-		.tdbg1	{background: url('images/f2/bg1.png')}
-		.tdbg2	{background: url('images/f2/bg2.png')}
+		.tdbg1	{background: url('schemes/fragmentation2/bg1.png')}
+		.tdbg2	{background: url('schemes/fragmentation2/bg2.png')}
 		body, .tdbg1, .tdbg2	{background-attachment: fixed; background-position: top-left;}
 		input, textarea, select	{border: 1px solid #008;}
 		";

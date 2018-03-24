@@ -8,7 +8,7 @@
 		return $ret;
 	}
 
-	$bgimage 			= 'images/themes/back09.gif';
+	$bgimage 			= 'schemes/default_old/back09.gif';
 	$bgcolor 			= '000000';
 	$tableheadtext 		= 'FFFFFF';
 
@@ -16,7 +16,7 @@
 
 	$min = $curtime['hours'] * 60 + $curtime['minutes'];
  
-	$bgimage 			= 'images/back09.gif';
+	$bgimage 			= 'schemes/default_old/back09.gif';
 	$bgcolor 			= '000000';
 	$tableheadtext 		= 'FFFFFF';
 	
@@ -83,11 +83,12 @@
 	$inputborder = $tableheadbg;
 
 
- 	$statusicons['new']			= '<img src=images/status-classic/new.gif>';
-	$statusicons['newhot']		= '<img src=images/status-classic/hotnew.gif>';
-	$statusicons['newoff']		= '<img src=images/status-classic/off.gif>';
-	$statusicons['newhotoff']	= '<img src=images/status-classic/hotoff.gif>';
-	$statusicons['hot']			= '<img src=images/status-classic/hot.gif>';
-	$statusicons['hotoff']		= '<img src=images/status-classic/hotoff.gif>';
-	$statusicons['off']			= '<img src=images/status-classic/off.gif>';
+	$statusicons['new']			= '<img src="schemes/default_old/status/new.gif">';
+	$statusicons['newhot']		= '<img src="schemes/default_old/status/hotnew.gif">';
+	$statusicons['newoff']		= '<img src="schemes/default_old/status/off.gif">';
+	$statusicons['newhotoff']	= '<img src="schemes/default_old/status/hotoff.gif">';
+	$statusicons['hot']			= '<img src="schemes/default_old/status/hot.gif">';
+	$statusicons['hotoff']		= '<img src="schemes/default_old/status/hotoff.gif">';
+	$statusicons['off']			= '<img src="schemes/default_old/status/off.gif">';
+
 

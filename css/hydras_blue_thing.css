@@ -9,7 +9,7 @@ a:hover { color: #CECAFE; }
 .tdbg2 { background: #15426D; } /* tablebg2 */
 .tdbgc { background: #0F265F; }
 .tdbgh { 
-	background: #0048B7 url("../images/julold/header_shade.png") repeat-x bottom center;
+	background: #0048B7 url("../images/header_shade.png") repeat-x bottom center;
 	color: #FFF;
 	border-bottom: 1px solid black;
 	border-right: 1px solid black;

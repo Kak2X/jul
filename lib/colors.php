@@ -19,27 +19,31 @@
 	$linkcolor4 ='FFFFFF';
 	$textcolor	='E0E0E0';
 
-	$font	='verdana';
-	$font2	='verdana';
-	$font3	='tahoma';
+	$font	= 'Verdana, Geneva, sans-serif';
+	$font2	= 'Verdana, Geneva, sans-serif';
+	$font3	= 'Tahoma, Verdana, Geneva, sans-serif';
+	
+	for ($i = 1; $i < 8; ++$i) {
+		${'scr'.$i} = 'auto';
+	}
 
-	$newpollpic		= '<img src="images/newpoll.png" alt="New poll" align="absmiddle">';
-	$newreplypic	= '<img src="images/newreply.png" alt="New reply" align="absmiddle">';
-	$newthreadpic	= '<img src="images/newthread.png" alt="New thread" align="absmiddle">';
-	$closedpic		= '<img src="images/threadclosed.png" alt="Thread closed" align="absmiddle">';
+	$newpollpic		= '<img src="schemes/default/status/newpoll.png" alt="New poll" align="absmiddle">';
+	$newreplypic	= '<img src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';
+	$newthreadpic	= '<img src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
+	$closedpic		= '<img src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
 	$numdir			= 'jul/';
 
 	$statusicons = array(
-		'new'			=> '<img src="images/new.gif">',
-		'newhot'		=> '<img src="images/hotnew.gif">',
-		'newoff'		=> '<img src="images/off.gif">',
-		'newhotoff'		=> '<img src="images/hotoff.gif">',
-		'hot'			=> '<img src="images/hot.gif">',
-		'hotoff'		=> '<img src="images/hotoff.gif">',
-		'off'			=> '<img src="images/off.gif">',
+		'new'			=> '<img src="schemes/default/status/new.gif">',
+		'newhot'		=> '<img src="schemes/default/status/hotnew.gif">',
+		'newoff'		=> '<img src="schemes/default/status/off.gif">',
+		'newhotoff'		=> '<img src="schemes/default/status/hotoff.gif">',
+		'hot'			=> '<img src="schemes/default/status/hot.gif">',
+		'hotoff'		=> '<img src="schemes/default/status/hotoff.gif">',
+		'off'			=> '<img src="schemes/default/status/off.gif">',
 
-		'getnew'		=> '<img src="images/getnew.png" title="Go to new posts" align="absmiddle">',
-		'getlast'		=> '<img src="images/getlast.png" title="Go to last post" style="position:relative;top:1px">',
+		'getnew'		=> '<img src="schemes/default/status/getnew.png" title="Go to new posts" align="absmiddle">',
+		'getlast'		=> '<img src="schemes/default/status/getlast.png" title="Go to last post" style="position:relative;top:1px">',
 
 		'sticky'		=> 'Sticky:',
 		'poll'			=> 'Poll:',

@@ -2,8 +2,9 @@
 	$formcss		= 0;		# formcss makes forms black with tableborder borders; using cssextra below is easier
 	$numcols		= 100;		# same thing, more or less
 
-	$bgimage		= 'images/gn/gstarsbg.png';
+	$bgimage		= 'schemes/greennight/gstarsbg.png';
 	#$config['board-title']		= '<img src="images/gn/boobies.png" title="Green Night">';	# comment this out for normal banner
+	$config['board-title']		= '<img src="schemes/greennight/greenbanner.png" title="Green Night">';	# comment this out for normal banner
 
 	$bgcolor		= '40806a';   
 	$textcolor		= 'DDDDFF';   
@@ -14,7 +15,7 @@
 	$linkcolor4		= '70A080'; # hover
 
 	$tableborder	= '001100'; 
-	$tableheadtext	= '204030';   
+	#$tableheadtext	= '204030'; // this makes the text unreadable
 	$tableheadbg	= '335544';   
 	$categorybg		= '224433';   
 	$tablebg1		= '113322';   
@@ -59,7 +60,7 @@
 		  color:		#000;
 		  font:	10pt $font;
 		  }
-		input[type=\"radio\"], .radio {
+		input[type='radio'], .radio {
 		  border:	none;
 		  background: #fff0f8;
 		  color:	#ffffff;

@@ -11,11 +11,11 @@
 	$numcols		= 100;		# Width of text entry, just use css extra again
 
 	# Banner; comment for default
-	$config['board-title']		= '<img src="images/garbg/garbanner.png" title="IT\'S CRAP">';
+	$config['board-title']		= '<img src="schemes/garbg/garbanner.png" title="IT\'S CRAP">';
 
 	# Page background color, background image, and text color
 	$bgcolor		= '000810';
-	$bgimage		= 'images/garbg/garbg.png';
+	$bgimage		= 'schemes/garbg/garbg.png';
 	$textcolor		= 'EEEEEE';	
 
 	# Links

@@ -2,8 +2,8 @@
 	$formcss		= 0;		# formcss makes forms black with tableborder borders; using cssextra below is easier
 	$numcols		= 100;		# same thing, more or less
 
-	$bgimage		= 'images/ccs/bg.png';
-	$config['board-title']		= '<img src="images/ccs/banner.png" title="The Horrible Forced Scheme 4/01/2009">';	# comment this out for normal banner
+	$bgimage		= 'schemes/ccs/bg.png';
+	$config['board-title']		= '<img src="schemes/ccs/banner.png" title="The Horrible Forced Scheme 4/01/2009">';	# comment this out for normal banner
 
 	$bgcolor		= 'ffbbc5';   
 	$textcolor		= '000000';   
@@ -34,22 +34,22 @@
 	$nmcol[1]		= array('-1' => '888888', '662244', '884455', '992277', '6D1F58', );	# F
 	$nmcol[2]		= array('-1' => '888888', '442266', '554477', '336633', '876D09', );	# N/A
 
-	$newthreadpic	= '<img src="images/ccs/newthread.png" align="absmiddle">';
-	$newreplypic	= '<img src="images/ccs/newreply.png" align="absmiddle">';
-	$newpollpic		= '<img src="images/ccs/newpoll.png" align="absmiddle">';
-	$closedpic		= '<img src="images/ccs/threadclosed.png" align="absmiddle">';
+	$newthreadpic	= '<img src="schemes/ccs/status/newthread.png" align="absmiddle">';
+	$newreplypic	= '<img src="schemes/ccs/status/newreply.png" align="absmiddle">';
+	$newpollpic		= '<img src="schemes/ccs/status/newpoll.png" align="absmiddle">';
+	$closedpic		= '<img src="schemes/ccs/status/threadclosed.png" align="absmiddle">';
 
 	$numdir			= 'ccs/';																# /numgfx/<dir>/ for number images
 #	$numfil			= 'numpurple';															# numgfx graphic set
 
 	# Status icons for threads, should be self-explanatory
-	$statusicons['new']			= '<img src="images/ccs/new.png">';
-	$statusicons['newhot']		= '<img src="images/ccs/newhot.png">';
-	$statusicons['newoff']		= '<img src="images/ccs/newoff.png">';
-	$statusicons['newhotoff']	= '<img src="images/ccs/newhotoff.png">';
-	$statusicons['hot']			= '<img src="images/ccs/hot.png">';
-	$statusicons['hotoff']		= '<img src="images/ccs/hotoff.png">';
-	$statusicons['off']			= '<img src="images/ccs/off.png">';
+	$statusicons['new']			= '<img src="schemes/ccs/status/new.png">';
+	$statusicons['newhot']		= '<img src="schemes/ccs/status/newhot.png">';
+	$statusicons['newoff']		= '<img src="schemes/ccs/status/newoff.png">';
+	$statusicons['newhotoff']	= '<img src="schemes/ccs/status/newhotoff.png">';
+	$statusicons['hot']			= '<img src="schemes/ccs/status/hot.png">';
+	$statusicons['hotoff']		= '<img src="schemes/ccs/status/hotoff.png">';
+	$statusicons['off']			= '<img src="schemes/ccs/status/off.png">';
 
 
 	# Extra CSS included at the bottom of a page

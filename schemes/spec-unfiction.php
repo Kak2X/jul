@@ -1,5 +1,5 @@
 <?php
-    $boardtitle = '<img src="images/unfiction.png">';
+    $config['board-title'] = '<img src="schemes/spec-unfiction/unfiction.png">';
     $formcss 	= 0;
 	
     $inputborder 	= '000000';
@@ -14,7 +14,7 @@
     $tablebg1 		= 'aaaaaa';
     $tablebg2 		= '999999';
     $categorybg 	= '005020';
-    $tableheadtext	= 'ece6da;';
+    $tableheadtext	= 'ece6da';
     $tableheadbg	= '4b3617';
 	
     //$tableheadbg='b07f36';
@@ -27,7 +27,7 @@
 		  color:		#000;
 		  font:	10pt $font;
 		  }
-		input[type=\"radio\"], .radio {
+		input[type='radio'], .radio {
 		  border:	none;
 		  background: #fff0f8;
 		  color:	#ffffff;

@@ -348,13 +348,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			div.lastpost { font: 10px $font2 !important; white-space: nowrap; }
 			div.lastpost:first-line { font: 13px $font !important; }
 			.font 	{font:13px $font}
-			.fonth	{font:13px $font;color:$tableheadtext}
+			.fonth	{font:13px $font;color:#$tableheadtext}
 			.fonts	{font:10px $font2}
 			.fontt	{font:10px $font3}
 			.tdbg1	{background:#$tablebg1}
 			.tdbg2	{background:#$tablebg2}
 			.tdbgc	{background:#$categorybg}
-			.tdbgh	{background:#$tableheadbg; color:$tableheadtext}
+			.tdbgh	{background:#$tableheadbg; color:#$tableheadtext}
 			.table	{empty-cells:	show; width: 100%;
 					 border-top:	#$tableborder 1px solid;
 					 border-left:	#$tableborder 1px solid;

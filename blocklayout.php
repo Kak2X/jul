@@ -27,6 +27,20 @@
 		}
 		
 		errorpage("Thank you, {$loguser['name']}, for {$verb} a post layout.", filter_string($_SERVER['HTTP_REFERER']), 'the previous page', 0);
+	} else if ($_GET['action'] == 'nuke' && $isadmin) {
+		$message = "Are you sure you want to nuke this layout?";
+		$form_link = "?action=nuke&id={$_GET['id']}";
+		$buttons   = array(
+			0 => ["NUKE IT"],
+			1 => ["Cancel", "profile.php?id={$_GET['id']}"]
+		);
+		if (confirmpage($message, $form_link, $buttons)) {
+			check_token($_POST['auth']);
+			$text = addslashes("<hr>[<span class='font b' style='font-size: 10pt; color: f00'>ATTENTION</span>: Your layout has been removed for being terrible.]");
+			//$text = addslashes("<hr><font face=\"Verdana\" style=font-size:10pt color=ff0000><b>[ATTENTION IDIOT: YOUR LAYOUT HAS BEEN NUKED FOR BEING <font color=ff8080>EXTREMELY BAD</font>. PLEASE READ THE <a href='announcement.php'>ANNOUNCEMENTS</a> BEFORE CREATING ANOTHER ATROCITY, OR YOU <i><font color=ff8080>WILL BE BANNED</font></i>.]</b></font>");
+			$sql->query("UPDATE `users` SET `signature` = '{$text}', `bio` = '{$text}', `postheader` = '' WHERE `id` = '{$_GET['id']}'");
+			errorpage("Bio, header, and signature fields nuked!", "profile.php?id={$_GET['id']}", 'the user\'s profile page', 0);
+		}
 	} else if ($_GET['action'] == 'view' && $isadmin) {
 		$user = load_user($_GET['id']);
 		$thisuser = getuserlink($user);

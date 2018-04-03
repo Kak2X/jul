@@ -16,10 +16,11 @@
 	$linkcolor2  = 'ffffff';
 	$linkcolor3  = 'eeeeee';
 	$linkcolor4  = 'ffffff';
-
-	$malecolor   = '90a0c0';
-	$femalecolor = 'c090b0';
-	$bannedcolor = '999999';
+	
+	$nmcol[0]=array('-2'=>'999999','-1'=>'909090','90a0c0','c0c0e0','a0c0a0','d8d8b0');
+	$nmcol[1]=array('-2'=>'999999','-1'=>'909090','c090b0','e0a0d0','b080d0','b05090');
+	$nmcol[2]=array('-2'=>'999999','-1'=>'909090','a090c0','e0c0c0','90c090','e0c890');
+	
 	$tablebg1      = '101010';
 	$tablebg2      = '202020';
 	$categorybg    = '404040';

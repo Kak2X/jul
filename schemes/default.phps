@@ -24,12 +24,18 @@
 	$linkcolor3		= 'CCE8FF'; # Active
 	$linkcolor4		= 'CCE8FF'; # Hover
 
+	$inputborder    = '000011'; # Border color for input elements
 	$tableborder	= '000011'; # Border color for tables
 	$tableheadtext	= '002549'; # Table header text color
 	$tableheadbg	= '000921'; # Table header background (you can use images)
 	$categorybg		= '002864'; # Category BG
 	$tablebg1		= '001E4B'; # Table cell 1 background
 	$tablebg2		= '001638'; # Table cell 2 (the darker one, usually)
+	
+	# Font family
+	$font	= 'Verdana, Geneva, sans-serif'; // Main font
+	$font2	= 'Verdana, Geneva, sans-serif'; // Small font
+	$font3	= 'Tahoma, Verdana, Geneva, sans-serif'; // (unused?)
 
 	# Scrollbar colors...
 	$scr1			= 'aaaaff';	# top-left outer highlight
@@ -65,12 +71,13 @@
 
 	# Status icons for threads, should be self-explanatory
 /*
-	$statusicons['new']			= '<img src="schemes/ccs/status/new.png">';
-	$statusicons['newhot']		= '<img src="schemes/ccs/status/newhot.png">';
-	$statusicons['newhotoff']	= '<img src="schemes/ccs/status/newhotoff.png">';
-	$statusicons['hot']			= '<img src="schemes/ccs/status/hot.png">';
-	$statusicons['hotoff']		= '<img src="schemes/ccs/status/hotoff.png">';
-	$statusicons['off']			= '<img src="schemes/ccs/status/off.png">';
+	$statusicons['new']			= '<img src="schemes/default_old/status/new.gif">';
+	$statusicons['newhot']		= '<img src="schemes/default_old/status/hotnew.gif">';
+	$statusicons['newoff']		= '<img src="schemes/default_old/status/off.gif">';
+	$statusicons['newhotoff']	= '<img src="schemes/default_old/status/hotoff.gif">';
+	$statusicons['hot']			= '<img src="schemes/default_old/status/hot.gif">';
+	$statusicons['hotoff']		= '<img src="schemes/default_old/status/hotoff.gif">';
+	$statusicons['off']			= '<img src="schemes/default_old/status/off.gif">';
 */
 
 	# Extra CSS included at the bottom of a page

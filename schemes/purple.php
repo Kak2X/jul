@@ -5,10 +5,10 @@
 	$numfil = 'numpurple';
 	$config['board-title'] = '<img src="schemes/purple/purplebanner.png">';
 	$bgimage      = 'schemes/purple/darkbubblebg.jpg';
-	$newthreadpic = "<img src='schemes/purple/status/newthreadpurple.gif'>";   
-	$newreplypic  = "<img src='schemes/purple/status/newreplypurple.gif'>";   
-	$newpollpic   = "<img src='schemes/purple/status/newpollpurple.png'>";
-	$closedpic    = "<img src='schemes/purple/status/threadclosedpurple.png'>";
+	$newthreadpic = "<img src='schemes/purple/status/newthreadpurple.png' align='absmiddle'>";   
+	$newreplypic  = "<img src='schemes/purple/status/newreplypurple.png' align='absmiddle'>";   
+	$newpollpic   = "<img src='schemes/purple/status/newpollpurple.png' align='absmiddle'>";
+	$closedpic    = "<img src='schemes/purple/status/threadclosedpurple.png' align='absmiddle'>";  
 	
 	$bgcolor    = '100018';
 	$textcolor  = 'EEDDFF';

@@ -18,6 +18,7 @@
 	$linkcolor3 ='FFEA00';
 	$linkcolor4 ='FFFFFF';
 	$textcolor	='E0E0E0';
+	$tableheadtext = "";
 
 	$font	= 'Verdana, Geneva, sans-serif';
 	$font2	= 'Verdana, Geneva, sans-serif';

@@ -177,7 +177,7 @@
 			<td class='tdbg2 center b' style='width: 30px'>{$user['cnt']}</td>
 			<td class='tdbg2 center' style='width: 100px'>
 				". number_format($ratio, 1) ."%<br>
-				". drawminibar($ratio) ."
+				". drawminibar($max, 3, $user['cnt']) ."
 			</td>
 		</tr>";
 

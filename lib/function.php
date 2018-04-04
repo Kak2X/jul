@@ -2369,19 +2369,21 @@ function generatenumbergfx($num, $minlen = 0, $size = 1) {
 }
 
 // Progress bar (for RPG levels, syndromes)
-function drawprogressbar($width, $height, $progress, $images) {
-	$on = floor($progress / 100 * $width);
+function drawprogressbar($width, $height, $done, $total, $images) {
+	$on  = min(round($done / $total * $width), $width);
 	$off = $width - $on;
-	return "<img src='{$images['left']}' style='height:{$height}px'>".
-			"<img src='{$images['on']}' style='height:{$height}px;width:{$on}px'>".
-			"<img src='{$images['off']}' style='height:{$height}px;width:{$off}px'>".
-			"<img src='{$images['right']}' style='height:{$height}px'>";
+	return  "<img src='{$images[0]}' style='height:{$height}px'>".
+			"<img src='{$images[1]}' style='height:{$height}px;width:{$on}px'>".
+			"<img src='{$images[2]}' style='height:{$height}px;width:{$off}px'>".
+			"<img src='{$images[3]}' style='height:{$height}px'>";
 }
 
 // Single image progress bar (for comparisions like in activeusers.php)
-function drawminibar($progress, $image = 'images/minibar.png') {
-	return "<img src='{$image}' style='float: left; width: ". round($progress) ."%; height: 3px'>";
+function drawminibar($width, $height, $progress, $image = 'images/minibar.png') {
+	$on = round($progress * 100 / $width);
+	return "<img src='{$image}' style='float: left; width: {$on}%; height: {$height}px'>";
 }
+
 
 function adbox() {
 

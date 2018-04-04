@@ -41,7 +41,7 @@
 
 
 function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $numcols,
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $numcols, $barimg,
 			$isadmin, $issuper, $sysadmin, $isChristmas;
 			
 	// Load images right away
@@ -298,6 +298,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	if ($schemepre) {
 		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";
 	}
+	// Default bar image definition
+	$barimg = array(
+		0 => "images/bar/{$numdir}barleft.png",
+		1 => "images/bar/{$numdir}bar-on.png",
+		2 => "images/bar/{$numdir}bar-off.png",
+		3 => "images/bar/{$numdir}barright.png",
+	);
 
 	//$config['board-title'] = "<a href='./'><img src=\"images/christmas-banner-blackroseII.png\" title=\"Not even Christmas in July, no. It's May.\"></a>";
 

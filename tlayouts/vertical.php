@@ -3,7 +3,7 @@
 function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire';}
 
 function postcode($post,$set){
-    global $loguser,$controls,$tlayout,$textcolor,$numdir,$numfil;
+    global $loguser,$controls,$tlayout,$textcolor,$numdir,$numfil,$barimg;
 
 	// Sidebar info
 	$exp		= calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
@@ -25,13 +25,7 @@ function postcode($post,$set){
 
 
 	// RPG Level bar
-	$barimg = array(
-		'left'  => "images/{$numdir}barleft.gif",
-		'right' => "images/{$numdir}barright.gif",
-		'on'    => "images/{$numdir}bar-on.gif",
-		'off'   => "images/{$numdir}bar-off.gif",
-	);
-	$bar = "<br>".drawprogressbar(96, 8, 100-round(@($expleft/totallvlexp($lvl))*100), $barimg);	
+	$bar = "<br>".drawprogressbar(96, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
 	
     $postdate = printdate($post['date']);
 	

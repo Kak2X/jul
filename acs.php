@@ -140,11 +140,7 @@
 			}
 
 			if (!$print_sep && !$ranked && !$_GET['view']) {
-?>				
-				<tr>
-					<td class="tdbgc center" style="height: 4px" colspan=4></td>
-				</tr>
-<?php		
+?>			<tr><td class="tdbgc center" style="height: 4px" colspan=4></td></tr><?php		
 				$print_sep = true;
 			}
 			
@@ -167,7 +163,7 @@
 					<td class="tdbg<?=$col?> center"><?=$r?></td>
 					<td class="tdbg<?=$col?>"><?=getuserlink($user)?></td>
 					<td class="tdbg<?=$col?> center"><?=$user['cnt']?></td>
-					<td class="tdbg<?=$col?>"><img src="images/<?=$numdir?>bar-on.gif" style="width: <?=($user['cnt']*100/$max)?>%; height: 8px"></td>
+					<td class="tdbg<?=$col?>"><?= drawminibar($max, 8, $user['cnt'], "images/bar/{$numdir}bar-on.png") ?></td>
 				</tr>
 			<?php		
 			}
@@ -177,7 +173,7 @@
 		// Ranked yesterday:
 //		$usersy=$sql->query("SELECT users.id,users.name,users.sex,users.powerlevel,COUNT(posts.id) AS cnt FROM users,posts WHERE posts.user=users.id AND posts.date>".($dd-86400)." AND posts.date<$dd GROUP BY users.id ORDER BY cnt DESC");
 //		$i=0;
-//		while($user=mysql_fetch_array($usersy) and $r <= $rcount ) {
+//		while($user=$sql->fetchq($usersy) and $r <= $rcount ) {
 //			$i++;
 //			if($rprev!=$user['cnt']) $r=$i;
 //			$rprev=$user['cnt'];

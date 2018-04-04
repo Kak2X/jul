@@ -64,17 +64,11 @@
 		}
 	}
 	//// Postbar
-	$images = array(
-		'left'  => "images/{$numdir}barleft.gif",
-		'on'    => "images/{$numdir}bar-on.gif",
-		'off'   => "images/{$numdir}bar-off.gif",
-		'right' => "images/{$numdir}barright.gif",
-	);
 	if (!isset($_GET['lol'])) {
 		$maxposts 		= $sql->resultq("SELECT MAX(posts) FROM users");
 		if (!$maxposts) $maxposts = 1;
 	}
-	$bar = drawprogressbar(116, 8, floor(($user['posts'] / $maxposts) * 100), $images);
+	$bar = drawprogressbar(116, 8, $user['posts'], $maxposts, $barimg);
 	
 	// Total threads
 	$threadsposted 	= $sql->resultq("SELECT COUNT(*) FROM threads WHERE user = {$_GET['id']}");

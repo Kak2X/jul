@@ -352,6 +352,18 @@ function thread_history($thread, $num, $pm = false) {
 	</table>";
 }
 
+// Jul numgfx don't include the extra graphics (ie: Posts / EXP text), so it's necessary to redirect those
+function get_complete_numdir() {
+	global $numdir;
+	switch ($numdir) {
+		case 'ccs/':   return "num3/";
+		//case 'death/': return "num1/";
+		case 'jul/':   return "num2/";
+		case 'ymar/':  return "num1/";
+		default:       return $numdir;
+	}
+}
+
 function syndrome($num, $double=false, $bar=true){
 	$bar	= false;
 	$a		= '\'>Affected by';
@@ -372,26 +384,19 @@ function syndrome($num, $double=false, $bar=true){
 
 	if($syn) {
 		if ($next && $bar) {
-			$barw1	= min(round(($num - $last) / $next * 150), 150); // Done / Total * Max bar size
-			$barw2	= 150 - $barw1;
-			$barimg	= "red.png";
-
-			if ($double == true) {
-				$hi = 16;
-				$barw1 *= 2;
-				$barw2 *= 2;
-			} else {
-				$hi	= 8;
-			}
-
-			if ($next	>= 100) $barimg	= "special.gif";
+			$special = ($next >= 100) ? "special" : ""; 
+			$barimg = array(
+				"images/bar/num1/barleft.png",
+				"images/bar/num1/bar-on{$special}.png",
+				"images/bar/num1/bar-off.png",
+				"images/bar/num1/barright.png",
+			);
+			
+			$multi  = ($double) ? 2 : 1;
 			$bar	= "<br>
 				<nobr>
 					". generatenumbergfx($num, 3, $double) ."
-					<img src='images/num1/barleft.png' height=$hi>
-					<img src='images/num1/bar-on$barimg' width=$barw1 height=$hi>
-					<img src='images/num1/bar-off.png' width=$barw2 height=$hi>
-					<img src='images/num1/barright.png' height=$hi>
+					". drawprogressbar(150 * $multi, 8 * $multi, ($num - $last), $next, $barimg) ."
 					". generatenumbergfx($next - ($num - $last), 3, $double) ."
 				</nobr>";
 		}

@@ -2,7 +2,7 @@
   function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
   function postcode($post,$set){
-    global $controls,$tableborder,$tablebg2,$tableheadtext,$numdir;
+    global $controls,$tableborder,$tablebg2,$tableheadtext,$numdir,$barimg;
 			
 	$numdays    = (ctime() - $post['regdate']) / 86400;
 	$exp		= calcexp($post['posts'], $numdays);
@@ -10,13 +10,7 @@
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
 	
-	$barimg = array(
-		'left'  => "images/{$numdir}barleft.gif",
-		'right' => "images/{$numdir}barright.gif",
-		'on'    => "images/{$numdir}bar-on.gif",
-		'off'   => "images/{$numdir}bar-off.gif",
-	);
-	$bar = drawprogressbar(100, 8, 100-round(@($expleft/totallvlexp($lvl))*100), $barimg);
+	$bar = "<br>".drawprogressbar(100, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
 	$postdate = printdate($post['date']);
 	
 	$threadlink		= "";

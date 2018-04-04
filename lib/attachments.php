@@ -98,7 +98,7 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 			</tr>
 			<tr>
 				<td class='tdbg2' colspan=3>
-					<img src='images/{$numdir}bar-on.gif' style='height:8px; width:".ceil($sizetotal * 100 / $config['attach-max-size'])."%'>
+					".drawminibar($config['attach-max-size'], 8, $sizetotal, "images/bar/{$numdir}bar-on.png")."
 				</td>
 			</tr>
 			<tr>

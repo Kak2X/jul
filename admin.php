@@ -169,7 +169,7 @@
 		</tr>
 	</table>
 	</form>
-	<?php/* Hide the Registration Code row if the respective registration mode isn't selected */?>
+	<!-- Hide the Registration Code row if the respective registration mode isn't selected -->
 	<script type="text/javascript">
 		function enacode() {
 			document.getElementById("regcodetr").style.display = (document.getElementById("regmode").selectedIndex == 3 ? "" : "none");

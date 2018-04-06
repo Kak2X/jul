@@ -46,6 +46,8 @@
 		PMFOLDER_TRASH => "The Trash&trade;"
 	);
 	
+	const INVALID_THREAD = -1;
+	const INVALID_FORUM  = -2;
 	
 	$pwlnames = array(
 		'-2'=>'Permabanned',

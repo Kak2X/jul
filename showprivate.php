@@ -49,9 +49,9 @@
 	// Are we allowed in?
 	
 
-	const E_BADPOSTS = -1;
+	//const INVALID_THREAD = -1;
 	
-	$thread_error = 0;
+	$forum_error = 0;
 
 	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
 	$tlinks = '';
@@ -67,7 +67,7 @@
 		}
 
 		// Admin can see and possibly remove bad posts
-		$thread_error     = E_BADPOSTS;
+		$forum_error     = INVALID_THREAD;
 		$thread['closed'] = true;
 		$thread['title']  = "Bad thread with ID #{$_GET['id']}";
 		$windowtitle      = "";
@@ -178,9 +178,9 @@
 
 
 	$errormsgs = '';
-	if ($thread_error) {
-		switch($thread_error) {
-        	case E_BADPOSTS: $errortext='This PM thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
+	if ($forum_error) {
+		switch($forum_error) {
+        	case INVALID_THREAD: $errortext='This PM thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
 		}
 		$errormsgs = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>$errortext</td></tr>";
 	}

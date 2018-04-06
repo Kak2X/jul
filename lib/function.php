@@ -2020,7 +2020,7 @@ function dofilters($p, $f = 0){
 require 'lib/avatars.php';
 require 'lib/attachments.php';
 require 'lib/threadpost.php';
-//require 'lib/thread.php';
+require 'lib/thread.php';
 require 'lib/pm.php';
 
 // require 'lib/replytoolbar.php';

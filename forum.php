@@ -463,7 +463,7 @@
 	";
 	
 	pagefooter();
-
+/*
 function notAuthorizedError() {
 	global $loguser;
 	$rreason = ($loguser['id'] ? 'don\'t have access to it' : 'are not logged in');
@@ -471,3 +471,4 @@ function notAuthorizedError() {
 	$rtext = ($loguser['id'] ? 'the index page' : 'log in (then try again)');
 	errorpage("Couldn't enter this restricted forum, as you {$rreason}.", $redir, $rtext);
 }
+*/

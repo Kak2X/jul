@@ -215,3 +215,44 @@ function get_pm_count($user, $folder = NULL) {
 		return $sql->getresultsbykey("SELECT folder, COUNT(*) FROM pm_access WHERE user = {$user} GROUP BY folder");
 	}
 }
+
+
+/*
+	load_pm_thread: fetch PM data and handle errors automatically
+	$id -  PM thread id
+*/
+function load_pm_thread($id) {
+	global $sql, $loguser, $isadmin, $thread, $access;
+	$forum_error = 0;
+
+	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
+	if (!$thread) {
+		if (!$isadmin) {
+			trigger_error("Accessed nonexistant PM thread number #{$_GET['id']}", E_USER_NOTICE);
+			notAuthorizedError('conversation');
+		}
+
+		$badposts = $sql->resultq("SELECT COUNT(*) FROM `pm_posts` WHERE `thread` = '{$_GET['id']}'");
+		if ($badposts <= 0) {
+			errorpage("PM Thread ID #{$_GET['id']} doesn't exist, and no posts are associated with the invalid thread ID.","index.php",'the index page');
+		}
+
+		// Admin can see and possibly remove bad posts
+		$error = INVALID_THREAD;
+		$thread = array(
+			'id'      => $id,
+			'closed'  => true,
+			'replies' => $badposts - 1,
+			'title'   => " ---[ BAD PM THREAD ID #{$id} ]--- ",
+			'error'   => true,
+		);
+		$access = false;
+
+	} else {
+		$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
+		if (!$access && !$isadmin) { // && $config['pmthread-admin-sneak']) {
+			trigger_error("Attempted to access PM thread {$_GET['id']} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
+			notAuthorizedError('conversation');
+		}
+	}
+}

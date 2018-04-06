@@ -75,9 +75,9 @@
 		$page		= filter_int($_GET['page']);
 	}
 
-	define('E_BADPOSTS', -1);
-	define('E_BADFORUM', -2);
-	$thread_error = 0;
+	//define('INVALID_THREAD', -1);
+	//define('INVALID_FORUM', -2);
+	$forum_error = 0;
 	$forumid = 0;
 
 	$specialscheme = $specialtitle = NULL;
@@ -101,7 +101,7 @@
 			}
 
 			// Mod+ can see and possibly remove bad posts
-			$thread_error = E_BADPOSTS;
+			$forum_error = INVALID_THREAD;
 			$thread['closed'] = true;
 			$thread['title'] = "Bad posts with ID #$id";
 			$forum['id'] = 0;
@@ -120,7 +120,7 @@
 				trigger_error("Accessed thread number #$id with bad forum ID $forumid", E_USER_WARNING);
 				notAuthorizedError();
 			}
-			$thread_error = E_BADFORUM;
+			$forum_error = INVALID_FORUM;
 			$forum['title'] = " --- BAD FORUM ID --- ";
 			$forum['id'] = 0;
 			break;
@@ -209,7 +209,7 @@
 	
 	pageheader($windowtitle, $specialscheme, $specialtitle);
 
-	if ($id && !$thread_error) {
+	if ($id && !$forum_error) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum, $thread)."</table>";
 		if ($sql->resultq("SELECT 1 FROM forummods WHERE forum='$forumid' and user = '{$loguser['id']}'"))
 			$ismod = true;
@@ -249,10 +249,10 @@
 
 
 	$errormsgs = '';
-	if ($thread_error) {
-		switch($thread_error) {
-        	case E_BADPOSTS: $errortext='This thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
-        	case E_BADFORUM: $errortext='This thread has an invalid forum ID; it is located in a forum that does not exist.'; break;
+	if ($forum_error) {
+		switch($forum_error) {
+        	case INVALID_THREAD: $errortext='This thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
+        	case INVALID_FORUM: $errortext='This thread has an invalid forum ID; it is located in a forum that does not exist.'; break;
 		}
 		$errormsgs = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>$errortext</td></tr>";
 	}
@@ -582,7 +582,7 @@
 	
 	pagefooter();
 
-
+/*
 function notAuthorizedError() {
 	global $loguser, $forum;
 	$redir = (($loguser['id']) ? 'index.php' : 'login.php');
@@ -590,4 +590,4 @@ function notAuthorizedError() {
 	// Horrible hack
 	$forum['id'] = NULL;
 	errorpage("Couldn't enter the forum. You don't have access to this restricted forum.", $redir, $rtext);
-}
+}*/

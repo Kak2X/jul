@@ -76,11 +76,9 @@
 		$queryok = array();
 		if ($_GET['id'] <= -1) {
 			$sql->queryp("INSERT INTO items SET $q, user = {$loguser['id']}", $vals, $queryok);
-			if (!$queryok[0]) errorpage("Couldn't add the item.");
 			$id	= $sql->insert_id();
 		} else {
 			$sql->queryp("UPDATE items SET $q WHERE id = {$_GET['id']}", $vals, $queryok);
-			if (!$queryok[0]) errorpage("Couldn't add the item.");
 			$id	= $_GET['id'];
 		}
 

@@ -2020,6 +2020,7 @@ function dofilters($p, $f = 0){
 require 'lib/avatars.php';
 require 'lib/attachments.php';
 require 'lib/threadpost.php';
+//require 'lib/thread.php';
 require 'lib/pm.php';
 
 // require 'lib/replytoolbar.php';
@@ -2098,7 +2099,9 @@ function xk_ircout($type, $user, $in) {
 }
 
 function xk_ircsend($str) {
+	global $config;
 	// $str = <chan id>|<message>
+	if (!$config['no-curl']) {
 /*	
 	$str = str_replace(array("%10", "%13"), array("", ""), rawurlencode($str));
 
@@ -2114,6 +2117,7 @@ function xk_ircsend($str) {
 	$file_contents = curl_exec($ch);
 	curl_close($ch);
 */
+	}
 	return true;
 }
 

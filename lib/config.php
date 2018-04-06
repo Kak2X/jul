@@ -59,6 +59,7 @@
 		'allow-pmthread-edit'   => true,                    // If false, editing will be restricted to admins
 		'pmthread-dest-limit'   => 5,                       // Max users a conversation can have
 		'pmthread-folder-limit' => 50,                      // Max folders (false for unlimited, -1 to disable)
+		'no-curl'               => true,                    // 
 		
 		// File uploads
 		'allow-attachments'      => true,                    // Enables the attachment feature

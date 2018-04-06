@@ -44,41 +44,43 @@
 		*/
 
 		/* do curl here */
-		$ch = curl_init();
-		curl_setopt ($ch,CURLOPT_URL, "http://". $_SERVER['REMOTE_ADDR']);
-		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 3); // <---- HERE
-		curl_setopt ($ch, CURLOPT_TIMEOUT, 5); // <---- HERE
-		$file_contents = curl_exec($ch);
-		curl_close($ch);
+		if (!$config['no-curl']) {
+			$ch = curl_init();
+			curl_setopt ($ch,CURLOPT_URL, "http://". $_SERVER['REMOTE_ADDR']);
+			curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, 3); // <---- HERE
+			curl_setopt ($ch, CURLOPT_TIMEOUT, 5); // <---- HERE
+			$file_contents = curl_exec($ch);
+			curl_close($ch);
 
-		if (
-			stristr($file_contents, "proxy")
-			|| stristr($file_contents, "forbidden")
-			|| stristr($file_contents, "it works")
-			|| stristr($file_contents, "anonymous")
-			|| stristr($file_contents, "filter")
-			|| stristr($file_contents, "panel")
-			) {
+			if (
+				stristr($file_contents, "proxy")
+				|| stristr($file_contents, "forbidden")
+				|| stristr($file_contents, "it works")
+				|| stristr($file_contents, "anonymous")
+				|| stristr($file_contents, "filter")
+				|| stristr($file_contents, "panel")
+				) {
 
-			$adjectives	= array(
-				"shitlord",
-				"shitheel",
-				"shitbag",
-				"douche",
-				"douchebag",
-				"douchenozzle",
-				"fuckwit",
-				"FUCKER",
-				"script-kiddie",
-				"dumbfuck extraordinare",
-				);
-			
-			shuffle($adjectives);
+				$adjectives	= array(
+					"shitlord",
+					"shitheel",
+					"shitbag",
+					"douche",
+					"douchebag",
+					"douchenozzle",
+					"fuckwit",
+					"FUCKER",
+					"script-kiddie",
+					"dumbfuck extraordinare",
+					);
+				
+				shuffle($adjectives);
 
-			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Reregistering fuckwit'");
-			@xk_ircsend("1|". xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $name)");
-			errorpage("Thank you, $name, for registering your account.", 'index.php', 'the board', 0);
+				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Reregistering fuckwit'");
+				@xk_ircsend("1|". xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $name)");
+				errorpage("Thank you, $name, for registering your account.", 'index.php', 'the board', 0);
+			}
 		}
 		
 		// You asked for it

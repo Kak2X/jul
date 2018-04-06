@@ -67,7 +67,7 @@
 			$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id");
 			$sql->query("DELETE FROM pollvotes WHERE user=$id");
 			$sql->query("DELETE FROM users WHERE id=$id");
-			$sql->query("DELETE FROM users_avatars WHERE uid=$id");
+			$sql->query("DELETE FROM users_avatars WHERE id=$id");
 			$sql->query("DELETE FROM users_rpg WHERE uid=$id");
 			$sql->query("DELETE FROM announcementread WHERE user = $id");
 			$sql->query("DELETE FROM forumread WHERE user = $id");

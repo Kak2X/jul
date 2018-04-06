@@ -38,7 +38,7 @@ else if ($_POST['knockout']) {
 	echo "Deleted private messages.\n";
 	
 	$sql->query("DELETE FROM users WHERE id = '{$target_id}' LIMIT 1");
-	$sql->query("DELETE FROM users_avatars WHERE uid='{$target_id}'");
+	$sql->query("DELETE FROM users_avatars WHERE id='{$target_id}'");
 	$sql->query("DELETE FROM users_rpg WHERE uid = '{$target_id}' LIMIT 1");
 	$sql->query("DELETE FROM postradar WHERE user = '{$target_id}' OR comp = '{$target_id}'");
 	echo "Deleted user data.\n";

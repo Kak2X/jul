@@ -94,7 +94,6 @@ elseif (isset($_POST['delete'])) {
 }
 elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 	check_token($_POST['auth']);	
-	
 
 	$values = array(
 		'name' 			=> xssfilters(filter_string($_POST['catname'], true)),
@@ -108,13 +107,13 @@ elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 		$id	= $sql->insert_id();
 		trigger_error("Created new category \"".$values['name']."\" with ID $id", E_USER_NOTICE);
 	} else {
-		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values);
+		$sql->queryp("UPDATE `categories` SET $qadd WHERE `id` = '". $_GET['catid'] ."'", $values);
 		$id	= $_GET['catid'];
 		trigger_error("Edited category ID $id", E_USER_NOTICE);
 	}
 
 	if ($_POST['catedit']) {
-		return header("Location: ?id=". $id . $prevtext);
+		return header("Location: ?catid=". $id . $prevtext);
 	} else {
 		return header("Location: ?".substr($prevtext, 1));
 	}

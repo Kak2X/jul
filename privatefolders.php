@@ -92,7 +92,7 @@ pageheader($windowtitle);
 
 $folders = get_pm_folder($u);
 if (!$folders) { 
-	$list = "<tr><td class='tdbg1 center' colspan=3><i>No custom folders defined.</i></td></tr>";
+	$list = "<tr><td class='tdbg1 center' colspan=4><i>No custom folders defined.</i></td></tr>";
 } else {
 	$totals  = get_pm_count($u);
 	$list = "";

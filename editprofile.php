@@ -108,12 +108,17 @@
 		
 		if ($issuper) {
 			// Always process the backup entry, so it can be updated even when it isn't selected
-			$namecolor_bak = substr(filter_string($_POST['namecolor']), 1); // Remove #
-			if (!ctype_xdigit($namecolor_bak)) {
-				errorpage("What are you trying to accomplish?");
+			$_POST['namecolor'] = filter_string($_POST['namecolor']); // Color input type
+			if ($_POST['namecolor']) {
+				$namecolor_bak = substr($_POST['namecolor'], 1); // Remove #
+				if (!ctype_xdigit($namecolor_bak)) {
+					errorpage("What are you trying to accomplish?");
+				}
+			} else { // This is a failsafe in case a color was never selected previously (causing the ctype check to fail)
+				$namecolor_bak = $userdata['namecolor_bak'];
 			}
 					
-			switch (filter_int($_POST['colorspec'])) {
+			switch (filter_int($_POST['colorspec'])) { // Selection box
 				case 0: $namecolor = ""; break;
 				case 1: $namecolor = $namecolor_bak; break;
 				case 2: $namecolor = "random"; break;

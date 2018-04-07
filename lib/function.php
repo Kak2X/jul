@@ -1546,10 +1546,10 @@ function onlineusers($forum = NULL, $thread = NULL){
 	$guests = $bpt_info = "";
 	if (!$isadmin) {
 		// Standard guest counter view
-		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > {$onlinetime} AND lastforum = ".filter_int($forum['id']));
+		$numguests = $sql->resultq("SELECT COUNT(*) FROM guests	WHERE date > {$onlinetime}{$check}");
 	} else {
 		// Detailed view of BPT (Bot/Proxy/Tor) flags
-		$onguests = $sql->query("SELECT flags FROM guests WHERE date > $onlinetime");
+		$onguests = $sql->query("SELECT flags FROM guests WHERE date > {$onlinetime}{$check}");
 		// Fill in the proper flag counters with the proper priority
 		$pts = array_fill(0, 4, 0);
 		for ($numguests = 0; $x = $sql->fetch($onguests); ++$numguests) {

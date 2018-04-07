@@ -3,10 +3,10 @@ $formcss    = 1;
 $numdir     = 'num1/'; 
 $numfil     = 'numnes';   
 $bgimage    = 'schemes/night_old/nightscheme_starsbg.png';
-$newthreadpic = "<img src='schemes/purple/newthreadpurple.gif'>";   
-$newreplypic  = "<img src='schemes/purple/newreplypurple.gif'>";   
-$newpollpic   = "<img src='schemes/purple/newpollpurple.png'>";
-$closedpic    = "<img src='schemes/purple/threadclosedpurple.png'>";
+$newthreadpic = "<img src='schemes/purple/status/newthreadpurple.png' align='absmiddle'>";   
+$newreplypic  = "<img src='schemes/purple/status/newreplypurple.png' align='absmiddle'>";   
+$newpollpic   = "<img src='schemes/purple/status/newpollpurple.png' align='absmiddle'>";
+$closedpic    = "<img src='schemes/purple/status/threadclosedpurple.png' align='absmiddle'>";  
 $bgcolor    = '000F1F';   
 $textcolor  = 'DDDDDD';   
 

@@ -87,15 +87,6 @@ function get_avatars($user, $flags = 0) {
 	}
 }
 
-function prepare_avatars($sets) {
-	global $sql;
-	$res = array();
-	while ($x = $sql->fetch($sets)) {
-		$res[$x['user']][$x['moodid']] = $x['weblink'];
-	}
-	return $res;
-}
-
 function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
@@ -193,6 +184,44 @@ function mood_list($user, $sel = 0, $return = false) {
 	}
 	
 	return include_js('avatars.js').$ret;
+}
+
+function load_avatars($searchon, $min, $ppp, $mode = MODE_POST) {
+	global $sql;
+	if ($mode == MODE_ANNOUNCEMENT) {
+		$avatars = $sql->query("
+			SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
+			FROM threads t
+			LEFT JOIN posts         p ON t.id     = p.thread
+			LEFT JOIN users_avatars v ON p.moodid = v.file
+			WHERE {$searchon} AND v.user = p.user
+			GROUP BY t.id
+			ORDER BY p.date DESC
+			LIMIT {$min},{$ppp}
+		");
+	} else {
+		if ($mode == MODE_POST) {
+			$prefix = "pm_";
+			$match  = "pm";
+		} else {
+			$prefix = "";
+			$match  = "post";
+		}
+		$avatars = $sql->query("
+			SELECT p.user, p.moodid, v.weblink
+			FROM {$prefix}posts p
+			LEFT JOIN users_avatars v ON p.moodid = v.file
+			WHERE {$searchon} AND v.user = p.user
+			ORDER BY p.id ASC
+			LIMIT {$min},{$ppp}
+		");
+	}
+	
+	$res = array();
+	while ($x = $sql->fetch($avatars)) {
+		$res[$x['user']][$x['moodid']] = $x['weblink'];
+	}
+	return $res;
 }
 
 // hopefully this will result in some consistency when asking just the minipic

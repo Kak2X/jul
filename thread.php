@@ -436,36 +436,21 @@
 	// Query elements
 	$min	= $ppp * $page;
 	
-	if ($user) $searchon = "user={$user}";
-	else       $searchon = "thread={$id}";
+	if ($user) $searchon = "p.user={$user}";
+	else       $searchon = "p.thread={$id}";
 
 	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT headid, signid FROM posts WHERE {$searchon} ORDER BY id ASC LIMIT $min, $ppp");
+	$layouts = $sql->query("SELECT p.headid, p.signid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
 	preplayouts($layouts);
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
-		$attachments = $sql->fetchq("
-			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
-			FROM posts p
-			LEFT JOIN attachments a ON p.id = a.post
-			WHERE p.{$searchon} AND a.id IS NOT NULL
-			ORDER BY p.id ASC
-			LIMIT {$min},{$ppp}
-		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+		$attachments = load_attachments($searchon, $min, $ppp);
+	}
+	if ($config['allow-avatar-storage']) {
+		$avatars = load_avatars($searchon, $min, $ppp); 
 	}
 	
-	if ($config['allow-avatar-storage']) {
-		$avatars = $sql->query("
-			SELECT p.user, p.moodid, v.weblink
-			FROM posts p
-			LEFT JOIN users_avatars v ON p.moodid = v.file
-			WHERE p.{$searchon} AND v.user = p.user
-			ORDER BY p.id ASC
-			LIMIT {$min},{$ppp}
-		");
-		$avatars = prepare_avatars($avatars);
-	}
 	// heh
 	$posts = $sql->query("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
@@ -474,7 +459,7 @@
 		FROM posts p
 		
 		LEFT JOIN users u ON p.user = u.id
-		WHERE p.{$searchon}
+		WHERE {$searchon}
 		ORDER BY p.id
 		LIMIT $min,$ppp
 	");

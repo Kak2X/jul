@@ -514,3 +514,35 @@ function upload_error($file) {
 		default: errorpage("Unknown error (id #{$err}).");
 	}
 }
+
+function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
+	global $sql;
+	if ($mode == MODE_ANNOUNCEMENT) { // heh welp
+		return $sql->fetchq("
+			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, MIN(p.id) pid
+			FROM threads t
+			LEFT JOIN posts       p ON p.thread = t.id
+			LEFT JOIN attachments a ON p.id     = a.post
+			WHERE {$searchon} AND a.id IS NOT NULL
+			GROUP BY t.id
+			ORDER BY p.date DESC
+			LIMIT {$min},{$ppp}
+		", PDO::FETCH_GROUP, mysql::FETCH_ALL);;
+	}
+	
+	if ($mode == MODE_PM) {
+		$prefix = "pm_";
+		$match  = "pm";
+	} else {
+		$prefix = "";
+		$match  = "post";
+	}
+	return $sql->fetchq("
+		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
+		FROM {$prefix}posts p
+		LEFT JOIN attachments a ON p.id = a.{$match}
+		WHERE {$searchon} AND a.id IS NOT NULL
+		ORDER BY p.id ASC
+		LIMIT {$min},{$ppp}
+	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+}

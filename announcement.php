@@ -68,46 +68,26 @@
 	
 	// Syndrome detection
 	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
-	
+	$searchon = "t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "");
 	
 	$ufields = userfields();
 	$layouts = $sql->query("
 		SELECT p.headid, p.signid, MIN(p.id) pid 
 		FROM threads t
 		LEFT JOIN posts p ON p.thread = t.id
-		WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+		WHERE {$searchon}
 		GROUP BY t.id
 		ORDER BY p.date DESC
 		LIMIT $min,$ppp
 	");
 	preplayouts($layouts);
 	
-	if ($config['allow-avatar-storage']) {
-		$avatars = $sql->query("
-			SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
-			FROM threads t
-			LEFT JOIN posts         p ON t.id     = p.thread
-			LEFT JOIN users_avatars v ON p.moodid = v.file
-			WHERE t.forum = $forum AND v.user = p.user ".(isset($fdata) ? "AND t.announcement = 1" : "")."
-			GROUP BY t.id
-			ORDER BY p.date DESC
-			LIMIT $min,$ppp
-		");
-		$avatars = prepare_avatars($avatars);
-	}
-	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
-		$attachments = $sql->fetchq("
-			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, MIN(p.id) pid
-			FROM threads t
-			LEFT JOIN posts p ON p.thread = t.id
-			LEFT JOIN attachments a ON p.id = a.post
-			WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")." AND a.id IS NOT NULL
-			GROUP BY t.id
-			ORDER BY p.date DESC
-			LIMIT {$min},{$ppp}
-		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+		$attachments = load_attachments($searchon, $min, $ppp, MODE_ANNOUNCEMENT);
+	}
+	if ($config['allow-avatar-storage']) {
+		$avatars = load_avatars($searchon, $min, $ppp, MODE_ANNOUNCEMENT);
 	}
 	
 	// Get every first post for every (announcement) thread in the forum
@@ -117,7 +97,7 @@
 		FROM threads t
 		LEFT JOIN posts p ON p.thread = t.id
 		LEFT JOIN users u ON p.user   = u.id
-		WHERE t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "")."
+		WHERE {$searchon}
 		GROUP BY t.id
 		ORDER BY p.date DESC
 		LIMIT $min,$ppp

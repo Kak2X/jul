@@ -49,6 +49,10 @@
 	const INVALID_THREAD = -1;
 	const INVALID_FORUM  = -2;
 	
+	const MODE_POST = 0;
+	const MODE_PM   = 1;
+	const MODE_ANNOUNCEMENT = 2;
+	
 	$pwlnames = array(
 		'-2'=>'Permabanned',
 		'-1'=>'Banned', 

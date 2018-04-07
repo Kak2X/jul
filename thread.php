@@ -425,7 +425,7 @@
 	// New Reply / Thread / Poll links
 	if ($id && $forumid) {
 		if ($forum['pollstyle'] != -2) $threadforumlinks .= "<a href='newthread.php?poll=1&id=$forumid'>$newpollpic</a> - ";
-		else                           $threadforumlinks .= "<img src='images/nopolls.png' align='absmiddle'> - ";
+		else                           $threadforumlinks .= "<img src='schemes/default/status/nopolls.png' align='absmiddle'> - ";
 		$threadforumlinks .= "<a href='newthread.php?id=$forumid'>$newthreadpic</a>";
 		if (!$thread['closed']) $threadforumlinks .= " - <a href='newreply.php?id=$id'>$newreplypic</a>";
 		else                    $threadforumlinks .= " - $closedpic";

@@ -136,7 +136,7 @@
 		
 		// Make sure we can create polls
 		$newthreadbar = "".
-			(($forum['pollstyle'] != -2) ? "<a href='newthread.php?poll=1&id=$id'>$newpollpic</a>" : "<img src='images/nopolls.png' align='absmiddle'>")
+			(($forum['pollstyle'] != -2) ? "<a href='newthread.php?poll=1&id=$id'>$newpollpic</a>" : "<img src='schemes/default/status/nopolls.png' align='absmiddle'>")
 			." - <a href='newthread.php?id=$id'>$newthreadpic</a>";
 		if ($ismod) {
 			$modopt = " - <a href='admin-forumbans.php?forum={$id}'>Edit forum bans</a>";

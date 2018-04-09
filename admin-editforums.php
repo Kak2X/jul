@@ -196,6 +196,7 @@ else if ($_GET['id']) {
 	$forum = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
 	if (!$forum) {
 		$_GET['id'] = -1;
+		$forum['pollstyle'] = -1;
 	} else {
 		if (!isset($categories[$forum['catid']]))
 			$categories[$forum['catid']] = "Unknown category #" . $forum['catid'];

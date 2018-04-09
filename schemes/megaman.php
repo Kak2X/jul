@@ -18,11 +18,11 @@
 	$linkcolor3 = 'FFEA00';
 	$linkcolor4 = 'FFD8A0';
 
-	$tablebg1      = '222222 url("schemes/megaman/mmback2b.png")'.$scrollmode;
-	$tablebg2      = '333333 url("schemes/megaman/mmback2a.png")'.$scrollmode;
+	$tablebg1      = '222222 url("schemes/megaman/mmback2b.png")';
+	$tablebg2      = '333333 url("schemes/megaman/mmback2a.png")';
 	$categorybg    = '003979';
 	$tableheadtext = 'FFFFFF';
-	$tableheadbg   = '0054B0 url("schemes/megaman/mmback3.png")'.$scrollmode;
+	$tableheadbg   = '0054B0 url("schemes/megaman/mmback3.png")';
 	$tableborder   = '000000';
 
 	$scr1 = '0050AF';

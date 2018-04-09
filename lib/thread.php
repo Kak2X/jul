@@ -119,23 +119,20 @@
 		
 	}
 	
-	function load_poll($id, $pollstyle = NULL) {
+	function load_poll($id, $pollstyle = -1) {
 		global $sql, $poll, $loguser;
 		$poll = $sql->fetchq("SELECT * FROM poll WHERE id = '{$id}'");
 		if (!$poll) return NULL;
 		
 		// Determine the user's poll votes
-		
 		if ($loguser['id']) {
 			$poll['myvotes'] = $sql->getresultsbykey("SELECT `choice`, 1 FROM `pollvotes` WHERE `poll` = '{$poll['id']}' AND `user` = '{$loguser['id']}'");
-			//while ($userchoice = $sql->fetch($lsql, PDO::FETCH_ASSOC))
-			//	$uservote[$userchoice['choice']] = true;
 		} else {
 			$poll['myvotes'] = array();
 		}
 		
 		// If we're not forcing a poll style, use the user provided one
-		$poll['style'] = ($pollstyle !== NULL) ? $pollstyle : $loguser['pollstyle'];
+		$poll['style'] = ($pollstyle >= 0) ? $pollstyle : $loguser['pollstyle'];
 		
 		// Get normal poll data (blank index will contain total)
 		$poll['votes'] = $sql->getresultsbykey("
@@ -173,9 +170,10 @@
 		}
 	}
 	
-	function print_poll($poll, $forum = 0) {
-		$confirm = generate_token(TOKEN_VOTE);
+	function print_poll($poll, $thread, $forum = 0) {
+		global $loguser;
 		
+		$confirm = generate_token(TOKEN_VOTE);
 		$choices = "";
 		// For each choice calculate the votes
 		foreach ($poll['choices'] as $id => $choice) {
@@ -230,17 +228,23 @@
 
 		// Edit poll linkery
 		if ($ismod) {
-			$polledit = "-- <a href='editpoll.php?id=$id'>Edit poll</a>";
+			$polledit = "-- <a href='editpoll.php?id={$thread['id']}'>Edit poll</a>";
 		} else if ($loguser['id'] == $thread['user']) {
-			$polledit = "-- <a href='editpoll.php?id=$id&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
+			$polledit = "-- <a href='editpoll.php?id={$thread['id']}&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
 		} else {
 			$polledit = "";
 		}
 		
-		if ($poll['closed']) $polltext = 'This poll is closed.';
-		else                 $polltext = 'Multi-voting is '.(($poll['doublevote']) ? 'enabled.' : 'disabled.');
-		if ($tvotes_u != 1) $s_have = 's have';
-		else                $s_have = ' has';
+		if ($poll['closed']) {
+			$polltext = 'This poll is closed.';
+		} else {
+			$polltext = 'Multi-voting is '.(($poll['doublevote']) ? 'enabled.' : 'disabled.');
+		}                 
+		if ($poll['usertotal'] != 1) {
+			$s_have = 's have';
+		} else {
+			$s_have = ' has';
+		} 
 		
 		return " 
 			<table class='table'>
@@ -250,6 +254,42 @@
 				<tr><td class='tdbg2 fonts' colspan=3>&nbsp;{$polltext} {$poll['usertotal']} user{$s_have} voted. {$polledit}</td></tr>
 			</table>
 			<br>";
+	}
+	
+	function poll_from_thread($id) {
+		global $sql;
+		return $sql->resultq("SELECT poll FROM threads WHERE id = {$id}");
+	}
+	
+	function vote_poll($pollid, $choice, $user, $action) {
+		global $sql;
+		if (!$user) return false;
+		$poll  = $sql->fetchq("SELECT * FROM poll WHERE id = {$pollid}");
+		if (!$poll || $poll['closed']) return false;
+		$valid = $sql->resultq("SELECT COUNT(*) FROM `poll_choices` WHERE `poll` = '{$pollid}' AND `id` = '{$choice}'");
+		if (!$valid) return false;
+		
+		if ($action == 'add') {
+			if (!$poll['doublevote']) {
+				$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$loguser['id']}' AND `poll` = '$pollid'");
+			}
+			$sql->query("INSERT INTO pollvotes (poll,choice,user) VALUES ($pollid,$choice,{$loguser['id']})");
+		} else {
+			$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$loguser['id']}' AND `poll` = '$pollid' AND `choice` = '$choice'");
+		}
+		return true;
+	}
+	
+	function create_thread() {
+		
+	}
+	
+	function create_post() {
+		
+	}
+	
+	function create_poll() {
+		
 	}
 	
 	// NOTE: For now this still allows a local mod to move threads/posts in forums they can access (but not have mod status)
@@ -341,12 +381,4 @@
 			}
 		}
 		return true;
-	}
-	
-	function notAuthorizedError($thing = 'forum') {
-		global $loguser;
-		$rreason = ($loguser['id'] ? 'don\'t have access to it' : 'are not logged in');
-		$redir   = ($loguser['id'] ? 'index.php' : 'login.php');
-		$rtext   = ($loguser['id'] ? 'the index page' : 'log in (then try again)');
-		errorpage("Couldn't enter this restricted {$thing}, as you {$rreason}.", $redir, $rtext);
 	}

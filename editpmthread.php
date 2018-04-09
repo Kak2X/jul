@@ -140,7 +140,8 @@
 	else {
 		
 		// We are increasing the limit since admins can edit the ACL
-		// This is because the thread owner (which usually is $loguser['id']) is normally omitted from the list
+		// This is because the thread owner (which usually is $loguser['id'] if we're not admins) is normally omitted from the list
+		// If we're admins (which can peek on otherwise restricted threads) this can be no longer true, so admins get the full list without omissions.
 		if ($isadmin) {
 			$config['pmthread-dest-limit']++;
 		}

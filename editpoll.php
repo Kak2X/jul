@@ -5,8 +5,9 @@
 	require 'lib/function.php';
 	
 	$meta['noindex'] = true;
+	const NUKE_ON_CHANGE = true;
 	
-	$id 		= filter_int($_GET['id']);
+	$_GET['id'] 		= filter_int($_GET['id']);
 
 	$thread  = $sql->fetchq("
 		SELECT 	t.forum, t.closed, t.title, t.user, t.poll,
@@ -16,7 +17,7 @@
 		FROM threads t
 		LEFT JOIN forums f ON t.forum = f.id
 		LEFT JOIN poll   p ON t.poll  = p.id
-		WHERE t.id = $id
+		WHERE t.id = {$_GET['id']}
 	", PDO::FETCH_ASSOC);
 	
 	
@@ -34,22 +35,22 @@
 		$message = NULL;
 	
 	if ($message) {
-		if (!$ismod) errorpage("You aren't allowed to edit this poll.","thread.php?id={$id}",'the thread');
+		if (!$ismod) errorpage("You aren't allowed to edit this poll.","thread.php?id={$_GET['id']}",'the thread');
 		else errorpage($message);
 	}
 	
 	// Quick link to close a poll for thread authors
 	if (isset($_GET['close'])) {
-		check_token($_GET['auth'], 35);
+		check_token($_GET['auth'], TOKEN_MGET);
 		
 		if (!$ismod && $loguser['id'] != $thread['user'])
-			errorpage("You aren't allowed to edit this poll.","thread.php?id={$id}",'the thread');
+			errorpage("You aren't allowed to edit this poll.","thread.php?id={$_GET['id']}",'the thread');
 		
 		$sql->query("UPDATE poll SET closed = 1 - closed WHERE id = {$thread['poll']}");
-		return header("Location: thread.php?id=$id");
+		return header("Location: thread.php?id={$_GET['id']}");
 	} else if (!$ismod) {
 		// Trying to edit the actual poll without being a mod? I think not!
-		errorpage("You aren't allowed to edit this poll.","thread.php?id={$id}",'the thread');
+		errorpage("You aren't allowed to edit this poll.","thread.php?id={$_GET['id']}",'the thread');
 	}
 	
 	
@@ -78,11 +79,7 @@
 		$chtext 	= filter_array($_POST['chtext']);
 		$chcolor 	= filter_array($_POST['chcolor']);
 		
-		/*
-			This specific check is to skip over the last entry, but only if it is blank and the form has been previewed / posted.
-			In this case, it always belongs to the extra option, which is then shown as a blank one with the "removed" attribute.
-		*/
-		
+		// Remove extra option if it is blank
 		$maxval  = max(array_keys($chtext)); // The extra option has the highest chtext ID
 		if (!$chtext[$maxval]){
 			unset($chtext[$maxval]);
@@ -117,9 +114,8 @@
 			errorpage("You haven't specified the options!");
 		
 		$sql->beginTransaction();
-			
-
-		$update = $sql->prepare("INSERT INTO poll_choices (id, poll, choice, color) VALUES (:id,:poll,:choice,:color)".
+		
+		$update = $sql->prepare("INSERT INTO poll_choices (poll, choice, color) VALUES (:poll,:choice,:color)".
 								"ON DUPLICATE KEY UPDATE choice = VALUES(choice), color = VALUES(color)");
 		
 		
@@ -132,13 +128,13 @@
 			} else {
 				
 				// If the text of the choice changes, nuke all votes
-				if (filter_string($origtext[$i]) != $chtext[$i]) {
+				if (filter_string($origtext[$i]) != $chtext[$i] && NUKE_ON_CHANGE) {
 					$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = $i");
 				}
 				// Update and insert in a single query
 				$sql->execute($update,
 				[
-					'id' 		=> $i,
+					//'id' 		=> $i,
 					'poll' 		=> $thread['poll'],
 					'choice' 	=> xssfilters($chtext[$i]),
 					'color' 	=> xssfilters($chcolor[$i]),
@@ -155,7 +151,7 @@
 		]);
 			
 		$sql->commit();
-		errorpage("Thank you, {$loguser['name']}, for editing the poll.","thread.php?id=$id",'return to the poll');
+		errorpage("Thank you, {$loguser['name']}, for editing the poll.","thread.php?id={$_GET['id']}",'return to the poll');
 		
 	}
 	
@@ -165,38 +161,37 @@
 	*/
 		
 	$choice_txt = "";
-	$choice_out = ""; // this is actually for the preview page, but might as well build this here
+	$choice_out = ""; // DELETEME // this is actually for the preview page, but might as well build this here
 
-	$i = 1;
-	foreach($chlist as $n){
-		
-		/*
-			Here we can't delete entries marked as deleted
-			Instead, just remove the flag
-		*/
-		if (isset($_POST['remove'][$n]) || !$chtext[$n]) {
-			$deleted = true;
-		} else {
-			$deleted = false;
-		}
+	$j = 1;
+	$choice_save = array();
+	foreach ($chlist as $i) {
+		//	We can't immediately delete entries marked as deleted
+		//	Instead, just remove the flag
+		$deleted = (isset($_POST['remove'][$i]) || !$chtext[$i]);
 		
 		$choice_txt .= "
-		Choice $i: <input name='chtext[$n]' size='30' maxlength='255' value=\"".htmlspecialchars($chtext[$n])."\" type='text'> &nbsp;
-		Color: <input name='chcolor[$n]' size='7' maxlength='25' value=\"".htmlspecialchars($chcolor[$n])."\" type='text'> &nbsp;
-		<input name='remove[$n]' value=1 type='checkbox' ".($deleted ? "checked" : "")."><label for='remove[$n]'>Remove</label><br>
+		Choice $j: <input name='chtext[$i]' size='30' maxlength='255' value=\"".htmlspecialchars($chtext[$i])."\" type='text'> &nbsp;
+		Color: <input name='chcolor[$i]' size='7' maxlength='25' value=\"".htmlspecialchars($chcolor[$i])."\" type='text'> &nbsp;
+		<input name='remove[$i]' id='remove[$i]' value=1 type='checkbox' ".($deleted ? "checked" : "")."><label for='remove[$i]'>Remove</label><br>
 		";
 		
+		if (!$deleted) {
+			$choice_save[] = $i;
+		}
+		
+		// --- DELETEME (TODO: use print_poll() instead)
 		// Preview
 		if (!$deleted) {
-			$votes = filter_int($votedb[$n]);
+			$votes = filter_int($votedb[$i]);
 			$width = $total ? sprintf("%.1f", $votes / $total * 100) : '0.0';
 			$choice_out .= "
 			<tr>
 				<td class='tdbg1' width='20%'>
-					{$chtext[$n]}
+					{$chtext[$i]}
 				</td>
 				<td class='tdbg2' width='60%'>
-					<table bgcolor='{$chcolor[$n]}' cellpadding='0' cellspacing='0' width='$width%'>
+					<table bgcolor='{$chcolor[$i]}' cellpadding='0' cellspacing='0' width='$width%'>
 						<tr><td>&nbsp;</td></tr>
 					</table>
 				</td>
@@ -206,44 +201,32 @@
 			</tr>
 			";
 		}
-		
-		$i++;
-
+		// ---
+		++$j;
 	}
 	
-	
-	$origmax = $sql->resultq("SELECT MAX(id) FROM poll_choices");
-	
-	if ($n > $origmax) {	// Have we added extra options in the choice list?
-		$n++;
-	} else {				
-		$n = $origmax + 1;
-	}
-
-	
-	if (isset($_POST['changeopt'])){
-		// add set option number
-		for (;$i < $addopt; $i++, $n++) {
-			$choice_txt .= "
-				Choice $i: <input name='chtext[$n]' size='30' maxlength='255' value='' type='text'> &nbsp;
-				Color: <input name='chcolor[$n]' size='7' maxlength='25' value='' type='text'> &nbsp;
-				<input name='remove[$n]' value=1 type='checkbox'><label for='remove[$n]'>Remove</label><br>
-			";
-		}
-	}
-	
-	$choice_txt .= "
-		Choice $i: <input name='chtext[$n]' size='30' maxlength='255' value='' type='text'> &nbsp;
-		Color: <input name='chcolor[$n]' size='7' maxlength='25' value='' type='text'> &nbsp;
-		<input name='remove[$n]' value=1 type='checkbox'><label for='remove[$n]'>Remove</label><br>
-	";
-	
-	
+	// Extra choices
+	do {
+		++$i;
+		$choice_txt .= "
+			Choice $j: <input name='chtext[$i]' size='30' maxlength='255' value='' type='text'> &nbsp;
+			Color: <input name='chcolor[$i]' size='7' maxlength='25' value='' type='text'> &nbsp;
+			<input name='remove[$i]' value=1 type='checkbox'><label for='remove[$i]'>Remove</label><br>
+		";
+		++$j;
+	} while ($i < $addopt);
 	
 	pageheader(NULL, $thread['specialscheme'], $thread['specialtitle']);
-	
-	$barlinks =	"<a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id={$thread['forum']}'>".htmlspecialchars($thread['ftitle'])."</a> - <a href='thread.php?id=$id'>".htmlspecialchars($thread['title'])."</a>";
-	
+			
+	// DELETEME
+	$forum['title'] = $thread['ftitle'];
+			
+	$links = array(
+		$forum['title']  => "forum.php?id={$thread['forum']}",
+		$thread['title'] => "thread.php?id={$_GET['id']}",
+		"Edit poll"      => NULL,
+	);
+	$barlinks = dobreadcrumbs($links); 
 	
 	if (isset($_POST['preview'])) {
 		
@@ -286,7 +269,7 @@
 
 	?>
 	<?=$barlinks?>
-	<form action='editpoll.php?&id=<?=$id?>' method='POST'>
+	<form action='editpoll.php?&id=<?=$_GET['id']?>' method='POST'>
 	<table class='table'>
 		<tr>
 			<td class='tdbgh' style='width: 150px'>&nbsp;</td>
@@ -294,21 +277,21 @@
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center'><b>Question:</b></td>
+			<td class='tdbg1 center b'>Question:</td>
 			<td class='tdbg2'>
 				<input style='width: 600px;' type='text' name='question' value="<?=htmlspecialchars($question)?>">
 			</td>
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center'><b>Briefing:</b></td>
+			<td class='tdbg1 center b'>Briefing:</td>
 			<td class='tdbg2'>
 				<textarea name='briefing' rows='2' cols=<?=$numcols?> wrap='virtual'><?=htmlspecialchars($briefing)?></textarea>
 			</td>
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center'><b>Multi-voting:</b></td>
+			<td class='tdbg1 center b'>Multi-voting:</td>
 			<td class='tdbg2'>
 				<input type='radio' name='doublevote' value=0 <?=filter_string($vote_sel[0])?>>Disabled&nbsp;&nbsp;&nbsp;&nbsp;
 				<input type='radio' name='doublevote' value=1 <?=filter_string($vote_sel[1])?>>Enabled
@@ -316,7 +299,7 @@
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center'><b>Choices:</b></td>
+			<td class='tdbg1 center b'>Choices:</td>
 			<td class='tdbg2'>
 				<?=$choice_txt?>
 				<input type='submit' name='changeopt' value='Submit changes'>&nbsp;and show
@@ -324,7 +307,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td class='tdbg1 center'><b>Poll status:</b></td>
+			<td class='tdbg1 center b'>Poll status:</td>
 			<td class='tdbg2'>
 				<input type='radio' name='pollclosed' value=0 <?=filter_string($close_sel[0])?>>Open&nbsp;&nbsp;&nbsp;&nbsp;
 				<input type='radio' name='pollclosed' value=1 <?=filter_string($close_sel[1])?>>Closed

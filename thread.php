@@ -28,7 +28,8 @@
 	$choice = filter_int($_GET['vote']);
 	
 	if ($id && $action) {
-		
+		if ($loguser['id']) {
+		check_token($_GET['auth'], TOKEN_VOTE);
 		// does the poll exist?
 		$pollid	= $sql->resultq("SELECT poll FROM threads WHERE id = {$id}");
 		if (!$pollid)
@@ -36,7 +37,7 @@
 
 		$poll = $sql->fetchq("SELECT * FROM poll WHERE id = $pollid");
 		
-		check_token($_GET['auth'], TOKEN_VOTE);
+		
 
 		// no wrong poll bullshit
 		$valid = $sql->resultq("SELECT COUNT(*) FROM `poll_choices` WHERE `poll` = '$pollid' AND `id` = '$choice'");
@@ -49,6 +50,7 @@
 			}
 			else
 				$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$loguser['id']}' AND `poll` = '$pollid' AND `choice` = '$choice'");
+		}
 		}
 		die(header("Location: ?id={$id}"));
 	}

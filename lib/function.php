@@ -1812,6 +1812,14 @@ function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN)
 	return false;
 }
 
+function notAuthorizedError($thing = 'forum') {
+	global $loguser;
+	$rreason = ($loguser['id'] ? 'don\'t have access to it' : 'are not logged in');
+	$redir   = ($loguser['id'] ? 'index.php' : 'login.php');
+	$rtext   = ($loguser['id'] ? 'the index page' : 'log in (then try again)');
+	errorpage("Couldn't enter this restricted {$thing}, as you {$rreason}.", $redir, $rtext);
+}
+
 function admincheck() {
 	global $isadmin;
 	if (!$isadmin) {

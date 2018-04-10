@@ -144,17 +144,21 @@
 		} else {
 			$posticon = $_POST['custposticon'];
 		}
-		
-
-		//$postnum 		= $numposts;
-		
 
 		if (isset($_POST['submit'])) {
 			#echo "key => {$attach_key}; count = {$attach_count}";
 			#die;
 			check_token($_POST['auth']);
 			
-			// Prepare tags / filters (CHANGEME)
+			// -- DO NOT DELETE
+			if (!$ismod) {
+				$_POST['close'] = 0;
+				$_POST['stick'] = 0;
+				$_POST['tannc'] = 0;
+			}
+			// --
+			
+			// Prepare tags / filters
 			$numposts 		= $user['posts'] + 1;
 			$numdays 		= (ctime() - $user['regdate']) / 86400;
 			$tags			= array();
@@ -201,12 +205,6 @@
 			
 			
 			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'");
-			
-			if (!$ismod) {
-				$_POST['close'] = 0;
-				$_POST['stick'] = 0;
-				$_POST['tannc']   = 0;
-			}
 			
 			// Insert thread
 			$vals = [
@@ -474,7 +472,7 @@
 	
 ?>
 
-	<?=$barlink?>
+	<?=$barlinks ?>
 	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 			<tr>
@@ -641,7 +639,7 @@
 		<?=quikattach($attach_key, $userid)?>
 		</table>
 		</form>
-		<?=$barlink?>
+		<?=$barlinks?>
 		<?=replytoolbar(4)?>
 		<?php
 	pagefooter();

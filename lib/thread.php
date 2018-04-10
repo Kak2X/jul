@@ -280,16 +280,111 @@
 		return true;
 	}
 	
-	function create_thread() {
-		
+	function create_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0) {
+		global $sql;
+			// $user consistency support
+			if (is_array($user)) {
+				$user = filter_int($user['id']);
+				if (!$user) return 0;
+			}
+			$currenttime = ctime();
+			
+			// Insert thread
+			$vals = array(
+				'forum'             => $forum,
+				'user'              => $user,
+				
+				'closed'            => $closed,
+				'sticky'            => $sticky,
+				'announcement'      => $announcement,
+				
+				'poll'              => $pollid,
+				
+				'title'             => xssfilters($title),
+				'description'       => xssfilters($description),
+				'icon'              => $posticon,
+				
+				'views'             => 0,
+				'replies'           => 0,
+				'firstpostdate'     => $currenttime,
+				'lastpostdate'      => $currenttime,
+				'lastposter'        => $user,
+			);
+			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
+			return $sql->insert_id();
 	}
 	
-	function create_post() {
+	function create_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0) {
+		global $sql;
 		
+		// $user consistency support
+		if (!is_array($user)) {
+			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, postsignature FROM users WHERE id = {$user}");
+			if (!$user) return 0;
+		}
+		
+		$numposts 		= $user['posts'] + 1;
+		$numdays 		= (ctime() - $user['regdate']) / 86400;
+		$tags			= array();
+		$message 		= doreplace($message, $numposts, $numdays, $user['id'], $tags);
+		$tagval			= json_encode($tags);
+		
+		if ($nolayout) {
+			$headid = 0;
+			$signid = 0;
+		} else {
+			$headid = getpostlayoutid($user['postheader']);
+			$signid = getpostlayoutid($user['signature']);
+		}
+		$currenttime = ctime();
+		
+		// Update posts & stats
+		$vals = array(
+			'thread'        => $thread,
+			'user'          => $user['id'],
+			'date'          => $currenttime,
+			'ip'            => $ip,
+			'num'           => $numposts,
+			
+			'headid'        => $headid,
+			'signid'        => $signid,
+			'moodid'        => $moodid,
+			
+			'text'          => xssfilters($message),
+			'tagval'        => $tagval,
+			'options'       => $nosmilies . "|" . $nolayout,
+		);
+		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
+		$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
+		
+		return $sql->insert_id();	
 	}
 	
-	function create_poll() {
+	function create_poll($question, $briefing, $chtext, $chcolor, $doublevote = 0) {
+		global $sql;
+
+		// Process main poll data
+		$vals =	array(
+			'question'			=> xssfilters($question),
+			'briefing'			=> xssfilters($briefing),
+			'closed'			=> 0,
+			'doublevote'		=> $doublevote,
+		);
+		$sql->queryp("INSERT INTO `poll` SET ".mysql::setplaceholders($vals), $vals);
+		$pollid = $sql->insert_id();
 		
+		// Process choices
+		$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
+		for ($i = 1; isset($chtext[$i]); ++$i) {
+			if (!isset($chtext[$i]) || !trim($chtext[$i])) { // No blank options
+				continue;
+			} else if (!isset($chcolor[$i]) || !trim($chcolor[$i])) {
+				$chcolor[$i] = 'red';
+			}
+			$sql->execute($addchoice, array($pollid, $chtext[$i], $chcolor[$i]));
+		}
+		
+		return $pollid;
 	}
 	
 	// NOTE: For now this still allows a local mod to move threads/posts in forums they can access (but not have mod status)

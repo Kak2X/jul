@@ -73,14 +73,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . $windowtitle : "");
 	
-	// Overriding the default title?
-	if ($miscdata['specialtitle'])
-		$config['board-title'] = $miscdata['specialtitle'];	// Global
-	else if ($forcetitle) 
-		$config['board-title'] = $forcetitle; // Forum specific
-	else 
-		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
-	
 	// Admin-only info
 	// in_array($loguserid,array(1,5,2100))
 	if ($sysadmin) {
@@ -294,6 +286,15 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	
 	require "schemes/$filename";
+	
+	// Overriding the default title?
+	// Moved here to allow overriding themes defining custom headers (and fixing the bug which renders the custom header non-clickable)
+	if ($miscdata['specialtitle'])
+		$config['board-title'] = $miscdata['specialtitle'];	// Global
+	else if ($forcetitle) 
+		$config['board-title'] = $forcetitle; // Forum specific
+	else 
+		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
 
 	if ($schemepre) {
 		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";

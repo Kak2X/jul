@@ -110,7 +110,9 @@ if ($_GET['id']) {
 			}
 			
 			// Update statistics
-			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : "";
+			// NO DELETE!
+			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
+			//--
 			$sql->query("UPDATE `pm_threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '{$loguser['id']}' WHERE `id` = '{$_GET['id']}'");
 			$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$_GET['id']}'");
 			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$_GET['id']}', `time` = ". ctime() .", `read` = '1'");
@@ -300,7 +302,7 @@ else {
 			$error	= "You are trying to post too rapidly.";
 		} else if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
 			$error = "You have selected a nonexisting folder.";
-		} else {
+		} else { // if (!($destid = filter_pm_acl($userlist, $loguser['name'], $error)))
 			$error = "";
 			foreach ($userlist as $x) {
 				$x = trim($x);
@@ -334,6 +336,13 @@ else {
 			}
 		}
 		
+		// Needed for thread preview
+		if ($_POST['iconid'] != '-1' && isset($posticons[$_POST['iconid']])) {
+			$posticon = $posticons[$_POST['iconid']];
+		} else {
+			$posticon = $_POST['custposticon'];
+		}
+		
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
 			
@@ -343,11 +352,6 @@ else {
 			$_POST['message'] = doreplace($_POST['message'], $loguser['posts'], $numdays, $loguser['id'], $tags);
 			$tagval           = json_encode($tags);
 			
-			if ($_POST['iconid'] != '-1' && isset($posticons[$_POST['iconid']])) {
-				$posticon = $posticons[$_POST['iconid']];
-			} else {
-				$posticon = $_POST['custposticon'];
-			}
 			if ($_POST['nolayout']) {
 				$headid = 0;
 				$signid = 0;
@@ -405,11 +409,11 @@ else {
 				$sql->execute($acl, [$tid, $in, PMFOLDER_MAIN]);
 			}
 			$sql->execute($acl, [$tid, $loguser['id'], $_POST['folder']]);
-			$sql->commit();
 			
 			if ($config['allow-attachments']) {
 				save_attachments($attach_key, $loguser['id'], $pid, 'pm');
 			}
+			$sql->commit();
 			
 			errorpage("Conversation posted successfully!", "showprivate.php?id=$tid", $_POST['subject'], 0);
 			

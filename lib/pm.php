@@ -256,3 +256,154 @@ function load_pm_thread($id) {
 		}
 	}
 }
+
+/*
+	valid_pm_acl: check if the user list is valid
+	$userlist   - array with user names
+	$allow_self - if false, the current user should not be present in the list
+	$error      - contains the error text
+*/
+function valid_pm_acl($userlist, $allow_self = false, &$error) {
+	global $config, $loguser;
+	// Increase the limit to account ourselves
+	$limit = $allow_self ? $config['pmthread-dest-limit'] + 1 : $config['pmthread-dest-limit'];
+	
+	$destcount = count($userlist);
+	if (!$destcount) {
+		$error = "You haven't entered an existing username to send this conversation to.";
+		return false;
+	} else if ($destcount > $config['pmthread-dest-limit']) {
+		$error = "You have entered too many usernames.";
+		return false;
+	}
+	
+	// Loop through the user list and report bad users
+	$badusers = "";
+	$badself  = false;
+	foreach ($userlist as $x) {
+		$x = trim($x);
+		if (!$allow_self && $loguser['name'] == $x) { // $allow_self is true for admins (where they explicitly have to add themseles to the list), false for normal users
+			$badself = true;
+		} else if ($valid = valid_user($x)) {
+			$destid[$valid] = $valid; // no duplicates please
+		} else {
+			$badusers .= "<li>{$x}</li>";
+		}
+	}
+	
+	if ($badusers) {
+		$error = "The following users you've entered don't exist:<ul>{$badusers}</ul>";
+		if ($badself) $error .= "You are also automatically added as a partecipant. You can't add yourself manually";
+	} else if ($badself) {
+		$error .= "You are automatically added as a partecipant. You can't add yourself manually";
+	} else {
+		return $destid;
+	}
+	return false;
+}
+
+/*
+	set_pm_acl: set access permissions for a thread
+	$users - array of user IDs
+	$thread - ID of the PM Thread
+	$show_self - if false, the logged in user is automatically added to the ACL even though it's not in $users
+	$self_folder - the folder the logged in user is moving the PM to. only has effect if $show_self is false
+*/
+function set_pm_acl($users, $thread, $show_self = false, $self_folder = PMFOLDER_MAIN) {
+	global $sql, $loguser;
+	
+	// Remove users missing from the list...
+	$noshow = $show_self ? 0 : $loguser['id']; //... (and account for lists omitting the logged in user)
+	$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']} AND user NOT in (".implode(',', $users).", {$noshow})");
+	
+	// Then add the users without touching the existing values
+	$acl = $sql->prepare("INSERT IGNORE INTO pm_access (thread, user, folder) VALUES (?,?,?)");
+	foreach ($users as $x) {
+		$sql->execute($acl, [$thread, $x, PMFOLDER_MAIN]);
+	}
+	if (!$show_self) { // If $show_self is false, $users does not contain the logged in user, so we have to add ourselves manually
+		$sql->execute($acl, [$thread, $loguser['id'], $self_folder]);
+	}
+			
+}
+
+function create_pm_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0) {
+	global $sql;
+	// $user consistency support
+	if (is_array($user)) {
+		$user = filter_int($user['id']);
+		if (!$user) return 0;
+	}
+	$currenttime = ctime();
+		
+	// Insert thread
+	$vals = array(
+		'user'				=> $user,
+		'closed'			=> $closed,
+		
+		'title'				=> xssfilters($title),
+		'description'		=> xssfilters($description),
+		'icon'				=> $posticon,
+		
+		'replies'			=> 0,
+		'firstpostdate'		=> $currenttime,
+		'lastpostdate'		=> $currenttime,
+		'lastposter'		=> $user,
+	);
+	$sql->queryp("INSERT INTO `pm_threads` SET ".mysql::setplaceholders($vals), $vals);
+	return $sql->insert_id();
+}
+
+function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0, $threadupdate = "") {
+	global $sql;
+	
+	// $user consistency support
+	if (!is_array($user)) {
+		$user = $sql->fetchq("SELECT id, posts, regdate, postheader, postsignature FROM users WHERE id = {$user}");
+		if (!$user) return 0;
+	}
+	
+	$numdays          = (ctime() - $user['regdate']) / 86400;
+	$tags             = array();
+	$message          = doreplace($message, $user['posts'], $numdays, $user['id'], $tags);
+	$tagval           = json_encode($tags);
+	$currenttime      = ctime();
+	
+	if ($nolayout) {
+		$headid = 0;
+		$signid = 0;
+	} else {
+		$headid = getpostlayoutid($user['postheader']);
+		$signid = getpostlayoutid($user['signature']);
+	}
+	
+	$postdata = array(
+		'thread'			=> $thread,
+		'user'				=> $user['id'],
+		'date'				=> $currenttime,
+		'ip'				=> $ip,
+		//'num'				=> $numposts,
+		
+		'headid'			=> $headid,
+		'signid'			=> $signid,
+		'moodid'			=> $moodid,
+		
+		'text'				=> xssfilters($message),
+		'tagval'			=> $tagval,
+		'options'			=> $nosmilies . "|" . $nohtml,
+	);
+	$sql->queryp("INSERT INTO `pm_posts` SET ".mysql::setplaceholders($postdata), $postdata);	 
+	$pid = $sql->insert_id();
+	
+	// Update statistics
+	$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$loguser['id']}'");
+	
+	//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : "";
+	if ($sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$thread}") > 1) {
+		$sql->query("UPDATE `pm_threads` SET {$threadupdate} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'");
+		$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
+		$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
+		$sql->query("UPDATE `users` SET `lastpmtime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
+	}
+	return $pid;
+}

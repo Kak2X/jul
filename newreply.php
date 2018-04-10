@@ -156,10 +156,8 @@
 					 
 			$pid = $sql->insert_id();
 			
-			if ($config['allow-attachments']) {
-				save_attachments($_GET['id'], $userid, $pid);
-			}
-			
+
+			// NO DELETE!
 			$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
 			
 			// Update statistics
@@ -170,7 +168,11 @@
 			$sql->query("REPLACE INTO threadsread SET `uid` = '$userid', `tid` = '{$_GET['id']}', `time` = ". ctime() .", `read` = '1'");
 
 			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '$userid'");
-
+			
+			//--
+			if ($config['allow-attachments']) {
+				save_attachments($_GET['id'], $userid, $pid);
+			}
 			$sql->commit();
 			
 			xk_ircout("reply", $user['name'], array(

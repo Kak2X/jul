@@ -252,10 +252,6 @@
 			
 			$pid = $sql->insert_id();
 			
-			if ($config['allow-attachments']) {
-				save_attachments($attach_key, $userid, $pid);
-			}
-			
 			$sql->query("
 				UPDATE `forums` SET
 					`numthreads`   = `numthreads` + 1,
@@ -264,8 +260,10 @@
 					`lastpostuser` = '$userid',
 					`lastpostid`   = '$pid'
 				WHERE id = {$_GET['id']}");
-
-			
+			//--
+			if ($config['allow-attachments']) {
+				save_attachments($attach_key, $userid, $pid);
+			}		
 			
 			$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
 			

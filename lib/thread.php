@@ -311,10 +311,11 @@
 				'lastposter'        => $user,
 			);
 			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
+			$sql->query("UPDATE `forums` SET `numthreads` = `numthreads` + 1 WHERE id = {$forum}");
 			return $sql->insert_id();
 	}
 	
-	function create_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0) {
+	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0, $threadupdate = "") {
 		global $sql;
 		
 		// $user consistency support
@@ -355,9 +356,16 @@
 			'options'       => $nosmilies . "|" . $nolayout,
 		);
 		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
+		$pid = $sql->insert_id();
 		$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
-		
-		return $sql->insert_id();	
+		$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '{$currenttime}', `lastpostuser` = '{$user['id']}', `lastpostid` = '{$pid}' WHERE `id` = '{$forum}'");
+		if ($sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$thread}") > 1) {
+			// Not the first post: update other stats
+			$sql->query("UPDATE `threads` SET {$threadupdate} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'");
+			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
+			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
+		}
+		return $pid;	
 	}
 	
 	function create_poll($question, $briefing, $chtext, $chcolor, $doublevote = 0) {

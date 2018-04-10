@@ -107,12 +107,8 @@
 		errorpage("No forum specified.","index.php",'the index page');
 	}
 
-
 	
-	
-	$windowtitle = $config['board-name']." -- ".$forum['title'];
-	
-	pageheader($windowtitle, $specialscheme, $specialtitle);
+	pageheader($forum['title'], $specialscheme, $specialtitle);
 	if ($id) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum)."</table>";
 	}

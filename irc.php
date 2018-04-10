@@ -7,7 +7,7 @@
 		die;
 	}
 	
-	pageheader("{$config['board-name']} - IRC Chat");
+	pageheader("IRC Chat");
 	
 	// Pick a server, 0 to show server selection
 	$_GET['server'] = filter_int($_GET['server']);

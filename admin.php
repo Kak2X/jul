@@ -1,7 +1,7 @@
 <?php
 
 	require 'lib/function.php';
-	$windowtitle	= "Admin Cruft -- {$config['board-name']}";
+	$windowtitle	= "Admin Cruft";
 	pageheader($windowtitle);
 	
 	if (!$isadmin) {

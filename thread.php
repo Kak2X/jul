@@ -204,10 +204,8 @@
 	else {
 		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 		errorpage("No thread specified.","index.php",'the index page');
-	}	
-
-	//temporary
-	if ($windowtitle) $windowtitle = $config['board-name']." -- $windowtitle";
+	}
+	
 	
 	pageheader($windowtitle, $specialscheme, $specialtitle);
 

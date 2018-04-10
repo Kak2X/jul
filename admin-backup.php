@@ -6,7 +6,7 @@
 	
 	require "lib/function.php";
 	
-	$windowtitle = "{$config['board-name']} -- Board Backups";
+	$windowtitle = "Board Backups";
 	
 	if (!$sysadmin) {
 		errorpage("Sorry, but no.");

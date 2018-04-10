@@ -2,7 +2,7 @@
 
 require 'lib/function.php';
 
-pageheader("{$config['board-name']} - Forum Moderators");
+pageheader("Forum Moderators");
 
 admincheck();
 print adminlinkbar('admin-editmods.php');

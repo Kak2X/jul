@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 	
-	pageheader("{$config['board-name']} -- Milestones");
+	pageheader("Milestones");
 	
 	$posts   = max(10000, filter_int($_GET['p']));
 	$threads = max(1000,  filter_int($_GET['t']));

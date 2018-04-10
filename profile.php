@@ -12,7 +12,7 @@
 		errorpage("The specified user doesn't exist.");
 	}
 	
-	$windowtitle = "{$config['board-name']} -- Profile for {$user['name']}";
+	$windowtitle = "Profile for {$user['name']}";
 
 //	if ($_GET['id'] == 1 && !$x_hacks['host']) {
 //		pageheader();

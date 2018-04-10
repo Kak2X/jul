@@ -108,7 +108,7 @@
 		";
 	}
 	
-	pageheader("{$config['board-name']} -- IP Bans");
+	pageheader("IP Bans");
 	print adminlinkbar();
 	
 	?>

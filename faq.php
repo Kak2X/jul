@@ -2,7 +2,7 @@
 	
 	require 'lib/function.php';
 	
-	pageheader("FAQ / Rules -- {$config['board-name']}");
+	pageheader("FAQ / Rules");
 	
 	#errorpage("There is no FAQ.");
 

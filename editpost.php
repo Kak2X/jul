@@ -45,7 +45,7 @@
 	if (!$ismod && ($thread['closed'] || $post['deleted'] || $loguser['id'] != $post['user']))
 		errorpage("You are not allowed to edit this post.", "thread.php?id=$threadid", "the thread", 0);
 	
-	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
+	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 
 	$attachsel = array();

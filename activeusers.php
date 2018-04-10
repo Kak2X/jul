@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 
-	$windowtitle    = "{$config['board-name']} -- Active users";
+	$windowtitle    = "Active users";
 	
 	$_GET['tid']    = filter_int($_GET['tid']); // Thread ID filtering for 'post' type 
 	$_GET['time']   = filter_int($_GET['time']);

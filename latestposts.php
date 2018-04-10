@@ -31,7 +31,7 @@
 	
 	if (!$_GET['raw']) {
 		// Normal page
-		pageheader("{$config['board-name']} - A revolution in posting technology&trade;");		
+		pageheader("A revolution in posting technology&trade;");		
 		
 		if ($loguser['id']) {
 			$forumread = $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}");

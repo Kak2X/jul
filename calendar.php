@@ -69,7 +69,7 @@
 		$eventtext[$event1['d']] .= "<br>- $userlink | <a href='calendar.php?event={$event1['id']}'>".htmlspecialchars($event1['title'])."</a>";
 	}
 	
-	pageheader("{$config['board-name']} -- Calendar for {$mn[$month]} {$year}");
+	pageheader("Calendar for {$mn[$month]} {$year}");
 	
 	?>
 	<table style="width: 100%">

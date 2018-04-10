@@ -71,7 +71,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	/*
 		Board title (and sub titles)
 	*/
-	if(!$windowtitle) $windowtitle = $config['board-name'];
+	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . $windowtitle : "");
 	
 	// Overriding the default title?
 	if ($miscdata['specialtitle'])

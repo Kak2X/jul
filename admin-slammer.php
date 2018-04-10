@@ -2,7 +2,7 @@
 
 require 'lib/function.php';
 
-pageheader("{$config['board-name']} - EZ Ban Hammer");
+pageheader("EZ Ban Hammer");
 echo "<div style='white-space:pre;'>";
 
 admincheck();

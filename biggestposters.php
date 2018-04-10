@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 
-	pageheader("{$config['board-name']} -- Biggest posters");
+	pageheader("Biggest posters");
 
 	$_GET['sort'] = filter_string($_GET['sort']);
 	if ($_GET['sort'] == "posts")   { $sort = "posts";   $headertext = 'sorted by post count'; }

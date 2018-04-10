@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 
-	$windowtitle = "{$config['board-name']} -- Online users";
+	$windowtitle = "Online users";
 
 /*
 	if (empty($_COOKIE) && $_SERVER['HTTP_REFERER'] == "http://jul.rustedlogic.net/") {

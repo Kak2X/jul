@@ -47,7 +47,7 @@
 		</tr>";
 	}
 	
-	pageheader("{$config['board-name']} -- Forum bans to ".htmlspecialchars($user['name']));
+	pageheader("Forum bans to ".htmlspecialchars($user['name']));
 ?>
 	<table class="table">
 		<tr><td class="tdbgh center b" colspan=6>Forum bans for <?= getuserlink($user) ?> (Total: <?= $i ?>)</td></tr>

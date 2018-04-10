@@ -124,7 +124,7 @@ if (!$_GET['forum']) {
 		$addlink = $forumlist = "";
 	}
 	
-	pageheader("{$config['board-name']} -- {$windowtitle} - {$forum['title']}");
+	pageheader("{$windowtitle} - {$forum['title']}");
 	print adminlinkbar().$forumlist;
 	
 	//--

@@ -193,7 +193,7 @@
 		
 	$smilies = readsmilies();
 	
-	$windowtitle = "{$config['board-name']} -- ".htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
+	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	/*

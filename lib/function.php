@@ -2516,7 +2516,7 @@ function error_reporter($type, $msg, $file, $line, $context) {
 		$file = "[Parent] ".filter_string($backtrace[2]['file']);
 		$line = filter_int($backtrace[2]['line']);
 		$func = filter_string($backtrace[2]['function']);
-		$args = filter_string($backtrace[2]['args']);
+		$args = filter_array($backtrace[2]['args']);
 	} else {
 		$backtrace = debug_backtrace();
 		$func = filter_string($backtrace[1]['function']);

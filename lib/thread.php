@@ -21,7 +21,7 @@
 		$forum = $sql->fetchq("SELECT * FROM forums WHERE id = '{$id}'");
 		if ($check_errors) {
 			if (!$forum) {
-				trigger_error("Attempted to access invalid forum $id", E_USER_NOTICE);
+				trigger_error("Attempted to access invalid forum {$id}", E_USER_NOTICE);
 				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				notAuthorizedError();
 				
@@ -33,10 +33,13 @@
 				
 				$error = INVALID_FORUM;
 				$forum = array(
-					'id'         => $id,
-					'title'      => " ---[ BAD FORUM ID #{$id} ]--- ",
-					'numthreads' => $badthreads,
-					'error'      => true,
+					'id'             => $id,
+					'title'          => "[ BAD FORUM ID #{$id} ]",
+					'numthreads'     => $badthreads,
+					'specialscheme'  => NULL,
+					'specialtitle'   => NULL,
+					'pollstyle'      => 0,
+					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
 				trigger_error("Attempted to access level-{$forum['minpower']} restricted forum {$id} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
@@ -77,16 +80,18 @@
 				'id'      => $id, // For breadcrumbs support, see load_forum above
 				'closed'  => true,
 				'replies' => $badposts - 1,
-				'title'   => " ---[ BAD THREAD ID #{$id} ]--- ",//"Bad posts with ID #{$id}",
+				'title'   => "[ BAD THREAD ID #{$id} ]",//"Bad posts with ID #{$id}",
 				'error'   => true,
 			);
 			$forum = array(
-				'id'      => 0,
-				'title'   => "",
+				'id'            => 0,
+				'title'         => "",
+				'specialscheme' => NULL,
+				'specialtitle'  => NULL,
+				'pollstyle'     => 0,
 			);
 			$check_forum = false;
 		}
-		
 		if ($check_forum) {
 			$forum = $sql->fetchq("SELECT * FROM forums WHERE id = '{$thread['forum']}'");
 
@@ -99,7 +104,10 @@
 				$error = INVALID_FORUM;
 				$forum = array(
 					'id'             => $thread['forum'], // ID should point to the existing value
-					'title'          => " ---[ BAD FORUM ID #{$thread['forum']} ]--- ",
+					'title'          => "[ BAD FORUM ID #{$thread['forum']} ]",
+					'specialscheme'  => NULL,
+					'specialtitle'   => NULL,
+					'pollstyle'      => 0,
 					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
@@ -168,10 +176,11 @@
 			}
 			$poll['choices'][$x['id']] = $x;
 		}
+		return true;
 	}
 	
 	function print_poll($poll, $thread, $forum = 0) {
-		global $loguser;
+		global $loguser, $ismod;
 		
 		$confirm = generate_token(TOKEN_VOTE);
 		$choices = "";
@@ -215,12 +224,12 @@
 
 			$link = '';
 			if ($loguser['id'] && !$poll['closed']) {
-				$link = "<a href='?id={$id}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
+				$link = "<a href='?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
 			}
 			
 			$choices	.= "
 			<tr>
-				<td class='tdbg1' width=20%>{$dot}{$link}".xssfilters($pollc['choice'])."</a></td>
+				<td class='tdbg1' width=20%>{$dot}{$link}".xssfilters($choice['choice'])."</a></td>
 				<td class='tdbg2' width=60%>{$barpart}</td>
 				<td class='tdbg1 center' width=20%>".($poll['doublevote'] ? "{$pct}% of users, {$votes} ({$pct2}%)" : "{$pct}%, {$votes}")."</td>
 			</tr>";

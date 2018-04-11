@@ -7,7 +7,7 @@
 		$id		= $sql->resultq("SELECT `thread` FROM `{$prefix}posts` WHERE `id` = '{$pid}'");
 		if (!$id) {
 			$meta['noindex'] = true; // prevent search engines from indexing
-			errorpage("Couldn't find a post with ID #{$pid}.  Perhaps it's been deleted?", "index.php", 'the index page');
+			errorpage("Couldn't find a post with ID #{$pid}. Perhaps it's been deleted?", "index.php", 'the index page');
 		}
 		return $id;
 	}
@@ -98,8 +98,8 @@
 				}
 				$error = INVALID_FORUM;
 				$forum = array(
-					'id'             => $id,
-					'title'          => " ---[ BAD FORUM ID #{$id} ]--- ",
+					'id'             => $thread['forum'], // ID should point to the existing value
+					'title'          => " ---[ BAD FORUM ID #{$thread['forum']} ]--- ",
 					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
@@ -256,7 +256,7 @@
 			<br>";
 	}
 	
-	function poll_from_thread($id) {
+	function get_poll_from_thread($id) {
 		global $sql;
 		return $sql->resultq("SELECT poll FROM threads WHERE id = {$id}");
 	}
@@ -271,11 +271,11 @@
 		
 		if ($action == 'add') {
 			if (!$poll['doublevote']) {
-				$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$loguser['id']}' AND `poll` = '$pollid'");
+				$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$user}' AND `poll` = '$pollid'");
 			}
-			$sql->query("INSERT INTO pollvotes (poll,choice,user) VALUES ($pollid,$choice,{$loguser['id']})");
+			$sql->query("INSERT INTO pollvotes (poll,choice,user) VALUES ($pollid,$choice,{$user})");
 		} else {
-			$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$loguser['id']}' AND `poll` = '$pollid' AND `choice` = '$choice'");
+			$sql->query("DELETE FROM `pollvotes` WHERE `user` = '{$user}' AND `poll` = '$pollid' AND `choice` = '$choice'");
 		}
 		return true;
 	}

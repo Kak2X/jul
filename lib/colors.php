@@ -32,6 +32,7 @@
 	$newreplypic	= '<img src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';
 	$newthreadpic	= '<img src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
 	$closedpic		= '<img src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
+	$nopollpic      = '<img src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
 	$numdir			= 'jul/';
 
 	$statusicons = array(

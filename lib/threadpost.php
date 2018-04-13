@@ -364,6 +364,11 @@ function get_complete_numdir() {
 	}
 }
 
+function load_syndromes() {
+	global $sql;
+	return $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
+}
+
 function syndrome($num, $double=false, $bar=true){
 	$bar	= false;
 	$a		= '\'>Affected by';

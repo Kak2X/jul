@@ -21,9 +21,11 @@
 		$forum = $sql->fetchq("SELECT * FROM forums WHERE id = '{$id}'");
 		if ($check_errors) {
 			if (!$forum) {
-				trigger_error("Attempted to access invalid forum {$id}", E_USER_NOTICE);
-				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-				notAuthorizedError();
+				if (!$ismod) {
+					trigger_error("Attempted to access invalid forum {$id}", E_USER_NOTICE);
+					$meta['noindex'] = true; // prevent search engines from indexing what they can't access
+					notAuthorizedError();
+				}
 				
 				// Mod+ can see a list of threads assigned to the bad forum
 				$badthreads = $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `forum` = '{$id}'");
@@ -39,6 +41,9 @@
 					'specialscheme'  => NULL,
 					'specialtitle'   => NULL,
 					'pollstyle'      => 0,
+					'minpower'       => 2,
+					'minpowerreply'  => 2,
+					'minpowerthread' => 2,
 					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
@@ -84,11 +89,14 @@
 				'error'   => true,
 			);
 			$forum = array(
-				'id'            => 0,
-				'title'         => "",
-				'specialscheme' => NULL,
-				'specialtitle'  => NULL,
-				'pollstyle'     => 0,
+				'id'             => 0,
+				'title'          => "",
+				'specialscheme'  => NULL,
+				'specialtitle'   => NULL,
+				'pollstyle'      => 0,
+				'minpower'       => 2,
+				'minpowerreply'  => 2,
+				'minpowerthread' => 2,
 			);
 			$check_forum = false;
 		}
@@ -108,6 +116,9 @@
 					'specialscheme'  => NULL,
 					'specialtitle'   => NULL,
 					'pollstyle'      => 0,
+					'minpower'       => 2,
+					'minpowerreply'  => 2,
+					'minpowerthread' => 2,
 					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
@@ -179,53 +190,103 @@
 		return true;
 	}
 	
-	function print_poll($poll, $thread, $forum = 0) {
+	function preview_poll($in, $forum) {
+		$out = array(
+			'id'         => NULL,
+			'question'   => $in['question'],
+			'briefing'   => $in['briefing'],
+			'doublevote' => $in['doublevote'],
+			'closed'     => 0,
+			'myvotes'    => array(),
+			'votes'      => array(),
+			'style'      => 0, // Always standard
+			'usertotal'  => 0,
+			'choices'    => merge_choice_arrays($in['chtext'], $in['chcolor'], filter_array($in['remove'])),
+		);
+		return print_poll($out, 0, $forum);
+	}
+	
+	function merge_choice_arrays($chtext, $chcolor, $remove = array()) {
+		$out = array();
+		foreach ($chtext as $key => $val) {
+			$out[$key] = array(
+				'id'     => $key,
+				'poll'   => NULL, 
+				'choice' => $chtext[$key], 
+				'color'  => $chcolor[$key],
+				'remove' => (!$val || isset($remove[$key])), // Mark blank entries or those marked for deletion
+			);
+		}
+		return $out;
+	}
+	
+	function print_poll($poll, $thread = 0, $forum = 0) {
 		global $loguser, $ismod;
 		
 		$confirm = generate_token(TOKEN_VOTE);
 		$choices = "";
 		// For each choice calculate the votes
 		foreach ($poll['choices'] as $id => $choice) {
-			// poll['votes'][<choice>] -> normal votes
-			// poll['influ'][<choice>] -> influence votes
+			if (filter_bool($choice['remove'])) continue; // Edit poll support
 			
-			if ($poll['style']) { // Influence
-				if ($poll['influ']['total']) { // $poll['usertotal'] && 
-					$pct  = $pct2 = sprintf('%02.1f', $poll['influ'][$id] / $poll['influ']['total'] * 100);
-				} else {
-					$pct  = $pct2 = "0.0"; // No votes!
+			$link = '';
+			if ($thread) { // No links or real vote counter for poll previews
+				// poll['votes'][<choice>] -> normal votes
+				// poll['influ'][<choice>] -> influence votes
+				if ($poll['style']) { // Influence
+					if ($poll['influ']['total']) { // $poll['usertotal'] && 
+						$pct  = $pct2 = sprintf('%02.1f', $poll['influ'][$id] / $poll['influ']['total'] * 100);
+					} else {
+						$pct  = $pct2 = "0.0"; // No votes!
+					}
+					// <infl> points (<norm>)
+					$votes = "{$poll['influ'][$id]} point".($poll['influ'][$id] == 1 ? '' : 's')." ({$poll['votes'][$id]})";
+				} else { // Normal
+					if ($poll['votes']['total']) { // $poll['usertotal'] && 
+						$pct  = sprintf('%02.1f', $poll['votes'][$id] / $poll['votes']['total'] * 100);
+						$pct2 = sprintf('%02.1f', $poll['votes'][$id] / $poll['usertotal'] * 100);
+					} else
+						$pct  = $pct2 = "0.0";
+					// <norm> votes
+					$votes = "{$poll['votes'][$id]} vote".($poll['votes'][$id] == 1 ? '' : 's');
 				}
-				// <infl> points (<norm>)
-				$votes = "{$poll['influ'][$id]} point".($poll['influ'][$id] == 1 ? '' : 's')." ({$poll['votes'][$id]})";
-			} else { // Normal
-				if ($poll['votes']['total']) { // $poll['usertotal'] && 
-					$pct  = sprintf('%02.1f', $poll['votes'][$id] / $poll['votes']['total'] * 100);
-					$pct2 = sprintf('%02.1f', $poll['votes'][$id] / $poll['usertotal'] * 100);
-				} else
-					$pct  = $pct2 = "0.0";
-				// <norm> votes
-				$votes = "{$poll['votes'][$id]} vote".($poll['votes'][$id] == 1 ? '' : 's');
-			}
 
+				// Has the logged in user voted on this choice?
+				if (isset($poll['myvotes'][$id])) {
+					$linkact = 'del';
+					$dot = "<img src='images/dot4.gif' align='absmiddle'> ";
+				} else {
+					$linkact = 'add';
+					$dot = "<img src='images/_.gif' width=8 height=8 align='absmiddle'> ";
+				}
+
+				if ($loguser['id'] && !$poll['closed']) {
+					$link = "<a href='?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
+				}
+				
+				// Edit poll linkery
+				if ($ismod) {
+					$polledit = "-- <a href='editpoll.php?id={$thread['id']}'>Edit poll</a>";
+				} else if ($loguser['id'] == $thread['user']) {
+					$polledit = "-- <a href='editpoll.php?id={$thread['id']}&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
+				} else {
+					$polledit = "";
+				}
+				
+			} else {
+				// Poll previews show the colors
+				$pct = $pct2 = "50.0"; // mt_rand(30, 100).".0";
+				$votes = "? votes";
+				$polledit = $dot = "";
+			}
+			
+			
 			// Generate the bar graphics
 			$barpart = "<table cellpadding=0 cellspacing=0 width=$pct% bgcolor='".($choice['color'] ? $choice['color'] : "cccccc")."'><td>&nbsp;</table>";
 			if ($pct == "0.0") {
 				$barpart = '&nbsp;';
 			}
-			
-			// Has the logged in user voted on this choice?
-			if (isset($poll['myvotes'][$id])) {
-				$linkact = 'del';
-				$dot = "<img src='images/dot4.gif' align='absmiddle'> ";
-			} else {
-				$linkact = 'add';
-				$dot = "<img src='images/_.gif' width=8 height=8 align='absmiddle'> ";
-			}
 
-			$link = '';
-			if ($loguser['id'] && !$poll['closed']) {
-				$link = "<a href='?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
-			}
 			
 			$choices	.= "
 			<tr>
@@ -235,15 +296,7 @@
 			</tr>";
 		}
 
-		// Edit poll linkery
-		if ($ismod) {
-			$polledit = "-- <a href='editpoll.php?id={$thread['id']}'>Edit poll</a>";
-		} else if ($loguser['id'] == $thread['user']) {
-			$polledit = "-- <a href='editpoll.php?id={$thread['id']}&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
-		} else {
-			$polledit = "";
-		}
-		
+
 		if ($poll['closed']) {
 			$polltext = 'This poll is closed.';
 		} else {
@@ -320,8 +373,9 @@
 				'lastposter'        => $user,
 			);
 			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
+			$tid = $sql->insert_id();
 			$sql->query("UPDATE `forums` SET `numthreads` = `numthreads` + 1 WHERE id = {$forum}");
-			return $sql->insert_id();
+			return $tid;
 	}
 	
 	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0, $threadupdate = "") {
@@ -389,7 +443,6 @@
 		);
 		$sql->queryp("INSERT INTO `poll` SET ".mysql::setplaceholders($vals), $vals);
 		$pollid = $sql->insert_id();
-		
 		// Process choices
 		$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
 		for ($i = 1; isset($chtext[$i]); ++$i) {

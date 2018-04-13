@@ -1820,6 +1820,13 @@ function notAuthorizedError($thing = 'forum') {
 	errorpage("Couldn't enter this restricted {$thing}, as you {$rreason}.", $redir, $rtext);
 }
 
+function ismod($forum = 0, $user = NULL) {
+	global $loguser, $sql;
+	if ($user === NULL) $user = $loguser;
+	if ($user['powerlevel'] > 1) return true;
+	return ($forum && $sql->resultq("SELECT COUNT(*) FROM forummods WHERE forum = '{$forum}' and user = '{$user['id']}'"));
+}
+
 function admincheck() {
 	global $isadmin;
 	if (!$isadmin) {

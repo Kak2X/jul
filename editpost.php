@@ -5,8 +5,8 @@
 	// Stop this insanity.  Never index editpost...
 	$meta['noindex'] = true;
 	
-	$id 	= filter_int($_GET['id']);
-	$action = filter_string($_GET['action']);
+	$_GET['id'] 	= filter_int($_GET['id']);
+	$_GET['action'] = filter_string($_GET['action']);
 
 	
 	if (!$loguser['id']) {
@@ -15,74 +15,55 @@
 	if ($loguser['editing_locked'] == 1) {
 		errorpage("You are not allowed to edit your posts.", 'index.php', 'return to the board');
 	}
-	if (!$id) {	// You dummy
+	if (!$_GET['id']) {	// You dummy
 		errorpage("No post ID specified.",'index.php', 'return to the board');
 	}
 
-	$post     = $sql->fetchq("SELECT * FROM posts WHERE id = $id");
+	$post     = $sql->fetchq("SELECT * FROM posts WHERE id = {$_GET['id']}");
 	if (!$post) {
-		errorpage("Post ID #{$id} doesn't exist.",'index.php', 'return to the board');
+		errorpage("Post ID #{$_GET['id']} doesn't exist.",'index.php', 'return to the board');
 	}
-
-	$threadid = $post['thread'];
-	$thread   = $sql->fetchq("SELECT forum, closed, title FROM threads WHERE id = $threadid");
-	$options  = explode("|", $post['options']);
-
-	//$thread['title'] = str_replace(array('<', '>'),array('&lt;','&gt;'),$thread['title']);
-
-	$smilies = readsmilies();
-
-	$forum      = $sql->fetchq("SELECT * FROM forums WHERE id = {$thread['forum']}");
-	
-	if ($loguser['powerlevel'] < $forum['minpower'] || (!$forum && !$ismod)) // Broken forum
-		errorpage("Sorry, but you are not allowed to do this in this restricted forum.", 'index.php' ,'return to the board', 0);
-	
+	load_thread($post['thread']);
 	check_forumban($forum['id'], $loguser['id']);
+	$ismod = ismod($forum['id']);
+	if ($forum_error) {
+		$forum_error = "<table class='table'>{$forum_error}</table>";
+	}
 	
-	if ($sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forum['id']} and user = {$loguser['id']}"))
-		$ismod = 1;
-	
-	if (!$ismod && ($thread['closed'] || $post['deleted'] || $loguser['id'] != $post['user']))
-		errorpage("You are not allowed to edit this post.", "thread.php?id=$threadid", "the thread", 0);
+	if (!$ismod && ($loguser['id'] != $post['user'] || $thread['closed']))
+		errorpage("You are not allowed to edit this post.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
 	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	
+	$links = array(
+		$forum['title']    => "forum.php?id={$forum['id']}",
+		$thread['title']   => "thread.php?id={$_GET['id']}",
+		"Edit post"        => NULL,
+	);
+	$barlinks = dobreadcrumbs($links); 
 
-	$attachsel = array();
-	$attach_key = "{$threadid}_{$id}";
-	
-	
-/*	print "<font> - ". ($forum['minpower'] <= $loguser['powerlevel'] ? "" : "Restricted thread") ."
-";
-*/
 	
 	/*
 		Editing a post?
 	*/
-	if (!$action) {
-		
+	if (!$_GET['action']) {
+		$smilies    = readsmilies();
+		$attachsel  = array();
+		$attach_key = "{$thread['id']}_{$_GET['id']}";
+	
 		if (isset($_POST['submit']) || isset($_POST['preview'])) {
 			
-			$message 	= filter_string($_POST['message'], true);
-			$head 		= filter_string($_POST['head'], true);
-			$sign 		= filter_string($_POST['sign'], true);
+			$message 	= filter_string($_POST['message']);
+			$head 		= filter_string($_POST['head']);
+			$sign 		= filter_string($_POST['sign']);
 			
 			$nosmilies	= filter_int($_POST['nosmilies']);
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
-			
-			
-			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = {$loguser['id']}");
-			$numposts 	= $user['posts'];
-			$numdays 	= (ctime()-$user['regdate'])/86400;
-			$message 	= doreplace($message,$numposts,$numdays,$loguser['id']);
-
-			$edited 	= getuserlink($loguser);
-			//$edited = str_replace('\'', '\\\'', getuserlink($loguser));
-			
 
 			if ($config['allow-attachments']) {
-				$savedata  = process_saved_attachments($id);
+				$savedata  = process_saved_attachments($_GET['id']);
 				$extrasize = $savedata['size'];
 				$attachsel = $savedata['del'];
 				process_temp_attachments($attach_key, $loguser['id'], $extrasize);
@@ -90,50 +71,62 @@
 			
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
+				
+				$numposts 	= $loguser['posts'];
+				$numdays 	= (ctime() - $loguser['regdate']) / 86400;
+				$message 	= doreplace($message, $numposts, $numdays, $loguser['id']);
+
+				$edited 	= getuserlink($loguser);
+				
 				/*
 				if ($loguserid == 1162) {
-					xk_ircsend("1|The jceggbert5 dipshit tried to edit another post: ". $id);
+					xk_ircsend("1|The jceggbert5 dipshit tried to edit another post: ". $_GET['id']);
 					errorpage("");
 				}
-				*/
+				
 				if (($message == "COCKS" || $head == "COCKS" || $sign == "COCKS") || ($message == $head && $head == $sign)) {
 					$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."'");
 					errorpage("NO BONUS");
 				}
-			
-				$headid = $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$head]);
-				$signid = $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$sign]);
-				if($headid) $head=''; else $headid=0;
-				if($signid) $sign=''; else $signid=0;
+				*/
 				
+				// Check if we have already stored this layout, so we won't have to duplicate it
+				$headid = $signid = 0;
+				if ($head) {
+					$headid = (int) $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$head]);
+					if ($headid) $head = "";
+				}
+				if ($sign) {
+					$signid = (int) $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$sign]);
+					if ($signid) $sign = "";
+				}
 				
 				$sql->beginTransaction();
 				
-				$sql->queryp("UPDATE posts SET `headid` = :headid, `signid` = :signid, `moodid` = :moodid, `options` = :options, `headtext` = :headtext, `text` = :text, `signtext` = :signtext, `edited` = :edited, `editdate` = :editdate WHERE id = $id",
-					[
-						'text'		=> xssfilters($message),
-						'headtext'	=> xssfilters($head),
-						'signtext'	=> xssfilters($sign),
-						
-						'options'	=> $nosmilies . "|" . $nohtml,
-						'edited'	=> $edited,
-						'editdate' 	=> ctime(),
-						
-						'headid'	=> $headid,
-						'signid'	=> $signid,
-						'moodid'	=> $moodid,
-						
-					]);
+				$pdata = array(
+					'text'		=> xssfilters($message),
+					'headtext'	=> xssfilters($head),
+					'signtext'	=> xssfilters($sign),
+					
+					'options'	=> $nosmilies . "|" . $nohtml,
+					'edited'	=> $edited,
+					'editdate' 	=> ctime(),
+					
+					'headid'	=> $headid,
+					'signid'	=> $signid,
+					'moodid'	=> $moodid,	
+				);
+				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
 				$sql->commit();
 				
 				if ($config['allow-attachments']) {
 					if ($attachsel) {
 						remove_attachments(array_keys($attachsel));
 					}
-					save_attachments($attach_key, $post['user'], $id);
+					save_attachments($attach_key, $post['user'], $_GET['id']);
 				}
 				
-				errorpage("Post edited successfully.", "thread.php?pid=$id#$id", 'return to the thread', 0);
+				errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
 				
 			} else {
 				/*
@@ -160,12 +153,12 @@
 					'attach_key' => $attach_key,
 					'attach_sel' => $attachsel,
 				);
-				print preview_post($user, $data, PREVIEW_EDITED);
+				print preview_post($loguser, $data, PREVIEW_EDITED);
 			}
 			
 		} else {
 			
-			// If not, replace the default variables with the original ones from the thread
+			// Replace the default variables with the original ones from the thread
 			
 			$message = $post['text'];
 			
@@ -174,9 +167,9 @@
 			if(!$post['signid']) $sign = $post['signtext'];
 			else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
 
-
-			$nosmilies 	= $options[0];
-			$nohtml		= $options[1];
+			$options    = explode("|", $post['options']);
+			$nosmilies  = $options[0];
+			$nohtml     = $options[1];
 
 			$moodid		= $post['moodid'];
 			//$user=$sql->fetchq("SELECT name FROM users WHERE id=$post[user]");		
@@ -186,15 +179,10 @@
 		$selsmilies = $nosmilies ? "checked" : "";
 		$selhtml    = $nohtml    ? "checked" : "";	
 		
-		sbr(1,$message);
-		sbr(1,$head);
-		sbr(1,$sign);
-		
-		$barlinks = "<span class='font'><a href='index.php'>{$config['board-name']}</a> - <a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a> - <a href='thread.php?pid=$id#$id'>".htmlspecialchars($thread['title'])."</a> - Edit post";
-
 		?>
-		<?=$barlinks?>
-		<form method="POST" ACTION="editpost.php?id=<?=$id?>" enctype="multipart/form-data">
+		
+		<?= $barlinks . $forum_error ?>
+		<form method="POST" ACTION="editpost.php?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr>
 				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
@@ -202,26 +190,23 @@
 			</tr>
 			
 			<tr>
-				<td class='tdbg1 center'><b>Header:</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg1 center b'>Header:</td>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
+				</td>
 				<td class='tdbg2' width=* rowspan=3>
 					<?=mood_layout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>
-				<td class='tdbg1 center'>
-					<b>Post:</b>
-				</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg1 center b'>Post:</td>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td class='tdbg1 center'>
-					<b>Signature:</b>
-				</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg1 center b'>Signature:</td>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($sign)?></textarea>
 				</td>
 			</tr>
@@ -236,9 +221,7 @@
 			</tr>
 			
 			<tr>
-				<td class='tdbg1 center'>
-					<b>Options:</b>
-				</td>
+				<td class='tdbg1 center b'>Options:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
@@ -248,17 +231,15 @@
 			</tr>
 		</table>
 		</form>
-		<?=$barlinks?>
+		<?= $barlinks ?>
 		<?php
 	}
-	// Oh come on, noobing posts was/is a fun sport - Kak
-	else if ($ismod && $action == 'noob') {
+	else if ($ismod && $_GET['action'] == 'noob') {
 		check_token($_GET['auth'], TOKEN_MGET);
-		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '$id'");
-		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "thread.php?pid=$id#$id",'the post',0);
+		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '{$_GET['id']}'");
+		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "thread.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
 	}
-  
-	else if ($action == 'delete'){
+	else if ($_GET['action'] == 'delete'){
 		if ($post['deleted']) {
 			$message = "Do you want to undelete this post?";
 			$btntext = "Yes";
@@ -266,63 +247,62 @@
 			$message = "Are you sure you want to <b>DELETE</b> this post?";
 			$btntext = "Delete post";
 		}
-		$form_link = "editpost.php?action=delete&id={$id}";
+		$form_link = "editpost.php?action=delete&id={$_GET['id']}";
 		$buttons       = array(
 			0 => [$btntext],
-			1 => ["Cancel", "thread.php?pid={$id}#{$id}"]
+			1 => ["Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
 		);
 		
 		if (confirmpage($message, $form_link, $buttons)) {
-			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$id}");
+			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
 			if ($post['deleted']) {
-				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid=$id#$id","return to the thread",0);
+				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
 	}
-	else if ($action == 'erase' && $sysadmin && $config['allow-post-deletion']){
+	else if ($_GET['action'] == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		
-		$pcount  = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$threadid}");
+		$pcount  = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$thread['id']}");
 		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
 		if ($pcount <= 1) {
 			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
 		}
-		$form_link = "editpost.php?action=erase&id={$id}";
+		$form_link = "editpost.php?action=erase&id={$_GET['id']}";
 		$buttons       = array(
 			0 => ["Delete post"],
-			1 => ["Cancel", "thread.php?pid={$id}#{$id}"]
+			1 => ["Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
 		);
 		
 		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
-			$sql->query("DELETE FROM posts WHERE id = $id");
-			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$id}");
+			$sql->query("DELETE FROM posts WHERE id = {$_GET['id']}");
+			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$_GET['id']}");
 			
 			if ($pcount <= 1) {
 				// We have deleted the last remaining post from a thread
-				$sql->query("DELETE FROM threads WHERE id = {$threadid}");
+				$sql->query("DELETE FROM threads WHERE id = {$thread['id']}");
 				// Update forum status
 				$t1 = $sql->fetchq("SELECT lastpostdate, lastposter	FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
 				$sql->queryp("UPDATE forums SET numposts=numposts-1,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", [filter_int($t1['lastpostdate']),filter_int($t1['lastposter'])]);
-			
 			} else {
-				$p = $sql->fetchq("SELECT id,user,date FROM posts WHERE thread = {$threadid} ORDER BY date DESC");
-				$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id=$threadid");
+				$p = $sql->fetchq("SELECT id,user,date FROM posts WHERE thread = {$thread['id']} ORDER BY date DESC");
+				$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id={$thread['id']}");
 				$sql->query("UPDATE forums SET numposts=numposts-1 WHERE id={$forum['id']}");
 			}
 			
 			$sql->commit();
-			remove_attachments($list, $id);
+			remove_attachments($list, $_GET['id']);
 			if ($pcount <= 1) {
 				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","forum.php?id={$thread['forum']}","return to the forum",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id=$threadid","return to the thread",0);
+				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id={$thread['id']}","return to the thread",0);
 			}
 		}
 	}
 	else {
-		errorpage("No valid action specified.","thread.php?id={$threadid}#{$threadid}","return to the post",0);
+		errorpage("No valid action specified.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the post",0);
 	}
 
 	pagefooter();

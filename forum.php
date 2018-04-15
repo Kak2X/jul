@@ -3,11 +3,10 @@
 	require_once 'lib/function.php';
 	
 	
-	$id 	= filter_int($_GET['id']);
-	$user 	= filter_int($_GET['user']);
-	
-	$fav	= filter_bool($_GET['fav']);
-	$act	= filter_string($_GET['act']);
+	$_GET['id']     = filter_int($_GET['id']);
+	$_GET['user']   = filter_int($_GET['user']);
+	$_GET['fav']    = filter_bool($_GET['fav']);
+	$_GET['act']    = filter_string($_GET['act']);
 	
 
 	if ($loguser['id']) {
@@ -16,60 +15,53 @@
 	
 	$specialscheme = $specialtitle = NULL;
 		
-	$forumlist  = "";
-	$fonline    = "";
+	$forumlist   = "";
+	$fonline     = "";
+	$forum_error = "";
 
 	// Add/remove favorites
-	if ($act == 'add' || $act == 'rem') {
+	if ($_GET['act'] == 'add' || $_GET['act'] == 'rem') {
 		if (!$loguser['id']) {
 			$meta['noindex'] = true; // prevent search engines from indexing
 			errorpage("You need to be logged in to edit your favorites!", "forum.php?id={$t['forum']}", 'return to the forum');
 		}
+		$_GET['thread'] = filter_int($_GET['thread']);
+		load_thread($_GET['thread']);
 		
-		$thread = filter_int($_GET['thread']);
-		$t = $sql->fetchq("
-			SELECT t.title, t.forum, f.minpower, v.thread fav
-			FROM threads t
-			INNER JOIN forums f ON t.forum = f.id
-			LEFT JOIN favorites v ON t.id = v.thread AND v.user = {$loguser['id']}
-			WHERE t.id = $thread
-		");
-		if ($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) {
-			errorpage("You can't favorite a thread you don't have access to!","index.php",'the board');
-		}
-
-		if ($act == 'add' && !$t['fav']) {
-			$sql->query("INSERT INTO favorites (user, thread) VALUES ({$loguser['id']},{$thread})");
-			$tx = "\"{$t['title']}\" has been added to your favorites.";
-		} else if ($act == 'rem' && $t['fav']) {
-			$sql->query("DELETE FROM favorites WHERE user = {$loguser['id']} AND thread = {$thread}");
-			$tx = "\"{$t['title']}\" has been removed from your favorites.";
+		$favorited = $sql->resultq("SELECT COUNT(*) FROM favorites WHERE thread = {$_GET['thread']} AND user = {$loguser['id']}");
+		if ($_GET['act'] == 'add' && !$favorited) {
+			$sql->query("INSERT INTO favorites (user, thread) VALUES ({$loguser['id']},{$_GET['thread']})");
+			$tx = "\"{$thread['title']}\" has been added to your favorites.";
+		} else if ($_GET['act'] == 'rem' && $favorited) {
+			$sql->query("DELETE FROM favorites WHERE user = {$loguser['id']} AND thread = {$_GET['thread']}");
+			$tx = "\"{$thread['title']}\" has been removed from your favorites.";
 		} else {
-			die(header("Location: forum.php?id={$t['forum']}"));
+			die(header("Location: forum.php?id={$thread['forum']}"));
 		}
 		
-		errorpage($tx, "forum.php?id={$t['forum']}", 'return to the forum');
+		errorpage($tx, "forum.php?id={$thread['forum']}", 'return to the forum');
 	}
 	
 	// Favorites view
-	if ($fav) {
+	if ($_GET['fav']) {
 		if (!$loguser['id']) {
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 			errorpage("You need to be logged in to view your favorites.", 'login.php', 'log in (then try again)');
 		}
 
 		$forum['title'] = 'Favorites';
-		
-		if ($user && $user != $loguser['id'] && $isadmin)
-			$forum['title'] .= ' of '.$sql->resultq("SELECT name FROM users WHERE id = {$user}");
+		// Viewing another user's favorites?
+		if ($_GET['user'] && $_GET['user'] != $loguser['id'] && $isadmin)
+			$forum['title'] .= ' of '.$sql->resultq("SELECT name FROM users WHERE id = {$_GET['user']}");
 		else
-			$user = $loguser['id'];
+			$_GET['user'] = $loguser['id'];
 		
-		$threadcount = $sql->resultq("SELECT COUNT(*) FROM favorites where user = {$user}");
+		$threadcount = $sql->resultq("SELECT COUNT(*) FROM favorites where user = {$_GET['user']}");
+		$pageurl = "fav=1";
 	}
 	// Posts by user
-	else if ($user) {
-		$userdata = $sql->fetchq("SELECT $userfields FROM users u WHERE id = {$user}");
+	else if ($_GET['user']) {
+		$userdata = $sql->fetchq("SELECT $userfields FROM users u WHERE id = {$_GET['user']}");
 		
 		if (!$userdata) {
 			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
@@ -77,30 +69,20 @@
 		}
 
 		$forum['title'] = "Threads by {$userdata['name']}";
-		$threadcount = $sql->resultq("SELECT COUNT(*) FROM threads where user = $user");
+		$threadcount = $sql->resultq("SELECT COUNT(*) FROM threads where user = {$_GET['user']}");
+		$pageurl = "user={$_GET['user']}";
 	}
-	else if ($id) { # Default case, show forum with id
-		$forum = $sql->fetchq("SELECT id, title, minpower, numthreads, specialscheme, specialtitle, pollstyle FROM forums WHERE id = $id");
-
-		if (!$forum) {
-			trigger_error("Attempted to access invalid forum $id", E_USER_NOTICE);
-			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-			notAuthorizedError();
-		}
-		elseif ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
-			trigger_error("Attempted to access level-{$forum['minpower']} restricted forum $id (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
-			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-			notAuthorizedError();
-		}
-		
-		if (!$ismod) {
-			$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$id} AND user = {$loguser['id']}");
+	else if ($_GET['id']) { # Default case, show forum with id
+		load_forum($_GET['id']);
+		$ismod = ismod($_GET['id']);
+		if ($forum_error) {
+			$forum_error = "<table class='table'>{$forum_error}</table>";
 		}
 		
 		$threadcount 	= $forum['numthreads'];
 		$specialscheme 	= $forum['specialscheme'];
 		$specialtitle 	= $forum['specialtitle'];
-		
+		$pageurl = "id={$_GET['id']}";
 	}
 	else {
 		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
@@ -109,78 +91,59 @@
 
 	
 	pageheader($forum['title'], $specialscheme, $specialtitle);
-	if ($id) {
+	if ($_GET['id']) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum)."</table>";
 	}
 	$hotcount = $sql->resultq('SELECT hotcount FROM misc');
 	if ($hotcount <= 0) $hotcount = 0xFFFF;
 	
 	
-	$ppp = (isset($_GET['ppp']) ? ((int) $_GET['ppp']) : (($loguser['id']) ? $loguser['postsperpage'] : $config['default-ppp']));
-	$ppp = max(min($ppp, 500), 1);
-
-	$tpp = (isset($_GET['tpp']) ? ((int) $_GET['tpp']) : (($loguser['id']) ? $loguser['threadsperpage'] : $config['default-tpp']));
-	$tpp = max(min($tpp, 500), 1);
-
-	$page = filter_int($_GET['page']);
-    $min = $page*$tpp;
+	$ppp = get_ppp();
+	$tpp = get_tpp();
+	
+	$_GET['page'] = filter_int($_GET['page']);
+    $min = $_GET['page'] * $tpp;
 	
 
-	$newthreadbar = $forumlist = $modopt = '';
-	if ($id) {
-		$forumlist = doforumlist($id);
+
+	// Breadcrumbs bar / new thread links
+	$links = array(
+		$forum['title'] => NULL
+	);
+	$barright = $forumlist = '';
+	if ($_GET['id']) {
+		$forumlist = doforumlist($_GET['id']);
 		
 		// Make sure we can create polls
-		$newthreadbar = "".
-			(($forum['pollstyle'] != -2) ? "<a href='newthread.php?poll=1&id=$id'>$newpollpic</a>" : "<img src='schemes/default/status/nopolls.png' align='absmiddle'>")
-			." - <a href='newthread.php?id=$id'>$newthreadpic</a>";
+		$barright = "".
+			(($forum['pollstyle'] != -2) ? "<a href='newthread.php?poll=1&id={$_GET['id']}'>{$newpollpic}</a>" : $nopollpic)
+			." - <a href='newthread.php?id={$_GET['id']}'>{$newthreadpic}</a>";
 		if ($ismod) {
-			$modopt = " - <a href='admin-forumbans.php?forum={$id}'>Edit forum bans</a>";
+			$barright .= " - <a href='admin-forumbans.php?forum={$_GET['id']}'>Edit forum bans</a>";
 		}
 	}
+	$infotable = dobreadcrumbs($links, $barright); 
 	
-	$infotable =
-		"<table style='width: 100%'>
-			<tr>
-				<td align=left class='font'>
-					<a href='index.php'>{$config['board-name']}</a> - ".htmlspecialchars($forum['title'])."
-				</td>
-				<td align=right class='fonts'>
-					{$newthreadbar}
-					{$modopt}
-				</td>
-			</tr>
-		</table>";
-		
 
 	// Forum page list at the top & bottom
 	$forumpagelinks = '';
 	if($threadcount > $tpp) {
-		
-		$query = ($id ? "id=$id" : ($user ? "user=$user" : "fav=1")); // Determine correct mode
-		if (isset($_GET['tpp'])) $query .= "&tpp=$tpp";
-
-		$forumpagelinks = 
-			"<table style='width: 100%'>
-				<tr>
-					<td align=left class='fonts'>
-						".pagelist("?$query", $threadcount, $tpp, true)."
-					</td>
-				</tr>
-			</table>";
+		if (isset($_GET['tpp'])) $pageurl .= "&tpp=$tpp";
+		$forumpagelinks = "<table style='width: 100%'><tr><td class='fonts'>".pagelist("?$pageurl", $threadcount, $tpp, true)."</td></tr></table>";
     }
 
-	$threadlist = "<table class='table'>";
+	
+	$threadlist = "{$forum_error}<table class='table'>";
 
-	if ($id) {
+	if ($_GET['id']) {
 		// Main forum view: Get the last announcement from
 		// both the annc forum and the current forum
 		
 		// Conditional labels
-		if ($id == $config['announcement-forum']) {
+		if ($_GET['id'] == $config['announcement-forum']) {
 			$ac = [$config['announcement-forum'], "0"]; // Don't show forum attachments in the annc forum
 		} else {
-			$ac = [$config['announcement-forum'], "$id AND t.announcement = 1"];
+			$ac = [$config['announcement-forum'], "{$_GET['id']} AND t.announcement = 1"];
 		}
 		$al = ['A','Forum a'];
 		
@@ -229,7 +192,7 @@
 	}
 	
 	// Now with FETCH_NAMED capabilities
-	if ($fav) {
+	if ($_GET['fav']) {
 		$threads = $sql->query("
 			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid,
 			        ".set_userfields('u1')." uid, 
@@ -243,13 +206,13 @@
 			LEFT JOIN favorites fav ON t.id         = fav.thread
 			$q_trjoin
 			
-			WHERE fav.user = {$user}
+			WHERE fav.user = {$_GET['user']}
 			ORDER BY t.sticky DESC, t.lastpostdate DESC
 					
 			LIMIT $min,$tpp			
 		");
 
-	} else if ($user) {
+	} else if ($_GET['user']) {
 		$vals = [
 			'u1name'		=> $userdata['name'],		
 			'u1sex'			=> $userdata['sex'],
@@ -269,7 +232,7 @@
 			LEFT JOIN forums f ON t.forum      = f.id
 			$q_trjoin
 			
-			WHERE t.user = {$user}
+			WHERE t.user = {$_GET['user']}
 			ORDER BY t.sticky DESC, t.lastpostdate DESC
 					
 			LIMIT $min,$tpp" ,$vals);
@@ -285,7 +248,7 @@
 			LEFT JOIN users      u2 ON t.lastposter =  u2.id
 			$q_trjoin
 			
-			WHERE t.forum = {$id}
+			WHERE t.forum = {$_GET['id']}
 			ORDER BY t.sticky DESC, t.lastpostdate DESC
 					
 			LIMIT $min,$tpp			
@@ -321,13 +284,13 @@
 		$sticklast = $thread['sticky'];
 
 		// Always check the powerlevel if we're not showing a forum id
-		if(!$id && $thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) {
+		if(!$_GET['id'] && $thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) {
 			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
 			continue;
 		}
 
 		// Disabled polls
-		if ($id && $forum['pollstyle'] == -2)
+		if ($_GET['id'] && $forum['pollstyle'] == -2)
 			$thread['poll'] = 0;
 
 		
@@ -340,13 +303,13 @@
 		$threadstatus	= "";
 
 		// Forum, logged in
-		if ($loguser['id'] && $id && $thread['lastpostdate'] > filter_int($postread[$id]) && !$thread['tread']) {
+		if ($loguser['id'] && $_GET['id'] && $thread['lastpostdate'] > filter_int($postread[$_GET['id']]) && !$thread['tread']) {
 			$threadstatus	.= "new";
 			$newpost		= true;
-			$newpostt		= ($thread['treadtime'] ? $thread['treadtime'] : filter_int($postread[$id]));
+			$newpostt		= ($thread['treadtime'] ? $thread['treadtime'] : filter_int($postread[$_GET['id']]));
 		}
 		// User's thread list / Favorites, logged in
-		elseif ($loguser['id'] && !$id && $thread['lastpostdate'] > filter_int($postread[$thread['forumid']]) && !$thread['tread']) {
+		elseif ($loguser['id'] && !$_GET['id'] && $thread['lastpostdate'] > filter_int($postread[$thread['forumid']]) && !$thread['tread']) {
 			$threadstatus	.= "new";
 			$newpost		= true;
 			$newpostt		= ($thread['treadtime'] ? $thread['treadtime'] : filter_int($postread[$thread['forumid']]));
@@ -379,7 +342,7 @@
 			Secondary thread status icon
 		*/
 		$sicon			= "";
-		if ($thread['announcement'] && (!$id || ($id != $config['announcement-forum']))) {
+		if ($thread['announcement'] && (!$_GET['id'] || ($_GET['id'] != $config['announcement-forum']))) {
 			$sicon	.= "ann";
 		}
 		if ($thread['sticky'])	{
@@ -392,7 +355,7 @@
 			$threadtitle	= "<i>{$statusicons[$sicon]}</i> {$threadtitle}";
 
 		// Show forum name if not in a forum
-		if (!$id)
+		if (!$_GET['id'])
 			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>{$forumnames[$thread['forumid']]}</a>";
 
 		// Extra pages
@@ -457,12 +420,4 @@
 	";
 	
 	pagefooter();
-/*
-function notAuthorizedError() {
-	global $loguser;
-	$rreason = ($loguser['id'] ? 'don\'t have access to it' : 'are not logged in');
-	$redir = ($loguser['id'] ? 'index.php' : 'login.php');
-	$rtext = ($loguser['id'] ? 'the index page' : 'log in (then try again)');
-	errorpage("Couldn't enter this restricted forum, as you {$rreason}.", $redir, $rtext);
-}
-*/
+	

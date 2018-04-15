@@ -9,46 +9,41 @@
 	$meta['noindex'] = true;	
 	const BLANK_KEY = "nk";
 
-	// Detect all three (invalid forum, banned user, restricted forum) in one query
-	$forum = $sql->fetchq("SELECT * FROM forums WHERE id = {$_GET['id']} AND {$loguser['powerlevel']} >= minpowerthread");
-	if (!$forum) { // Stop right there
-		if ($banned)
-			errorpage("Sorry, but you are not allowed to post, because you are banned from this board.", "forum.php?id={$_GET['id']}",'return to the forum', 0);
-		else 
-			errorpage("Sorry, but you are not allowed to post in this restricted forum.", 'index.php' ,'return to the board', 0);
-	}
-	
+	load_forum($_GET['id']);
 	check_forumban($_GET['id'], $loguser['id']);
 	
 	$windowtitle = "{$forum['title']} -- New Thread";
-	
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	$smilies = readsmilies();
 	
 	replytoolbar(1);
 
-
-	if ($_GET['id'] == $config['trash-forum']) {
-		errorpage("No. Stop that, you idiot.");
-	}
-
-	if ($forum['pollstyle'] == '-2' && $_GET['poll']) {
-		errorpage("A for effort, but F for still failing.");
-	}
 	
+	if (isset($forum['error']))
+		errorpage("You cannot post new threads in invalid forums.");
+	if ($banned || $loguser['powerlevel'] < $forum['minpowerthread'])
+		errorpage("You aren't allowed to post new threads in this forum.");
+	if ($_GET['id'] == $config['trash-forum'])
+		errorpage("No. Stop that, you idiot.");
+	if ($forum['pollstyle'] == '-2' && $_GET['poll'])
+		errorpage("A for effort, but F for still failing.");
+	
+	if ($forum_error) {
+		$forum_error = "<table class='table'>{$forum_error}</table>";
+	}
 
 	/*
 		Variable initialization
 	*/
 	if ($_GET['poll']) {
-		$_POST['chtext']    = filter_array($_POST['chtext']);   // Text for the choices
-		$_POST['chcolor']   = filter_array($_POST['chcolor']);  // Choice color
-		$_POST['remove']    = filter_array($_POST['remove']);   // Choices to remove from the list
-		$_POST['count']     = filter_int($_POST['count']);      // Number of choices to show
-		$_POST['mltvote']   = filter_int($_POST['mltvote']);    // Multivote flag (default: 0)
-		$_POST['question']  = filter_string($_POST['question'], true);
-		$_POST['briefing']  = filter_string($_POST['briefing'], true);
+		$_POST['chtext']     = filter_array($_POST['chtext']);   // Text for the choices
+		$_POST['chcolor']    = filter_array($_POST['chcolor']);  // Choice color
+		$_POST['remove']     = filter_array($_POST['remove']);   // Choices to remove from the list
+		$_POST['count']      = filter_int($_POST['count']);      // Number of choices to show
+		$_POST['doublevote'] = filter_int($_POST['doublevote']); // Multivote flag (default: 0)
+		$_POST['question']   = filter_string($_POST['question']);
+		$_POST['briefing']   = filter_string($_POST['briefing']);
 	}
 	$posticons		= file('posticons.dat');
 	$iconpreview    = "";
@@ -79,32 +74,34 @@
 		$_POST['username'] = filter_string($_POST['username']);
 		$_POST['password'] = filter_string($_POST['password']);
 		
+		$error = '';
+		// Trying to post as someone else?
 		if ($loguser['id'] && !$_POST['password']) {
-			$user	= $loguser;
+			$user   = $loguser;
 		} else {
-			$userid 	= checkuser($_POST['username'],$_POST['password']);
-			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '$userid'");
+			$userid = checkuser($_POST['username'], $_POST['password']);
+			if ($userid == -1) {
+				$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
+			} else {
+				$user 	= load_user($userid);
+			}
 		}
 		
 		// some consistency with newreply.php
-		$error = '';
-		if ($userid == -1) {
-			$error	= "You haven't entered your username and password correctly.";
-		} else {
-			check_forumban($_GET['id'], $userid);
-			
-			if (!$ismod) {
-				$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$_GET['id']} and user = {$userid}");
+		if (!$error) {
+			if ($userid != $loguser['id']) {
+				check_forumban($forum['id'], $userid);
+				$ismod = ismod($forum['id'], $user);
+				if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
+					$error	= "You aren't allowed to post in this forum.";
+			} else {
+				if (!$_POST['message'])   
+					$error = "You haven't entered a message.";
+				else if (!$_POST['subject'])    
+					$error = "You haven't entered a subject.";
+				else if ($user['lastposttime'] > (ctime()-30))
+					$error	= "You are trying to post too rapidly.";	
 			}
-			
-			if ($user['powerlevel'] < $forum['minpowerthread'])
-				$error = "You aren't allowed to post in this forum.";
-			else if (!$_POST['message'])   
-				$error = "You haven't entered a message.";
-			else if (!$_POST['subject'])    
-				$error = "You haven't entered a subject.";
-			else if ($user['lastposttime'] > (ctime()-30))
-				$error	= "You are trying to post too rapidly.";	
 		}
 		
 		/*// ---
@@ -123,9 +120,8 @@
 		}
 		
 		// All OK!
-		
 		if ($config['allow-attachments']) {
-			$attachids   = get_attachments_key("n{$_GET['id']}", $userid); // Get the base key to identify the correct files
+			$attachids    = get_attachments_key("n{$_GET['id']}", $userid); // Get the base key to identify the correct files
 			$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
 			$attach_key   = $attachids[1]; // String (base) key for file names
 			$attach_count = process_temp_attachments($attach_key, $userid); // Process the attachments and return the post-processed total
@@ -146,121 +142,23 @@
 		}
 
 		if (isset($_POST['submit'])) {
-			#echo "key => {$attach_key}; count = {$attach_count}";
-			#die;
 			check_token($_POST['auth']);
 			
-			// -- DO NOT DELETE
+			$sql->beginTransaction();
+			if ($_GET['poll']) {
+				$pollid = create_poll($_POST['question'], $_POST['briefing'], $_POST['chtext'], $_POST['chcolor'], $_POST['doublevote']);
+			} else {
+				$pollid = 0;
+			}
+			
 			if (!$ismod) {
 				$_POST['close'] = 0;
 				$_POST['stick'] = 0;
 				$_POST['tannc'] = 0;
 			}
-			// --
+			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc']);
+			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nolayout']);
 			
-			// Prepare tags / filters
-			$numposts 		= $user['posts'] + 1;
-			$numdays 		= (ctime() - $user['regdate']) / 86400;
-			$tags			= array();
-			$msg 			= doreplace($_POST['message'], $numposts, $numdays, $user['id'], $tags);
-			$tagval			= json_encode($tags);
-			
-			if ($_POST['nolayout']) {
-				$headid = 0;
-				$signid = 0;
-			} else {
-				$headid = getpostlayoutid($user['postheader']);
-				$signid = getpostlayoutid($user['signature']);
-			}
-			
-			$currenttime 	= ctime();
-			
-			$sql->beginTransaction();
-			
-			// Process the poll data right away
-			if ($_GET['poll']) {
-				$sql->queryp("INSERT INTO `poll` (`question`, `briefing`, `closed`, `doublevote`) VALUES (:question, :briefing, :closed, :doublevote)",
-					 [
-						'question'			=> xssfilters($_POST['question']),
-						'briefing'			=> xssfilters($_POST['briefing']),
-						'closed'			=> 0,
-						'doublevote'		=> $_POST['mltvote'],
-					 ]);
-				
-				$pollid = $sql->insert_id();
-				
-				$addchoice = $sql->prepare("INSERT INTO `poll_choices` (`poll`, `choice`, `color`) VALUES (?,?,?)");
-				
-				for($c = 1; isset($_POST['chtext'][$c]); ++$c) {
-					
-					if (!$_POST['chtext'][$c] || !isset($_POST['chcolor'][$c])) {
-						continue; // Just in case
-					}
-					$sql->execute($addchoice, array($pollid, $_POST['chtext'][$c], $_POST['chcolor'][$c]));
-				}
-					
-			} else {
-				$pollid = 0;
-			}
-			
-			
-			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '{$user['id']}'");
-			
-			// Insert thread
-			$vals = [
-				'forum'				=> $_GET['id'],
-				'user'				=> $user['id'],
-				
-				'closed'			=> $_POST['close'],
-				'sticky'			=> $_POST['stick'],
-				'announcement'		=> $_POST['tannc'],
-				
-				'poll'				=> $pollid,
-				
-				'title'				=> xssfilters($_POST['subject']),
-				'description'		=> xssfilters($_POST['description']),
-				'icon'				=> $posticon,
-				
-				'views'				=> 0,
-				'replies'			=> 0,
-				'firstpostdate'		=> $currenttime,
-				'lastpostdate'		=> $currenttime,
-				'lastposter'		=> $user['id'],
-			];
-			
-			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
-			
-			$tid = $sql->insert_id();
-			
-			// Insert post
-			$vals = [
-				'thread'			=> $tid,
-				'user'				=> $user['id'],
-				'date'				=> $currenttime,
-				'ip'				=> $_SERVER['REMOTE_ADDR'],
-				'num'				=> $numposts,
-				
-				'headid'			=> $headid,
-				'signid'			=> $signid,
-				'moodid'			=> $_POST['moodid'],
-				
-				'text'				=> xssfilters($msg),
-				'tagval'			=> $tagval,
-				'options'			=> $_POST['nosmilies'] . "|" . $_POST['nohtml'],
-			 ];
-			$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
-			
-			$pid = $sql->insert_id();
-			
-			$sql->query("
-				UPDATE `forums` SET
-					`numthreads`   = `numthreads` + 1,
-					`numposts`     = `numposts` + 1,
-					`lastpostdate` = '$currenttime',
-					`lastpostuser` = '$userid',
-					`lastpostid`   = '$pid'
-				WHERE id = {$_GET['id']}");
-			//--
 			if ($config['allow-attachments']) {
 				save_attachments($attach_key, $userid, $pid);
 			}		
@@ -312,16 +210,17 @@
 					"<input type='text' name=count size=4 maxlength=2 VALUE=\"".htmlspecialchars($_POST['count'] ? $_POST['count'] : $c)."\"> options";
 		
 		// Multivote selection
-		$mltsel[$_POST['mltvote']] = 'checked';
+		$seldouble[$_POST['doublevote']] = 'checked';
 	}
 	
 	$nosmilieschk 	= $_POST['nosmilies'] 	? " checked" : "";
 	$nohtmlchk	 	= $_POST['nohtml'] 		? " checked" : "";
 	$nolayoutchk 	= $_POST['nolayout'] 	? " checked" : "";
-
-	$selsticky = $_POST['stick'] ? "checked" : "";
-	$selclosed = $_POST['close'] ? "checked" : "";
-	$seltannc  = $_POST['tannc'] ? "checked" : "";
+	if ($ismod) {
+		$selsticky  = $_POST['stick'] ? "checked" : "";
+		$selclosed  = $_POST['close'] ? "checked" : "";
+		$seltannc   = $_POST['tannc'] ? "checked" : "";
+	}
 	
 	$links = array(
 		$forum['title']  => "forum.php?id={$_GET['id']}",
@@ -342,59 +241,23 @@
 	
 	// Mixing _GET and _POST is bad. Put all _GET arguments here rather than sending them as hidden form values.
 	$formlink = "newthread.php?id={$_GET['id']}";
-	if ($_GET['poll']) $formlink .= "&poll=1";
-	
-	
-	
+	if ($_GET['poll']) {
+		$formlink .= "&poll=1";
+		//--
+		$threadtype = "Poll";
+	} else {
+		$threadtype = "Thread";
+	}
 
 	if (isset($_POST['preview'])) {
 		
 		if ($posticon)
 			$iconpreview = "<img src=\"".htmlspecialchars($posticon)."\" height=15 align=absmiddle>";
 	
-		$pollpreview = "";
-		
-		if ($_GET['poll']) {
-			// Print out poll options
-			$pchoices = "";
-			for($c = 1; ($_POST['chtext'][$c]); ++$c) {
-				
-				if (!$_POST['chtext'][$c]) continue;
-				// Just in case
-				if (!isset($_POST['chtext'][$c])) $_POST['chtext'][$c] = "red";
-				
-				$pchoices .= 
-					"<tr><td class='tdbg1' width=20%>".htmlspecialchars($_POST['chtext'][$c])."</td>".
-					"<td class='tdbg2' width=60%><table cellpadding=0 cellspacing=0 width=50% bgcolor='{$_POST['chcolor'][$c]}'><td>&nbsp</table></td>".
-					"<td class='tdbg1 center' width=20%><font> ? votes, ??.?%</tr>";
-			}
-			
-			$mlt = ($_POST['mltvote'] ? 'enabled' : 'disabled');
-			
-			$pollpreview = 
-				"<table class='table'>
-				<tr>
-					<td colspan=3 class='tbl tdbgc center'>
-						<b>".htmlspecialchars($_POST['question'])."</b>
-					</td>
-				<tr>
-					<td class='tdbg2 fonts' colspan=3>
-						".xssfilters($_POST['briefing'])."
-					</td>
-				</tr>
-				$pchoices
-				<tr>
-					<td class='tdbg2 fonts' colspan=3>
-						Multi-voting is $mlt.
-					</td>
-				</tr>						
-				</table>
-				<br>";
-			
-		}
+		// Preview a poll always in normal style
+		$pollpreview = $_GET['poll'] ? preview_poll($_POST, $_GET['id']) : "";
 		
 		// Threadpost
-		
 		$data = array(
 			// Text
 			'message' => $_POST['message'],	
@@ -416,14 +279,12 @@
 			'attach_key'  => $attach_key,
 			#'attach_sel'  => "",
 		);
-		
-		$threadtype = ($_GET['poll'] ? 'poll' : 'thread');
 
 			?>
 	<table class='table'>
 		<tr>
 			<td class='tdbgh center'>
-				<?=($_GET['poll'] ? 'Poll' : 'Thread')." preview"?>
+				<?= $threadtype ?> preview
 			</td>
 		</tr>
 	</table>
@@ -445,32 +306,11 @@
 		} else {
 			$autofocus[0] = 'autofocus'; // for 'subject'
 		}
-		
-	$modoptions	= "";
-	
-	if ($ismod) {
-		
-		$selsticky = $_POST['stick'] ? "checked" : "";
-		$selclosed = $_POST['close'] ? "checked" : "";
-		$seltannc  = $_POST['tannc']   ? "checked" : "";
-		
-		
-		$modoptions = 
-		"<tr>
-			<td class='tdbg1 center'>
-				<b>Moderator Options:</b>
-			</td>
-			<td class='tdbg2' colspan=2>
-				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
-				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
-				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
-			</td>
-		</tr>";
-	}		
-	
+
 ?>
 
-	<?=$barlinks ?>
+	<?= $barlinks ?>
+	<?= $forum_error ?>
 	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 			<tr>
@@ -494,34 +334,54 @@
 				</td>
 			</tr>
 			
-		<?php
-			
-	/*
-		New thread
-	*/
-	if (!$_GET['poll']) {
-			
-		?>
 			<tr>
-				<td class='tdbg1 center b'>Thread icon:</td>
+				<td class='tdbg1 center b'><?= $threadtype ?> icon:</td>
 				<td class='tdbg2' colspan=2>
 					<?=dothreadiconlist($_POST['iconid'], $_POST['custposticon'])?>
 				</td>
 			</tr>
 			
 			<tr>
-				<td class='tdbg1 center b'>Thread title:</td>
+				<td class='tdbg1 center b'><?= $threadtype ?> title:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
 				</td>
 			</tr>
 			<tr>
-				<td class='tdbg1 center b'>Thread description:</td>
+				<td class='tdbg1 center b'><?= $threadtype ?> description:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['description'])?>">
 				</td>
 			</tr>
+<?php if ($_GET['poll']) { ?>
+			<tr>
+				<td class='tdbg1 center b'>Question:</td>
+				<td class='tdbg2' colspan=2>
+					<input type='text' name=question SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['question'])?>">
+				</td>
+			</tr>			
+			<tr>
+				<td class='tdbg1 center b'>Briefing:</td>
+				<td class='tdbg2' colspan=2>
+					<textarea wrap=virtual name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($_POST['briefing'])?></TEXTAREA>
+				</td>
+			</tr>
 			
+			<tr>
+				<td class='tdbg1 center b'>Multi-voting:</td>
+				<td class='tdbg2' colspan=2>
+					<input type=radio class='radio' name=doublevote value=0 <?=filter_string($seldouble[0])?>> Disabled &nbsp;&nbsp;
+					<input type=radio class='radio' name=doublevote value=1 <?=filter_string($seldouble[1])?>> Enabled
+				</td>
+			</tr>
+			
+			<tr>
+				<td class='tdbg1 center b'>Choices:</td>
+				<td class='tdbg2' colspan=2>
+					<?=$choices?>
+				</td>
+			</tr>
+<?php	} ?>
 			<tr>
 				<td class='tdbg1 center b'>Post:</td>
 				<td class='tdbg2' style='width: 800px' valign=top>
@@ -539,105 +399,36 @@
 					<input type='hidden' name=action VALUE=postthread>
 					<?= auth_tag() ?>
 					<?= $input_tid ?>
-					<input type='submit' class=submit name=submit VALUE="Submit thread">
-					<input type='submit' class=submit name=preview VALUE="Preview thread">
-				</td>
-			</tr>
-		<?php
-	}
-		
-	/*
-		New poll
-	*/
-	else {
-			
-		?>
-			<tr>
-				<td class='tdbg1 center b'>Poll icon:</td>
-				<td class='tdbg2' colspan=2>
-					<?=dothreadiconlist($_POST['iconid'], $_POST['custposticon'])?>
+					<input type='submit' class=submit name=submit VALUE="Submit <?= lcfirst($threadtype) ?>">
+					<input type='submit' class=submit name=preview VALUE="Preview <?= lcfirst($threadtype) ?>">
 				</td>
 			</tr>
 			
-			<tr>
-				<td class='tdbg1 center b'>Poll title:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center b'>Poll description:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['description'])?>">
-				</td>
-			</tr>
-			
-			<tr>
-				<td class='tdbg1 center b'>Question:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=question SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['question'])?>">
-				</td>
-			</tr>			
-			<tr>
-				<td class='tdbg1 center b'>Briefing:</td>
-				<td class='tdbg2' colspan=2>
-					<textarea wrap=virtual name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($_POST['briefing'])?></TEXTAREA>
-				</td>
-			</tr>
-			
-			<tr>
-				<td class='tdbg1 center b'>Multi-voting:</td>
-				<td class='tdbg2' colspan=2>
-					<input type=radio class='radio' name=mltvote value=0 <?=filter_string($mltsel[0])?>> Disabled &nbsp;&nbsp;
-					<input type=radio class='radio' name=mltvote value=1 <?=filter_string($mltsel[1])?>> Enabled
-				</td>
-			</tr>
-			
-			<tr>
-				<td class='tdbg1 center b'>Choices:</td>
-				<td class='tdbg2' colspan=2>
-					<?=$choices?>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<?=replytoolbar(2)?>
-					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"  <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
-				</td>
-				<td class='tdbg2' width=*>
-					<?=mood_layout(0, $userid, $_POST['moodid'])?>
-				</td>
-			</tr>
-
-			<tr>
-				<td class='tdbg1 center'>&nbsp;</td><td class='tdbg2' colspan=2>
-					<input type='hidden' name=action VALUE=postthread>
-					<?= auth_tag() ?>
-					<?= $input_tid ?>
-					<input type='submit' class=submit name=submit VALUE="Submit poll">
-					<input type='submit' class=submit name=preview VALUE="Preview poll">
-				</td>
-			</tr>
-		<?php
-	}
-		
-		
-		?>
 			<tr>
 				<td class='tdbg1 center b'>Options:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
-					<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk?> ><label for="nolayout" >Disable Layout</label> -
-					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk?>   ><label for="nohtml"   >Disable HTML</label> | 
+					<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
+					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
 					<?=mood_layout(1, $userid, $_POST['moodid'])?>
 				</td>
 			</tr>
-			<?=$modoptions?>
-		<?=quikattach($attach_key, $userid)?>
+<?php if ($ismod) { ?>
+			<tr>
+				<td class='tdbg1 center b'>Moderator Options:</td>
+				<td class='tdbg2' colspan=2>
+					<input type='checkbox' name='close' id='close' value="1" <?=$selclosed?>><label for='close'>Close</label> -
+					<input type='checkbox' name='stick' id='stick' value="1" <?=$selsticky?>><label for='stick'>Sticky</label> - 
+					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label>
+				</td>
+			</tr>
+<?php } ?>
+
+			<?= quikattach($attach_key, $userid) ?>
 		</table>
 		</form>
-		<?=$barlinks?>
-		<?=replytoolbar(4)?>
-		<?php
+		<?= $barlinks ?>
+		<?= replytoolbar(4) ?>
+<?php
+
 	pagefooter();

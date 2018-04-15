@@ -3,72 +3,67 @@
 
 	// This file felt completely neglected (for obvious reasons)
 	
-	$id		= filter_int($_GET['id']);
-	$page	= filter_int($_GET['page']);
-	$forum	= filter_int($_GET['f']);
-	//$action	= filter_string($_GET['action']);
-	
+	$_GET['id']		= filter_int($_GET['id']);
+	$_GET['page']	= filter_int($_GET['page']);
+	$_GET['f']	    = filter_int($_GET['f']);
 	
 	// Make sure the forum exists and we can access it
-	if ($forum) {
-		$fdata = $sql->fetchq("SELECT id, title,minpower FROM forums WHERE id = $forum");
-		if (!$fdata || $fdata['minpower'] && $fdata['minpower'] > $loguser['powerlevel']) {
-			errorpage("Couldn't enter the forum. You don't have access to this restricted forum.", 'index.php', 'the index page');
+	if ($_GET['f']) {
+		load_forum($_GET['f']);
+		$forumannc = true;
+		if ($forum_error) {
+			$forum_error = "<table class='table'>{$forum_error}</table>";
 		}
 	} else {
-		$fdata = NULL;
-		$forum = $config['announcement-forum'];
-		if (!$forum) {
+		$_GET['f'] = $config['announcement-forum'];
+		if (!$_GET['f']) {
 			errorpage("No announcement forum defined.");
 		}
+		$forumannc   = false;
+		$forum_error = "";
 	}
 	
-	if($sql->resultq("SELECT 1 FROM forummods WHERE forum = $forum AND user = {$loguser['id']}"))
-		$ismod = 1;
-	$canthread = ($isadmin || ($ismod && $forum));
+	$ismod     = ismod($_GET['f']);
+	$canthread = ($isadmin || ($ismod && $forumannc));
 
 		
 	$smilies = readsmilies();
 	
 	pageheader();
 	
-	
-	?>
-	<table width=100%>
-		<tr>
-			<td class='font'>
-				<a href=index.php><?=$config['board-name']?></a><?=($fdata ? " - <a href='forum.php?id={$fdata['id']}'>".htmlspecialchars($fdata['title'])."</a>" : "")?> - Announcements
-			</td>
-			<td class='fonts' align=right>
-				<?=($canthread ? "<a href='newthread.php?id=$forum&a=1'>Post new announcement</a>" : "")?>
-			</td>
-		</tr>
-	</table>
-	<?php
+	$links    = array();
+	$barright = "";
+	if ($forumannc) {
+		$links[$forum['title']] = "forum.php?id={$forum['id']}";
+		if ($canthread) $barright = "<a href='newthread.php?id={$_GET['f']}&a=1'>Post new announcement</a>";
+	} else {
+		if ($canthread) $barright = "<a href='newthread.php?id={$_GET['f']}'>Post new announcement</a>";
+	}
+	$links['Announcements'] = NULL;
+	print dobreadcrumbs($links, $barright); 
 	
 	loadtlayout();
 	
-	$ppp	= isset($_GET['ppp']) ? ((int) $_GET['ppp']) : ($loguser['id'] ? $loguser['postsperpage'] : $config['default-ppp']);
-	$ppp	= numrange($ppp, 1, 500); // yeah right
-	$min 	= $ppp * $page;
+	$ppp	= get_ppp();
+	$min 	= $ppp * $_GET['page'];
 	
 	// Set better last read date
 	if ($loguser['id']) {
-		$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '$forum' LIMIT 1");
-		$thread = $sql->fetchq("SELECT id, firstpostdate FROM threads WHERE forum = $forum".(isset($fdata) ? " AND announcement = 1" : "")." ORDER BY firstpostdate DESC LIMIT 1");
+		$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '{$_GET['f']}' LIMIT 1");
+		$thread = $sql->fetchq("SELECT id, firstpostdate FROM threads WHERE forum = {$_GET['f']}".($forumannc ? " AND announcement = 1" : "")." ORDER BY firstpostdate DESC LIMIT 1");
 		
 		if ($loguser['id'] && $thread['firstpostdate'] > $readdate) {
 			// Set only the first post as marked so announcement replies won't get marked as read 
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".($thread['firstpostdate']++)."', `read` = '1'");
 		}
 		
-		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, $forum, ".ctime().") 
+		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, {$_GET['f']}, ".ctime().") 
 		ON DUPLICATE KEY UPDATE readdate = VALUES(readdate)");
 	}
 	
 	// Syndrome detection
-	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
-	$searchon = "t.forum = $forum ".(isset($fdata) ? "AND t.announcement = 1" : "");
+	$act = load_syndromes();
+	$searchon = "t.forum = {$_GET['f']} ".($forumannc ? "AND t.announcement = 1" : "");
 	
 	$ufields = userfields();
 	$layouts = $sql->query("
@@ -102,13 +97,14 @@
 		ORDER BY p.date DESC
 		LIMIT $min,$ppp
 	");
-	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = $forum ".(isset($fdata) ? "AND announcement = 1" : ""));
+	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = {$_GET['f']} ".($forumannc ? "AND announcement = 1" : ""));
 	
 	
-	$pagelinks = pagelist("?f=$forum&ppp={$ppp}", $annctotal, $ppp);
+	$pagelinks = pagelist("?".($forumannc ? "f={$_GET['f']}&" : "")."ppp={$ppp}", $annctotal, $ppp);
 	$controls['quote'] = $controls['ip'] = $controls['edit'] = "";
 
 	$annclist = "
+	{$forum_error}
 	<table class='table'>
 		<tr>
 			<td class='tdbgh center' style='width: 200px'>User</td>
@@ -134,7 +130,7 @@
 		if ($config['allow-avatar-storage']) {
 			$annc['piclink'] = filter_string($avatars[$annc['user']][$annc['moodid']]);
 		}
-		$annclist .= threadpost($annc,$bg,$id);
+		$annclist .= threadpost($annc,$bg,$_GET['id']);
 	}
 	
 	echo "$pagelinks<table class='table'>$annclist</table>$pagelinks";

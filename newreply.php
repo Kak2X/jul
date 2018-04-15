@@ -6,103 +6,71 @@
 	// Stop this insanity.  Never index newreply.
 	$meta['noindex'] = true;
 	
+	if ($banned) {
+		errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id={$_GET['id']}",$thread['title'],0);
+	}
+	
 	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
 	
-	if (!$_GET['id'])  {
-		errorpage("No thread specified.", "index.php", 'return to the index page', 0);
-	}
+	load_thread($_GET['id']);
+	check_forumban($forum['id'], $loguser['id']);
+	$ismod = ismod($forum['id']);
 	
-	$thread = $sql->fetchq("SELECT forum, closed, sticky, announcement, title, lastposter FROM threads WHERE id = {$_GET['id']}");
-
-	if (!$thread) {
-		errorpage("Nice try. Next time, wait until someone makes the thread <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
-	}
-
-	$forumid = (int) $thread['forum'];
-	$forum   = $sql->fetchq("
-		SELECT title, minpower, minpowerreply, id, specialscheme, specialtitle 
-		FROM forums 
-		WHERE id = {$forumid}
-	");
-	
-	// Local mods
-	if (!$ismod) {
-		$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = {$forumid} and user = {$loguser['id']}");
-	}
-	
-	check_forumban($forumid, $loguser['id']);
-	
-	// Thread permissions for our sanity
-	$canviewforum 	= (!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']);
-	$canreply		= ($loguser['powerlevel'] >= $forum['minpowerreply']);
-	$closed			= (!$ismod && $thread['closed']);
-	
-	if ($closed) {
+	// load_thread takes care of view permissions, but the reply permissions still need to be checked
+	if (!$ismod && $thread['closed']) {
 		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.","thread.php?id={$_GET['id']}",$thread['title'],0);
-	} else if ($banned) {
-		errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id={$_GET['id']}",$thread['title'],0);
-	} else if (!$canreply || (!$forum && !$ismod)) { // Thread in broken forum = No
+	} else if ($loguser['powerlevel'] < $forum['minpowerreply']) {
 		errorpage("You are not allowed to post in this thread.","thread.php?id={$_GET['id']}",$thread['title'],0);
 	}
 	
-	if (!$canviewforum) {
-		$forum['title'] 	= '(restricted forum)';
-		$thread['title'] 	= '(restricted thread)';
+	if ($forum_error) {
+		$forum_error = "<table class='table'>{$forum_error}</table>";
 	}
 	
-	
-	$ppp	= get_ppp();
-	
-	
-	// register_globals!
 	$_POST['username'] 	= filter_string($_POST['username']);
 	$_POST['password'] 	= filter_string($_POST['password']);
 	
 	$_POST['message']	= filter_string($_POST['message']);
 	
-	$_POST['moodid']		= filter_int($_POST['moodid']);
+	$_POST['moodid']    = filter_int($_POST['moodid']);
 	$_POST['nosmilies']	= filter_int($_POST['nosmilies']);
 	$_POST['nolayout']	= filter_int($_POST['nolayout']);
-	$_POST['nohtml']		= filter_int($_POST['nohtml']);
+	$_POST['nohtml']    = filter_int($_POST['nohtml']);
 	
 	$_POST['stick'] = filter_int($_POST['stick']);
 	$_POST['close'] = filter_int($_POST['close']);
-	$_POST['tannc']	 = filter_int($_POST['tannc']);
+	$_POST['tannc'] = filter_int($_POST['tannc']);
 	
 	$userid = $loguser['id'];
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
-		
+		$error = '';
 		// Trying to post as someone else?
 		if ($loguser['id'] && !$_POST['password']) {
-			$user	= $loguser;
+			$user   = $loguser;
 		} else {
-			$userid 	= checkuser($_POST['username'], $_POST['password']);
-			$user 		= $sql->fetchq("SELECT * FROM users WHERE id = '{$userid}'");
+			$userid = checkuser($_POST['username'], $_POST['password']);
+			if ($userid == -1) {
+				$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
+			} else {
+				$user 	= load_user($userid);
+			}
 		}
 		
-
-		$error = '';
-		if ($userid == -1) {
-			$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
-		} else {
-			check_forumban($forumid, $userid);
-			
-			//$user	   = $sql->fetchq("SELECT * FROM users WHERE id='$userid'");
-			
-			if (!$ismod) {
-				$ismod = $sql->resultq("SELECT 1 FROM forummods WHERE forum = $forumid and user = {$userid}");
+		if (!$error) {
+			if ($userid != $loguser['id']) {
+				check_forumban($forum['id'], $userid);
+				$ismod = ismod($forum['id'], $user);
+				if ($thread['closed'] && !$ismod)
+					$error	= 'The thread is closed and no more replies can be posted.';
+				else if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
+					$error	= 'Replying in this forum is restricted, and you are not allowed to post in this forum.';
+			} else {
+				if (!$_POST['message'])
+					$error	= "You didn't enter anything in the post.";
+				else if ($user['lastposttime'] > (ctime()-4))
+					$error	= "You are posting too fast.";
 			}
-			
-			if ($thread['closed'] && !$ismod)
-				$error	= 'The thread is closed and no more replies can be posted.';
-			if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
-				$error	= 'Replying in this forum is restricted, and you are not allowed to post in this forum.';
-			if (!$_POST['message'])
-				$error	= "You didn't enter anything in the post.";
-			if ($user['lastposttime'] > (ctime()-4))
-				$error	= "You are posting too fast.";
-			// Attachments check here
 		}
 		
 		if ($error) {
@@ -117,59 +85,10 @@
 		// All OK
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
-
-			$numposts		= $user['posts'] + 1;
-			$numdays		= (ctime() - $user['regdate']) / 86400;
-			$tags			= array();
-			$_POST['message']		= doreplace($_POST['message'],$numposts,$numdays,$user['id'], $tags);
-			$tagval			= json_encode($tags);
-			$currenttime	= ctime();
-			
 			$sql->beginTransaction();
-
-			if ($_POST['nolayout']) {
-				$headid = 0;
-				$signid = 0;
-			} else {
-				$headid = getpostlayoutid($user['postheader']);
-				$signid = getpostlayoutid($user['signature']);
-			}
 			
-			$sql->queryp("INSERT INTO `posts` (`thread`, `user`, `date`, `ip`, `num`, `headid`, `signid`, `moodid`, `text`, `tagval`, `options`) ".
-						 "VALUES              (:thread,  :user,  :date,  :ip,  :num,  :headid,  :signid,  :moodid,  :text,  :tagval,  :options)",
-					 [
-						'thread'			=> $_GET['id'],
-						'user'				=> $user['id'],
-						'date'				=> $currenttime,
-						'ip'				=> $_SERVER['REMOTE_ADDR'],
-						'num'				=> $numposts,
-						
-						'headid'			=> $headid,
-						'signid'			=> $signid,
-						'moodid'			=> $_POST['moodid'],
-						
-						'text'				=> $_POST['message'],
-						'tagval'			=> $tagval,
-						'options'			=> $_POST['nosmilies'] . "|" . $_POST['nohtml'],
-						
-					 ]);
-					 
-			$pid = $sql->insert_id();
-			
-
-			// NO DELETE!
 			$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
-			
-			// Update statistics
-			$sql->query("UPDATE `threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '$userid' WHERE `id`='{$_GET['id']}'");
-			$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '$currenttime', `lastpostuser` ='$userid', `lastpostid` = '$pid' WHERE `id`='$forumid'");
-
-			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$_GET['id']}'");
-			$sql->query("REPLACE INTO threadsread SET `uid` = '$userid', `tid` = '{$_GET['id']}', `time` = ". ctime() .", `read` = '1'");
-
-			$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '$currenttime' WHERE `id` = '$userid'");
-			
-			//--
+			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
 				save_attachments($_GET['id'], $userid, $pid);
 			}
@@ -177,13 +96,12 @@
 			
 			xk_ircout("reply", $user['name'], array(
 				'forum'		=> $forum['title'],
-				'fid'		=> $forumid,
+				'fid'		=> $forum['id'],
 				'thread'	=> str_replace("&lt;", "<", $thread['title']),
 				'pid'		=> $pid,
 				'pow'		=> $forum['minpower'],
 			));
-
-			return header("Location: thread.php?pid=$pid#$pid");
+			return header("Location: thread.php?pid={$pid}#{$pid}");
 
 		}
 		
@@ -192,19 +110,12 @@
 		Main page
 	*/
 	
-		
-	$smilies = readsmilies();
+	$ppp	  = get_ppp();	
+	$smilies  = readsmilies();
+	$postlist = thread_history($_GET['id'], $ppp + 1);
 	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
-	
-	/*
-		Previous posts in the thread
-	*/
-	$postlist = "";
-	if ($canviewforum) {
-		$postlist = thread_history($_GET['id'], $ppp + 1);
-	}
 	
 	
 	
@@ -237,7 +148,7 @@
 	}
 	
 	$links = array(
-		$forum['title']  => "forum.php?id={$forumid}",
+		$forum['title']  => "forum.php?id={$forum['id']}",
 		$thread['title'] => "thread.php?id={$_GET['id']}",
 		"New reply"      => NULL,
 	);
@@ -267,18 +178,17 @@
 		);
 		print preview_post($user, $data);
 	} else {
+		// Use existing thread options
 		$_POST['stick'] = $thread['sticky'];
 		$_POST['close'] = $thread['closed'];
 		$_POST['tannc'] = $thread['announcement'];
 	}
 	
 	$modoptions	= "";
-	
 	if ($ismod) {
-		
 		$selsticky = $_POST['stick'] ? "checked" : "";
 		$selclosed = $_POST['close'] ? "checked" : "";
-		$seltannc  = $_POST['tannc']   ? "checked" : "";
+		$seltannc  = $_POST['tannc'] ? "checked" : "";
 		
 		$modoptions = 
 		"<tr>
@@ -299,6 +209,7 @@
 	
 	?>
 	<?=$barlinks?>
+	<?=$forum_error?>
 	<form method="POST" action="newreply.php?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 		<tr>
@@ -307,9 +218,7 @@
 		</tr>
 		
 		<tr>
-			<td class='tdbg1 center b'>
-				<?=$passhint?>
-			</td>
+			<td class='tdbg1 center b'><?=$passhint?></td>
 			<td class='tdbg2' colspan=2>
 				<?=$altloginjs?>
 					<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->

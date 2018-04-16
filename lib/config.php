@@ -7,7 +7,7 @@
 	
 	$sqldebuggers = array('127.0.0.1');
 	
-	const BOARD_VERSION = 'v1.92 (23/3/2018)';
+	const BOARD_VERSION = 'v1.92 (16/4/2018)';
 	
 	$config = array(
 	

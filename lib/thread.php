@@ -457,10 +457,8 @@
 		return $pollid;
 	}
 	
-	// NOTE: For now this still allows a local mod to move threads/posts in forums they can access (but not have mod status)
-	// Maybe this will change in the future, maybe not
 	function move_thread($id, $dest_forum, $thread = NULL) {
-		global $sql, $ismod, $isfullmod;
+		global $sql, $config, $loguser, $ismod, $isfullmod;
 		if (!$ismod) return false;
 		
 		if ($thread === NULL) {
@@ -474,11 +472,16 @@
 			if (!$valid) {
 				return false;
 			}
-			//if (!$isfullmod && !$sql->resultq("SELECT COUNT(*) FROM forummods WHERE forum = {$dest_forum} and user = {$loguser['id']}")) {
-			//	return false;
-			//}
+			// Are we mods in this forum?
+			if (!$isfullmod) {
+				$allowed = $sql->getresults("SELECT forum FROM forummods WHERE user = {$loguser['id']}");
+				$allowed[] = $config['trash-forum'];
+				if (!in_array($dest_forum, $allowed)) {
+					return false;
+				}
+			}
 			
-			$sql->query("UPDATE threads SET forum = {$dest_forum} WHERE thread = {$id}");
+			$sql->query("UPDATE threads SET forum = {$dest_forum} WHERE id = {$id}");
 			
 			// Update the forum counters appropriately
 			//$numposts = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = $id");
@@ -492,7 +495,7 @@
 	}
 	
 	function move_posts($posts, $thread, $dest_thread) {
-		global $sql, $ismod, $isfullmod;
+		global $sql, $config, $loguser, $ismod, $isfullmod;
 		if (!$ismod) return false;
 		// Base for thread merge functionality added
 		// Of course, the tricky part is providing an interface for it
@@ -519,7 +522,15 @@
 				|| !$data[$dest_thread]['valid_forum'] // The destination forum doesn't exist
 			) {
 				return false;
-			}			
+			}	
+
+			// Require mod status in dest thread
+			$allowed = $sql->getresults("SELECT forum FROM forummods WHERE user = {$loguser['id']}");
+			$allowed[] = $config['trash-forum'];
+			if (!in_array($dest_forum, $allowed)) {
+				return false;
+			}
+			
 			// All OK; move the posts
 			$sql->query("UPDATE posts SET thread = {$dest_thread} WHERE id IN (".implode(',', $posts).")");
 			

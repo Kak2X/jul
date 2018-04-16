@@ -85,38 +85,6 @@
 	
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
-	} else {
-		$die = 0;
-	}
-	
-
-	if ($die || filter_int($_GET['sec'])) {
-		if ($die) {
-			$sql->query("INSERT INTO `minilog` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `time` = '". ctime() ."', `banflags` = '$banflags'");
-
-			if ($_COOKIE['loguserid'] > 0) {
-				$newid	= 0;
-			} elseif (!$_COOKIE['loguserid'])
-				$newid	= 0 - ctime();
-
-			if (isset($newid)) {
-				setcookie('loguserid',$newid,2147483647);
-			}
-
-		}
-		
-		if ($miscdata['private'] == 2) {
-			do404();
-		}
-		
-		header("HTTP/1.1 403 Forbidden");
-
-		die("<title>Error</title>
-			<body style=\"background: #000; color: #fff;\">
-				<font style=\"font-family: Verdana, sans-serif;\">
-				<center>
-				Suspicious request detected (e.g. bot or malicious tool).
-			");
 	}
 	
 	function do404() {

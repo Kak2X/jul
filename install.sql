@@ -298,7 +298,7 @@ DROP TABLE IF EXISTS `delusers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `delusers` (
-  `id` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `id` smallint(5) unsigned NOT NULL,
   `posts` mediumint(9) NOT NULL DEFAULT '0',
   `regdate` int(11) NOT NULL DEFAULT '0',
   `name` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -867,7 +867,7 @@ CREATE TABLE `log` (
   `useragent` text COLLATE utf8mb4_unicode_ci,
   `ref` text COLLATE utf8mb4_unicode_ci,
   `headers` text COLLATE utf8mb4_unicode_ci,
-  `banflags` smallint(5) DEFAULT NULL,
+  `banflags` mediumint(9) DEFAULT NULL,
   `defntime` char(19) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -891,7 +891,7 @@ DROP TABLE IF EXISTS `minilog`;
 CREATE TABLE `minilog` (
   `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `time` int(11) unsigned NOT NULL,
-  `banflags` smallint(5) unsigned NOT NULL,
+  `banflags` mediumint(8) unsigned NOT NULL,
   KEY `time` (`time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2034,4 +2034,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-03-21 12:41:17
+-- Dump completed on 2018-04-16 23:15:57

@@ -1192,8 +1192,8 @@ function check_token(&$var, $div = TOKEN_MAIN, $extra = "") {
 	if (!$res) errorpage("Invalid token.");
 }
 
-function auth_tag($div = TOKEN_MAIN) {
-	return '<input type="hidden" name="auth" value="'.generate_token($div).'">';
+function auth_tag($div = TOKEN_MAIN, $field = 'auth') {
+	return '<input type="hidden" name="'.$field.'" value="'.generate_token($div).'">';
 }
 
 function getpwhash($pass, $id) {
@@ -1772,12 +1772,16 @@ function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN)
 	
 	// Get the indicator
 	static $i = 0; // just in case
+	static $confirmtxt = "";
 	$key = "nk_page_confirm".($i++);
-	$status = filter_bool($_POST[$key]);
+	$status  = filter_bool($_POST[$key]);
+	$authtag = auth_tag($token, 'auth'.$i); // Auth tag needs to be printed to allow nested confirms
 	
 	if ($status) { // All ok; do not print anything (unless the token is bad, that is)
-		check_token($_POST['auth'], $token);
-		return "<input type='hidden' name='{$key}' value='1'>";
+		check_token($_POST['auth'.$i], $token);
+		$confirm = "<input type='hidden' name='{$key}' value='1'>{$authtag}";
+		$confirmtxt .= $confirm;
+		return $confirm;
 	}
 	
 	if ($buttons !== NULL) {
@@ -1807,7 +1811,7 @@ function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN)
 		<?= $message ?><br/>
 		<br/>
 		<?= $commands ?><br/>
-		<?= auth_tag($token) ?>
+		<?= $authtag . $confirmtxt ?>
 	</div>
 	</center>
 	</form>

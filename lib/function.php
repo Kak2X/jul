@@ -283,6 +283,11 @@
 	//$getdoom = true;
 	//require "ext/mmdoom.php";
 	
+	// Support for stupid shit
+	if (file_exists("lib/hacks.php")) {
+		require "lib/hacks.php";
+	}
+	
 	if ($miscdata['disable']) {
 		if (!$sysadmin && $_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
 			if ($miscdata['private'] == 2) {

@@ -11,6 +11,7 @@ lib/firewall.php
 # Not necessary
 shitbugs.php
 library2.php
+lib/hacks.php
 
 # No testboard stuff
 # lib/config.php # nobody ended up updating config.sample.php

@@ -17,8 +17,8 @@ if ($config['pmthread-folder-limit'] < 0) {
 }
 
 $windowtitle = "Private Message Folders";
-$_GET['id']   = filter_int($_GET['id']);   // User
-$_GET['edit'] = filter_int($_GET['edit']); // Folder edit
+$_GET['id']        = filter_int($_GET['id']);          // User
+$_GET['edit']      = filter_int($_GET['edit']);        // Folder edit
 $_POST['delcheck'] = filter_array($_POST['delcheck']); // Folder delete
 
 // Viewing someone else?

@@ -15,38 +15,27 @@
 	if ((!$isadmin && !$config['allow-pmthread-edit'] && $_GET['action'] != 'movethread') || $loguser['editing_locked'] == 1) {
 		errorpage("You are not allowed to edit your threads.", "showprivate.php?id={$_GET['id']}", 'return to the conversation');
 	}
-	if (!$_GET['id']) {
-		errorpage("No thread ID specified.",'index.php', 'return to the board');
-	}
-
-	$thread   = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
-	$access   = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-	$confirm  = "";
-	if (!$isadmin && (!$access || !$thread)) {
+	
+	load_pm_thread($_GET['id']);
+	
+	// If thread deletion is enabled and we're sysadmins, bring up confirmation box to trigger post deletion.
+	// We simply redirect to the deletethread action.
+	if (isset($thread['error'])) {
+		if (!$config['allow-thread-deletion'] || !$sysadmin) {
+			errorpage("You can not edit broken PM threads.", "showprivate.php?id={$_GET['id']}", 'the thread');
+		}
+		$message   = "It's impossible to edit a broken PM thread.<br>You have to delete the invalid posts, or merge them to another thread.";
+		$form_link = "?id={$_GET['id']}";
+		$buttons   = array(
+			0 => ["Delete all posts"],
+			1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
+		);
+		if (confirmpage($message, $form_link, $buttons)) {
+			$_POST['deletethread'] = true;
+		}
+	} else if (!$isadmin && $thread['user'] != $loguser['id']) {
 		errorpage("You are not allowed to do this for this conversation.", "private.php", 'your private message box');
 	}
-	if (!$thread) {
-		$badposts = $sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$_GET['id']}");
-		// Show the confirmation box to trigger the trash thread action, but only if thread deletion is enabled
-		if ($badposts) {
-			if (!$config['allow-thread-deletion'] || !$sysadmin) {
-				errorpage("A thread with ID #{$_GET['id']} doesn't exist, but there are {$badposts} post(s) associated with it.", "showprivate.php?id={$_GET['id']}", 'the thread');
-			}
-			$message = "It's impossible to edit a broken PM thread. You have to delete the invalid posts, or merge them to another thread.";
-			$form_link     = "?id={$_GET['id']}";
-			$buttons       = array(
-				0 => ["Delete all posts"],
-				1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
-			);
-			$confirm = confirmpage($message, $form_link, $buttons);
-			if ($confirm) {
-				$_POST['deletethread'] = true;
-			}
-		} else {
-			errorpage("A thread with ID #{$_GET['id']} doesn't exist, and no posts are associated with it.", "private.php", 'your private message box');
-		}
-	}
-	
 	
 	if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
 		$message = "
@@ -152,10 +141,9 @@
 			$_POST['subject']       = filter_string($_POST['subject']);
 			$_POST['custposticon']  = filter_string($_POST['custposticon']);
 			$_POST['iconid']        = filter_int($_POST['iconid']);
-			$_POST['closed'] = (true) ? filter_int($_POST['closed']) : $thread['closed'];
+			$_POST['closed']        = filter_int($_POST['closed']);
 			$_POST['users']         = filter_string($_POST['users']);
 			$userlist  = array_filter(explode(';', $_POST['users']), 'trim');
-			$destcount = count($userlist);
 			
 			if (!$_POST['subject']) {
 				errorpage("Couldn't edit the thread. You haven't entered a subject.");
@@ -170,27 +158,10 @@
 			}
 			
 			//-- User validation --
-			if (!$destcount) {
-				errorpage("You haven't entered an existing username to send this conversation to.");
+			$destid = valid_pm_acl($userlist, $isadmin, $error);
+			if ($error) {
+				errorpage("The partecipants list cannot be processed.<br>{$error}");
 			}
-			if ($destcount > $config['pmthread-dest-limit']) {
-				errorpage("You have entered too many usernames.");
-			}
-			$badusers = "";
-			foreach ($userlist as $x) {
-				$x = trim($x);
-				if (!$isadmin && $loguser['name'] == $x) { // having "the following users don't exist: yourself" is kind of weird
-					errorpage("You are automatically added as a partecipant. You can't add yourself manually.");
-				} else if ($valid = valid_user($x)) {
-					$destid[$valid] = $valid; // no duplicates please
-				} else {
-					$badusers .= "<li>{$x}</li>";
-				}
-			}
-			if ($badusers) {
-				errorpage("The following users you've entered don't exist:<ul>{$badusers}</ul>");
-			}
-			//--
 			
 			$sql->beginTransaction();
 			$data = [
@@ -200,15 +171,7 @@
 				'closed'       => $_POST['closed'],
 			];
 			$sql->queryp("UPDATE pm_threads SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
-			//-- Insert ACL --
-			// Remove users missing from the list (except yourself)
-			$noshow = $isadmin ? 0 : $loguser['id']; // display everybody if admin
-			$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']} AND user NOT in (".implode(',', $destid).", {$noshow})");
-			$acl = $sql->prepare("INSERT IGNORE INTO pm_access (thread, user, folder) VALUES (?,?,?)"); // Do not replace existing values
-			foreach ($destid as $in) {
-				$sql->execute($acl, [$_GET['id'], $in, PMFOLDER_MAIN]);
-			}
-			//--
+			set_pm_acl($destid, $_GET['id'], $isadmin, PMFOLDER_MAIN);
 			$sql->commit();
 			errorpage("Thank you, {$loguser['name']}, for editing the thread.","showprivate.php?id={$_GET['id']}",'return to the thread');
 		}

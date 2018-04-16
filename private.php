@@ -125,14 +125,7 @@
 		if (isset($_GET['ppp'])) $args .= "&ppp={$ppp}";
 		if (isset($_GET['tpp'])) $args .= "&tpp={$tpp}";
 		
-		$pagelinks = 
-			"<table style='width: 100%'>
-				<tr>
-					<td class='fonts'>
-						".pagelist("?{$idparam}{$args}", $pmcount, $tpp, true)."
-					</td>
-				</tr>
-			</table>";
+		$pagelinks = "<table class='w'><tr><td class='fonts'>".pagelist("?{$idparam}{$args}", $pmcount, $tpp, true)."</td></tr></table>";
     }
 	
 	

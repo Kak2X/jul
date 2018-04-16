@@ -36,135 +36,103 @@
 	
 	// Linking to a post ID
 	if ($_GET['pid']) {
-		$_GET['id']		= $sql->resultq("SELECT `thread` FROM `pm_posts` WHERE `id` = '{$_GET['pid']}'");
-		if (!$_GET['id']) {
-			errorpage("Couldn't find a post with ID #{$_GET['pid']}.", "index.php", 'the index page');
-		}
+		$_GET['id'] = get_pm_thread_from_post($_GET['pid']);
 		$numposts 	= $sql->resultq("SELECT COUNT(*) FROM `pm_posts` WHERE `thread` = '{$_GET['id']}' AND `id` < '{$_GET['pid']}'");
-		$page 		= floor($numposts / $ppp);
+		$_GET['page'] = floor($numposts / $ppp);
 	} else {
-		$page		= filter_int($_GET['page']);
+		$_GET['page'] = filter_int($_GET['page']);
 	}
 	
-	// Are we allowed in?
 	
-
-	//const INVALID_THREAD = -1;
-	
-	$forum_error = 0;
-
-	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
-	$tlinks = '';
-
-	if (!$thread) {
-		if (!$isadmin) {
-			trigger_error("Accessed nonexistant PM thread number #{$_GET['id']}", E_USER_NOTICE);
-			errorpage("Couldn't enter the conversation, since you don't have access to it.", 'index.php', 'the index page');
-		}
-
-		if ($sql->resultq("SELECT COUNT(*) FROM `pm_posts` WHERE `thread` = '{$_GET['id']}'") <= 0) {
-			errorpage("Thread ID #{$_GET['id']} doesn't exist, and no posts are associated with the invalid thread ID.","index.php",'the index page');
-		}
-
-		// Admin can see and possibly remove bad posts
-		$forum_error     = INVALID_THREAD;
-		$thread['closed'] = true;
-		$thread['title']  = "Bad thread with ID #{$_GET['id']}";
-		$windowtitle      = "";
-	} else {
-		
-		$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-		if (!$access && !$isadmin) {
-			trigger_error("Attempted to access PM thread {$_GET['id']} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
-			errorpage("Couldn't enter the conversation, since you don't have access to it.", 'index.php', 'the index page');
-		}
-		$tlinks = array();
-		
-		// An admin sneaking in shouldn't ever update the last read stats
-		if ($access) {
-			if (!valid_pm_folder($access['folder'], $loguser['id'])) {
-				trigger_error("A PM thread was located in an invalid PM folder (user's name: {$loguser['name']} [#{$loguser['id']}]; folder #{$access['folder']}). The thread has been moved to the default folder.", E_USER_NOTICE);
-				$access['folder'] = PMFOLDER_MAIN;
-				$sql->query("UPDATE pm_access SET folder = ".PMFOLDER_MAIN." WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-			}
-			
-			// Unread posts count
-			$readdate = (int) $sql->resultq("SELECT `readdate` FROM `pm_foldersread` WHERE `user` = '{$loguser['id']}' AND folder = {$access['folder']}");
-			if ($thread['lastpostdate'] > $readdate) {
-				$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
-			}	
-			// See if it's possible to merge in the folderread
-			$unreadthreads = $sql->resultq("
-				SELECT COUNT(*) 
-				FROM pm_access a 
-				LEFT JOIN pm_threads t ON a.thread = t.id 
-				LEFT JOIN pm_threadsread r ON a.thread = r.tid AND r.uid = {$loguser['id']}
-				WHERE a.user = {$loguser['id']} AND a.folder = {$access['folder']}
-				  AND (!r.read OR r.read IS NULL) 
-				  AND t.lastpostdate > {$readdate} 
-			");
-			if (!$unreadthreads) { // All threads in the folder have been read; we can merge
-				$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".ctime().")");
-			}
+	load_pm_thread($_GET['id']);
+	if ($access) {
+		// Automatically move threads out of invalid folders upon access
+		if (!valid_pm_folder($access['folder'], $loguser['id'])) {
+			trigger_error("A PM thread was located in an invalid PM folder (user's name: {$loguser['name']} [#{$loguser['id']}]; folder #{$access['folder']}). The thread has been moved to the default folder.", E_USER_NOTICE);
+			$access['folder'] = PMFOLDER_MAIN;
+			$sql->query("UPDATE pm_access SET folder = ".PMFOLDER_MAIN." WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
 		}
 		
-		/*
-			Previous/next thread in folder navigation
-		*/
-		switch ($_GET['dir']) {
-			case PMFOLDER_ALL:
-				$ffilter = "";
-				break;
-			case PMFOLDER_BY:
-				$ffilter = " AND t.user = {$_GET['user']}";
-				break;
-			case PMFOLDER_TO:
-				$ffilter = " AND t.user != {$_GET['user']}";
-				break;
-			default:
-				$ffilter = " AND a.folder = {$_GET['dir']}";
-				break;
-		}
-		$tnext = $sql->resultq("
-			SELECT t.id 
-			FROM pm_access a
-			INNER JOIN pm_threads t ON a.thread = t.id
-			WHERE a.user = {$_GET['user']}{$ffilter} AND t.lastpostdate > {$thread['lastpostdate']} 
-			ORDER BY t.lastpostdate ASC 
-			LIMIT 1
+		// Unread posts count
+		$readdate = (int) $sql->resultq("SELECT `readdate` FROM `pm_foldersread` WHERE `user` = '{$loguser['id']}' AND folder = {$access['folder']}");
+		if ($thread['lastpostdate'] > $readdate) {
+			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
+		}	
+		// See if it's possible to merge in the folderread
+		$unreadthreads = $sql->resultq("
+			SELECT COUNT(*) 
+			FROM pm_access a 
+			LEFT JOIN pm_threads t ON a.thread = t.id 
+			LEFT JOIN pm_threadsread r ON a.thread = r.tid AND r.uid = {$loguser['id']}
+			WHERE a.user = {$loguser['id']} AND a.folder = {$access['folder']}
+			  AND (!r.read OR r.read IS NULL) 
+			  AND t.lastpostdate > {$readdate} 
 		");
-		if ($tnext) $tlinks[] = "<a href='?id={$tnext}{$navparam}' class='nobr'>Next newer thread</a>";
-		$tprev = $sql->resultq("
-			SELECT t.id 
-			FROM pm_access a
-			INNER JOIN pm_threads t ON a.thread = t.id
-			WHERE a.user = {$_GET['user']}{$ffilter} AND t.lastpostdate < {$thread['lastpostdate']} 
-			ORDER BY t.lastpostdate DESC
-			LIMIT 1
-		");
-		if ($tprev) $tlinks[] = "<a href='?id={$tprev}{$navparam}' class='nobr'>Next older thread</a>";
-		$tlinks = implode(' | ', $tlinks);
-		
-		$windowtitle = "Private messages: {$thread['title']}";
-		
+		if (!$unreadthreads) { // All threads in the folder have been read; we can merge
+			$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".ctime().")");
+		}
 	}
+
+	/*
+		Previous/next conversation in folder navigation
+		This accounts for the folder the conversation was selected from ($_GET['dir'])
+	*/
+	$tlinks = array();
+	switch ($_GET['dir']) {
+		case PMFOLDER_ALL:
+			$ffilter = "";
+			break;
+		case PMFOLDER_BY:
+			$ffilter = " AND t.user = {$_GET['user']}";
+			break;
+		case PMFOLDER_TO:
+			$ffilter = " AND t.user != {$_GET['user']}";
+			break;
+		default:
+			$ffilter = " AND a.folder = {$_GET['dir']}";
+			break;
+	}
+	$tnext = $sql->resultq("
+		SELECT t.id 
+		FROM pm_access a
+		INNER JOIN pm_threads t ON a.thread = t.id
+		WHERE a.user = {$_GET['user']}{$ffilter} AND t.lastpostdate > {$thread['lastpostdate']} 
+		ORDER BY t.lastpostdate ASC 
+		LIMIT 1
+	");
+	if ($tnext) $tlinks[] = "<a href='?id={$tnext}{$navparam}' class='nobr'>Next newer thread</a>";
+	$tprev = $sql->resultq("
+		SELECT t.id 
+		FROM pm_access a
+		INNER JOIN pm_threads t ON a.thread = t.id
+		WHERE a.user = {$_GET['user']}{$ffilter} AND t.lastpostdate < {$thread['lastpostdate']} 
+		ORDER BY t.lastpostdate DESC
+		LIMIT 1
+	");
+	if ($tprev) $tlinks[] = "<a href='?id={$tprev}{$navparam}' class='nobr'>Next older thread</a>";
+	$tlinks = implode(' | ', $tlinks);
 	
-	pageheader($windowtitle);
+	pageheader("Private messages: {$thread['title']}");
+
 	
 	/*
 		Thread controls
 	*/
 	$linklist = $fulledit = "";
+	// Thread owner / admin actions
 	if ($isadmin || ($loguser['id'] == $thread['user'] && $config['allow-pmthread-edit'])) {
 		$link = "<a href='editpmthread.php?id={$_GET['id']}&auth=".generate_token(TOKEN_MGET)."&action";
-		if (!$thread['closed']) {
+		if (isset($thread['error'])) {
+			$linklist .= "<s>Close</s>";
+		} else if (!$thread['closed']) {
 			$linklist .= "$link=qclose'>Close</a>";
 		} else {
 			$linklist .= "$link=qunclose'>Open</a>";
 		}
 		$fulledit = " -- <a href='editpmthread.php?id={$_GET['id']}'>Edit thread<a>";
 	}
-	if ($access) { // Moving a thread on a different folder should be always possible
+	// Moving a thread on a different folder should be always possible
+	if ($access) { 
 		if ($access['folder'] != PMFOLDER_TRASH) {
 			$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
 		}
@@ -175,15 +143,7 @@
 	}
 	$modfeats = "<tr><td class='tdbgc fonts' colspan=2>{$head}: {$linklist} {$fulledit}</td></tr>";
 	
-
-
-	$errormsgs = '';
-	if ($forum_error) {
-		switch($forum_error) {
-        	case INVALID_THREAD: $errortext='This PM thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
-		}
-		$errormsgs = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>$errortext</td></tr>";
-	}
+	
 	loadtlayout();
 	
 	switch($loguser['viewsig']) {
@@ -194,34 +154,28 @@
 	$ufields = userfields();
 
 	// Activity in the last day (to determine syndromes)
-	$act = $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
+	$act = load_syndromes();
 	
 	$postlist = "
 		<table class='table'>
 		{$modfeats}
-		{$errormsgs}
+		{$forum_error}
 	";
-
-	$threadforumlinks = "";
-	// New Reply / Thread / Poll links
-	$threadforumlinks .= "<a href='sendprivate.php'>New conversation</a>";
-	if (!$thread['closed']) $threadforumlinks .= " - <a href='sendprivate.php?id={$_GET['id']}'>{$newreplypic}</a>";
 	
-	$threadforumlinks = "
-	<table style='width: 100%'>
-		<tr>
-			<td class='font'>
-				<a href='index.php'>{$config['board-name']}</a> - 
-				<a href='private.php'>Private messages</a> - 
-				".htmlspecialchars($thread['title']).
-			"</td>
-			<td class='fonts right'>{$threadforumlinks}</td>
-		</tr>
-	</table>";
+	$links = array(
+		"Private messages" => "private.php",
+		$thread['title']   => NULL,
+	);
+	// New reply text
+	$newxlinks = "<a href='sendprivate.php'>New conversation</a>";
+	if (!$thread['closed']) {
+		$newxlinks .= " - <a href='sendprivate.php?id={$_GET['id']}'>{$newreplypic}</a>";
+	}
+	$threadforumlinks = dobreadcrumbs($links, $newxlinks); 
 
 	
 	// Query elements
-	$min      = $ppp * $page;
+	$min      = $ppp * $_GET['page'];
 	$searchon = "p.thread = {$_GET['id']}";
 	
 	// Workaround for the lack of scrollable cursors
@@ -250,6 +204,7 @@
 	");
 	
 	$controls['ip'] = "";
+	$tokenstr       = "&auth=".generate_token(TOKEN_MGET);
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		$bg = $i % 2 + 1;
 
@@ -260,7 +215,6 @@
 		
 		$controls['edit'] = '';
 		if ($isadmin || (!$banned && $config['allow-pmthread-edit'] && !$post['deleted'] && $post['user'] == $loguser['id'])) {
-			$tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
         	if ($isadmin || !$thread['closed']) {
 				$controls['edit'] = " | <a href='editpmpost.php?id={$post['id']}'>Edit</a>";

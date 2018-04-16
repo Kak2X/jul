@@ -4,43 +4,24 @@
 
 	$meta['noindex'] = true;
 	
+	if (!$loguser['id'])
+		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
+	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'] == 1)
+		errorpage("You are not allowed to edit your posts.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
+	if (!$_GET['id'])
+		errorpage("No post ID specified.",'index.php', 'return to the board');
+	
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['action'] = filter_string($_GET['action']);
-
-	
-	if (!$loguser['id']) {
-		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
-	}
-	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'] == 1) {
-		errorpage("You are not allowed to edit your posts.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
-	}
-	if (!$_GET['id']) {
-		errorpage("No post ID specified.",'index.php', 'return to the board');
-	}
-
 
 	$post     = $sql->fetchq("SELECT * FROM pm_posts WHERE id = {$_GET['id']}");
 	if (!$post) {
 		errorpage("Post ID #{$_GET['id']} doesn't exist.",'index.php', 'return to the board');
 	}
-	$thread   = $sql->fetchq("SELECT closed, title FROM pm_threads WHERE id = {$post['thread']}");
-	$access   = $sql->resultq("SELECT COUNT(*) FROM pm_access WHERE thread = {$post['thread']} AND user = {$loguser['id']}");
-	if (!$isadmin && (!$access || !$thread)) {
-		errorpage("You are not allowed to do this for this conversation.", "private.php", 'your private message box');
+	load_pm_thread($post['thread']);
+	if (!$isadmin && $post['user'] != $loguser['id']) {
+		errorpage("You are not allowed to edit this post.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'the post');
 	}
-	if (!$thread) {
-		$thread = array(
-			'closed' => 1,
-			'title'  => "Bad conversation with ID {$post['forum']}",
-			'error'  => true,
-		);
-	}
-	// DELETEME
-	if ($isadmin && !$access) {
-		$thread['title'] .= " [SNEEK MODE]";
-	}
-	// DELETEME
-	
 	pageheader("Private Messages: ".htmlspecialchars($thread['title'])." -- Editing Post");
 	
 	/*
@@ -138,7 +119,7 @@
 			}
 			
 		} else {
-			// If not, replace the default variables with the original ones from the thread
+			// Replace the default variables with the original ones from the thread
 
 			$message = $post['text'];
 			
@@ -162,9 +143,13 @@
 			"Edit post"        => NULL,
 		);
 		$barlinks = dobreadcrumbs($links); 
+		
+		if ($forum_error) {
+			$forum_error = "<br><table class='table'>{$forum_error}</table>";
+		}
 
 		?>
-		<?=$barlinks?>
+		<?= $barlinks . $forum_error ?>
 		<form method="POST" ACTION="?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr>
@@ -174,7 +159,7 @@
 			
 			<tr>
 				<td class='tdbg1 center b'>Header:</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
 				<td class='tdbg2' width=* rowspan=3>
 					<?=mood_layout(0, $post['user'], $moodid)?>
@@ -182,13 +167,13 @@
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Signature:</td>
-				<td class='tdbg2' width=800px valign=top>
+				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($sign)?></textarea>
 				</td>
 			</tr>

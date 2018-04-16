@@ -17,15 +17,14 @@ if ($_GET['id']) {
 	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
 
-	
-	$thread = $sql->fetchq("SELECT closed, title, user, lastposter FROM pm_threads WHERE id = {$_GET['id']}");
-	if (!$thread) {
-		errorpage("Nice try. Next time, wait until someone makes the conversation <i>before</i> trying to reply to it.", "index.php", 'return to the index page', 0);
+	load_pm_thread($_GET['id']);
+	if ($forum_error) {
+		$forum_error = "<table class='table'>{$forum_error}</table>";
 	}
 	
 	// Thread permissions for our sanity
 	$mythread       = ($loguser['id'] == $thread['user'] && $config['allow-pmthread-edit']);
-	$canreply       = ($isadmin || $mythread || $sql->resultq("SELECT COUNT(*) FROM pm_access WHERE user = {$loguser['id']} AND thread = {$_GET['id']}"));
+	$canreply       = ($isadmin || $access); // $mythread ||
 	$closed			= (!$isadmin && !$mythread && $thread['closed']);
 	
 	if ($closed) {
@@ -54,7 +53,7 @@ if ($_GET['id']) {
 		$error = NULL;
 		if (!$_POST['message'])
 			$error	= "You didn't enter anything in the post.";
-		if ($loguser['lastpmtime'] > (ctime()-4))
+		else if ($loguser['lastpmtime'] > (ctime()-4))
 			$error	= "You are posting too fast.";
 		
 		if ($error) { // This redirect is so fucking annoying
@@ -68,56 +67,11 @@ if ($_GET['id']) {
 				
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
-			
-			// All OK
-			//$numposts		= $loguser['posts']+ 1;
-
-			$numdays          = (ctime() - $loguser['regdate']) / 86400;
-			$tags             = array();
-			$_POST['message'] = doreplace($_POST['message'],$loguser['posts'],$numdays,$loguser['id'], $tags);
-			$tagval           = json_encode($tags);
-			$currenttime      = ctime();
-			
-			$sql->beginTransaction();
-
-			if ($_POST['nolayout']) {
-				$headid = 0;
-				$signid = 0;
-			} else {
-				$headid = getpostlayoutid($loguser['postheader']);
-				$signid = getpostlayoutid($loguser['signature']);
-			}
-			
-			$postdata = [
-				'thread'			=> $_GET['id'],
-				'user'				=> $loguser['id'],
-				'date'				=> $currenttime,
-				'ip'				=> $_SERVER['REMOTE_ADDR'],
-				//'num'				=> $numposts,
-				
-				'headid'			=> $headid,
-				'signid'			=> $signid,
-				'moodid'			=> $_POST['moodid'],
-				
-				'text'				=> $_POST['message'],
-				'tagval'			=> $tagval,
-				'options'			=> $_POST['nosmilies'] . "|" . $_POST['nohtml'],
-			 ];
-			$sql->queryp("INSERT INTO `pm_posts` SET ".mysql::setplaceholders($postdata), $postdata);	 
-			$pid = $sql->insert_id();
+			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
+			$pid = create_pm_post($loguser, $_GET['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
 				save_attachments($attach_key, $loguser['id'], $pid, 'pm');
 			}
-			
-			// Update statistics
-			// NO DELETE!
-			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
-			//--
-			$sql->query("UPDATE `pm_threads` SET $modq `replies` =  `replies` + 1, `lastpostdate` = '$currenttime', `lastposter` = '{$loguser['id']}' WHERE `id` = '{$_GET['id']}'");
-			$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$_GET['id']}'");
-			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$_GET['id']}', `time` = ". ctime() .", `read` = '1'");
-			$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$loguser['id']}'");
-
 			$sql->commit();
 			return header("Location: showprivate.php?pid=$pid#$pid");
 
@@ -189,9 +143,7 @@ if ($_GET['id']) {
 		
 		$modoptions = 
 		"<tr>
-			<td class='tdbg1 center b'>
-				Extra Options:
-			</td>
+			<td class='tdbg1 center b'>Extra Options:</td>
 			<td class='tdbg2' colspan=2>
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label>
 			</td>
@@ -210,7 +162,7 @@ if ($_GET['id']) {
 	$barlinks = dobreadcrumbs($links); 
 	
 	?>
-	<?=$barlinks?>
+	<?= $barlinks . $forum_error ?>
 	<form method="POST" action="?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 		<tr>
@@ -281,7 +233,7 @@ else {
 	$_POST['nosmilies']     = filter_int($_POST['nosmilies']);
 	$_POST['nohtml']        = filter_int($_POST['nohtml']);
 	$_POST['nolayout']      = filter_int($_POST['nolayout']);
-	$_POST['tclosed']       = filter_int($_POST['close']);
+	$_POST['close']       = filter_int($_POST['close']);
 	$_POST['folder']        = isset($_GET['dir']) ? ((int) $_GET['dir']) : filter_int($_POST['folder']); // Convenience for links
 	
 	// Attachment preview stuff
@@ -302,20 +254,8 @@ else {
 			$error	= "You are trying to post too rapidly.";
 		} else if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
 			$error = "You have selected a nonexisting folder.";
-		} else { // if (!($destid = filter_pm_acl($userlist, $loguser['name'], $error)))
-			$error = "";
-			foreach ($userlist as $x) {
-				$x = trim($x);
-				$valid    = $sql->resultp("SELECT id FROM users WHERE name = ? AND id != {$loguser['id']}", [$x]);
-				if (!$valid) {
-					$error .= "<li>{$x}";
-				} else {
-					$destid[$valid] = $valid; // no duplicates please
-				}
-			}
-			if ($error) {
-				$error = "The following users you've entered don't exist:<ul>{$error}</ul>";
-			}
+		} else if (!($destid = valid_pm_acl($userlist, false, $error))) {
+			$error = "The partecipants list cannot be processed.<br>{$error}";
 		}
 		
 		if ($error) { // This redirect is so fucking annoying
@@ -346,69 +286,14 @@ else {
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
 			
-			$currenttime 	  = ctime();
-			$numdays          = ($currenttime - $loguser['regdate']) / 86400;
-			$tags             = array();
-			$_POST['message'] = doreplace($_POST['message'], $loguser['posts'], $numdays, $loguser['id'], $tags);
-			$tagval           = json_encode($tags);
-			
-			if ($_POST['nolayout']) {
-				$headid = 0;
-				$signid = 0;
-			} else {
-				$headid = getpostlayoutid($loguser['postheader']);
-				$signid = getpostlayoutid($loguser['signature']);
-			}
 			if (!$isadmin && !$config['allow-pmthread-edit']) {
-				$_POST['tclosed'] = 0;
+				$_POST['close'] = 0;
 			}
-			
 			
 			$sql->beginTransaction();
-			$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$loguser['id']}'");
-			
-			// Insert thread
-			$vals = [
-				'user'				=> $loguser['id'],
-				
-				'closed'			=> $_POST['tclosed'],
-				
-				'title'				=> xssfilters($_POST['subject']),
-				'description'		=> xssfilters($_POST['description']),
-				'icon'				=> $posticon,
-				
-				'replies'			=> 0,
-				'firstpostdate'		=> $currenttime,
-				'lastpostdate'		=> $currenttime,
-				'lastposter'		=> $loguser['id'],
-			];
-			$sql->queryp("INSERT INTO `pm_threads` SET ".mysql::setplaceholders($vals), $vals);
-			$tid = $sql->insert_id();
-			
-			// Insert post
-			$vals = [
-				'thread'			=> $tid,
-				'user'				=> $loguser['id'],
-				'date'				=> $currenttime,
-				'ip'				=> $_SERVER['REMOTE_ADDR'],
-				
-				'headid'			=> $headid,
-				'signid'			=> $signid,
-				'moodid'			=> $_POST['moodid'],
-				
-				'text'				=> xssfilters($_POST['message']),
-				'tagval'			=> $tagval,
-				'options'			=> $_POST['nosmilies'] . "|" . $_POST['nohtml'],
-			 ];
-			$sql->queryp("INSERT INTO `pm_posts` SET ".mysql::setplaceholders($vals), $vals);
-			$pid = $sql->insert_id();
-			
-			// Insert ACL
-			$acl = $sql->prepare("INSERT INTO pm_access (thread, user, folder) VALUES (?,?,?)");
-			foreach ($destid as $in) {
-				$sql->execute($acl, [$tid, $in, PMFOLDER_MAIN]);
-			}
-			$sql->execute($acl, [$tid, $loguser['id'], $_POST['folder']]);
+			$tid = create_pm_thread($loguser, $_POST['subject'], $_POST['description'], $posticon, $_POST['close']);
+			$pid = create_pm_post($loguser, $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
+			set_pm_acl($destid, $tid); // and add yourself automatically
 			
 			if ($config['allow-attachments']) {
 				save_attachments($attach_key, $loguser['id'], $pid, 'pm');
@@ -461,9 +346,7 @@ else {
 	<table class='table'><tr><td class='tdbgh center'>Conversation preview</td></tr></table>
 	<table class='table' style='border-top: none !important'>
 		<tr>
-			<td class='tdbg2 center' style='width: 4%'>
-				<?=$iconpreview?>
-			</td>
+			<td class='tdbg2 center' style='width: 4%'><?=$iconpreview?></td>
 			<td class='tdbg1'>
 				<b><?=htmlspecialchars($_POST['subject'])?></b>
 				<span class='fonts'><br><?=htmlspecialchars($_POST['description'])?></span>
@@ -480,7 +363,7 @@ else {
 		
 	$modoptions	= "";
 	if ($isadmin || $config['allow-pmthread-edit']) {
-		$selclosed = $_POST['tclosed'] ? "checked" : "";
+		$selclosed = $_POST['close'] ? "checked" : "";
 		$modoptions = " - <input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Disable replies</label>";
 	}		
 	
@@ -539,7 +422,6 @@ else {
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
 			<td class='tdbg2' colspan=2>
-				<input type='hidden' name=action VALUE=postthread>
 				<?= auth_tag() ?>
 				<?= $input_tid ?>
 				<input type='submit' class=submit name=submit VALUE="Submit thread">

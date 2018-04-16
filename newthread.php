@@ -157,7 +157,7 @@
 				$_POST['tannc'] = 0;
 			}
 			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc']);
-			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nolayout']);
+			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 			
 			if ($config['allow-attachments']) {
 				save_attachments($attach_key, $userid, $pid);
@@ -396,7 +396,6 @@
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2' colspan=2>
-					<input type='hidden' name=action VALUE=postthread>
 					<?= auth_tag() ?>
 					<?= $input_tid ?>
 					<input type='submit' class=submit name=submit VALUE="Submit <?= lcfirst($threadtype) ?>">

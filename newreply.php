@@ -88,7 +88,7 @@
 			$sql->beginTransaction();
 			
 			$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
-			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nolayout'], $modq);
+			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
 				save_attachments($_GET['id'], $userid, $pid);
 			}

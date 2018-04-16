@@ -1,7 +1,7 @@
 <?php
 	
 	function get_thread_from_post($pid, $prefix = '') {
-		global $sql;
+		global $sql, $meta;
 		
 		// Linking to a post ID
 		$id		= $sql->resultq("SELECT `thread` FROM `{$prefix}posts` WHERE `id` = '{$pid}'");
@@ -378,7 +378,7 @@
 			return $tid;
 	}
 	
-	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0, $threadupdate = "") {
+	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = "") {
 		global $sql;
 		
 		// $user consistency support
@@ -416,7 +416,7 @@
 			
 			'text'          => xssfilters($message),
 			'tagval'        => $tagval,
-			'options'       => $nosmilies . "|" . $nolayout,
+			'options'       => $nosmilies . "|" . $nohtml,
 		);
 		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
 		$pid = $sql->insert_id();

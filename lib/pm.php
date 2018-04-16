@@ -216,15 +216,25 @@ function get_pm_count($user, $folder = NULL) {
 	}
 }
 
-
+function get_pm_thread_from_post($pid) {
+	global $sql;
+	// Linking to a post ID
+	$id		= $sql->resultq("SELECT `thread` FROM `pm_posts` WHERE `id` = '{$pid}'");
+	if (!$id) {
+		errorpage("Couldn't find a post with ID #{$pid}. Perhaps it's been deleted?", "index.php", 'the index page');
+	}
+	return $id;
+}
+	
 /*
 	load_pm_thread: fetch PM data and handle errors automatically
 	$id -  PM thread id
 */
 function load_pm_thread($id) {
-	global $sql, $loguser, $isadmin, $thread, $access;
-	$forum_error = 0;
-
+	global $sql, $loguser, $isadmin, $thread, $access, $forum_error;
+	$error        = 0;
+	$forum_error = "";
+	
 	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
 	if (!$thread) {
 		if (!$isadmin) {
@@ -240,11 +250,12 @@ function load_pm_thread($id) {
 		// Admin can see and possibly remove bad posts
 		$error = INVALID_THREAD;
 		$thread = array(
-			'id'      => $id,
-			'closed'  => true,
-			'replies' => $badposts - 1,
-			'title'   => " ---[ BAD PM THREAD ID #{$id} ]--- ",
-			'error'   => true,
+			'id'           => $id,
+			'closed'       => true,
+			'replies'      => $badposts - 1,
+			'title'        => "[ BAD PM THREAD ID #{$id} ]",
+			'lastpostdate' => 0,
+			'error'        => true,
 		);
 		$access = false;
 
@@ -254,6 +265,12 @@ function load_pm_thread($id) {
 			trigger_error("Attempted to access PM thread {$_GET['id']} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
 			notAuthorizedError('conversation');
 		}
+	}
+	if ($error) {
+		switch ($error) {
+			case INVALID_THREAD: $errortext='This PM thread does not exist, but posts exist that are associated with this invalid thread ID.'; break;
+		}
+		$forum_error = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>{$errortext}</td></tr>";
 	}
 }
 
@@ -327,7 +344,7 @@ function set_pm_acl($users, $thread, $show_self = false, $self_folder = PMFOLDER
 			
 }
 
-function create_pm_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0) {
+function create_pm_thread($user, $title, $description, $posticon, $closed = 0) {
 	global $sql;
 	// $user consistency support
 	if (is_array($user)) {
@@ -354,7 +371,7 @@ function create_pm_thread($user, $forum, $title, $description, $posticon, $polli
 	return $sql->insert_id();
 }
 
-function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nolayout = 0, $threadupdate = "") {
+function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = "") {
 	global $sql;
 	
 	// $user consistency support
@@ -396,7 +413,7 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 	$pid = $sql->insert_id();
 	
 	// Update statistics
-	$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$loguser['id']}'");
+	$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$user['id']}'");
 	
 	//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : "";
 	if ($sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$thread}") > 1) {

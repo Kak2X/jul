@@ -433,18 +433,19 @@
 				}
 			}
 
-			$sql->queryp("
-				UPDATE users
-				SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
-				WHERE id = {$loguser['id']}",
-				[
-					'lastactivity' 	=> ctime(),
-					'lastip' 		=> $_SERVER['REMOTE_ADDR'],
-					'lasturl' 		=> $url,
-					'lastforum'		=> 0,
-					'influence'		=> $influencelv,
-				]);
-			
+			if (!filter_bool($meta['notrack'])) {
+				$sql->queryp("
+					UPDATE users
+					SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
+					WHERE id = {$loguser['id']}",
+					[
+						'lastactivity' 	=> ctime(),
+						'lastip' 		=> $_SERVER['REMOTE_ADDR'],
+						'lasturl' 		=> $url,
+						'lastforum'		=> 0,
+						'influence'		=> $influencelv,
+					]);
+			}
 		}
 
 	} else {
@@ -1477,7 +1478,7 @@ function is_banned($forum, $user) {
 }
 
 function onlineusers($forum = NULL, $thread = NULL){
-	global $loguser, $config, $sql, $userfields, $isadmin, $ismod, $numon;
+	global $loguser, $config, $meta, $sql, $userfields, $isadmin, $ismod, $numon;
 
 	// compat hax
 	if ($config['onlineusers-on-thread']) {
@@ -1503,7 +1504,7 @@ function onlineusers($forum = NULL, $thread = NULL){
 	}
 	
 	
-	if ($loguser['id']) {
+	if ($loguser['id'] && !filter_bool($meta['notrack'])) {
 		$sql->query("UPDATE users  SET {$update} WHERE id = {$loguser['id']}");
 	} else {
 		$sql->query("UPDATE guests SET {$update} WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");

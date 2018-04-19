@@ -5,7 +5,7 @@
 	*/
 	
 	global 	$pwlnames, $nmcol, $statusicons,
-			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $numdir, $numfil;
+			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $numdir, $numfil;
 			
 	$nmcol = array(
 		0 	 => array('-2'=>     '6a6a6a', '-1'=>'888888', '97ACEF',   'D8E8FE',   'AFFABE',        'FFEA95'),

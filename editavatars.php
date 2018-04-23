@@ -160,14 +160,14 @@
 	<!-- extra global css for avatar tables -->
 	<style type='text/css'>
 		.avatarbox{
-			width: <?= $config['max-avatar-size-x'] ?>px;
-			height: <?= $config['max-avatar-size-y'] ?>px;
+			width: <?= $config['max-avatar-size-x'] + 5 ?>px;
+			height: <?= $config['max-avatar-size-y'] + 5 ?>px;
 		}
 		.sect {
-			width: <?= $config['max-avatar-size-y']?>px;
+			width: <?= $config['max-avatar-size-y'] + 5 ?>px;
 			display: inline-block;
 		}
-		.sizex{width: <?= $config['max-avatar-size-x'] ?>px}
+		.sizex{width: <?= $config['max-avatar-size-x'] + 5 ?>px}
 	</style>
 
 	<div class="font center b">User avatars for <?= getuserlink(NULL, $_GET['id'], '', true) ?></div>

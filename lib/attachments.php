@@ -1,5 +1,13 @@
 <?php
 
+/*
+	Attachment field HTML
+	$thread   - Thread ID
+	$user     - User ID (used for attachment key)
+	$showpost - Post ID (to show uploaded attachments in the list)
+	$sel      - Array with attachment IDs marked for deletion
+	$pm       - If true, attachment keys are handled in PM mode
+*/ 
 function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) {
 	global $config, $numdir, $sql;
 	
@@ -7,23 +15,24 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 		return "";
 	}
 	
-	$cnt = get_attachments_index($thread, $user);
+	$listtemp = $listreal = "";
+	
 	// Display removal options for temp attachments
-	$out = "";
+	$cnt = get_attachments_index($thread, $user);
+	if ($cnt) {
+		$listtemp = "<tr><td class='tdbgc center b' colspan=3>Files to upload</td></tr>";
+	}
 	$sizetotal = 0;
 	for ($i = 0; $i < $cnt; ++$i) {
 		$path = attachment_tempname($thread, $user, $i);
 		$cell = ($i % 2) + 1;
 		$metadata = get_attachment_metadata($path);
-		$out .= "
+		$listtemp .= "
 		<tr>
-			<td class='tdbg{$cell}'>
-				".htmlspecialchars($metadata['filename'])."
-			</td>
+			<td class='tdbg{$cell}'>".htmlspecialchars($metadata['filename'])."</td>
 			<td class='tdbg{$cell}'>".sizeunits($metadata['size'])."</td>
 			<td class='tdbg{$cell}'>
-				<input type='checkbox' name='remove{$i}' value=1>
-				<label for='remove{$i}'>Remove</a><br>
+				<label><input type='checkbox' name='remove{$i}' value=1> Remove</label>
 			</td>
 		</tr>";
 		
@@ -31,33 +40,27 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 	}
 	
 	// Display removal options for real attachments associated to the post (when editing a post)
-	$out_conf = "";
+
 	if ($showpost !== NULL) {
 		$j = $i;
 		$attach = get_saved_attachments($showpost, $pm);
 		if ($attach) {
-			$out_conf .= "<tr><td class='tdbgh center b' colspan=3>Files uploaded</td></tr>";
+			$listreal = "<tr><td class='tdbgc center b' colspan=3>Files uploaded</td></tr>";
 		}
 		foreach ($attach as $x) {
 			$cell = ($j % 2) + 1;
-			
 			if (!isset($sel[$x['id']])) {
-				$sizetotal += $x['size'];
+				$sizetotal += $x['size']; // Do not count attachments removed from the total
 				$delmark = "";
-			} else {
-				// Deletion mark
+			} else { // Deletion mark
 				$delmark = " style='text-decoration: line-through'";
 			}
-			
-			$out_conf .= "
+			$listreal .= "
 			<tr>
-				<td class='tdbg{$cell}'{$delmark}>
-					{$x['filename']}
-				</td>
+				<td class='tdbg{$cell}'{$delmark}>".htmlspecialchars($x['filename'])."</td>
 				<td class='tdbg{$cell}'{$delmark}>".sizeunits($x['size'])."</td>
 				<td class='tdbg{$cell}'>
-					<input type='checkbox' name='removec{$x['id']}' value=1 ".filter_string($sel[$x['id']]).">
-					<label for='removec{$x['id']}'>Remove</a><br>
+					<label><input type='checkbox' name='removec{$x['id']}' value=1 ".filter_string($sel[$x['id']])."> Remove</label>
 				</td>
 			</tr>";			
 			
@@ -68,33 +71,28 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 	
 	// Display fields option
 	// Doesn't cut out attachments above the limit if they are already uploaded
-	$numfields = max(1, filter_int($_POST['attachfields']));
+	$numfields  = max(1, filter_int($_POST['attachfields']));
 	$uploadinpt = "";
 	do {
 		$uploadinpt .= "<input type='file' class='w' name='attachment{$i}'><br/>";
 		++$i;
 	} while ($i < $numfields);
 	
-	return "".
-"<tr>
-	<td class='tdbg1 center b'>
-		Attachments:
-	</td>
+	return "
+<tr>
+	<td class='tdbg1 center b'>Attachments:</td>
 	<td class='tdbg2' colspan=2>
 		<table class='table' style='border: none !important; width: auto !important'>
-			<tr><td class='tdbgh center b' colspan=3>Files to upload</td></tr>
 			<tr>
-				<td class='tdbgh center'>Filename</td>
-				<td class='tdbgh center'>File size</td>
+				<td class='tdbgh center b'>File name</td>
+				<td class='tdbgh center b'>Size</td>
 				<td class='tdbgh center'></td>
 			</tr>
-			{$out}
-			{$out_conf}
+			{$listtemp}
+			{$listreal}
 			<tr>
 				<td class='tdbgc center b'>Total</td>
-				<td class='tdbgc center b' colspan=2>
-					".sizeunits($sizetotal)."/".sizeunits($config['attach-max-size'])."
-				</td>
+				<td class='tdbgc center b' colspan=2>".sizeunits($sizetotal)."/".sizeunits($config['attach-max-size'])."</td>
 			</tr>
 			<tr>
 				<td class='tdbg2' colspan=3>
@@ -108,54 +106,41 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 				</td>
 			</tr>
 		</table>
-		
 	</td>
 </tr>";
 }
-
-function attachdisplay($id, $filename, $size, $views, $is_image = false, $imgprev = NULL, $extra = "") {
-
-	if ($is_image) { // An image
-		$thumb = ($imgprev !== NULL ? $imgprev : attachment_name($id, true));
-	} else { // Not an image
-		$thumb = "images/defaultthumb.png";
-	}
-	
-	// id 0 is a magic value used for post previews
-	$w = $id ? 'a' : 'b';
-	
-	return "
-	<table class='attachment-box'>
-		<tr>
-		<td class='attachment-box-thumb' rowspan=2>
-			<$w href='download.php?id={$id}{$extra}'><img src='{$thumb}'></$w>
-		</td>
-		<td class='attachment-box-text fonts'>
-			<div><$w href='download.php?id={$id}{$extra}'>{$filename}</$w></div>
-			<div>Size:<span style='float: right'>".sizeunits($size)."</span></div>
-			<div>Views:<span style='float: right'>{$views}</span></div>
-		</td>
-	</tr>
-	<tr><td class='attachment-box-controls fonts right'></td></tr>
-	</table>";
-	
-	
-
-}
-
-// on preview, uploaded files are saved on temp/attach_<thread>_<user>_<i>
-// once confirmed, they are simply identified by index
 
 // Assumes to receive an array of elements fetched off the DB
 function attachfield($list, $extra = "") {
 	$out = "";
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
-		$out .= attachdisplay($x['id'], $x['filename'], $x['size'], $x['views'], $x['is_image'], $x['imgprev'], $extra);
+		
+		if ($x['is_image']) { // An image
+			$thumb = isset($x['imgprev']) ? $x['imgprev'] : attachment_name($x['id'], true);
+		} else { // Not an image
+			$thumb = "images/defaultthumb.png";
+		}
+		
+		// id 0 is a magic value used for post previews
+		$w = $x['id'] ? 'a' : 'b';
+		
+		$out .= "
+		<table class='attachment-box'>
+			<tr>
+				<td class='attachment-box-thumb'>
+					<$w href='download.php?id={$x['id']}{$extra}'><img src='{$thumb}'></$w>
+				</td>
+				<td class='attachment-box-text fonts'>
+					<div><$w href='download.php?id={$x['id']}{$extra}'>{$x['filename']}</$w></div>
+					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
+					<div>Views:<span style='float: right'>{$x['views']}</span></div>
+				</td>
+			</tr>
+		</table>";
 	}
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
-
 
 const ATTACH_PM     = 0b1;  // Handle attachments for PMs, not posts.
 const ATTACH_INCKEY = 0b10; // Use incremented key mode (attachments are not shared between tabs of the same page)

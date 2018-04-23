@@ -235,16 +235,16 @@ function load_pm_thread($id) {
 	$error        = 0;
 	$forum_error = "";
 	
-	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$_GET['id']}");
+	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$id}");
 	if (!$thread) {
 		if (!$isadmin) {
-			trigger_error("Accessed nonexistant PM thread number #{$_GET['id']}", E_USER_NOTICE);
+			trigger_error("Accessed nonexistant PM thread number #{$id}", E_USER_NOTICE);
 			notAuthorizedError('conversation');
 		}
 
-		$badposts = $sql->resultq("SELECT COUNT(*) FROM `pm_posts` WHERE `thread` = '{$_GET['id']}'");
+		$badposts = $sql->resultq("SELECT COUNT(*) FROM `pm_posts` WHERE `thread` = '{$id}'");
 		if ($badposts <= 0) {
-			errorpage("PM Thread ID #{$_GET['id']} doesn't exist, and no posts are associated with the invalid thread ID.","index.php",'the index page');
+			errorpage("PM Thread ID #{$id} doesn't exist, and no posts are associated with the invalid thread ID.","index.php",'the index page');
 		}
 
 		// Admin can see and possibly remove bad posts
@@ -260,9 +260,9 @@ function load_pm_thread($id) {
 		$access = false;
 
 	} else {
-		$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
+		$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$id} AND user = {$loguser['id']}");
 		if (!$access && !$isadmin) { // && $config['pmthread-admin-sneak']) {
-			trigger_error("Attempted to access PM thread {$_GET['id']} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
+			trigger_error("Attempted to access PM thread {$id} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
 			notAuthorizedError('conversation');
 		}
 	}
@@ -331,7 +331,7 @@ function set_pm_acl($users, $thread, $show_self = false, $self_folder = PMFOLDER
 	
 	// Remove users missing from the list...
 	$noshow = $show_self ? 0 : $loguser['id']; //... (and account for lists omitting the logged in user)
-	$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']} AND user NOT in (".implode(',', $users).", {$noshow})");
+	$sql->query("DELETE FROM pm_access WHERE thread = {$thread} AND user NOT in (".implode(',', $users).", {$noshow})");
 	
 	// Then add the users without touching the existing values
 	$acl = $sql->prepare("INSERT IGNORE INTO pm_access (thread, user, folder) VALUES (?,?,?)");

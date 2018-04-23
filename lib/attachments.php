@@ -502,14 +502,18 @@ function sizeunits($bytes) {
 }
 
 function resize_image($image, $max_width, $max_height) {
+	// Set immediately transparency mode on the source image
+	imagealphablending($image, true);
+	
 	// Determine thumbnail size based on the aspect ratio
 	$width     = imagesx($image);
 	$height    = imagesy($image);
 	
-	// TODO: This obliterates the transparency for thumbnails. Fix this.
 	// Don't bother if the image is already under the limits
 	if ($width <= $max_width && $height <= $max_height) {
 		$dst_image = imagecreatetruecolor($width, $height);
+		imagealphablending($dst_image, false);
+		imagesavealpha($dst_image, true);
 		imagecopy($dst_image, $image, 0, 0, 0, 0, $width, $height);
 	} else {
 		$ratio     = $width / $height;
@@ -520,8 +524,9 @@ function resize_image($image, $max_width, $max_height) {
 			$n_width    = round($width * $max_height / $height);
 			$n_height   = $max_height;
 		}
-		
 		$dst_image = imagecreatetruecolor($n_width, $n_height);
+		imagealphablending($dst_image, false); 
+		imagesavealpha($dst_image, true);
 		imagecopyresampled($dst_image, $image, 0, 0, 0, 0, $n_width, $n_height, $width, $height);
 	}
 	return $dst_image;

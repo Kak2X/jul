@@ -67,8 +67,9 @@
 				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
 			}
 			
+			// Display the pretty attachment list
 			if (filter_array($post['attach'])) {
-				$set['attach'] = attachfield($post['attach'], ($forum < 0 ? "&pm" : ""), ($isadmin || $post['uid'] == $loguser['id']));
+				$set['attach'] = attachfield($post['attach'], ($forum < 0 ? "&pm" : "")); //, ($isadmin || $post['uid'] == $loguser['id']));
 			} else {
 				$set['attach'] = "";
 			}
@@ -241,9 +242,11 @@
 		if ($flags == PREVIEW_EDITED) {
 			// If we're viewing the post preview when *EDITING* a new post/pm
 			// the attachment list should contain the temp attachments and the already uploaded attachments
+			// (and hide those marked as deleted)
 			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
-				$attach = get_saved_attachments($data['id'], isset($data['attach_pm']));
-				$ppost['attach'] = array_merge(filter_attachments($attach, $data['attach_sel']), get_temp_attachments($data['attach_key'], $user['id']));
+				$real = get_saved_attachments($data['id'], isset($data['attach_pm']), $data['attach_sel']);
+				$temp = get_temp_attachments($data['attach_key'], $user['id']);
+				$ppost['attach'] = array_merge($real, $temp);
 			}
 			// Edit marker
 			$ppost['edited']	= getuserlink($loguser);

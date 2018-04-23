@@ -59,12 +59,12 @@
 			}
 			$sql->beginTransaction();
 			
-			$sql->query("DELETE FROM pm_posts WHERE thread = {$_GET['id']}");	
+			$sql->query("DELETE FROM pm_posts WHERE thread = {$_GET['id']}");
 			$sql->query("DELETE FROM pm_threads WHERE id = {$_GET['id']}");
 			$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']}");
 			$sql->query("DELETE FROM pm_threadsread WHERE tid = {$_GET['id']}");
 			if ($config['allow-attachments']) {
-				$attachids = get_saved_attachments_ids($sql->getresults("SELECT id FROM pm_posts WHERE thread = {$_GET['id']}"), 'pm');
+				$attachids = get_thread_attachments($_GET['id'], ATTACH_PM);
 				if ($attachids) {
 					remove_attachments($attachids);
 				}

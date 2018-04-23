@@ -83,6 +83,12 @@
 			$t1 = $sql->fetchq("SELECT lastpostdate, lastposter	FROM threads WHERE forum = {$thread['forum']} ORDER BY lastpostdate DESC LIMIT 1");
 			$sql->queryp("UPDATE forums SET numposts=numposts-$numdeletedposts,numthreads=numthreads-1,lastpostdate=?,lastpostuser=? WHERE id={$thread['forum']}", array((int) $t1['lastpostdate'], (int) $t1['lastposter']));
 			
+			if ($config['allow-attachments']) {
+				$attachids = get_thread_attachments($_GET['id']);
+				if ($attachids) {
+					remove_attachments($attachids);
+				}
+			}
 			$sql->commit();
 			$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$thread['forum']}");			
 			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);

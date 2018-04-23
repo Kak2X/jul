@@ -40,7 +40,6 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 	}
 	
 	// Display removal options for real attachments associated to the post (when editing a post)
-
 	if ($showpost !== NULL) {
 		$j = $i;
 		$attach = get_saved_attachments($showpost, $pm);
@@ -142,53 +141,53 @@ function attachfield($list, $extra = "") {
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
 }
 
+// After post previews
 const ATTACH_PM     = 0b1;  // Handle attachments for PMs, not posts.
 const ATTACH_INCKEY = 0b10; // Use incremented key mode (attachments are not shared between tabs of the same page)
 function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 	
-	 // Special mode where $key is handled as an incomplete "base key"
+	// Special mode where $key is handled as an incomplete "base key"
 	if ($flags & ATTACH_INCKEY) {
-		$attachids    = get_attachments_key($key, $user); // Get the base key to identify the correct files
-		$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
-		$key          = $attachids[1]; // String (base) key for file names
+		//--
+		if (!isset($_POST['attach_id'])) {	
+			// No ID acquired yet? Get the first free slot then.
+			$attach_id = -1;
+			do {
+				++$attach_id;
+				$set = glob("temp/attach_c{$keyformat}_{$attach_id}_{$user}_*", GLOB_NOSORT);
+			} while($set);
+		} else {
+			$attach_id = (int) $_POST['attach_id'];
+		}
+		$key = "c{$key}_{$callid}";
+		//--
 	}
 	
 	$mode = ($flags & ATTACH_PM) ? 'pm' : false;
 	if ($post) { // Edit post mode
-		$savedata  = process_saved_attachments($post, $mode); // MOVE FUNCTION
-		$extrasize = $savedata['size'];
-		$attachsel = $savedata['del'];	
+		//--
+		// List the attachments marked for deletion (only when editing a post)
+		$extrasize = 0;
+		$attach = get_saved_attachments($post, $mode);
+		$attachsel = array();
+		foreach ($attach as $x) {
+			if (isset($_POST["removec{$x['id']}"])) {
+				$attachsel[$x['id']] = 'checked';
+			} else {
+				$extrasize += $x['size'];
+			}
+		}
+		//--
 	} else {
 		$extrasize = 0;
 		$attachsel = array();
 	}
 	
-	// Total attachments returned:
-	$attach_count = process_temp_attachments($key, $user, $extrasize); // MOVE FUNCTION	
+	//--
+	// Handle the upload / removal of new attachment to the temp folder
 	
-	if ($flags & ATTACH_INCKEY) { // If some attachments exist, confirm the key for the next page
-		if ($attach_count) {
-			$input_tid = save_attachments_key($attach_id); // MOVE FUNCTION
-		} else {
-			$input_tid = "";
-		}
-		return $input_tid;
-	}
-	return $attachsel;
-}
-
-function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array()) {
-	if ($remove) {
-		remove_attachments(array_keys($remove));
-	}
-	$mode = ($flags & ATTACH_PM) ? 'pm' : 'post';
-	save_attachments($key, $user, $post, $mode); // MOVE FUNCTION
-}
-
-// Update the status of temp attachments after submit/preview is clicked
-// Returns the resulting number of attachments
-function process_temp_attachments($key, $user, $extrasize = 0) {
-	// Get the total number of attachments / first free slot
+	// Get the number of attachments already uploaded to the temp folder
+	// This number will also be used as ID for the next uploaded attachment
 	$total = get_attachments_index($key, $user);
 	
 	// Check if we're removing any temp attachments...
@@ -199,13 +198,13 @@ function process_temp_attachments($key, $user, $extrasize = 0) {
 		}
 	}
 	
-	// ...then mass-remove them at once
+	// ...then mass-remove them at once (instant delete, since temp attachments aren't saved to the db)
 	if (!empty($list)) {
 		remove_temp_attachments($key, $user, $list);
-		$total -= count($list);
+		$total -= count($list); // No gaps allowed between temp attachment IDs (since it stops on the first missing file)
 	}
 	
-	// Upload current attachment
+	// Upload new attachments from the extra fields
 	$showopt = max(1, filter_int($_POST['attachfields']));
 	do {
 		if (
@@ -218,59 +217,81 @@ function process_temp_attachments($key, $user, $extrasize = 0) {
 		}
 		++$i;
 	} while ($i < $showopt);
+	//--
+
 	
-	return $total;
+	if ($flags & ATTACH_INCKEY) { // If some attachments are left (while in key increment mode), confirm the key for the next refresh
+		$input_tid = $total ? "<input type='hidden' name='attach_id' value='{$key}'>" : ""; 
+		return $input_tid;
+	}
+	return $attachsel;
 }
 
-
-function get_saved_attachments($post, $pm = false) {
+// After submitting a post/thread/edit/whatever
+function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array()) {
 	global $sql;
+	// If any attachments
+	if ($remove) {
+		remove_attachments(array_keys($remove));
+	}
+	$field = ($flags & ATTACH_PM) ? 'pm' : 'post';
+	//--
+	// Check if any current attachments are in the temp folder
+	// and move them to the proper attachment folder and save to the DB
+	for ($i = 0;; ++$i) {
+		// This is why temp attachments IDs need to be contiguous
+		$path = attachment_tempname($key, $user, $i);
+		if (!file_exists($path)) break;
+		
+		// Save the metadata to the database
+		$metadata = get_attachment_metadata($path);
+		$sqldata = [
+			$field     => $post,
+			'user'     => $user,
+			'mime'     => $metadata['mime'],
+			'filename' => $metadata['filename'],
+			'size'     => (int) $metadata['size'],
+			'views'    => 0,
+			'is_image' => (int) $metadata['is_image'],
+		];
+		
+		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
+		
+		$rowid = $sql->insert_id();
+		// Move the thumbnail we previously generated off the temp folder
+		if ($metadata['is_image']) {
+			rename("{$path}_t", attachment_name($rowid, true));
+		}
+		rename($path, attachment_name($rowid));
+		unlink("{$path}.dat");
+	}
+	//--
+}
+
+function get_saved_attachments($post, $pm = false, $remove = array()) {
+	global $sql;
+	if ($remove) {
+		$idfilter = " AND a.id NOT IN (".implode(',', array_map('intval', array_keys($remove))).")";
+	} else {
+		$idfilter = "";
+	}
 	return $sql->getarray("
 		SELECT a.post, a.pm, a.id, a.filename, a.size, a.views, a.is_image
 		FROM attachments a
-		WHERE a.".($pm ? "pm" : "post")." = {$post}"
+		WHERE a.".($pm ? "pm" : "post")." = {$post}{$idfilter}"
 	, mysql::USE_CACHE);
 }
 
-function get_saved_attachments_ids($post, $pm = false) {
+function get_thread_attachments($id, $flags = 0) {
 	global $sql;
-	if (!$post) {
-		return [];
-	} else if (is_array($post)) {
-		return $sql->getresults("SELECT id FROM attachments WHERE ".($pm ? "pm" : "post")." IN (".implode(',', $post).")");
+	if ($flags & ATTACH_PM) {
+		$prefix = "pm_";
+		$field  = "pm";
 	} else {
-		return $sql->getresults("SELECT id FROM attachments WHERE ".($pm ? "pm" : "post")." = {$post}");
+		$prefix = "";
+		$field  = "post";
 	}
-}
-
-
-
-function process_saved_attachments($post, $pm = false) {
-	// Mark the already confirmed attachment just for deletion (will be properly removed on submit)
-	// Recycle the same query which will be used later in quikattach()
-	$extrasize = 0;
-	$attach = get_saved_attachments($post, $pm);
-	$attachsel = array();
-	foreach ($attach as $x) {
-		if (isset($_POST["removec{$x['id']}"])) {
-			$attachsel[$x['id']] = 'checked';
-		} else {
-			$extrasize += $x['size']; // get_attachment_size() works for temp attachments only, so calculate the extra here
-		}
-	}
-	return ['size' => $extrasize, 'del' => $attachsel];
-}
-
-// Remove from the attachment $list anything marked in $sel
-// $list should be the saved attachment list, $sel the removal list
-function filter_attachments($list, $sel) {
-	$filtered = array();
-	foreach ($list as $k => $val) {
-		if (!isset($sel[$val['id']])) {
-			$filtered[] = $list[$k];
-		}
-	}
-	return $filtered;
+	return $sql->getresults("SELECT a.id FROM {$prefix}posts p INNER JOIN attachments a ON p.id = a.{$field} WHERE p.thread = {$id}");
 }
 
 // Upload to the temp area
@@ -319,41 +340,6 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	}
 	
 	return $res;
-}
-
-// Check if any current attachments are in the temp folder
-// and move them to the proper attachment folder and save to the DB
-function save_attachments($thread, $user, $post_id, $assoc = 'post') {
-	global $sql;
-	for ($i = 0; true; ++$i) {
-		$path = attachment_tempname($thread, $user, $i);
-		if (!file_exists($path)){
-			break;
-		}
-		
-		// Save the metadata to the database
-		$metadata = get_attachment_metadata($path);
-		$sqldata = [
-			$assoc     => $post_id,
-			'user'     => $user,
-			'mime'     => $metadata['mime'],
-			'filename' => $metadata['filename'],
-			'size'     => (int) $metadata['size'],
-			'views'    => 0,
-			'is_image' => (int) $metadata['is_image'],
-		];
-		
-		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
-		
-		$rowid = $sql->insert_id();
-		
-		// Move the thumbnail we previously generated off the temp folder
-		if ((int) $metadata['is_image']) {
-			rename("{$path}_t", attachment_name($rowid, true));
-		}
-		rename($path, attachment_name($rowid));
-		unlink("{$path}.dat");
-	}
 }
 
 // For attachdisplay
@@ -442,32 +428,6 @@ function get_attachments_index($thread, $user) {
 			return $i;
 		}
 	}
-}
-
-// $i is used to differentiate between attachments from different threads by the same user
-// this is to make sure temp attachments aren't shared, even by the same user
-function get_attachments_request_id($keyformat, $user) {
-	$i = -1;
-	do {
-		++$i;
-		$set = glob("temp/attach_{$keyformat}_{$i}_{$user}_*", GLOB_NOSORT);
-		#echo "temp/attach_{$keyformat}_{$i}_{$user}_*<br/>";
-		#print_r($set);
-	} while($set);
-	return $i;
-}
-
-function get_attachments_key($keyformat, $user) {
-	if (!isset($_POST['attach_id'])) {		
-		$callid = get_attachments_request_id("c{$keyformat}", $user); // No id acquired yet? Get the first available id then.
-	} else {
-		$callid = (int) $_POST['attach_id'];
-	}
-	#echo $callid;
-	return [$callid, "c{$keyformat}_{$callid}"];
-}
-function save_attachments_key($key) {
-	return "<input type='hidden' name='attach_id' value='{$key}'>";
 }
 
 function attachment_name ($id, $thumb = false) { return "attachments/".($thumb ? "t/{$id}.png" : "f/{$id}"); }

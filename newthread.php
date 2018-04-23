@@ -7,7 +7,6 @@
 	
 	// Stop this insanity.  Never index newthread.
 	$meta['noindex'] = true;	
-	const BLANK_KEY = "nk";
 
 	load_forum($_GET['id']);
 	check_forumban($_GET['id'], $loguser['id']);
@@ -67,7 +66,7 @@
 	$userid = $loguser['id'];	
 	// Attachment preview stuff
 	$input_tid  = "";
-	$attach_key   = BLANK_KEY;
+	$attach_key = "";
 	
 	if (isset($_POST['preview']) || isset($_POST['submit'])) {
 		// check alternate login info
@@ -121,17 +120,8 @@
 		
 		// All OK!
 		if ($config['allow-attachments']) {
-			$attachids    = get_attachments_key("n{$_GET['id']}", $userid); // Get the base key to identify the correct files
-			$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
-			$attach_key   = $attachids[1]; // String (base) key for file names
-			$attach_count = process_temp_attachments($attach_key, $userid); // Process the attachments and return the post-processed total
-			if ($attach_count) {
-				// Some files are attached; reconfirm the key
-				$input_tid = save_attachments_key($attach_id);
-			} else {
-				$attach_key = BLANK_KEY; // just in case
-			}
-			
+			$attach_key = "n{$_GET['id']}";
+			$input_tid = process_attachments($attach_key, $userid, 0, ATTACH_INCKEY);
 		}
 		
 		// Needed for thread preview
@@ -160,7 +150,7 @@
 			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 			
 			if ($config['allow-attachments']) {
-				save_attachments($attach_key, $userid, $pid);
+				confirm_attachments($attach_key, $userid, $pid);
 			}		
 			
 			$whatisthis = $_GET['poll'] ? "Poll" : "Thread";

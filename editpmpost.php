@@ -18,6 +18,7 @@
 	if (!$post) {
 		errorpage("Post ID #{$_GET['id']} doesn't exist.",'index.php', 'return to the board');
 	}
+	
 	load_pm_thread($post['thread']);
 	if (!$isadmin && $post['user'] != $loguser['id']) {
 		errorpage("You are not allowed to edit this post.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'the post');
@@ -43,10 +44,7 @@
 			$moodid		= filter_int($_POST['moodid']);
 			
 			if ($config['allow-attachments']) {
-				$savedata  = process_saved_attachments($_GET['id'], 'pm');
-				$extrasize = $savedata['size'];
-				$attachsel = $savedata['del'];
-				process_temp_attachments($attach_key, $loguser['id'], $extrasize);
+				$attachsel = process_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
 			}
 			
 			if (isset($_POST['submit'])) {
@@ -82,10 +80,7 @@
 				$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 				$sql->commit();
 				if ($config['allow-attachments']) {
-					if ($attachsel) {
-						remove_attachments(array_keys($attachsel));
-					}
-					save_attachments($attach_key, $post['user'], $_GET['id'], 'pm');
+					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM, $attachsel);
 				}
 				errorpage("Post edited successfully.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
 				
@@ -246,7 +241,7 @@
 		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM pm_posts WHERE id = {$_GET['id']}");
-			$list = $sql->getresults("SELECT id FROM attachments WHERE pm = {$_GET['id']}");
+			
 			
 			if ($pcount <= 1) {
 				// We have deleted the last remaining post from a thread
@@ -258,8 +253,11 @@
 				$sql->query("UPDATE pm_threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id={$post['thread']}");
 			}
 			
+			if ($config['allow-attachments']) {
+				$list = $sql->getresults("SELECT id FROM attachments WHERE pm = {$_GET['id']}");
+				remove_attachments($list, $_GET['id']);
+			}
 			$sql->commit();
-			remove_attachments($list, $_GET['id']);
 			if ($pcount <= 1) {
 				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","private.php","return to the private message box",0);
 			} else {

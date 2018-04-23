@@ -157,6 +157,49 @@ function attachfield($list, $extra = "") {
 }
 
 
+const ATTACH_PM     = 0b1;  // Handle attachments for PMs, not posts.
+const ATTACH_INCKEY = 0b10; // Use incremented key mode (attachments are not shared between tabs of the same page)
+function process_attachments(&$key, $user, $post = 0, $flags = 0) {
+	
+	 // Special mode where $key is handled as an incomplete "base key"
+	if ($flags & ATTACH_INCKEY) {
+		$attachids    = get_attachments_key($key, $user); // Get the base key to identify the correct files
+		$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
+		$key          = $attachids[1]; // String (base) key for file names
+	}
+	
+	$mode = ($flags & ATTACH_PM) ? 'pm' : false;
+	if ($post) { // Edit post mode
+		$savedata  = process_saved_attachments($post, $mode); // MOVE FUNCTION
+		$extrasize = $savedata['size'];
+		$attachsel = $savedata['del'];	
+	} else {
+		$extrasize = 0;
+		$attachsel = array();
+	}
+	
+	// Total attachments returned:
+	$attach_count = process_temp_attachments($key, $user, $extrasize); // MOVE FUNCTION	
+	
+	if ($flags & ATTACH_INCKEY) { // If some attachments exist, confirm the key for the next page
+		if ($attach_count) {
+			$input_tid = save_attachments_key($attach_id); // MOVE FUNCTION
+		} else {
+			$input_tid = "";
+		}
+		return $input_tid;
+	}
+	return $attachsel;
+}
+
+function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array()) {
+	if ($remove) {
+		remove_attachments(array_keys($remove));
+	}
+	$mode = ($flags & ATTACH_PM) ? 'pm' : 'post';
+	save_attachments($key, $user, $post, $mode); // MOVE FUNCTION
+}
+
 // Update the status of temp attachments after submit/preview is clicked
 // Returns the resulting number of attachments
 function process_temp_attachments($key, $user, $extrasize = 0) {
@@ -478,6 +521,7 @@ function resize_image($image, $max_width, $max_height) {
 	$width     = imagesx($image);
 	$height    = imagesy($image);
 	
+	// TODO: This obliterates the transparency for thumbnails. Fix this.
 	// Don't bother if the image is already under the limits
 	if ($width <= $max_width && $height <= $max_height) {
 		$dst_image = imagecreatetruecolor($width, $height);
@@ -518,6 +562,8 @@ function upload_error($file) {
 function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
 	global $sql;
 	if ($mode == MODE_ANNOUNCEMENT) { // heh welp
+		return array();
+		// TODO: Fix this
 		return $sql->fetchq("
 			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, MIN(p.id) pid
 			FROM threads t
@@ -527,7 +573,7 @@ function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
 			GROUP BY t.id
 			ORDER BY p.date DESC
 			LIMIT {$min},{$ppp}
-		", PDO::FETCH_GROUP, mysql::FETCH_ALL);;
+		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 	}
 	
 	if ($mode == MODE_PM) {

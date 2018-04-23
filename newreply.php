@@ -42,7 +42,8 @@
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = filter_int($_POST['tannc']);
 	
-	$userid = $loguser['id'];
+	$attach_key = $_GET['id'];
+	$userid     = $loguser['id'];
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
 		$error = '';
 		// Trying to post as someone else?
@@ -79,7 +80,7 @@
 		
 		// Process attachments removal
 		if ($config['allow-attachments']) {
-			process_temp_attachments($_GET['id'], $userid);
+			process_attachments($attach_key, $userid);
 		}
 		
 		// All OK
@@ -90,7 +91,7 @@
 			$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
 			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
-				save_attachments($_GET['id'], $userid, $pid);
+				confirm_attachments($attach_key, $userid, $pid);
 			}
 			$sql->commit();
 			

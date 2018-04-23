@@ -62,7 +62,7 @@ if ($_GET['id']) {
 		
 		// Process attachments removal
 		if ($config['allow-attachments']) {
-			process_temp_attachments($attach_key, $loguser['id']);
+			process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM);
 		}
 				
 		if (isset($_POST['submit'])) {
@@ -70,7 +70,7 @@ if ($_GET['id']) {
 			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
 			$pid = create_pm_post($loguser, $_GET['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
-				save_attachments($attach_key, $loguser['id'], $pid, 'pm');
+				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
 			}
 			$sql->commit();
 			return header("Location: showprivate.php?pid=$pid#$pid");
@@ -264,16 +264,8 @@ else {
 		
 		// All OK!
 		if ($config['allow-attachments']) {
-			$attachids    = get_attachments_key("npmx", $loguser['id']); // Get the base key to identify the correct files
-			$attach_id    = $attachids[0]; // Cached ID to safely reuse attach_key across requests
-			$attach_key   = $attachids[1]; // String (base) key for file names
-			$attach_count = process_temp_attachments($attach_key, $loguser['id']); // Process the attachments and return the post-processed total
-			if ($attach_count) {
-				// Some files are attached; reconfirm the key
-				$input_tid = save_attachments_key($attach_id);
-			} else {
-				$attach_key = ""; // just in case
-			}
+			$attach_key = "npmx";
+			$input_tid = process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM | ATTACH_INCKEY);
 		}
 		
 		// Needed for thread preview
@@ -296,7 +288,7 @@ else {
 			set_pm_acl($destid, $tid); // and add yourself automatically
 			
 			if ($config['allow-attachments']) {
-				save_attachments($attach_key, $loguser['id'], $pid, 'pm');
+				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
 			}
 			$sql->commit();
 			

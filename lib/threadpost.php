@@ -237,9 +237,10 @@
 			$ppost['piclink']   = "";
 		}
 		
-		// Attachment stuff / edit marker
+		// Attachment preview stuff / edit marker
 		if ($flags == PREVIEW_EDITED) {
-			//$ppost['id'] = $data['id'];
+			// If we're viewing the post preview when *EDITING* a new post/pm
+			// the attachment list should contain the temp attachments and the already uploaded attachments
 			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
 				$attach = get_saved_attachments($data['id'], isset($data['attach_pm']));
 				$ppost['attach'] = array_merge(filter_attachments($attach, $data['attach_sel']), get_temp_attachments($data['attach_key'], $user['id']));
@@ -250,7 +251,8 @@
 		} else if ($flags == PREVIEW_PROFILE) {
 			$data['ip'] = $user['lastip'];
 		} else {
-			//$ppost['id'] = 0; // Not used; should be setting up $quote
+			// If we're viewing the post preview when creating a new post/pm/etc
+			// the attachment list should contain the temp attachments
 			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
 				$ppost['attach'] = get_temp_attachments($data['attach_key'], $user['id']);
 			}

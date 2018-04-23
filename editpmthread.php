@@ -58,16 +58,18 @@
 				errorpage("You haven't confirmed the choice.", "showprivate.php?id={$_GET['id']}", 'the thread');
 			}
 			$sql->beginTransaction();
-			$attachids = get_saved_attachments_ids($sql->getresults("SELECT id FROM pm_posts WHERE thread = {$_GET['id']}"), 'pm');
-			//errorpage(print_r($attachids, true)." attachments oy");
+			
 			$sql->query("DELETE FROM pm_posts WHERE thread = {$_GET['id']}");	
 			$sql->query("DELETE FROM pm_threads WHERE id = {$_GET['id']}");
 			$sql->query("DELETE FROM pm_access WHERE thread = {$_GET['id']}");
-			$sql->query("DELETE FROM pm_threadsread WHERE tid = {$_GET['id']}");	
-			$sql->commit();
-			if ($attachids) {
-				remove_attachments($attachids);
+			$sql->query("DELETE FROM pm_threadsread WHERE tid = {$_GET['id']}");
+			if ($config['allow-attachments']) {
+				$attachids = get_saved_attachments_ids($sql->getresults("SELECT id FROM pm_posts WHERE thread = {$_GET['id']}"), 'pm');
+				if ($attachids) {
+					remove_attachments($attachids);
+				}
 			}
+			$sql->commit();
 			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "private.php", "your private message box");
 			
 		}

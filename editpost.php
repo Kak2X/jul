@@ -63,10 +63,7 @@
 			$moodid		= filter_int($_POST['moodid']);
 
 			if ($config['allow-attachments']) {
-				$savedata  = process_saved_attachments($_GET['id']);
-				$extrasize = $savedata['size'];
-				$attachsel = $savedata['del'];
-				process_temp_attachments($attach_key, $loguser['id'], $extrasize);
+				$attachsel = process_attachments($attach_key, $loguser['id'], $_GET['id']); // Returns attachments marked for removal
 			}
 			
 			if (isset($_POST['submit'])) {
@@ -120,10 +117,7 @@
 				$sql->commit();
 				
 				if ($config['allow-attachments']) {
-					if ($attachsel) {
-						remove_attachments(array_keys($attachsel));
-					}
-					save_attachments($attach_key, $post['user'], $_GET['id']);
+					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], 0, $attachsel);
 				}
 				
 				errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
@@ -278,7 +272,7 @@
 		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM posts WHERE id = {$_GET['id']}");
-			$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$_GET['id']}");
+			
 			
 			if ($pcount <= 1) {
 				// We have deleted the last remaining post from a thread
@@ -291,9 +285,12 @@
 				$sql->query("UPDATE threads SET replies=replies-1, lastposter={$p['user']}, lastpostdate={$p['date']} WHERE id={$thread['id']}");
 				$sql->query("UPDATE forums SET numposts=numposts-1 WHERE id={$forum['id']}");
 			}
-			
+			if ($config['allow-attachments']) {
+				$list = $sql->getresults("SELECT id FROM attachments WHERE post = {$_GET['id']}");
+				remove_attachments($list, $_GET['id']);
+			}
 			$sql->commit();
-			remove_attachments($list, $_GET['id']);
+			
 			if ($pcount <= 1) {
 				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","forum.php?id={$thread['forum']}","return to the forum",0);
 			} else {

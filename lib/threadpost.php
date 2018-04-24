@@ -100,7 +100,7 @@
 					$post['edited'] .= " <{$w} href='?pid={$post['id']}&pin={$post['id']}&rev={$i}#{$post['id']}'>{$i}</{$w}>";
 				}
 				$w = ($i == $sel) ? "z" : "a"; // Last revision
-				$post['edited'] .= " <{$w} href='?pid={$post['id']}#{$post['id']}'>3</{$w}>";
+				$post['edited'] .= " <{$w} href='?pid={$post['id']}#{$post['id']}'>{$i}</{$w}>";
 			}
 		} else {
 			$post['edited'] = "";

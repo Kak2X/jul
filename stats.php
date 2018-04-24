@@ -82,6 +82,7 @@
 	<?php
 echo //tblinfo('posts_text').
 	tblinfo('posts')
+	.tblinfo('posts_old')
 	.tblinfo('pm_posts')
 	//.tblinfo('pmsgs_text')
 	.tblinfo('postlayouts')

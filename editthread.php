@@ -76,6 +76,7 @@
 			$sql->beginTransaction();
 			
 			$sql->query("DELETE FROM threads WHERE id={$_GET['id']}");
+			$sql->query("DELETE FROM posts_old WHERE pid IN (SELECT id FROM posts WHERE thread = {$_GET['id']})");
 			$deleted = $sql->query("DELETE FROM posts WHERE thread = {$_GET['id']}");
 			$numdeletedposts = $sql->num_rows($deleted);
 			

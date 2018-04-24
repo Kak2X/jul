@@ -25,6 +25,7 @@ else if ($_POST['knockout']) {
 	
 	$sql->beginTransaction();
 	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
+	$sql->query("DELETE FROM posts_old WHERE pid IN (SELECT id FROM threads WHERE user = '{$target_id}') OR pid IN (SELECT id FROM posts WHERE user = '{$target_id}')");
 	$sql->query("DELETE FROM posts WHERE user = '{$target_id}' OR id IN (SELECT id FROM threads WHERE user = '{$target_id}')"); // LIMIT 50
 	echo "Deleted posts.\n";
 	

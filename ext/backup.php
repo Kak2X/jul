@@ -60,7 +60,7 @@
 		'postlayouts',
 		'postradar',
 		'posts',
-//		'posts_old',
+		'posts_old',
 		'ranks',
 		'ranksets',
 		'rpg_classes',

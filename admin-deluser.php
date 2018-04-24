@@ -50,8 +50,10 @@
 			// Since we're moving all posts to the deleted user account, include the user's name as a "signature"
 			$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
 			$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
-			$sql->query("UPDATE posts    SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
-			$sql->query("UPDATE pm_posts SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
+			$sql->query("UPDATE posts_old SET revuser = {$config['deleted-user-id']} WHERE revuser = $id");
+			$sql->query("UPDATE posts_old SET headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE pid IN (SELECT id FROM posts WHERE user = {$id})");
+			$sql->query("UPDATE posts     SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
+			$sql->query("UPDATE pm_posts  SET user = {$config['deleted-user-id']}, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
 			
 			$sql->query("UPDATE threads     SET user         = {$config['deleted-user-id']} WHERE user=$id");
 			$sql->query("UPDATE threads     SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");

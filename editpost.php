@@ -38,7 +38,7 @@
 	
 	$links = array(
 		$forum['title']    => "forum.php?id={$forum['id']}",
-		$thread['title']   => "thread.php?id={$_GET['id']}",
+		$thread['title']   => "thread.php?id={$post['thread']}",
 		"Edit post"        => NULL,
 	);
 	$barlinks = dobreadcrumbs($links); 

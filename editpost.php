@@ -98,21 +98,39 @@
 					if ($signid) $sign = "";
 				}
 				
+				
 				$sql->beginTransaction();
 				
+				// Post update data which does not trigger a new revision
 				$pdata = array(
-					'text'		=> xssfilters($message),
-					'headtext'	=> xssfilters($head),
-					'signtext'	=> xssfilters($sign),
-					
 					'options'	=> $nosmilies . "|" . $nohtml,
 					'edited'	=> $edited,
 					'editdate' 	=> ctime(),
-					
-					'headid'	=> $headid,
-					'signid'	=> $signid,
-					'moodid'	=> $moodid,	
+					'moodid'	=> $moodid,
 				);
+				
+				if ($post['text'] != $message || $post['headtext'] != $head || $post['signtext'] != $sign) {
+					// Old revisions are stored in their own containment area, and not in the same table
+					$save = array(
+						'pid'      => $_GET['id'],
+						'revdate'  => $post['date'],   // Revision dated
+						'revuser'  => ($post['revision'] > 1 ? $loguser['id'] : $post['user']), // Revision edited by
+						'text'     => $post['text'],
+						'headtext' => $post['headtext'],
+						'signtext' => $post['signtext'],
+						'headid'   => $post['headid'],
+						'signid'   => $post['signid'],
+						'revision' => $post['revision'],
+					);
+					$sql->queryp("INSERT INTO posts_old SET ".mysql::setplaceholders($save), $save);
+					// The post update query now updates these as well
+					$pdata['text']     = xssfilters($message);
+					$pdata['headtext'] = xssfilters($head);
+					$pdata['signtext'] = xssfilters($sign);
+					$pdata['headid']   = $headid;
+					$pdata['signid']   = $signid;
+					$pdata['revision'] = $post['revision'] + 1;
+				}
 				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
 				$sql->commit();
 				

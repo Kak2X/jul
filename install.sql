@@ -942,7 +942,7 @@ CREATE TABLE `misc` (
 
 LOCK TABLES `misc` WRITE;
 /*!40000 ALTER TABLE `misc` DISABLE KEYS */;
-INSERT INTO `misc` () VALUES ();
+INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,NULL,NULL,0,NULL,0,0,0);
 /*!40000 ALTER TABLE `misc` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1344,6 +1344,7 @@ CREATE TABLE `posts` (
   `edited` text COLLATE utf8mb4_unicode_ci,
   `editdate` int(11) unsigned DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `revision` tinyint(3) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `thread` (`thread`),
   KEY `date` (`date`),
@@ -1359,6 +1360,38 @@ CREATE TABLE `posts` (
 LOCK TABLES `posts` WRITE;
 /*!40000 ALTER TABLE `posts` DISABLE KEYS */;
 /*!40000 ALTER TABLE `posts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `posts_old`
+--
+
+DROP TABLE IF EXISTS `posts_old`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `posts_old` (
+  `id` mediumint(8) NOT NULL AUTO_INCREMENT,
+  `pid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `revuser` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `revdate` int(10) unsigned NOT NULL DEFAULT '0',
+  `headid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `signid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `headtext` text COLLATE utf8mb4_unicode_ci,
+  `text` mediumtext COLLATE utf8mb4_unicode_ci,
+  `signtext` text COLLATE utf8mb4_unicode_ci,
+  `revision` tinyint(3) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `pid` (`pid`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `posts_old`
+--
+
+LOCK TABLES `posts_old` WRITE;
+/*!40000 ALTER TABLE `posts_old` DISABLE KEYS */;
+/*!40000 ALTER TABLE `posts_old` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -2034,4 +2067,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-04-16 23:15:57
+-- Dump completed on 2018-04-24 10:29:32

@@ -6,6 +6,7 @@
 	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
 	$_GET['pid']         = filter_int($_GET['pid']); // Post ID
 	$_GET['pin']         = filter_int($_GET['pin']); // Selected post ID for peeking (when a post is soft deleted)
+	$_GET['rev']         = filter_int($_GET['rev']); // Post revision of pinned post
 	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
 	$_GET['vact']        = filter_string($_GET['vact']); // Vote action
 	$_GET['vote']        = filter_int($_GET['vote']); // Vote choice ID
@@ -229,11 +230,12 @@
 	// heh
 	$posts = $sql->query("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
-				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted,
+				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
 				u.id uid, u.name, $ufields, u.regdate
 		FROM posts p
 		
 		LEFT JOIN users u ON p.user = u.id
+		
 		WHERE {$searchon}
 		ORDER BY p.id
 		LIMIT $min,$ppp
@@ -275,6 +277,17 @@
 			} else {
 				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
 				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+			}
+			// Fetch the selected post revision
+			if ($ismod && $post['id'] == $_GET['pin'] && $_GET['rev']) {
+				$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, headid, signid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+				if (!$oldrev) {
+					$post['text'] = "<i>Post revision #{$_GET['rev']} not found.</i>";
+					$post['headtext'] = $post['signtext'] = "";
+					$post['headid']   = $post['signid']   = 0;
+				} else {
+					$post = array_merge($post, $oldrev);
+				}
 			}
 			if ($sysadmin && $config['allow-post-deletion']) {
 				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";

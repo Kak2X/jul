@@ -2,7 +2,7 @@
 	
 	function threadpost($post,$bg,$forum = 0,$pthread='') {
 		
-		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin;
+		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -82,9 +82,26 @@
 			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
 		}
 
-		
+		// Edit date and revision selector
 		if (filter_int($post['editdate'])) {
-			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']).")";
+			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']);
+			if (!$ismod || $post['revision'] < 2) { // Hide selector
+				$post['edited'] .= ")";
+			} else {
+				// Display revision info if one is selected
+				if ($_GET['rev']) {
+					$post['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
+				}
+				$post['edited'] .= ") | Revisions:";
+				$sel = $_GET['rev'] ? $_GET['rev'] : $post['revision']; // Select max revision if none is specified
+				// Revision selector
+				for ($i = 1; $i < $post['revision']; ++$i) {
+					$w = ($i == $sel) ? "z" : "a";
+					$post['edited'] .= " <{$w} href='?pid={$post['id']}&pin={$post['id']}&rev={$i}#{$post['id']}'>{$i}</{$w}>";
+				}
+				$w = ($i == $sel) ? "z" : "a"; // Last revision
+				$post['edited'] .= " <{$w} href='?pid={$post['id']}#{$post['id']}'>3</{$w}>";
+			}
 		} else {
 			$post['edited'] = "";
 		}

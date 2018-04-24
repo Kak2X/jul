@@ -621,7 +621,7 @@ piwikTracker.enableLinkTracking();
 				</td>
 				<td>
 					<span class='fonts'>
-						Acmlmboard - <?=BOARD_VERSION?><br>
+						Acmlmboard - <?= file_get_contents('version.txt') ?><br>
 						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al. 
 					</span>
 				</td>

@@ -282,7 +282,7 @@
 			if ($ismod && $post['id'] == $_GET['pin'] && $_GET['rev']) {
 				$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, headid, signid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
 				if (!$oldrev) {
-					$post['text'] = "<i>Post revision #{$_GET['rev']} not found.</i>";
+					$post['text'] = "(Post revision #{$_GET['rev']} not found)";
 					$post['headtext'] = $post['signtext'] = "";
 					$post['headid']   = $post['signid']   = 0;
 				} else {

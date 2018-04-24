@@ -55,7 +55,7 @@
 		$_GET['page']		= filter_int($_GET['page']);
 	}
 	$specialscheme = $specialtitle = NULL;
-	
+	$forum_error   = "";
 	if ($_GET['id']) {
 		load_thread($_GET['id']);
 

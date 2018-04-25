@@ -438,7 +438,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		if (isset($css_extra)) {
 			$css .= $css_extra . "\n";
 		}
-		$css.='</style>';
+		$css .= '</style>';
+	} else if (isset($css_extra)) {
+		$css .= "<style type='text/css'>{$css_extra}</style>\n";
 	}
 
 	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";

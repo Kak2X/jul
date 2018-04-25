@@ -89,11 +89,13 @@
 				$post['edited'] .= ")";
 			} else {
 				// Display revision info if one is selected
-				if ($_GET['rev']) {
+				if ($_GET['rev'] && $_GET['pin'] == $post['id']) {
 					$post['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
+					$sel = $_GET['rev'];
+				} else { // Select max revision if none is specified
+					$sel = $post['revision'];
 				}
 				$post['edited'] .= ") | Revisions:";
-				$sel = $_GET['rev'] ? $_GET['rev'] : $post['revision']; // Select max revision if none is specified
 				// Revision selector
 				for ($i = 1; $i < $post['revision']; ++$i) {
 					$w = ($i == $sel) ? "z" : "a";

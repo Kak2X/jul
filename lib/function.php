@@ -16,6 +16,9 @@
 	set_exception_handler('exception_reporter');
 		
 	require 'lib/defines.php';
+	if (!file_exists('lib/config.php')) {
+		die("Configuration file missing. Please run the <a href='install'>installer</a>.");
+	}
 	require 'lib/config.php';
 	require 'lib/mysql.php';
 	require 'lib/layout.php';

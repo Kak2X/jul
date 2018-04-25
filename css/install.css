@@ -1,0 +1,67 @@
+body{
+	background: 	#333;
+	font-family:	"Courier New", Courier, monospace;
+	font-size:		13px;
+	color:			#ddd;
+}
+.container{
+	padding: 		4px;
+	border-spacing: 0px;
+	border: 		0px;
+	min-width: 		700px;
+	max-width: 		1000px;
+	height: 		100%;
+	text-align:		center;
+}
+.tdbgh{
+	text-align:		center;
+	background:		#222;
+	width:			0px; /* ?????? (this was width=0 in td)*/
+}
+.table{
+	background:		#111;
+	vertical-align:	top;
+/*	height: 		100%;*/
+	font-family:	"Courier New", Courier, monospace;
+}
+.warn, .highlight, .ok { font-weight: bold }
+.warn		{ color: #ff8080 }
+.highlight	{ color: #e0e080 }
+.ok			{ color: #60ff60 }
+
+.tdbg1, .tdbg2{
+	background:		#333;
+	border-spacing: 0px;
+	border: 		0px;
+	/*white-space: 	nowrap;*/
+}
+.tdbg2{
+	background:		#282828;
+}
+.tdbgc{
+	background:		#224;
+	border-spacing: 0px;
+	border: 		0px;
+	text-align:		center;
+	/*white-space: 	nowrap;*/
+}
+a:link,a:visited,a:active,a:hover{
+	text-decoration-color: #80FF80;
+	color:			#80FF80;
+	font-weight: 	normal;
+}
+textarea, input, select, button{
+	border: 			1px solid #ffdd33;
+	background-color: 	#000000;
+	color: 				#DDDDDD;
+	font-family:		"Courier New", Courier, monospace;
+	font-size:			13px;
+}
+.submit {
+	border: 			2px solid #80FF80;
+}
+.sel {
+	text-align: 	left;
+	border-spacing: 0px;
+	border: 		0px;
+}

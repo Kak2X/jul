@@ -3,7 +3,6 @@
 .old/
 board/
 xkeeper/
-version.txt
 
 # It's a secret to everybody
 lib/firewall.php

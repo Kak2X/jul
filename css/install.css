@@ -43,8 +43,10 @@ body{
 	border-spacing: 0px;
 	border: 		0px;
 	text-align:		center;
+	font-family:	"Courier New", Courier, monospace;
 	/*white-space: 	nowrap;*/
 }
+.fonts { font-size: 11px !important; }
 a:link,a:visited,a:active,a:hover{
 	text-decoration-color: #80FF80;
 	color:			#80FF80;

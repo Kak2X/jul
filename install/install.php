@@ -67,8 +67,8 @@ if ($_POST['step'] <= STEP_INTRO)  {
 <html>
 	<head>
 		<title>Acmlmboard Installer</title>
-		<link rel='stylesheet' href='../css/base.css' type='text/css'>
-		<link rel='stylesheet' href='../css/install.css' type='text/css'>
+		<link rel='stylesheet' href='../schemes/base.css' type='text/css'>
+		<link rel='stylesheet' href='../schemes/spec-install.css' type='text/css'>
 	</head>
 	<body>
 	<form method='POST' action='?'>

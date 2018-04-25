@@ -1,3 +1,3 @@
 <?php
 	$schemetype = 1;
-	$schemefile = "hydras_blue_thing";
+	$schemefile = "hydras_blue_thing_v2";

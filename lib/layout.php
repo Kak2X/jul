@@ -328,14 +328,14 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$css = "";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='css/$schemefile.css'>";
+		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
 		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css = "<link rel='stylesheet' href='css/base.css' type='text/css'>
+		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }

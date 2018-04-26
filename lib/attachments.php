@@ -154,12 +154,12 @@ function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 			$attach_id = -1;
 			do {
 				++$attach_id;
-				$set = glob("temp/attach_c{$keyformat}_{$attach_id}_{$user}_*", GLOB_NOSORT);
+				$set = glob("temp/attach_c{$key}_{$attach_id}_{$user}_*", GLOB_NOSORT);
 			} while($set);
 		} else {
 			$attach_id = (int) $_POST['attach_id'];
 		}
-		$key = "c{$key}_{$callid}";
+		$key = "c{$key}_{$attach_id}";
 		//--
 	}
 	

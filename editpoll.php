@@ -208,8 +208,20 @@
 			<td class='tdbg1 center b'>Choices:</td>
 			<td class='tdbg2'>
 				<?=$choice_txt?>
-				<input type='submit' name='changeopt' value='Submit changes'>&nbsp;and show
-				&nbsp;<input type='text' name='addopt' value='<?=$addopt?>' size='4' maxlength='1'>&nbsp;options
+				<noscript>
+					<style type="text/css">#jsadd{ display: none }</style>
+					<input type='submit' name='changeopt' value='Submit changes'>&nbsp;and show 
+					&nbsp;<input type='text' name='addopt' value='<?=$addopt?>' size='4' maxlength='1'>&nbsp;options
+				</noscript>
+			</td>
+		</tr>
+		<tr id="jsadd">
+			<td class='tdbg1 center b'>New choices:</td>
+			<td class='tdbg2'>
+				Add choice: <input type="button" value="+" onclick="addchoice()">
+				<div id="newchoices">
+					<!-- reserved for JS-added choices -->
+				</div>
 			</td>
 		</tr>
 		<tr>
@@ -230,6 +242,29 @@
 	</table>
 	</form>
 	<?= $barlinks ?>
+
+<script type="text/javascript">
+	var area = document.getElementById('newchoices');
+	var optid  = <?= $i ?>;
+	var optval = <?= $j ?>;
+	function addchoice() {
+		// Yeah ok
+		area.innerHTML += ""
+			+"<div id='cchoice"+optid+"'>"
+			+"<input name='chtext["+optid+"]' size='30' maxlength='255' value='' type='text'> &nbsp; "
+			+"Color: <input name='chcolor["+optid+"]' size='7' maxlength='25' value='' type='text'> &nbsp; "
+			+"<input type='button' value='-' onclick='delchoice("+optid+")'><br>"
+			+"</div>";
+		optid++;
+		optval++;
+	}
+	function delchoice(id) {
+		var choice = document.getElementById('cchoice'+id);
+		if (choice) { 
+			choice.parentNode.removeChild(choice);
+		}
+	}
+</script>
 	<?php
 		
 	pagefooter();

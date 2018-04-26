@@ -415,7 +415,6 @@ if (!$error) {
 		
 			// Decided to drop the database?
 			if ($db && $_POST['dropdb'] == 1) {
-				die("OH NO ATTEMPTED DROP!");
 				print "Dropping database `{$_POST['dbname']}`...\n";
 				$sql->query("DROP DATABASE IF EXISTS `{$_POST['dbname']}`");
 			}

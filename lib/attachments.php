@@ -221,7 +221,7 @@ function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 
 	
 	if ($flags & ATTACH_INCKEY) { // If some attachments are left (while in key increment mode), confirm the key for the next refresh
-		$input_tid = $total ? "<input type='hidden' name='attach_id' value='{$key}'>" : ""; 
+		$input_tid = $total ? "<input type='hidden' name='attach_id' value='{$attach_id}'>" : ""; 
 		return $input_tid;
 	}
 	return $attachsel;

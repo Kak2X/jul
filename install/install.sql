@@ -2026,6 +2026,34 @@ LOCK TABLES `users_avatars` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `users_comments`
+--
+
+DROP TABLE IF EXISTS `users_comments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `users_comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userfrom` smallint(5) unsigned NOT NULL,
+  `userto` smallint(5) unsigned NOT NULL,
+  `date` int(32) NOT NULL,
+  `text` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `userfrom` (`userfrom`),
+  KEY `userto` (`userto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users_comments`
+--
+
+LOCK TABLES `users_comments` WRITE;
+/*!40000 ALTER TABLE `users_comments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `users_comments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `users_rpg`
 --
 

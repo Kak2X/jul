@@ -52,7 +52,8 @@ else if ($_POST['knockout']) {
 	echo "Deleted postread data.\n";
 	
 	$sql->query("DELETE FROM events WHERE user = '{$target_id}'");	
-	echo "Deleted events.\n";
+	$sql->query("DELETE FROM users_comments WHERE userfrom = '{$target_id}' OR userto = '{$target_id}'");	
+	echo "Deleted misc data.\n";
 	
 	$sql->commit();
 	echo "Success! Finishing job.\n";

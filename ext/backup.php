@@ -78,7 +78,7 @@
 		'users_rpg',
 //		'users_subgroups',
 		'users_avatars',
-		//'user_comments'#boardc
+		'users_comments'
 	);
 	
 	// We don't need everything

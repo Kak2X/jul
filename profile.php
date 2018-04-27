@@ -4,8 +4,9 @@
 	
 	require 'lib/function.php';
 	
-	$_GET['id']		= filter_int($_GET['id']);
-	$_GET['action'] = filter_string($_GET['action']);
+	$_GET['id']     = filter_int($_GET['id']);
+	$_GET['page']   = filter_int($_GET['page']);
+	//$_GET['action'] = filter_string($_GET['action']);
 	
 	$user = $sql->fetchq("SELECT * FROM users WHERE id = {$_GET['id']}");
 	if (!$user) {
@@ -265,6 +266,7 @@
 		0 => [
 			"Show posts"                => ["thread.php?user={$_GET['id']}"],
 			"View threads by this user" => ["forum.php?user={$_GET['id']}"],
+			"View comments by this user" => ["usercomment.php?id={$_GET['id']}"],
 		],
 		1 => [
 			"View forum bans to this user" => ["forumbansbyuser.php?id={$_GET['id']}"],
@@ -307,6 +309,54 @@
 		$options[0]["Preview mood avatar"] = ["avatar.php?id={$_GET['id']}", "class='popout' target='_blank'"];	
 	}
 	
+	/*
+		Profile comments
+	*/
+	$ppp = get_ppp();
+	$comments = $sql->query("
+		SELECT c.id cid, c.userfrom, c.date, c.text, $userfields
+		FROM users_comments c
+		LEFT JOIN users u ON c.userfrom = u.id
+		WHERE c.userto = {$_GET['id']}
+		ORDER BY c.id DESC
+		LIMIT ".($_GET['page'] * $ppp).", $ppp
+	");
+	$total      = $sql->resultq("SELECT COUNT(id) FROM users_comments WHERE userto = {$_GET['id']}");
+	$pagelinks  = pagelist("usercomment.php?id={$_GET['id']}&ppp={$ppp}&to", $total, $ppp);
+	if ($pagelinks)
+		$pagelinks = "<tr><td class='tdbg2' colspan=3>{$pagelinks}</td></tr>";
+	
+	// Comment list
+	$comm_txt = "";
+	$i = 0;
+		
+	if (!$sql->num_rows($comments)) {
+		$comm_txt = "<tr><td class='tdbg1 center' colspan=3><i>There are no profile comments for this user.</i></td></tr>";
+	} else while ($x = $sql->fetch($comments)){
+		$dellink = $isadmin ? "<a href='usercomment.php?act=del&id={$x['cid']}&auth={$token}'>Remove</a>" : $x['cid'];
+		$cell = ($i++ % 2) + 1;
+		$comm_txt .= "
+			<tr>
+				<td class='tdbg{$cell} center nobr' style='width: 60px'>{$dellink}</td>
+				<td class='tdbg{$cell} center nobr' style='width: 150px'>".printdate($x['date'])."</td>
+				<td class='tdbg{$cell}'>".getuserlink($x).": ".htmlspecialchars($x['text'])."</td>
+			</tr>";
+	}
+	
+	// New comment link
+	if (!$loguser['id']) {
+		$comm_new = "You must be logged in to add a comment for this user.";
+	} else if ($banned) {
+		$comm_new = "Banned users aren't allowed to add profile comments.";
+	} else {
+		$comm_new = "
+		<form method='POST' action='usercomment.php?act=add&id={$_GET['id']}'>
+			".getuserlink($loguser).":&nbsp;<input type='text' name='text' class='fonts' style='width: 800px; height: 16px; vertical-align: middle'> <input type='submit' class='fonts' name='add' value='Add comment'>
+			".auth_tag()."
+		</form>
+		";
+	}
+	
 ?>
 <div>Profile for <?=$userlink?></div>
 <table cellpadding=0 cellspacing=0 border=0>
@@ -335,6 +385,14 @@
 <?= profile_table($profile, 'Personal information') ?>
 <br>
 <?= preview_post($user, $data, PREVIEW_PROFILE, "Sample post") ?>
+<br>
+<table class='table fonts' id='comments'>
+	<tr><td class='tdbgh center' colspan=3>Profile Comments</td></tr>
+	<?= $comm_txt ?>
+	<?= $pagelinks ?>
+	<tr><td class='tdbg2' colspan=3><?= $comm_new ?></td></tr>
+</table>
+<br>
 <table class='table'>
 	<tr><td class='tdbgh fonts center'>Options</td></tr>
 	<?= profile_controls($options, 0) ?>

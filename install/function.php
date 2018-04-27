@@ -57,16 +57,21 @@
 			</tr>";
 	}
 	
-	function set_powl($name, $desc, $default = 0){
+	function set_powl($type, $name, $desc, $default = 0){
+		global $pwlnames;
 		$field = get_input_val($name, $default);
 		$key   = get_input_key($name);
 		
+		$list = "";
+		foreach ($pwlnames as $id => $name) {
+			$list .= "<option value='{$id}' ".($field == $id ? "selected" : "").">{$name}</option>";
+		}
 		return "
 			<tr>
 				<td class='tdbg1 b center'>$desc</td>
 				<td class='tdbg2'>
-					(POWERLEVEL SELECT LIST GOES HERE)
-					<input type='hidden' name='{$key}[1]' value='0'>
+					<select name='{$key}[0]'>{$list}</select>
+					<input type='hidden' name='{$key}[1]' value='{$type}'>
 				</td>
 			</tr>";
 	}

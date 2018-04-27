@@ -947,6 +947,65 @@ INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,NULL,NULL,0,NULL,0,0,0)
 UNLOCK TABLES;
 
 --
+-- Table structure for table `news`
+--
+
+DROP TABLE IF EXISTS `news`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `news` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` text NOT NULL,
+  `text` text NOT NULL,
+  `user` int(32) NOT NULL,
+  `time` int(32) NOT NULL,
+  `cat` text,
+  `hide` bit(1) NOT NULL DEFAULT b'0',
+  `lastedituser` int(32) NOT NULL DEFAULT '0',
+  `lastedittime` int(32) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Used by the external "plugin" news.php';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `news`
+--
+
+LOCK TABLES `news` WRITE;
+/*!40000 ALTER TABLE `news` DISABLE KEYS */;
+/*!40000 ALTER TABLE `news` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `news_comments`
+--
+
+DROP TABLE IF EXISTS `news_comments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `news_comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `pid` int(32) NOT NULL,
+  `user` int(32) NOT NULL,
+  `time` int(32) NOT NULL,
+  `hide` bit(1) NOT NULL DEFAULT b'0',
+  `text` text NOT NULL,
+  `lastedituser` int(32) NOT NULL DEFAULT '0',
+  `lastedittime` int(32) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `news_comments`
+--
+
+LOCK TABLES `news_comments` WRITE;
+/*!40000 ALTER TABLE `news_comments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `news_comments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `pendingusers`
 --
 
@@ -1630,7 +1689,7 @@ CREATE TABLE `schemes` (
 
 LOCK TABLES `schemes` WRITE;
 /*!40000 ALTER TABLE `schemes` DISABLE KEYS */;
-INSERT INTO `schemes` VALUES (0,1,'Night','night.php',0),(1,3,'Red Night (Drag)','rednight.php',0),(2,2,'The Com Port (BMF)','comport.php',0),(3,4,'Christmas','xmas.php',0),(4,5,'Cuppycakes13','cuppycakes.php',0),(5,6,'Hydra\'s Blue Thing','hydras_blue_thing.php',0),(6,7,'Mario Movie','mariomovie.php',0),(7,8,'Hydra\'s Blue Thing (Alternate)','hydras_blue_thing_alt.php',0),(8,9,'Purple','purple.php',0),(9,10,'Kafuka','kafuka.php',0),(10,11,'The Horrible Forced Scheme','ccs.php',0),(12,12,'Green Night (Bloodstar)','greennight.php',0),(13,13,'GarBG (FirePhoenix)','garbg.php',0),(14,14,'Darkest Night (Tyty)','dnss.php',0),(15,15,'Fragmentation II','fragmentation2.php',0),(16,16,'Summer Dreams','ymar.php',0),(20,20,'Desolation','desolation.php',0),(21,22,'Pinstripe Blue (Treeki)','pinstripe.php',0),(42,23,'The Lazy Null Scheme','null.php',0),(101,21,'Hydra\'s Blue Thing (V2)','hydras_blue_thing_v2.php',0),(150,150,'AE Torture','aesucks.php',0),(151,151,'Daily Cycle','dailycycle.php',0),(152,152,'Aceboard','aceboard.php',0),(153,153,'Bloodlust','bloodlust.php',0),(154,154,'Classic','classic.php',0),(155,155,'Daniversary','dani.php',0),(156,156,'Circuit','dig.php',0),(157,157,'End of FF','endofff.php',0),(158,158,'FF9','ff9a.php',0),(159,159,'Hot Fire','fire.php',0),(160,160,'Halloweiner','halloweiner.php',0),(161,161,'Horde','horde.php',0),(162,162,'Icy Blue','ice.php',0),(163,163,'Kirby','kirby.php',0),(164,164,'Lameboard','lameboard.php',0),(165,165,'Mario','mario.php',0),(166,166,'Mega Man','megaman.php',0),(167,167,'Neon','neon.php',0),(168,168,'NES','nes.php',0),(169,169,'Night (Classic)','night_old.php',0),(170,170,'Old Blue','oldblue.php',0),(171,171,'Purple Planet','planet.php',0),(172,172,'ROM Hack Domain','romhackdomain.php',0),(173,173,'Battleship Down','ship.php',0),(174,174,'Tartan','tartan.php',0),(175,175,'Twilight','twilight.php',0),(176,176,'TWINKLE YAY ^____^','twinkle.php',0),(177,177,'wtfweb\'s (bright)','wtfweb.php',0),(178,178,'Yoshi','yoshi.php',0),(179,152,'Alliance','alliance.php',0),(202,202,'Attitude Barn','spec-attitude.php',1),(203,203,'Black Hole','spec-blackhole.php',1),(204,204,'Subcon','spec-subcon.php',1),(205,205,'Top Secret','spec-topsecret.php',1),(206,206,'Trolldra','spec-trolldra.php',1),(207,207,'Waffles','spec-waffle.php',1),(208,208,'The Zen','spec-zen.php',1),(209,209,'Unfiction','spec-unfiction.php',1),(210,210,'Installer','spec-installer.php',1);
+INSERT INTO `schemes` VALUES (0,1,'Night','night.php',0),(1,3,'Red Night (Drag)','rednight.php',0),(2,2,'The Com Port (BMF)','comport.php',0),(3,4,'Christmas','xmas.php',0),(4,5,'Cuppycakes13','cuppycakes.php',0),(5,6,'Hydra\'s Blue Thing','hydras_blue_thing.php',0),(6,7,'Mario Movie','mariomovie.php',0),(7,8,'Hydra\'s Blue Thing (Alternate)','hydras_blue_thing_alt.php',0),(8,9,'Purple','purple.php',0),(9,10,'Kafuka','kafuka.php',0),(10,11,'The Horrible Forced Scheme','ccs.php',0),(12,12,'Green Night (Bloodstar)','greennight.php',0),(13,13,'GarBG (FirePhoenix)','garbg.php',0),(14,14,'Darkest Night (Tyty)','dnss.php',0),(15,15,'Fragmentation II','fragmentation2.php',0),(16,16,'Summer Dreams','ymar.php',0),(20,20,'Desolation','desolation.php',0),(21,22,'Pinstripe Blue (Treeki)','pinstripe.php',0),(42,23,'The Lazy Null Scheme','null.php',0),(101,21,'Hydra\'s Blue Thing (V2)','hydras_blue_thing_v2.php',0),(150,150,'AE Torture','aesucks.php',0),(151,151,'Daily Cycle','dailycycle.php',0),(152,152,'Aceboard','aceboard.php',0),(153,153,'Bloodlust','bloodlust.php',0),(154,154,'Classic','classic.php',0),(155,155,'Daniversary','dani.php',0),(156,156,'Circuit','dig.php',0),(157,157,'End of FF','endofff.php',0),(158,158,'FF9','ff9a.php',0),(159,159,'Hot Fire','fire.php',0),(160,160,'Halloweiner','halloweiner.php',0),(161,161,'Horde','horde.php',0),(162,162,'Icy Blue','ice.php',0),(163,163,'Kirby','kirby.php',0),(164,164,'Lameboard','lameboard.php',0),(165,165,'Mario','mario.php',0),(166,166,'Mega Man','megaman.php',0),(167,167,'Neon','neon.php',0),(168,168,'NES','nes.php',0),(169,169,'Night (Classic)','night_old.php',0),(170,170,'Old Blue','oldblue.php',0),(171,171,'Purple Planet','planet.php',0),(172,172,'ROM Hack Domain','romhackdomain.php',0),(173,173,'Battleship Down','ship.php',0),(174,174,'Tartan','tartan.php',0),(175,175,'Twilight','twilight.php',0),(176,176,'TWINKLE YAY ^____^','twinkle.php',0),(177,177,'wtfweb\'s (bright)','wtfweb.php',0),(178,178,'Yoshi','yoshi.php',0),(179,152,'Alliance','alliance.php',0),(202,202,'Attitude Barn','spec-attitude.php',1),(203,203,'Black Hole','spec-blackhole.php',1),(204,204,'Subcon','spec-subcon.php',1),(205,205,'Top Secret','spec-topsecret.php',1),(206,206,'Trolldra','spec-trolldra.php',1),(207,207,'Waffles','spec-waffle.php',1),(208,208,'The Zen','spec-zen.php',1),(209,209,'Unfiction','spec-unfiction.php',1),(210,210,'Installer','spec-installer.php',1),(211,211, 'News', 'spec-news.php', 1);
 /*!40000 ALTER TABLE `schemes` ENABLE KEYS */;
 UNLOCK TABLES;
 

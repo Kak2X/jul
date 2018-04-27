@@ -179,7 +179,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href='calendar.php'>Calendar</a>
 		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
 		- <a href='irc.php'>IRC Chat</a>
-		- <a href='online.php'>Online users</a><br>
+		- <a href='online.php'>Online users</a>
+		".($config['enable-news'] ? " - <a href='news.php'>News</a>" : "")."
+		<br>
 		<a href='ranks.php'>Ranks</a>
 		- <a href='faq.php'>Rules/FAQ</a>
 		- <a href='acs.php'>JCS</a>
@@ -632,6 +634,24 @@ piwikTracker.enableLinkTracking();
 		<?=$doomnum?>
 		
 	<?php
+	
+	// Leaving this here commented for now. Maybe it will be used in the future.
+	/*
+			$footer = "
+				<!-- horrible hack -->
+				</div>
+				<table class='main c news-container new-post' style='padding: 5px 50px'>
+					<tr>
+						<td>
+							News Engine ".NEWS_VERSION."<br>
+							&copy; 2016 Kak
+						</td>
+					</tr>
+				</table>
+				<div class='fonts'>
+			";
+	*/
+	
 
 	/*
 		( used to be in printtimedif() )

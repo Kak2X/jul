@@ -93,6 +93,8 @@ echo //tblinfo('posts_text').
 	.tblinfo('pm_threads')
 	.tblinfo('pm_threadsread')
 	.tblinfo('pm_foldersread')
+	.tblinfo('news')
+	.tblinfo('news_comments')
 	.tblinfo('postradar')
 	.tblinfo('ipbans')
 	.tblinfo('defines')

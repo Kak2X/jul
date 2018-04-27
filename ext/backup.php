@@ -39,8 +39,8 @@
 		'itemtypes',
 		'ipbans',
 		'misc',
-		//'news',#boardc
-		//'news_comments',#boardc
+		'news',
+		'news_comments',
 		'pendingusers',
 //		'perm_definitions',
 //		'perm_forums',

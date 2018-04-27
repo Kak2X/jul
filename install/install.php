@@ -1,6 +1,7 @@
 <?php
 chdir("..");
 require "install/function.php";
+require "lib/defines.php";
 
 /*
 	An installer...
@@ -302,15 +303,13 @@ if (!$error) {
 				".set_input(3,'irc-servers'     , "IRC Servers (separated by ;)", 470, ["irc.sample.net","irc.test.com"])."
 				".set_input(3,'irc-channels'    , "IRC channel list"            , 470, ["#xtest","#ytest"])."
 				
-				"./*
 				".set_heading("News engine")."
-				".set_radio(2,'enable-news', 'Enable news', 'Disable|Enable', 1)."
+				".set_radio(2,'enable-news', 'Enable news', 'Disable|Enable', 0)."
 				".set_input(1,"news-name", "News page name", 300, "News")."
 				".set_input(1,"news-title", "News Header HTML", 500, "News page")."
 				".set_input(0,'max-preview-length', 'Character limit in preview', 40, 500)."
 				".set_powl(0,'news-write-perm', 'Powerlevel required to add news', 1)."
-				".set_powl(0,'news-admin-perm', 'Powerlevel required to moderate news', 4)."
-				"*/"
+				".set_powl(0,'news-admin-perm', 'Powerlevel required to moderate news', 3)."
 				
 				".set_heading("Advanced (Do not change if you don't know what you're doing)")."
 				".set_input(0,'trash-forum'       , 'Trash forum ID'       , 50, 3)."

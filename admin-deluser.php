@@ -66,7 +66,8 @@
 			$sql->query("UPDATE users       SET posts        = -1 * (SELECT COUNT(*) FROM posts WHERE user = {$config['deleted-user-id']}) WHERE id = {$config['deleted-user-id']}");
 			$sql->query("UPDATE users_comments SET userto    = {$config['deleted-user-id']} WHERE userto   = $id");
 			$sql->query("UPDATE users_comments SET userfrom  = {$config['deleted-user-id']} WHERE userfrom = $id");
-			
+			$sql->query("UPDATE news          SET user = {$config['deleted-user-id']} WHERE user = $id");
+			$sql->query("UPDATE news_comments SET user = {$config['deleted-user-id']} WHERE user = $id");		
 			
 			$sql->query("DELETE FROM forummods WHERE user=$id");
 			$sql->query("DELETE FROM userratings WHERE userrated=$id OR userfrom=$id");

@@ -584,6 +584,7 @@ function filter_float(&$v)		{ return (float) $v; }
 function filter_bool(&$v) 		{ return (bool) $v; }
 function filter_array (&$v)		{ return (array) $v; }
 function filter_string(&$v) 	{ return (string) $v; }
+function __(&$v) { return $v; }
 
 function readsmilies($path = 'smilies.dat') {
 	global $x_hacks;
@@ -2199,7 +2200,7 @@ function array_column_by_key($array, $index){
 		$output = array();
 		foreach ($array as $key => $val) {
 			if (is_array($array[$key])) {
-				$output[$key] = filter_string($array[$key][$index]);
+				$output[$key] = __($array[$key][$index]);
 			}
 		}
 		return $output;
@@ -2283,7 +2284,7 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 
 function page_select($total, $ppp) {
 	$page     = filter_int($_POST['page']);
-	$pages    = ceil($total / $ppp);
+	$pages    = max(1, ceil($total / $ppp));
 	$pagectrl = "";
 	for ($i = 0; $i < $pages;) {
 		$selected = ($page == $i) ? " selected" : "";

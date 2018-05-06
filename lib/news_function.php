@@ -1,222 +1,249 @@
 <?php
-	die("This is a file which used to be part of the boardc news engine.<br>The news engine hasn't been ported back yet.");
-	/*
-		Functions used by the news "plugin"
-	*/
 	
-	define('NEWS_VERSION', "v0.3b -- 25/09/16");
+	const NEWS_VERSION = "v0.4 -- 06/05/18";
+	const SHOW_SPECIAL_HEADER = false;
 	
 	if (!$config['enable-news']){
-		header("Location: index.php");
-		x_die();
+		return header("Location: index.php");
 	}
-	// Apply config.php news settings
-	//$config['board-name'] 	= $config['news-name'];
-	//$config['board-title'] 	= $config['news-title'];
-	//$config['board-url']	= "news.php";
-	// Load permissions
-	if ($isbanned) $loguser['id'] = 0; // oh dear
-	$isadmin	= ($loguser['id'] && $loguser['powerlevel'] >= $config['news-admin-perm']);
+	
+	// Load "permissions"
+	if ($banned) $loguser['id'] = 0; // oh dear
+	$ismod	    = ($loguser['id'] && $loguser['powerlevel'] >= $config['news-admin-perm']);
 	$canwrite	= ($loguser['id'] && $loguser['powerlevel'] >= $config['news-write-perm']);
 	
-	// FORCED THEME
-	$miscdata['theme'] = 5;
+	// override absolutely any forced scheme
+	// necessary because this scheme contains news-specific CSS missing from other schemes
+	$miscdata['scheme'] = 211;
 	
 	// Not truly alphanumeric as it also allows spaces
-	function alphanumeric($text){return preg_replace('/[^\da-z ]/i', '', $text);}
-	function newserrorpage($text){news_header("Error");echo "<br><br><table class='main w c'><tr><td>$text</td></tr></table>";pagefooter(true);}
-	
-	function news_header($title){
-		global $config;
-		echo "<!doctype html>"; // We need to print this here, since the "hide header" flag in pageheader() doesn't print a doctype
-		pageheader("$title - {$config['news-name']}", false, 0, true);
-		?>
-		<center>
-		<table class='main c top-header'>
-			<tr>
-				<td class='nobr header-title-td'>
-					<h1><a href='news.php' class='header-title'><?php echo $config['news-title'] ?></a></h1>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<a class='header-link' href='/board'>boardc</a> - 
-					<a class='header-link' href='/altboard'>altboard</a> - 
-					<a class='header-link' href='http://jul.rustedlogic.net'>jul</a> - 
-					<a class='header-link' href='http://board.kafuka.org'>kafuka</a>
-					
-				</td>
-			</tr>
-		</table>
-		</center>
-		<?php
+	function alphanumeric($text) { return preg_replace('/[^\da-z ]/i', '', $text); }
+	function escape_like_wildcards($text) { return strtr($text, array('%' => '\\%', '_' => '\\_')); }
+	function news_errorpage($text) {
+		if (!defined('HEADER_PRINTED'))	news_header("Error"); 
+		print "<table class='table news-container'><tr><td class='tdbg2 center'>{$text}</td></tr></table>";
+		//print "<table class='table'><tr><td class='tdbg1 center'>{$text}</td></tr></table>";
+		news_footer();
 	}
 	
-	function news_format($data, $preview = false, $showcomment = false){
+	function news_header($title) {
+		if (SHOW_SPECIAL_HEADER) {
+			global $config;
+			print "<!doctype html>"; // We need to print this here, since the "deleted header" flag in pageheader() doesn't print a doctype
+			pageheader($title, NULL, NULL, true);
+			?>
+			<center>
+			<table class='table top-header'>
+				<tr>
+					<td class='center nobr header-title-td'>
+						<h1><a href='news.php' class='header-title'><?= $config['news-title'] ?></a></h1>
+					</td>
+				</tr>
+				<tr>
+					<td class='center'>
+						<a class='header-link' href='index.php'>board</a> - 
+						<a class='header-link' href='/'>the index</a>
+					</td>
+				</tr>
+			</table>
+			</center>
+			<?php
+		} else {
+			pageheader($title);
+		}
+	}
+	
+	function news_footer() {
+		if (SHOW_SPECIAL_HEADER) {
+			?>
+			<br>
+			<center>
+			<table class='table center news-container new-post' style='padding: 5px 50px; width: 400px'>
+				<tr>
+					<td>
+						News Engine <?= NEWS_VERSION ?><br>
+						Programmed by Kak
+					</td>
+				</tr>
+			</table>
+			</center>
+			<?php
+			pagefooter(false);
+		}
+		
+		pagefooter();
+	}
+	
+	function news_format($post, $preview = false, $pin = 0) {
 		/*
 			threadpost() replacement as the original function obviously wouldn't work for this
 		*/
-		global $loguser, $config, $isadmin, $sql, $userfields;
-		global $page, $filter, $search, $token;
-		static $theme;
+		global $loguser, $config, $ismod, $sysadmin, $sql, $userfields;
 		
-		if (!isset($theme)){
+		
+		// The first post is rendered in a different (blue) color scheme.
+		static $theme;
+		if ($theme === NULL){
 			$theme = "new-post";
 		} else {
 			$theme = "";
 		}
 		
-		$comment_txt = "";
-		
-		if ($preview){
+		$text_shrunk = false;
+		if ($preview) {
 			// Get message length to shrink it if it's a preview
-			$charcount = strlen($data['text']);
+			$charcount = strlen($post['text']);
 			if ($charcount > $config['max-preview-length']){
-				$data['text'] = news_preview($data['text'], $charcount)."...";//substr($data['text'], 0, $config['max-preview-length']-3)."...";
-				$text_shrunk = TRUE;
-			}
-		} else {
-			// Display comments
-			if ($showcomment){
-				$comments = $sql->query("
-					SELECT c.*, $userfields uid
-					FROM news_comments c
-					LEFT JOIN users u ON c.user = u.id
-					WHERE c.pid = {$data['id']}
-					".($isadmin ? "" : "AND c.hide = 0")."
-					ORDER BY c.id DESC
-				");
-				
-				$comment_txt = "
-					<br><br><br>
-					<table class='main w small-shadow'>";
-				
-				if ($loguser['id'] && !isset($_GET['edit'])){
-				$comment_txt .= "
-						<tr>
-							<td class='head bold c' colspan=2>New comment</td>
-						</tr>
-						<tr>
-							<td colspan=2>
-							<form method='POST' action='editcomment.php?act=new&id={$data['id']}'>
-								<input type='hidden' name='auth' value='$token'>
-								<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'></textarea><br>
-								<input type='submit' class='submit' name='submit' value='Submit comment'>
-							</form>
-							</td>
-						</tr>";
-				}
-				
-				$comment_txt .= "
-						<tr>
-							<td class='head bold c' colspan=2>Comments</td>
-						</tr>";
-				
-				$doedit = filter_int($_GET['edit']);
-				
-				while ($c = $sql->fetch($comments)){
-					
-					$editlink = "";
-					if ($isadmin || $loguser['id'] == $c['uid']){
-						$editlink = "<a href='?id={$data['id']}&edit={$c['id']}#edit'>Edit</a>-".
-									"<a href='editcomment.php?act=del&id={$c['id']}&auth=$token'>".($c['hide'] ? "Und" : "D")."elete</a>";
-						$editcomment = ($doedit == $c['id']);
-					} else {
-						$editcomment = false;
-					}
-					if ($isadmin) $editlink .= "-<a class='danger' href='editcomment.php?act=erase&id={$c['id']}'>Erase</a>";
-					
-					// Edited posts are intentionally "marked" by a <br> tag (in part for readability)
-					if ($c['lastedituser']) $extra = "<br>(Last edited by ".makeuserlink($c['lastedituser'])." at ".printdate($c['lastedittime']).")";
-					else $extra = "";
-					$comment_txt .= "
-						<tr id='".($editcomment ? "edit" : $c['id'])."'>
-							<td class='comment-userbar nobr'>".makeuserlink($c['uid'], $c, true).($c['uid'] == $data['uid'] ? " [S]" : "")."</td>
-							<td class='comment-userbar r fonts'>$editlink ".printdate($c['time'])."$extra</td>
-						</tr>";
-						
-					// Print edit textbox
-					if ($editcomment){
-						$comment_txt .= "
-						<tr>
-							<td colspan=2>
-							<form method='POST' action='editcomment.php?act=edit&id={$c['id']}'>
-								<input type='hidden' name='auth' value='$token'>
-								<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'>".htmlspecialchars($c['text'])."</textarea><br>
-								<input type='submit' class='submit' name='doedit' value='Edit comment'>
-							</form>
-							</td>
-						</tr>
-						";						
-					} else {
-						$comment_txt .= "
-						<tr>
-							<td class='w' colspan=2>".output_filters($c['text'], true)."</td>
-						</tr>";
-					}
-				}
-				$comment_txt .= "</table>";
+				$post['text'] = news_preview($post['text'], $charcount)."...";
+				$text_shrunk = true;
 			}
 		}
 		
-		$viewfull = isset($text_shrunk) ? "<tr><td class='fonts'>To read the full text, click <a href='news.php?id=".$data['id']."'>here</a>.</td></tr>" : "";
+		$editlink = $lastedit = $viewfull = "";
+		// Preview to view full post
+		if ($text_shrunk)
+			$viewfull = "<tr><td class='fonts'>To read the full text, click <a href='news.php?id={$post['id']}'>here</a>.</td></tr>";
 		
-		$data['id'] = filter_int($data['id']);
+		// Post controls
 		
-		if ($data['id']){
-			if ($isadmin || $loguser['id'] == $data['uid'])
-				$editlink = "<a href='editnews.php?id=".$data['id']."&edit'>Edit</a>-<a href='editnews.php?id=".$data['id']."&del&auth=$token'>".($data['hide'] ? "Und" : "D")."elete</a>";
-			else $editlink = "";
-			
-			if ($isadmin) $editlink .= "-<a class='danger' href='editnews.php?id=".$data['id']."&kill'>Erase</a>";
+		if ($post['id']) {
+			if ($ismod || $loguser['id'] == $post['user']) {
+				$editlink = "<a href='news-editpost.php?id={$post['id']}&edit'>Edit</a>";
+				if ($post['deleted'])
+					$editlink .= " - <a href='news-editpost.php?id={$post['id']}&del'>Undelete</a> - <a href='?id={$post['id']}&pin={$post['id']}'>Peek</a>";
+				else
+					$editlink .= " - <a href='news-editpost.php?id={$post['id']}&del'>Delete</a>";
+			}				
+			if ($sysadmin) 
+				$editlink .= " - <a class='danger' href='news-editpost.php?id={$post['id']}&erase'>Erase</a>";
 		}
-		else $editlink = "";
 		
-		$lastedit = filter_int($data['lastedituser']) 
-			? " (Last edited by ".makeuserlink($data['lastedituser'])." at ".printdate($data['lastedittime']).")" 
-			: "";
+		if (filter_int($post['lastedituser'])) {
+			$lastedit     = " (Last edited by ".getuserlink($post['edituserdata'], $post['lastedituser'])." at ".printdate($post['lasteditdate']).")";
+		}
+		$usersort = "<a href='news.php?user={$post['user']}'>View all by this user</a>";
 		
-		$usersort = "<a href='news.php?user=".$data['uid']."'>View all by this user</a>";
-		
+		$hideondel = ($post['deleted'] && $post['id'] != $pin);
+		if ($hideondel) {
+			$post['text'] = "<i>(post deleted)</i>";
+			//$post['title'] = "<s>{$post['title']}</s>";
+		}
 		
 		return "
-		<input type='hidden' name='id' value={$data['id']}>
-		<table class='main w news-container $theme'>
+		<input type='hidden' name='id' value={$post['id']}>
+		<table class='table news-container {$theme}'>
 			<tr>
-				<td class='head w' colspan=2>
-					<table style='border-spacing: 0'>
+				<td class='tdbgh' colspan=2>
+					<table class='w' style='border-spacing: 0'>
 						<tr>
 							<td class='nobr'>
-								<a href='news.php?id={$data['id']}' class='headlink'>{$data['newsname']}</a>
+								<a href='news.php?id={$post['id']}' class='headlink'>{$post['title']}</a>
 							</td>
-							<td class='fonts w r'>
-								$editlink ".printdate($data['time'])."<br>
-								$lastedit ".makeuserlink($data['uid'], $data)."
+							<td class='fonts right'>
+								$editlink ".printdate($post['date'])."<br>
+								$lastedit ".getuserlink($post['userdata'], $post['user'])."
 							</td>
 						</tr>
 					</table>
-					<!--<hr/>-->
 				</td>
 			</tr>
 			
-			<tr><td class='dim' style='padding-bottom: 12px'>".output_filters($data['text'], true)."</td></tr>
+			<tr><td class='tdbg2' style='padding-bottom: 12px'>".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."</td></tr>
 			$viewfull
-			<tr class='fonts light w'>
-				<td>Comments: {$data['comments']}</td>
-				<td class='nobr r'>$usersort</td>
+			".($hideondel ? "" : "
+			<tr class='tdbg1 fonts'>
+				<td>Comments: {$post['comments']}</td>
+				<td class='nobr right'>$usersort</td>
 			</tr>
-			<tr>
-				<td class='fonts light w' colspan=2>
-					Tags: ".tag_format($data['cat'])."
-				</td>
-			</tr>
-		</table>
-		$comment_txt
-		";
+			<tr><td class='tdbg1 fonts' colspan=2>Tags: ".news_tag_format($post['tags'])."</td></tr>
+			")."
+		</table>";
 		
 	}
 	
+	// Display the comment section for any given post
+	function news_comments($post, $author, $edit = 0) {
+		global $sql, $loguser, $ismod, $sysadmin, $userfields;
+		$token = generate_token(TOKEN_MGET);
+		
+		$comments = $sql->query("
+			SELECT c.*, ".set_userfields('u1')." uid, ".set_userfields('u2')." uid
+			FROM news_comments c
+			LEFT JOIN users u1 ON c.user         = u1.id
+			LEFT JOIN users u2 ON c.lastedituser = u2.id
+			WHERE c.pid = {$post} ".($ismod ? "" : "AND c.deleted = 0")."
+			ORDER BY c.id DESC
+		");
+		
+		$txt = "";
+		while ($x = $sql->fetch($comments, PDO::FETCH_NAMED)){
+			// Check if we are editing this comment (and if we can do so)
+			$editlink = $lastedit = $editcomment = "";
+			if ($ismod || $loguser['id'] == $x['user']) {
+				$editlink = "<a href='?id={$post}&edit={$x['id']}#{$x['id']}'>Edit</a> - ".
+							"<a href='news-editcomment.php?act=del&id={$x['id']}&auth={$token}'>".($x['deleted'] ? "Und" : "D")."elete</a>";
+				$editcomment = ($edit == $x['id']);
+			}
+			
+			if ($sysadmin) 
+				$editlink .= " - <a class='danger' href='news-editcomment.php?act=erase&id={$x['id']}'>Erase</a>";
+			
+			$author = getuserlink(array_column_by_key($x, 0), $x['user']);
+			if ($x['deleted'])
+				$author = "<s>{$author}</s>";
+			if ($x['lastedituser'])
+				$lastedit = "<br>(Last edited by ".getuserlink(array_column_by_key($x, 1), $x['lastedituser'])." at ".printdate($x['lasteditdate']).")";
+			
+			// Display comment info (comments by the post author marked with [S])
+			$txt .= "
+				<tr id='{$x['id']}'>
+					<td class='comment-userbar nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
+					<td class='comment-userbar right fonts'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
+				</tr>";
+				
+			// Display the actual message; print edit textbox instead if in edit mode
+			if ($editcomment) {
+				$txt .= "
+				<tr>
+					<td colspan=2>
+					<form method='POST' action='news-editcomment.php?act=edit&id={$x['id']}'>
+						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea><br>
+						<input type='submit' name='doedit' value='Edit comment'>
+						".auth_tag()."
+					</form>
+					</td>
+				</tr>";						
+			} else {
+				$txt .= "<tr><td class='w' colspan=2>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
+			}
+		}
+		//$comment_txt .= "</table>";
+
+		// Do not show new comment area if we're editing a comment
+		$newcomment = "";
+		if ($loguser['id'] && !$edit) {
+			$newcomment .= "
+			<tr><td class='tdbgh center b' colspan=2>New comment</td></tr>
+			<tr>
+				<td class='tdbg2' colspan=2>
+					<form method='POST' action='news-editcomment.php?post={$post}'>
+						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'></textarea>
+						<br><input type='submit' name='submit' value='Submit comment'>".auth_tag()."
+					</form>
+				</td>
+			</tr>";
+		}
+		
+		return "
+		<table class='table small-shadow'>
+			{$newcomment}
+			<tr><td class='tdbgh center b' colspan=2>Comments</td></tr>
+			{$txt}
+		</table>";
+	}
+	
 	function news_preview($text, $length = NULL){
+		// TODO: FIX THIS
 		/*
 			news_preview: shrinks a string without leaving open HTML tags
 			currently this doesn't allow to use < signs, made worse by the board unescaping &lt; entities
@@ -255,45 +282,48 @@
 		}
 
 		return $res;
-
 	}
 	
-	function tag_format($list, $tags = false){
-		if (!$tags) $tags = explode(";", $list);
-		foreach($tags as $tag)
-			$text[] = "<a href='news.php?cat=$tag'>$tag</a>";
+	
+	function load_news_tags($post = 0, $limit = 0) {
+		global $sql;
+		if ($post) {
+			return $sql->getarraybykey("
+				SELECT t.id, t.title
+				FROM news_tags_assoc a
+				INNER JOIN news_tags t ON a.tag = t.id
+				WHERE a.post = {$post}
+			", 'id');
+		} else {
+			return $sql->getarraybykey("
+				SELECT t.id, t.title, COUNT(*) cnt
+				FROM news_tags t
+				LEFT JOIN news_tags_assoc a ON t.id = a.tag
+				GROUP BY t.id
+				ORDER BY cnt DESC
+				".($limit ? "LIMIT {$limit}" : "")."
+			", 'id');
+		}
+	}
+	
+	function news_tag_format($tags){
+		$text = array();
+		foreach($tags as $id => $data)
+			$text[] = "<a href='news.php?cat={$id}'>".htmlspecialchars($data['title'])."</a>";
 		return implode(", ", $text);
 	}
 	
-	// Return a list of tags, sorted by most used
-	function showtags(){
+	
+	function main_news_tags($num){
 		global $sql;
-		$cats = $sql->query("SELECT cat FROM news");
-		foreach($cats as $cat){
-			$x = explode(";", $cat['cat']);
-			foreach($x as $y){
-				if (isset($catlist[$y])) $catlist[$y]++;
-				else 					 $catlist[$y] = 1;
-			}
-		}
-		
-		if (!isset($catlist)) return "";
-		
-		arsort($catlist);
-		$max = max($catlist);
-		// Prevent exceeding max number of tags
-		$cnt = count($catlist);
-		if ($cnt > 15) $cnt = 15;
+		$tags = load_news_tags(0, $num); // Grab 15 most used tags, in order
+		$total = count($tags);
 		
 		$txt 	= "";
-		$i = 0;
-		foreach($catlist as $tag => $num){
-			if ($i > $cnt) break;
-			$px = 10 + round(pow($num/$cnt*100, 0.7));
-			$txt .= "<a class='nobr tag-links' href='news.php?cat=$tag' style='font-size: {$px}px'>$tag</a> ";
-			$i++;
+		foreach($tags as $id => $data){
+			$px = 10 + round(pow($data['cnt'] / $total * 100, 0.7)); // Gradually decreate font size
+			$txt .= "<a class='nobr tag-links' href='news.php?cat={$id}' style='font-size: {$px}px'>{$data['title']}</a> ";
 		}
-		
 		return $txt;
 	}
 	
@@ -302,22 +332,30 @@
 		//List with latest 5 (or 10?) comments showing user and thread
 		// should use IF and log editing
 		$list = $sql->query("
-			SELECT c.user, c.id, c.time, c.pid, n.name title, $userfields uid
+			SELECT c.user, c.id, c.date, c.pid, n.title, $userfields uid
 			FROM news_comments c
 			INNER JOIN news  n ON c.pid  = n.id
 			INNER JOIN users u ON c.user = u.id
-			WHERE c.hide = 0
-			ORDER BY c.time DESC
+			WHERE c.deleted = 0
+			ORDER BY c.date DESC
 			LIMIT $limit
 		");
 		
 		$txt = "";
-		while($c = $sql->fetch($list)){
+		while($x = $sql->fetch($list)){
 			$txt .= "
-				<table class='light w' style='border-spacing: 0'>
-					<tr><td>".makeuserlink($c['uid'], $c)."</td><td class='r'>".printdate($c['time'])."</td></tr>
-					<tr><td colspan=2><a href='news.php?id={$c['pid']}#{$c['id']}'>Comment</a> posted on <a href='news.php?id={$c['pid']}'>".htmlspecialchars($c['title'])."</a></td></tr>
-				</table><div style='height: 5px'></div>";
+				<table class='table fonts' style='border-spacing: 0'>
+					<tr>
+						<td class='tdbg1'>".getuserlink($x, $x['uid'])."</td>
+						<td class='right'>".printdate($x['date'])."</td>
+					</tr>
+					<tr>
+						<td class='tdbg1' colspan=2>
+							<a href='news.php?id={$x['pid']}#{$x['id']}'>Comment</a> posted on <a href='news.php?id={$x['pid']}'>".htmlspecialchars($x['title'])."</a>
+						</td>
+					</tr>
+				</table>
+				<div style='height: 5px'></div>";
 		}
 		return $txt;
 	}

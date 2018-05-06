@@ -7,117 +7,109 @@
 		The forms are shown in the newsheader function
 	*/
 	
-	$id     = filter_int($_GET['id']);
-	$action = filter_string($_GET['act']);
+	$_GET['id']    = filter_int($_GET['id']);
+	$_GET['post']  = filter_int($_GET['post']);
+	$_GET['act']   = filter_string($_GET['act']);
 	
-	if (!$loguser['id']) newserrorpage("You aren't allowed to do this!");
+	if (!$loguser['id']) 
+		news_errorpage("You aren't allowed to do this!");
 	
-	if ($action == 'new'){
+	// Load comment
+	if ($_GET['act']) {
+		if (!$_GET['id']) 
+			news_errorpage("No comment ID specified.");
+		$c = $sql->fetchq("SELECT text, user, deleted, pid FROM news_comments WHERE id = {$_GET['id']}");
+		if (!$c) 
+			news_errorpage("This comment does not exist.");
+		else if (!$ismod && ($c['deleted'] || !$c['pid'] || $loguser['id'] != $c['user']))
+			news_errorpage("You aren't allowed to do this.");
+	}
+	
+	
+	if (!$_GET['act']){
 		
 		// Has to send this
-		if (isset($_POST['submit'])){
-			checktoken();
+		if (isset($_POST['submit']) && $_GET['post']){
+			check_token($_POST['auth']);
 			
-			$text = prepare_string($_POST['text']);
-			if (!$text)  newserrorpage("Your comment was blank!");
-			$valid = $sql->resultq("SELECT 1 FROM news WHERE id = $id");
-			if (!$valid) newserrorpage("You can't comment to a nonexisting post!");
-			$lastcomment = $sql->resultq("SELECT time FROM news_comments WHERE user = {$loguser['id']} ORDER BY id DESC");
-			if (time() - $lastcomment < $config['post-break']) newserrorpage("You are commenting too fast!");
+			$_POST['text'] = filter_string($_POST['text']);
+			if (!trim($_POST['text'])) 
+				news_errorpage("Your comment was blank!");
+			if (!$sql->resultq("SELECT COUNT(*) FROM news WHERE id = {$_GET['post']}")) 
+				news_errorpage("You can't comment to a nonexisting post!");
 			
-			$sql->queryp("INSERT INTO news_comments (pid, user, text, time) VALUES (?,?,?,?)",
-			[$id, $loguser['id'], $text, time()]);
+			$lastcomment = $sql->resultq("SELECT date FROM news_comments WHERE user = {$loguser['id']} ORDER BY id DESC");
+			if (ctime() - $lastcomment < 10) 
+				news_errorpage("You are commenting too fast!");
 			
-			$pid = $sql->lastInsertId();
-			redirect("news.php?id=$id#$pid");
+			$sql->queryp("INSERT INTO news_comments (pid, user, text, date) VALUES (?,?,?,?)",
+			[$_GET['post'], $loguser['id'], $_POST['text'], ctime()]);
+			
+			$id = $sql->insert_id();
+			return header("Location: news.php?id={$_GET['post']}#$id");
 			
 		} else {
-			newserrorpage("I don't get what you're trying to do here.");
+			news_errorpage("I don't get what you're trying to do here.");
 		}
 		
 	}
 	
-	if ($action == 'edit'){
+	else if ($_GET['act'] == 'edit'){
 		
 		if (isset($_POST['doedit'])){
-			checktoken();
+			check_token($_POST['auth']);
 			
-			$text = prepare_string($_POST['text']);
-			if (!$text)  newserrorpage("You've edited the comment to be blank.");
-			$c = checkcomment($id, 1); // Admin action / Edit own comment
+			$_POST['text'] = filter_string($_POST['text']);
+			if (!trim($_POST['text'])) 
+				news_errorpage("Your comment was blank!");
+			if (!$sql->resultq("SELECT COUNT(*) FROM news_comments WHERE id = {$_GET['id']}")) 
+				news_errorpage("You can't edit a nonexisting comment!");
 			
 			$sql->queryp("
 				UPDATE news_comments SET
 					text         = ?,
 					lastedituser = ?,
-					lastedittime = ?
-				WHERE id = $id",
-			[$text, $loguser['id'], time()]);
+					lasteditdate = ?
+				WHERE id = {$_GET['id']}",
+			[$_POST['text'], $loguser['id'], ctime()]);
 			
-			redirect("news.php?id={$c['pid']}#$id");
-			
+			return header("Location: news.php?id={$c['pid']}#{$_GET['id']}");
 		} else {
-			newserrorpage("I <i>still</i> don't get what you're trying to do here.");
+			news_errorpage("I <i>still</i> don't get what you're trying to do here.");
 		}		
 	}
 	
-	if ($action == 'del'){
-		checktoken(true);
-		$c = checkcomment($id, 1);
-		$sql->query("UPDATE news_comments SET hide = NOT hide WHERE id = $id");
-		redirect("news.php?id={$c['pid']}#$id");
+	else if ($_GET['act'] == 'del' && ($ismod || $c['user'] == $loguser['id'])) {
+		if ($c['deleted']) {
+			$message = "Do you want to undelete this comment?";
+			$btntext = "Yes";
+		} else {
+			$message = "Are you sure you want to <b>DELETE</b> this comment?";
+			$btntext = "Delete comment";
+		}
+		$form_link = "news-editcomment.php?act=del&id={$_GET['id']}";
+		$buttons   = array(
+			0 => [$btntext],
+			1 => ["Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
+		);
+		
+		if (confirmpage($message, $form_link, $buttons)) {
+			$sql->query("UPDATE news_comments SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			return header("Location: news.php?id={$c['pid']}#{$_GET['id']}");
+		}
 	}
 
-	if ($action == 'erase'){
-		$c = checkcomment($id, 2);
-		
-		if (isset($_POST['remove'])){
-			checktoken();
-			$sql->query("DELETE FROM news_comments WHERE id = $id");
-			redirect("news.php?id={$c['pid']}");
+	else if ($_GET['act'] == 'erase' && $sysadmin) {
+		$message   = "Are you sure you want to <b>permanently DELETE</b> this comment from the database?";
+		$form_link = "news-editcomment.php?act=erase&id={$_GET['id']}";
+		$buttons   = array(
+			0 => ["Delete comment"],
+			1 => ["Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
+		);
+		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+			$sql->query("DELETE FROM news_comments WHERE id = {$_GET['id']}");
+			return header("Location: news.php?id={$c['pid']}");
 		}
-		
-		news_header("Erase comment");
-		?>
-		<br><br>
-		<form method='POST' action='?act=erase&id=<?php echo "$id" ?>'>
-		<input type='hidden' name='auth' value='<?php echo $token ?>'>
-		<center>
-		
-		<table class='main c'>
-			<tr><td class='head'>WARNING</td></tr>
-			<tr>
-				<td>
-					You are about to delete a comment from the database.<br>
-					<br>
-					Are you sure you want to continue?<br>
-					There's no going back!
-				</td>
-			</tr>
-			<tr>
-				<td class='light'>
-					<input type='submit' class='submit' name='remove' value='Delete'>&nbsp;-&nbsp;
-					<a href='news.php?id=<?php echo $c['pid'] ?>#<?php echo $id ?>'>Return</a>
-				</td>
-			</tr>
-		</table>
-		
-		</center>
-		</form>
-		<?php
 	}	
 	
-	pagefooter(true);
-	
-	// Load comment and check privileges
-	function checkcomment($id, $privilege = 0){
-		global $sql, $isadmin, $loguser;
-		$c = $sql->fetchq("SELECT text, user, hide, pid FROM news_comments WHERE id = $id");
-		if (!$c) 															newserrorpage("This post doesn't exist.");
-		if (!$isadmin && $c['hide'])										newserrorpage("You aren't allowed to do this.");
-		if (!$isadmin && !$c['pid'])										newserrorpage("You aren't allowed to do this.");
-		if ($privilege == 1 && $loguser['id'] != $c['user'] && !$isadmin)	newserrorpage("You aren't allowed to do this.");
-		if ($privilege == 2 && !$isadmin)									newserrorpage("You aren't allowed to do this!");
-		return $c;
-	}
-?>
+	news_footer();

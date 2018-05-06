@@ -1,7 +1,7 @@
 <?php
 
 	/*
-		News Engine v0.3b -- 25/09/16
+		News Engine v0.4 -- 06/05/18
 		
 		DESCRIPTION:
 		A news engine (read: alternate announcements page) that everybody can read, but only privileged or up can write.
@@ -13,173 +13,182 @@
 	require "lib/function.php";
 	require "lib/news_function.php";
 	
-	$id			= filter_int($_GET['id']);
-	$page		= filter_int($_GET['page']);
-	$usersort	= filter_int($_GET['user']);
-	$ord		= filter_int($_GET['ord']);
-	$filter		= filter_string($_GET['cat'], true);
-	
-	if (filter_string($_GET['search'])){
-		$search		= filter_string($_GET['search'], true);
-	} else if (isset($_POST['search'])){
-		// Refreshing with _POST is bad
-		redirect("?search=".urlencode($_POST['search']));
-	} else {
-		$search		= "";
-	}
-	
-	$q_filter = "";
-	if ($id) {
-		$q_filter = "AND n.id = $id";
-	} else{
-		if ($filter){
-			if (alphanumeric($filter) !== $filter){
-				errorpage("Invalid characters in tag.");
-				//header("Location: index.php?sec=1");
-			}
-			$q_filter = "AND n.cat REGEXP '(;|^)$filter(;|$)' "; // Changed to check first and last characters
-		}
-		if ($usersort){
-			// Sort by user ID
-			$q_filter .= "AND n.user = $usersort";
-		}
-	}
+	$_GET['id']         = filter_int($_GET['id']);
+	$_GET['user']       = filter_int($_GET['user']);
+	$_GET['pin']        = filter_int($_GET['pin']); // Peek post ID
+	$_GET['edit']       = filter_int($_GET['edit']); // Edit comment ID
 
+	// Tag filter
+	$_GET['tag']        = filter_int($_GET['tag']);
 	
-	/* 	Table name 	: news
-		Columns		: id, user, name, text, cat, hide
-	 "Cat" value is an *alphanumeric string* only used for filtering - this isn't normally used the main page
-	 as such, using the \0 merge trick isn't necessary. multiple categories are delimited by ;
-	 
-	 "Hide" marks deleted news. These can only be seen by users with write privileges, not by guests
-	*/
+	// Search results
+	$_POST['ord']       = filter_int($_POST['ord']);
+	$_POST['search']    = filter_string($_POST['search']);
+	$_POST['page']      = filter_int($_POST['page']);
 	
 	news_header("Main page");
 	
-	// Notice: This does NOT store old news revisions yet. Maybe it will in the future...
 	
-	$q_where 	= "WHERE ".($canwrite ? "1" : "n.hide = 0")." $q_filter";
-	$offset		= $page * $loguser['ppp'];
+	$tagfilter = $joins = $q_where = "";
+	if ($_GET['id']) {
+		// If only one post is selected, ignore all other filters
+		$q_where = "WHERE n.id = ?";
+		$vals    = array($_GET['id']);
+		if (!$canwrite) 
+			$q_where .= " AND n.deleted = 0";
+	} else {
+		
+		$where = $vals = array();
+		// Initial option for text search
+		if ($_POST['search']) {
+			$where[] = "n.text LIKE ?";
+			$vals[]  = "%".escape_like_wildcards($_POST['search'])."%";
+		}
+		// Do not display deleted news to guests
+		if (!$canwrite) 
+			$where[] = "n.deleted = 0";
+		// Filter by user
+		if ($_GET['user'])
+			$where[] = "n.user = {$_GET['user']}";
+		
+		if ($where)
+			$q_where = "WHERE ".implode(' AND ', $where);
+		
+		// Special filter since it should not be used on the $tags query
+		if ($_GET['tag']) {
+			$joins     .= "INNER JOIN news_tags_assoc a ON n.id = a.post";
+			$tagfilter .= ($where ? " AND" : " WHERE")." a.tag = {$_GET['tag']}";
+		}
+		
+	}
 	
-	$news = $sql->query("
-		SELECT 	n.id, n.time, n.name newsname, n.text, n.lastedituser, n.lastedittime, n.cat, n.hide,
-				$userfields uid, COUNT(c.id) comments
+	// Get the total right away to possibly fix bad page numbers
+	$total	= $sql->resultp("SELECT COUNT(*) FROM news n {$joins}{$q_where}{$tagfilter}", $vals);
+	$ppp    = get_ppp();
+	$pagelist = page_select($total, $ppp);
+	
+	$min = $_POST['page'] * $ppp;
+	
+	
+	// Get the posts we need
+	$news = $sql->queryp("
+		SELECT 	n.id, n.user, n.date, n.title, n.text, n.lastedituser, n.lasteditdate, n.deleted, n.nosmilies, n.nohtml,
+				".set_userfields('u1')." uid, ".set_userfields('u2')." uid, COUNT(c.id) comments
 		FROM news n
-		LEFT JOIN users         u ON n.user = u.id
-		LEFT JOIN news_comments c ON n.id   = c.pid
-		$q_where AND n.text LIKE '%".addslashes($search)."%'
+		LEFT JOIN users           u1 ON n.user         = u1.id
+		LEFT JOIN users           u2 ON n.lastedituser = u2.id
+		LEFT JOIN news_comments    c ON n.id           = c.pid AND c.deleted = 0
+		{$joins}
+		{$q_where}{$tagfilter}
 		GROUP BY n.id
-		ORDER BY n.time ".($ord ? "ASC" : "DESC")."
-		LIMIT $offset, {$loguser['ppp']}
-	");
+		ORDER BY n.date ".($_POST['ord'] ? "ASC" : "DESC")."
+		LIMIT {$min}, {$ppp}
+	", $vals);
 	
-
-	$newpost = $canwrite ? "<tr><td>Options:</td><td><a href='editnews.php?new'>New post</a></td></tr>" : "";
-	$news_count	= $sql->resultp("SELECT COUNT(n.id) FROM news n $q_where AND INSTR(n.text, ?) > 0 ", [$search]);
-	
+	// Tags have to be loaded separately
+	$tagsq = $sql->queryp("
+		SELECT a.post, t.id, t.title
+		FROM news n
+		INNER JOIN news_tags_assoc  a ON n.id  = a.post
+		INNER JOIN news_tags        t ON a.tag = t.id
+		{$q_where}
+	", $vals);
+	//$tags = $sql->fetchAll($tagsq, PDO::FETCH_GROUP);
+	$tags = array();
+	while ($x = $sql->fetch($tagsq))
+		$tags[$x['post']][$x['id']] = $x;
+		
 	/*
 		Number of posts (on this page)
 	*/
-	if (!$id){
-		$foundres = "<div class='fonts w c'>Showing $news_count post".($news_count == 1 ? "" : "s")." in total".
-			( /* all those little details I put here (that are making this code block bloated) are making me sad */
-				$news_count > $loguser['ppp'] ?
-				", from ".($offset + 1)." to ".($offset + $loguser['ppp'] > $news_count ? $news_count : $offset + $loguser['ppp'])." on this page" :
-				""
-			).".<br>Sorting from ".($ord ? "oldest to newest" : "newest to oldest").".</div>";
-	} else {
-		$foundres = "";
+	$foundres = "";
+	if (!$_GET['id']){
+		$foundres = "<div class='fonts w center'>".
+				"Showing {$total} post".($total == 1 ? "" : "s")." in total".
+				($total > $ppp ? ", from ".($min + 1)." to ".min($total, $min + $ppp)." on this page" : "").".<br>".
+				"Sorting from ".($_POST['ord'] ? "oldest to newest" : "newest to oldest").".".
+			"</div>";
 	}
-	$pagectrl	= dopagelist($news_count, $loguser['ppp'], "news", "&cat=$filter&user=$usersort&search=$search");
+	
+	$url = "?tag={$_GET['tag']}&user={$_GET['user']}";
 	
 	?>
 	<br>
 	<table>
 		<tr>
 			<td class='w' style='vertical-align: top; padding: 10px 40px 0px 40px'>
-				
 			<?php
-			/*
-				Posts
-			*/
-	
-			echo $pagectrl;
-			for($i = 0; $post = $sql->fetch($news); $i++){
-				print news_format($post, (!$id), true)."<br><br>"; // Don't show the preview if you're viewing a specific post ID
-			}
-			if (!$i){
-				?>
-				<table class='main w c news-container'>
-					<tr>
-						<td>
-							It looks like nothing was found. Do you want to try again?
-						</td>
-					</tr>
-				</table>
-				<?php
-			}
-			echo $pagectrl;
-			
+				if (!$sql->num_rows($news)) {
+					?>
+					<table class='table news-container'>
+						<tr><td class="tdbg2 center">It looks like nothing was found. Do you want to try again?</td></tr>
+					</table>
+					<?php
+				} else while ($post = $sql->fetch($news, PDO::FETCH_NAMED)) {
+					$post['tags'] = $tags[$post['id']];
+					$post['userdata']     = array_column_by_key($post, 0);
+					$post['edituserdata'] = array_column_by_key($post, 1);
+					print news_format($post, !$_GET['id'], $_GET['pin'])."<br>";
+					if ($_GET['id'])
+						print news_comments($_GET['id'], $post['user'], $_GET['edit']);
+				}
 			?>
+				<br>
+				<br>
 			</td>
 			<!-- sorting options and search box -->
 			<td style='vertical-align: top'>
-				<form method='POST' action='?'>
-				<table class='main w small-shadow'>
-				
-					<tr><td class='head c'>Options</td></tr>
-					<tr>
-						<td class='dark fonts'>
-							<!-- we want an aligned layout for this! -->
-							<table>
-								<?php echo $newpost ?>
-								<tr>
-									<td rowspan=2 style='vertical-align: top'>Sorting:</td>
-									<td>
-										<a href='<?php echo "?ord=0&cat=$filter&user=$usersort&search=$search" ?>'>
-											From newest to oldest
-										</a>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										<a href='<?php echo "?ord=1&cat=$filter&user=$usersort&search=$search" ?>'>
-											From oldest to newest
-										</a>
-									</td>
-								</tr>
-							</table>
-						</td>
+<?php			if ($canwrite) { ?>
+				<table class='table fonts small-shadow'>
+					<tr><td class='tdbgh center'>Options</td></tr>
+					<tr><td><a href='news-editpost.php?new'>New post</a></td>
 					</tr>
-					
-					<tr><td class='head c'>Search</td></tr>
+				</table>
+				<br> 
+<?php			} ?>
+				<form method='POST' action="<?= $url ?>">
+				<table class='table fonts small-shadow'>
+					<tr><td class="tdbgh center" colspan=2>Search</td></tr>
 					<tr>
-						<td class='dim'>
-							<input type='text' name='search' size=43 value='<?php echo htmlspecialchars($search) ?>'>
-							<div style='padding: 3px'>
-								<input type='submit' class='submit' name='dosearch' value='Search'>
-							</div>
-							<?php echo $foundres ?>	
+						<td class="tdbg1 center b">Text:</td>
+						<td class="tdbg2">
+							<input type='text' name='search' size=40 value="<?= htmlspecialchars($_POST['search']) ?>">
 						</td>
+					</td>
+					<tr>
+						<td class="tdbg1 center b">Sorting:</td>
+						<td class="tdbg2">
+							<label><input type="radio" name="ord" value=0<?= ($_POST['ord'] == 0 ? " checked" : "")?>> Newest to oldest</label>
+						</td>
+					</td>
+					<tr>
+						<td class="tdbg1 center b"></td>
+						<td class="tdbg2">
+							<label><input type="radio" name="ord" value=1<?= ($_POST['ord'] == 1 ? " checked" : "")?>> Oldest to newest</label>
+						</td>
+					</td>
+					<tr>
+						<td class="tdbg1 center b">Page:</td>
+						<td class="tdbg2"><?= $pagelist ?></td>
 					</tr>
+					<tr>
+						<td class="tdbg1"></td>
+						<td class="tdbg2"><input type='submit' name='dosearch' value='Search'></td>
+					</tr>
+					<tr><td class="tdbgh center b" colspan=2></td></tr>
+					<tr><td class='tdbg1' colspan=2><?= $foundres ?></td></tr>
 				</table>
 				</form>
 				<br>
-				<table class='main w small-shadow'>
-					<tr><td class='head c'>Tags</td></tr>
-					<tr>
-						<td style='padding: 4px'>
-							<?php echo showtags() ?>
-						</td>
+				<table class='table fonts small-shadow'>
+					<tr><td class='tdbgh center'>Tags</td></tr>
+					<tr><td style='padding: 4px'><?= main_news_tags(15) ?></td>
 					</tr>
 				</table>
 				<br>
-				<table class='main w small-shadow'>
-					<tr><td class='head c'>Latest comments</td></tr>
-					<tr>
-						<td class='fonts' style='padding: 4px'>
-							<?php echo recentcomments(5) ?>
-						</td>
+				<table class='table fonts small-shadow'>
+					<tr><td class='tdbgh center'>Latest comments</td></tr>
+					<tr><td class='fonts' style='padding: 4px'><?= recentcomments(5) ?></td>
 					</tr>
 				</table>
 			</td>
@@ -187,6 +196,4 @@
 	</table>
 	<?php
 	
-	pagefooter(true);
-	
-?>
+	news_footer();

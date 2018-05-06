@@ -211,6 +211,7 @@
 			'viewsig'		=> 1,
 			'layout'        => 1, // Regular
 			'powerlevel' 	=> 0,
+			'postsperpage'  => 20,
 			'signsep'		=> 0,
 			'dateformat'	=> $config['default-dateformat'],
 			'dateshort'		=> $config['default-dateshort'],

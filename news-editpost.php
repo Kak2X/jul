@@ -8,237 +8,335 @@
 	require "lib/function.php";
 	require "lib/news_function.php";
 	
-	if (!$canwrite){
-		newserrorpage("You aren't allowed to edit posts.<br>
-			Click <a href='news.php'>here</a> to return to the main page.
-		");	
-	}
+	if (!$canwrite)
+		news_errorpage("You aren't allowed to edit posts.<br>Click <a href='news.php'>here</a> to return to the main page.");	
 	
-	$id	= filter_int($_GET['id']);
-	
+	$_GET['id']	= filter_int($_GET['id']);
 	
 	if (isset($_GET['edit'])){
 		
-		if (!$id) newserrorpage("No post ID specified.");
+		if (!$_GET['id']) 
+			news_errorpage("No post ID specified.");
 		
 		$news = $sql->fetchq("
-			SELECT 	n.id, n.name newsname, text, time, user, hide, cat,
-					hide, lastedituser, lastedittime, $userfields uid, n.comments
+			SELECT n.*, $userfields uid
 			FROM news n
 			LEFT JOIN users u ON n.user = u.id
-			WHERE n.id = $id
+			WHERE n.id = {$_GET['id']}
 		");
 		
-		if (!$news) 										newserrorpage("The post doesn't exist!");
-		if (!$isadmin && $loguser['id'] != $news['user'])	newserrorpage("You have no permission to do this!");
+		if (!$news)
+			news_errorpage("The post doesn't exist!");
+		if (!$ismod && $loguser['id'] != $news['user'])
+			news_errorpage("You have no permission to do this!");
 		
-		$name = isset($_POST['nname'])	? $_POST['newsname'] : $news['newsname'];
-		$text = isset($_POST['text'])	? $_POST['text']	 : $news['text'];
-		$tags = isset($_POST['cat'])	? $_POST['cat']		 : $news['cat'];
+		$_POST['title']     = isset($_POST['nname'])     ? $_POST['title']     : $news['title'];
+		$_POST['text']      = isset($_POST['text'])      ? $_POST['text']      : $news['text'];
+		$_POST['nosmilies'] = isset($_POST['nosmilies']) ? $_POST['nosmilies'] : $news['nosmilies'];
+		$_POST['nohtml']    = isset($_POST['nohtml'])    ? $_POST['nohtml']    : $news['nohtml'];
+		
+		if (!isset($_POST['tags']))
+			$_POST['tags'] = $sql->getresults("SELECT tag FROM news_tags_assoc WHERE post = {$_GET['id']}");
+		else
+			$_POST['tags'] = array_map('intval', filter_array($_POST['tags']));
+		
+		$_POST['customtags'] = filter_string($_POST['customtags']);
 		
 		if (isset($_POST['submit'])){
-			checktoken();
+			check_token($_POST['auth']);
 			
-			if (!$name || !$text) newserrorpage("You have left one of the required fields blank!");
+			if (!$_POST['title'] || !$_POST['text'])
+				news_errorpage("You have left one of the required fields blank!");
+			$valid = (int)$sql->resultq("SELECT COUNT(*) FROM news_tags WHERE id IN (".implode(',', $_POST['tags']).")");
+			if ($valid != count($_POST['tags']))
+				news_errorpage("At least one invalid tag was selected.");
 			
-			// Prevent creation of tags without alphanumeric characters
-			$taglist = explode(";", $tags);
-			foreach($taglist as $tag)
-				if (alphanumeric($tag) != $tag)
-					newserrorpage("One of the tags contains non-alphanumeric characters.");
+			$sql->beginTransaction();
 			
-			// Here we go
-			$sql->queryp(
-				"UPDATE news SET name = ?, text = ?, cat = ?, lastedituser = ?, lastedittime = ? WHERE id = $id",
-				[$name, $text, $tags, $loguser['id'], time()]
+			// Get a filtered list of new tags to enter
+			$in = $sql->prepare("INSERT IGNORE INTO news_tags (title) VALUES (?)");
+			$taglist = explode(",", $_POST['customtags']);
+			foreach ($taglist as $tag) {
+				if ($tag = trim($tag)) {
+					$sql->execute($in, [$tag]);
+					if ($lastid = $sql->insert_id()) // If the tag already exists, $lastid will be 0
+						$_POST['tags'][] = $lastid;
+				}
+			}
+				
+			// Create the post
+			$values = array(
+				'title'        => $_POST['title'],
+				'text'         => $_POST['text'],
+				'lastedituser' => $loguser['id'],
+				'lasteditdate' => ctime(),
 			);
-			header("Location: news.php?id=$id");
-			x_die();
+			$sql->queryp("UPDATE news SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
+			
+			// Assoc things
+			$inassoc = $sql->prepare("INSERT IGNORE INTO news_tags_assoc (post, tag) VALUES ({$_GET['id']},?)");
+			foreach ($_POST['tags'] as $key => $tagid) {
+				$sql->execute($inassoc, [$tagid]);
+			}
+			// Remove de-selected
+			$sql->query("DELETE FROM news_tags_assoc WHERE post = {$_GET['id']} AND tag NOT IN (".implode(',', $_POST['tags']).")");
+			
+			$sql->commit();
+			
+			return header("Location: news.php?id={$_GET['id']}");
 		}
 		
 		
-		news_header("Edit post");
+		$nosmilies_chk = $_POST['nosmilies'] ? " checked" : "";
+		$nohtml_chk    = $_POST['nohtml']    ? " checked" : "";
 		
-		if (isset($_POST['preview'])){
-			print "<br>
-				<table class='main w'><tr><td class='head c'>Message preview</td></tr>
-				<tr><td class='dim'>".news_format(array_merge($news, $_POST))."</td></tr></table>";
-		}
 		
-		print "<!-- <a href='news.php'>".$config['news-name']."</a> - Edit post --><br>
-		<form method='POST' action='editnews.php?id=$id&edit'>
-		<input type='hidden' name='auth' value='$token'>
-		<center><table class='main'>
-			<tr><td class='head c' colspan='2'>Edit post</td></tr>
-			<!-- <tr>
-				<td class='light c'><b>Post options:</b></td>
-				<td class='dim'>[nothing yet]</td>
-			</tr> -->
-			<tr>
-				<td class='light c'><b>Heading</b></td>
-				<td class='dim'><input type='text' name='newsname' style='width: 580px' value=\"$name\"></td>
-			</tr>
-			<tr>
-				<td class='light c'><b>Contents</b></td>
-				<td class='dim'><textarea name='text' rows='21' cols='80' width='800px' style='resize:both;' wrap='virtual'>".htmlspecialchars($text)."</textarea></td>
-			</tr>
-			<tr>
-				<td class='light c'>
-					<b>Tags:</b><small><br>
-					Only alphanumeric characters and spaces allowed<br>
-					Multiple tags should be separated by ;
-					</small>
-				</td>
-				<td class='dim'><textarea name='cat' rows='3' cols='80' width='800px' style='resize:both;' wrap='virtual'>".htmlspecialchars($tags)."</textarea></td>
-			</tr>	
-			<tr>
-				<td class='dim' colspan='2'><input type='submit' name='submit' class='submit' value='Save changes'> <input type='submit' name='preview' class='submit' value='Preview'></td>
-			</tr>
-		</table></center>
-		</form>
-		";
+		$windowtitle = "Edit post";
+		news_header($windowtitle);
 		
+		$links = array(
+			$config['news-name'] => "news.php",
+			$windowtitle         => NULL,
+		);
+		$barlinks = dobreadcrumbs($links); 
+		
+		
+		print $barlinks;
+		
+		if (isset($_POST['preview'])) { 
+			$preview = array(
+				'id'           => $_GET['id'],
+				'user'         => $news['user'],
+				'date'         => $news['date'],
+				'userdata'     => $news,
+				'lastedituser' => $loguser['id'],
+				'lasteditdate' => ctime(),
+				'edituserdata' => $loguser,
+				'deleted'      => 0,
+				'comments'     => $sql->resultq("SELECT COUNT(*) FROM news_comments WHERE pid = {$_GET['id']}"),
+				'tags'         => array(), // TODO: Make tags work in the preview
+				'text'         => $_POST['text'],
+				'title'        => $_POST['title'],
+				'nosmilies'    => $_POST['nosmilies'],
+				'nohtml'       => $_POST['nohtml'],
+			);
+			?>
+			<table class='table'>
+				<tr><td class='tdbgh center b'>Message preview</td></tr>
+				<tr><td class='tdbg1'><?= news_format($preview) ?></td></tr>
+			</table>
+			<br>
+			<?php		
+		} 		
 	}
 	else if (isset($_GET['new'])){
 		// ACTION : New news
 		
-		$name = filter_string($_POST['newsname']);
-		$text = filter_string($_POST['text']);
-		$tags = filter_string($_POST['cat']);
+		$_POST['title']      = filter_string($_POST['title']);
+		$_POST['text']       = filter_string($_POST['text']);
+		$_POST['tags']       = array_map('intval', filter_array($_POST['tags']));
+		$_POST['customtags'] = filter_string($_POST['customtags']);
 		
-		// hack hack
-		$_POST['uid'] 		= $loguser['id'];
-		$_POST['id'] 		= false;
-		$_POST['time']		= time();
-		$_POST['hide']		= 0;
-		$_POST['comments'] 	= 0;
+		$_POST['nosmilies']  = filter_int($_POST['nosmilies']);
+		$_POST['nohtml']     = filter_int($_POST['nohtml']);
 		
 		if (isset($_POST['submit'])){
-			checktoken();
+			check_token($_POST['auth']);
 			
-			if (!$name || !$text)
-				newserrorpage("You have left one of the required fields blank!");
-			// Prevent creation of tags without alphanumeric characters
-			$taglist = explode(";", $tags);
-			foreach($taglist as $tag)
-				if (alphanumeric($tag) != $tag)
-					newserrorpage("One of the tags contains non-alphanumeric characters.");
+			if (!$_POST['title'] || !$_POST['text'])
+				news_errorpage("You have left one of the required fields blank!");
+			$valid = (int)$sql->resultq("SELECT COUNT(*) FROM news_tags WHERE id IN (".implode(',', $_POST['tags']).")");
+			if ($valid != count($_POST['tags']))
+				news_errorpage("At least one invalid tag was selected.");
+			
+			$sql->beginTransaction();
+			
+			// Get a filtered list of new tags to enter
+			$in = $sql->prepare("INSERT IGNORE INTO news_tags (title) VALUES (?)");
+			$taglist = explode(",", $_POST['customtags']);
+			foreach ($taglist as $tag) {
+				if ($tag = trim($tag)) {
+					$sql->execute($in, [$tag]);
+					if ($lastid = $sql->insert_id()) // If the tag already exists, $lastid will be 0
+						$_POST['tags'][] = $lastid;
+				}
+			}
 				
-			// Here we go
-			$sql->queryp(
-				"INSERT INTO news (name, text, cat, user, time) VALUES (?, ?, ?, ?, ?)",
-				array($name, $text, $tags, $loguser['id'], time())
+			// Create the post
+			$values = array(
+				'title' => $_POST['title'],
+				'text'  => $_POST['text'],
+				'user'  => $loguser['id'],
+				'date'  => ctime(),
 			);
+			$sql->queryp("INSERT INTO news SET ".mysql::setplaceholders($values), $values);
+			$id = $sql->insert_id();
 			
-			$id = $sql->lastInsertId();
-			header("Location: news.php?id=$id");
-			x_die();
+			// Assoc things
+			$inassoc = $sql->prepare("INSERT INTO news_tags_assoc (post, tag) VALUES ({$id},?)");
+			foreach ($_POST['tags'] as $tagid) {
+				$sql->execute($inassoc, [$tagid]);
+			}
+			
+			$sql->commit();
+			
+			return header("Location: news.php?id=$id");
 		}
 		
+		$nosmilies_chk = $_POST['nosmilies'] ? " checked" : "";
+		$nohtml_chk    = $_POST['nohtml']    ? " checked" : "";
 		
-		news_header("Create post");
 		
-		if (isset($_POST['preview']))
-			print "<br>
-				<table class='main w'><tr><td class='head c'>Message preview</td></tr>
-				<tr><td class='dim'>".news_format(array_merge($loguser,$_POST))."</td></tr></table>";
-
+		$windowtitle = "New post";
+		news_header($windowtitle);
 		
-		print "<!-- <a href='news.php'>".$config['news-name']."</a> - Create post --><br>
-		<form method='POST' action='editnews.php?new'>
-		<input type='hidden' name='auth' value='$token'>
-		<center><table class='main'>
-			<tr><td class='head c' colspan='2'>Create post</td></tr>
-			<!-- <tr>
-				<td class='light c'><b>Post options:</b></td>
-				<td class='dim'>[nothing yet]</td>
-			</tr> -->			
-			<tr>
-				<td class='light c'><b>Heading</b></td>
-				<td class='dim'><input type='text' name='newsname' style='width: 580px' value=\"$name\"></td>
-			</tr>
-			<tr>
-				<td class='light c'><b>Contents</b></td>
-				<td class='dim'><textarea name='text' rows='21' cols='80' width='800px' style='resize:both;' wrap='virtual'>".htmlspecialchars($text)."</textarea></td>
-			</tr>
-			<tr>
-				<td class='light c'>
-					<b>Tags:</b><small><br>
-					Only alphanumeric characters and spaces allowed<br>
-					Multiple tags should be separated by ;
-					</small>
-				</td>
-				<td class='dim'><textarea name='cat' rows='3' cols='80' width='800px' style='resize:both;' wrap='virtual'>".htmlspecialchars($tags)."</textarea></td>
-			</tr>	
-			<tr>
-				<td class='dim' colspan='2'><input type='submit' name='submit' class='submit' value='Create'> <input type='submit' name='preview' class='submit' value='Preview'></td>
-			</tr>
-		</table></center>
-		</form>
-		";
+		$links = array(
+			$config['news-name'] => "news.php",
+			$windowtitle         => NULL,
+		);
+		$barlinks = dobreadcrumbs($links); 
 		
+		
+		print $barlinks;
+		
+		if (isset($_POST['preview'])) { 
+			$preview = array(
+				'id'        => 0,
+				'user'      => $loguser['id'],
+				'date'      => ctime(),
+				'userdata'  => $loguser,
+				'deleted'   => 0,
+				'comments'  => 0,
+				'tags'      => array(), // TODO: Make tags work in the preview
+				'text'      => $_POST['text'],
+				'title'     => $_POST['title'],
+				'nosmilies' => $_POST['nosmilies'],
+				'nohtml'    => $_POST['nohtml'],
+			);
+			?>
+			<table class='table'>
+				<tr><td class='tdbgh center b'>Message preview</td></tr>
+				<tr><td class='tdbg1'><?= news_format($preview) ?></td></tr>
+			</table>
+			<br>
+			<?php		
+		} 
 	}
 	else if (isset($_GET['del'])){
-		checktoken(true); // ?
 		// ACTION: Hide/Unhide from normal users and guests
-		if (!$id) newserrorpage("No news ID specified.");
-		
+		if (!$_GET['id'])
+			news_errorpage("No news ID specified.");
 		// Sanity check. Don't allow this unless you're the news author or an admin
-		$news = $sql->resultq("SELECT user FROM news WHERE id = $id");
+		$news = $sql->fetchq("SELECT user, deleted FROM news WHERE id = {$_GET['id']}");
+		if (!$news)
+			news_errorpage("The post doesn't exist!");
+		if (!$ismod && $loguser['id'] != $news['user'])
+			news_errorpage("You have no permission to do this!");
 		
-		if (!$news) 					newserrorpage("The post doesn't exist!");
-		if ($loguser['id'] != $news)	newserrorpage("You have no permission to do this!");
-		
-		$sql->query("UPDATE news SET hide = NOT hide WHERE id = $id");
-		
-		redirect("news.php");
-	}
-	else if (isset($_GET['kill'])){
-		if (isset($_POST['remove'])){
-			checktoken();
-			// ACTION: Delete from database
-			if (!$id) 		newserrorpage("No post ID specified.");
-			if (!$isadmin)  newserrorpage("You're not allowed to do this!");
-			$news = $sql->resultq("SELECT 1 FROM news WHERE id = $id");
-			if (!$news) 	newserrorpage("The post doesn't exist!");
-			
-			$sql->query("DELETE FROM news WHERE id = $id");
-			redirect("news.php");
+		if ($news['deleted']) {
+			$message = "Do you want to undelete this post?";
+			$btntext = "Yes";
+		} else {
+			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$btntext = "Delete post";
 		}
+		$form_link = "news-editpost.php?del&id={$_GET['id']}";
+		$buttons   = array(
+			0 => [$btntext],
+			1 => ["Cancel", "news.php?id={$_GET['id']}"]
+		);
 		
-		news_header("Erase post");
-		?>
-		<br><br>
-		<form method='POST' action='<?php echo "?id=$id&kill" ?>'>
-		<input type='hidden' name='auth' value='<?php echo $token ?>'>
-		<center>
+		if (confirmpage($message, $form_link, $buttons)) {
+			$sql->query("UPDATE news SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			return header("Location: news.php");
+		}
+	}
+	else if (isset($_GET['erase']) && $sysadmin) {
+		// ACTION: Delete from database
+		if (!$_GET['id']) 
+			news_errorpage("No post ID specified.");
+		$news = $sql->resultq("SELECT COUNT(*) FROM news WHERE id = {$_GET['id']}");
+		if (!$news)
+			news_errorpage("The post doesn't exist!");
 		
-		<table class='main c'>
-			<tr><td class='head'>WARNING</td></tr>
-			<tr>
-				<td>
-					You are about to delete a post from the database.<br>
-					<br>
-					Are you sure you want to continue?<br>
-					There's no going back!
-				</td>
-			</tr>
-			<tr>
-				<td class='light'>
-					<input type='submit' class='submit' name='remove' value='Delete'>&nbsp;-&nbsp;
-					<a href='news.php'>Return</a>
-				</td>
-			</tr>
-		</table>
+		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
+		$form_link = "news-editpost.php?erase&id={$_GET['id']}";
+		$buttons       = array(
+			0 => ["Delete post"],
+			1 => ["Cancel", "news.php?id={$_GET['id']}"]
+		);
 		
-		</center>
-		</form>
-		<?php
+		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+			$sql->beginTransaction();
+			$sql->query("DELETE FROM news WHERE id = {$_GET['id']}");
+			$sql->query("DELETE FROM news_comments WHERE pid = {$_GET['id']}");
+			$sql->query("DELETE FROM news_tags_assoc WHERE post = {$_GET['id']}");
+			$sql->commit();
+			return header("Location: news.php");
+		}
 	}
 	else {
-		newserrorpage("No action specified.");
+		news_errorpage("No action specified.");
 	}
 	
-	pagefooter(true);
-	
 ?>
+	<center>
+	<form method='POST' action='?id=<?= $_GET['id'] ?>&edit'>
+	<input type='hidden' name='auth' value='$token'>
+
+	<table class='table'>
+		<tr><td class='tdbgh center b' colspan='2'>Create post</td></tr>		
+		<tr>
+			<td class='tdbg1 center b'>Title:</td>
+			<td class='tdbg2'>
+				<input type='text' name='title' style='width: 580px' value="<?= htmlspecialchars($_POST['title']) ?>">
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center b'>Message:</td>
+			<td class='tdbg2'>
+				<textarea name='text' rows='21' cols='80' width='800px' style='resize:both' wrap='virtual'><?= htmlspecialchars($_POST['text']) ?></textarea>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'><b>Tags:</b><div class="fonts">hold CTRL to select multiple</div></td>
+			<td class='tdbg2'><?= tag_select($_POST['tags'], $_POST['customtags']) ?></td>
+		</tr>	
+		<tr>
+			<td class='tdbg1 center b'>Options:</td>
+			<td class='tdbg2'>
+				<label><input type="checkbox" name="nosmilies" value=1 <?= $nosmilies_chk ?>> Disable smilies</label> &nbsp;
+				<label><input type="checkbox" name="nohtml" value=1 <?= $nohtml_chk ?>> Disable HTML</label>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1'></td>
+			<td class='tdbg2'>
+				<input type='submit' name='submit' value='Submit post'> &nbsp; 
+				<input type='submit' name='preview' value='Preview post'><?= auth_tag() ?>
+			</td>
+		</tr>
+	</table>
+	</form>
+	</center>
+		
+<?php
+	print $barlinks;
+	
+	news_footer();
+	
+	
+	function tag_select($sel = array(), $custom = "") {
+		global $sql;
+		$tags     = load_news_tags();
+		$selected = array_flip($sel);
+		$out = "";
+		foreach ($tags as $id => $data) {
+			$out .= "<option value='{$id}' ".(isset($selected[$id]) ? "selected" : "").">".htmlspecialchars($data['title'])."</option>\r\n";
+		}
+		return 
+		"<select multiple='multiple' name='tags[]' id='tags' style='min-width: 180px'>{$out}</select>".
+		" - or for <i>new</i> only: ".
+		"<input type='text' name='customtags' style='width: 250px' value=\"".htmlspecialchars($custom)."\">".
+		" (comma separated)";
+	}

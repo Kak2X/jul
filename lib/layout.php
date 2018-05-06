@@ -564,7 +564,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 
 
-function pagefooter() {
+function pagefooter($showfooter = true) {
 	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime;
 	
 	if (!$config['affiliate-links']) {
@@ -596,13 +596,10 @@ piwikTracker.enableLinkTracking();
 <script type=\"text/javascript\" src=\"js/useful.js\"></script> -->
 	*/
 	
+	print "<br><br><center>";
 	
-	
-	?>
-	
-	<br>
-	<br>
-	<center>
+	if ($showfooter) {
+		?>
 		<!--
 		<img src='adnonsense.php?m=d' title='generous donations to the first national bank of bad jokes and other dumb crap people post' style='margin-left: 44px;'><br>
 		<img src='adnonsense.php' title='hotpod fund' style='margin: 0 22px;'><br>
@@ -630,28 +627,11 @@ piwikTracker.enableLinkTracking();
 					</span>
 				</td>
 			</tr>
-		</table>
-		<?=$doomnum?>
-		
-	<?php
+		</table>	
+		<?php
+	}
 	
-	// Leaving this here commented for now. Maybe it will be used in the future.
-	/*
-			$footer = "
-				<!-- horrible hack -->
-				</div>
-				<table class='main c news-container new-post' style='padding: 5px 50px'>
-					<tr>
-						<td>
-							News Engine ".NEWS_VERSION."<br>
-							&copy; 2016 Kak
-						</td>
-					</tr>
-				</table>
-				<div class='fonts'>
-			";
-	*/
-	
+	print $doomnum;
 
 	/*
 		( used to be in printtimedif() )

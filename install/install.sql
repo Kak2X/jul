@@ -954,16 +954,19 @@ DROP TABLE IF EXISTS `news`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `news` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` text NOT NULL,
+  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(127) NOT NULL,
   `text` text NOT NULL,
-  `user` int(32) NOT NULL,
-  `time` int(32) NOT NULL,
-  `cat` text,
-  `hide` bit(1) NOT NULL DEFAULT b'0',
-  `lastedituser` int(32) NOT NULL DEFAULT '0',
-  `lastedittime` int(32) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  `user` smallint(5) unsigned NOT NULL,
+  `date` int(10) unsigned NOT NULL,
+  `deleted` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `lastedituser` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `lasteditdate` int(10) unsigned NOT NULL DEFAULT '0',
+  `nosmilies` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `nohtml` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `user` (`user`),
+  KEY `deleted` (`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Used by the external "plugin" news.php';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -987,12 +990,14 @@ CREATE TABLE `news_comments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `pid` int(32) NOT NULL,
   `user` int(32) NOT NULL,
-  `time` int(32) NOT NULL,
-  `hide` bit(1) NOT NULL DEFAULT b'0',
+  `date` int(10) unsigned NOT NULL,
+  `deleted` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `text` text NOT NULL,
-  `lastedituser` int(32) NOT NULL DEFAULT '0',
-  `lastedittime` int(32) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  `lastedituser` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `lasteditdate` int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `pid` (`pid`),
+  KEY `user` (`user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1004,6 +1009,54 @@ LOCK TABLES `news_comments` WRITE;
 /*!40000 ALTER TABLE `news_comments` DISABLE KEYS */;
 /*!40000 ALTER TABLE `news_comments` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `news_tags`
+--
+
+DROP TABLE IF EXISTS `news_tags`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `news_tags` (
+  `id` smallint(6) NOT NULL AUTO_INCREMENT,
+  `title` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `title` (`title`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `news_tags`
+--
+
+LOCK TABLES `news_tags` WRITE;
+/*!40000 ALTER TABLE `news_tags` DISABLE KEYS */;
+/*!40000 ALTER TABLE `news_tags` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `news_tags_assoc`
+--
+
+DROP TABLE IF EXISTS `news_tags_assoc`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `news_tags_assoc` (
+  `post` mediumint(8) unsigned NOT NULL,
+  `tag` smallint(5) unsigned NOT NULL,
+  UNIQUE KEY `posttag` (`post`,`tag`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `news_tags_assoc`
+--
+
+LOCK TABLES `news_tags_assoc` WRITE;
+/*!40000 ALTER TABLE `news_tags_assoc` DISABLE KEYS */;
+/*!40000 ALTER TABLE `news_tags_assoc` ENABLE KEYS */;
+UNLOCK TABLES;
+
 
 --
 -- Table structure for table `pendingusers`

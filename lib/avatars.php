@@ -185,42 +185,16 @@ function mood_list($user, $sel = 0, $return = false) {
 	return include_js('avatars.js').$ret;
 }
 
-function load_avatars($searchon, $min, $ppp, $mode = MODE_POST) {
-	global $sql;
-	if ($mode == MODE_ANNOUNCEMENT) {
-		$avatars = $sql->query("
-			SELECT p.user, p.moodid, v.weblink, MIN(p.id) pid 
-			FROM threads t
-			LEFT JOIN posts         p ON t.id     = p.thread
-			LEFT JOIN users_avatars v ON p.moodid = v.file
-			WHERE {$searchon} AND v.user = p.user
-			GROUP BY t.id
-			ORDER BY p.date DESC
-			LIMIT {$min},{$ppp}
-		");
+function set_avatars_sql($query) {
+	global $config;
+	if (!$config['allow-avatar-storage']) {
+		$query = str_replace("{%AVFIELD%}", ", NULL piclink", $query);
+		$query = str_replace("{%AVJOIN%}", "", $query);
 	} else {
-		if ($mode == MODE_POST) {
-			$prefix = "pm_";
-			$match  = "pm";
-		} else {
-			$prefix = "";
-			$match  = "post";
-		}
-		$avatars = $sql->query("
-			SELECT p.user, p.moodid, v.weblink
-			FROM {$prefix}posts p
-			LEFT JOIN users_avatars v ON p.moodid = v.file
-			WHERE {$searchon} AND v.user = p.user
-			ORDER BY p.id ASC
-			LIMIT {$min},{$ppp}
-		");
+		$query = str_replace("{%AVFIELD%}", ",v.weblink piclink", $query);
+		$query = str_replace("{%AVJOIN%}", "LEFT JOIN users_avatars v ON p.moodid = v.file AND v.user = p.user", $query);
 	}
-	
-	$res = array();
-	while ($x = $sql->fetch($avatars)) {
-		$res[$x['user']][$x['moodid']] = $x['weblink'];
-	}
-	return $res;
+	return $query;
 }
 
 // hopefully this will result in some consistency when asking just the minipic

@@ -81,22 +81,20 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $min, $ppp, MODE_ANNOUNCEMENT);
 	}
-	if ($config['allow-avatar-storage']) {
-		$avatars = load_avatars($searchon, $min, $ppp, MODE_ANNOUNCEMENT);
-	}
 	
 	// Get every first post for every (announcement) thread in the forum
-	$anncs = $sql->query("
+	$anncs = $sql->query(set_avatars_sql("
 		SELECT t.title atitle, t.description adesc, MIN(p.id) pid, p.*,
-		       COUNT(p.id)-1 replies, u.id uid, u.name, $ufields, u.regdate
+		       COUNT(p.id)-1 replies, u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM threads t
 		LEFT JOIN posts p ON p.thread = t.id
 		LEFT JOIN users u ON p.user   = u.id
+		{%AVJOIN%}
 		WHERE {$searchon}
 		GROUP BY t.id
 		ORDER BY p.date DESC
 		LIMIT $min,$ppp
-	");
+	"));
 	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = {$_GET['f']} ".($forumannc ? "AND announcement = 1" : ""));
 	
 	
@@ -127,9 +125,6 @@
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		if ($config['allow-avatar-storage']) {
-			$annc['piclink'] = filter_string($avatars[$annc['user']][$annc['moodid']]);
-		}
 		$annclist .= threadpost($annc,$bg,$_GET['id']);
 	}
 	

@@ -223,23 +223,21 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $min, $ppp);
 	}
-	if ($config['allow-avatar-storage']) {
-		$avatars = load_avatars($searchon, $min, $ppp); 
-	}
 	
 	// heh
-	$posts = $sql->query("
+	$posts = $sql->query(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
-				u.id uid, u.name, $ufields, u.regdate
+				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM posts p
 		
 		LEFT JOIN users u ON p.user = u.id
+		{%AVJOIN%}
 		
 		WHERE {$searchon}
 		ORDER BY p.id
 		LIMIT $min,$ppp
-	");
+	"));
 	
 	$controls['ip'] = "";
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
@@ -313,9 +311,6 @@
 		}
 		
 		$post['act']     = filter_int($act[$post['user']]);
-		if ($config['allow-avatar-storage']) {
-			$post['piclink'] = filter_string($avatars[$post['user']][$post['moodid']]);
-		}
 		if (!$pforum || $pforum <= $loguser['powerlevel'])
 			$postlist .= threadpost($post, $bg, $forum['id'], $pthread);
 		else

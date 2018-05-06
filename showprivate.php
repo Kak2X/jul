@@ -186,22 +186,20 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $min, $ppp, MODE_PM);
 	}
-	if ($config['allow-avatar-storage']) {
-		$avatars = load_avatars($searchon, $min, $ppp, MODE_PM);
-	}
 	
 	// heh
-	$posts = $sql->query("
+	$posts = $sql->query(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted,
-				u.id uid, u.name, $ufields, u.regdate
+				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM pm_posts p
 		
 		LEFT JOIN users u ON p.user = u.id
+		{%AVJOIN%}
 		WHERE {$searchon}
 		ORDER BY p.id ASC
 		LIMIT $min,$ppp
-	");
+	"));
 	
 	$controls['ip'] = "";
 	$tokenstr       = "&auth=".generate_token(TOKEN_MGET);
@@ -249,11 +247,7 @@
 			$post['attach'] = $attachments[$post['id']];
 		}
 		
-		$post['act']     = filter_int($act[$post['user']]);
-		if ($config['allow-avatar-storage']) {
-			$post['piclink'] = filter_string($avatars[$post['user']][$post['moodid']]);
-		}
-		
+		$post['act']     = filter_int($act[$post['user']]);	
 		$postlist .= "<tr>".threadpost($post, $bg, -1)."</tr>";
 	}
 

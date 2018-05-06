@@ -96,7 +96,6 @@ function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setm
 // Layout selecttor
 function mood_layout($mode, $user, $sel = 0) {
 	global $config, $loguser;
-	
 	if (!$mode) {
 		return "
 		<table style='border-spacing: 0px'>
@@ -126,7 +125,7 @@ function mood_list($user, $sel = 0, $return = false) {
 		return "";
 	}
 	
-	$c[$sel]	= " checked";
+	$c[$sel]	= " selected";
 	$txt		= "";
 	
 	if ($config['allow-avatar-storage']) { // Self stored avatar mode

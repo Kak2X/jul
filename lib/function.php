@@ -474,7 +474,7 @@
 
 	$views = $miscdata['views'] + 1;
 	
-	if (!$isbot && !IS_AJAX_REQUEST) {
+	if (!$isbot && !IS_AJAX_REQUEST && !filter_bool($meta['notrack'])) {
 		
 		// Don't increment the view counter for bots
 		$sql->query("UPDATE misc SET views = views + 1");

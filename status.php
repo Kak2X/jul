@@ -1,4 +1,6 @@
 <?php
+	$meta['notrack'] = true;
+	
 	require 'lib/function.php';
 	
 	$u  = filter_int($_GET['u']);	// User ID

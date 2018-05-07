@@ -1848,9 +1848,10 @@ function adminlinkbar($sel = NULL) {
 //			'admin-todo.php'        => "To-do list",
 			'announcement.php'      => "Go to Announcements",
 			'admin-editfilters.php' => "Edit Filters",
+			'admin-editratings.php' => "Edit Post Ratings",
 			'admin-editforums.php'  => "Edit Forum List",
 			'admin-editmods.php'    => "Edit Forum Moderators",
-			'admin-forumbans.php'    => "Edit Forum Bans",
+			'admin-forumbans.php'   => "Edit Forum Bans",
 		),
 		array(
 			'admin-threads.php'     => "ThreadFix",
@@ -2020,6 +2021,7 @@ require 'lib/attachments.php';
 require 'lib/threadpost.php';
 require 'lib/thread.php';
 require 'lib/pm.php';
+require 'lib/ratings.php';
 
 // require 'lib/replytoolbar.php';
 

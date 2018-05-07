@@ -350,6 +350,7 @@ CREATE TABLE `delusers` (
   `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `uploads_locked` tinyint(1) NOT NULL DEFAULT '0',
   `avatar_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `rating_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) unsigned NOT NULL DEFAULT '1',
   `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1211,6 +1212,33 @@ LOCK TABLES `pm_posts` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `pm_ratings`
+--
+
+DROP TABLE IF EXISTS `pm_ratings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `pm_ratings` (
+  `post` int(10) unsigned NOT NULL,
+  `user` smallint(5) unsigned NOT NULL,
+  `rating` tinyint(3) unsigned NOT NULL,
+  `date` int(10) unsigned NOT NULL DEFAULT '0',
+  KEY `post` (`post`),
+  KEY `rating` (`rating`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pm_ratings`
+--
+
+LOCK TABLES `pm_ratings` WRITE;
+/*!40000 ALTER TABLE `pm_ratings` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pm_ratings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+--
 -- Table structure for table `pm_threads`
 --
 
@@ -1507,6 +1535,32 @@ LOCK TABLES `posts_old` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `posts_ratings`
+--
+
+DROP TABLE IF EXISTS `posts_ratings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `posts_ratings` (
+  `post` int(10) unsigned NOT NULL,
+  `user` smallint(5) unsigned NOT NULL,
+  `rating` tinyint(3) unsigned NOT NULL,
+  `date` int(10) unsigned NOT NULL DEFAULT '0',
+  KEY `post` (`post`),
+  KEY `rating` (`rating`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `posts_ratings`
+--
+
+LOCK TABLES `posts_ratings` WRITE;
+/*!40000 ALTER TABLE `posts_ratings` DISABLE KEYS */;
+/*!40000 ALTER TABLE `posts_ratings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `postsday`
 --
 
@@ -1602,6 +1656,34 @@ LOCK TABLES `ranksets` WRITE;
 /*!40000 ALTER TABLE `ranksets` DISABLE KEYS */;
 INSERT INTO `ranksets` VALUES (0,'None'),(1,'Default'),(2,'TGM'),(11,'Mario'),(255,'Dots');
 /*!40000 ALTER TABLE `ranksets` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ratings`
+--
+
+DROP TABLE IF EXISTS `ratings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ratings` (
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `image` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `points` tinyint(4) NOT NULL DEFAULT '0',
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ratings`
+--
+
+LOCK TABLES `ratings` WRITE;
+/*!40000 ALTER TABLE `ratings` DISABLE KEYS */;
+INSERT INTO `ratings` VALUES (1,'Like','Post approved','images/ratings/default/approved.png',1,1),(2,'Dislike','Post disliked','images/ratings/default/denied.gif',-1,1);
+/*!40000 ALTER TABLE `ratings` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -2077,6 +2159,7 @@ CREATE TABLE `users` (
   `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `uploads_locked` tinyint(1) NOT NULL DEFAULT '0',
   `avatar_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `rating_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) unsigned NOT NULL DEFAULT '1',
   `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,

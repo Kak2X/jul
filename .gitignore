@@ -11,6 +11,8 @@ lib/firewall.php
 shitbugs.php
 library2.php
 lib/hacks.php
+images/ratings/lulz/*
+install/lulzratings.sql
 
 # No testboard stuff
 lib/config.php

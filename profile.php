@@ -239,6 +239,35 @@
 	}
 	
 	/*
+		Post ratings overview
+	*/
+	$ratinglist = "";
+	if ($config['enable-post-ratings']) {
+		$ratings = get_ratings(true);
+		$ratedata = get_user_post_ratings($_GET['id']);
+		$ratinglist = "
+		<table class='table'>
+			<tr><td class='tdbgh center' colspan=3>Post ratings</td></tr>
+			<tr>
+				<td class='tdbgh fonts center'>&nbsp;</td>
+				<td class='tdbgh fonts center'>Received</td>
+				<td class='tdbgh fonts center'>Given</td>
+			</tr>
+		";
+		foreach ($ratings as $id => $data) {
+			if (!$data['enabled'] && !$isadmin) continue;
+			$ratinglist .= "
+			<tr>
+				<td class='tdbg1 fonts center'>".rating_image($data)."</td>
+				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata['received'][$id]), $data['points'])."</td>
+				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata['given'][$id]),  $data['points'])."</td>
+			</tr>
+			";
+		}
+		$ratinglist .= "</table>";
+	}
+	
+	/*
 		Post preview
 	*/
 	$data = array(
@@ -367,6 +396,8 @@
 		<?= profile_table($profile, 'Contact information') ?>
 		<br>
 		<?= profile_table($profile, 'User settings') ?>
+		<br>
+		<?= profile_table($profile, 'Personal information') ?>	
 	</td>
 	<td>&nbsp;&nbsp;&nbsp;</td>
 	<td valign=top>
@@ -379,10 +410,10 @@
 			<tr><td class='tdbgh center' colspan=2>Equipped Items</td></tr>
 			<?=$shoplist?>
 		</table>
+		<br>
+		<?= $ratinglist ?>
 	</td>
 </table>
-<br>
-<?= profile_table($profile, 'Personal information') ?>
 <br>
 <?= preview_post($user, $data, PREVIEW_PROFILE, "Sample post") ?>
 <br>

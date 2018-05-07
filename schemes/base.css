@@ -123,10 +123,19 @@ input[type=radio] {
 	vertical-align: top;
 	height: 50px;
 }
+/*
 .attachment-box-controls {
 	vertical-align: bottom;
-}
+}*/
 
+/* Post ratings */
+.rating-container {	width: 100%; }
+.icon-rating { opacity: 0.5 }
+.icon-rating:hover,.icon-rated { opacity: 1 }
+/* Hide text to attempt preserving screen space */
+@media(max-width: 800px) {
+	.text-rating { display: none; }
+}
 
 /* Ikachan cursor (disabled) */
 /*			

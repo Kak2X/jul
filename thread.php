@@ -223,6 +223,9 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $min, $ppp);
 	}
+	if ($config['enable-post-ratings']) {
+		$ratings = load_ratings($searchon, $min, $ppp);
+	}
 	
 	// heh
 	$posts = $sql->query(set_avatars_sql("
@@ -299,6 +302,12 @@
 		
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
+		}
+		if ($config['enable-post-ratings']) {
+			$post['showratings'] = true;
+			if (isset($ratings[$post['id']])) {
+				$post['rating'] = $ratings[$post['id']];
+			}
 		}
 
 

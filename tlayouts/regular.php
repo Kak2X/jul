@@ -112,7 +112,13 @@ function postcode($post,$set){
 		}
 		
 		// EXTENDED LAYOUT OPTS
-		$icqicon = $imood = "";
+		$icqicon = $imood = $optionrow = "";
+		if ($config['enable-post-ratings']) {
+			$optionrow .= "<tr>
+				<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
+				<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>{$set['rating']}</td>
+			</tr>"; // &nbsp;<b>Post ratings:</b>
+		}
 		if ($tlayout == 6) {
 			//if ($post['icq']) $icqicon="<a href='http://wwp.icq.com/{$post['icq']}#pager'><img src='http://wwp.icq.com/scripts/online.dll?icq={$post['icq']}&img=5' border=0 width=13 height=13 align=absbottom></a>";
 			if ($post['imood']) {
@@ -130,7 +136,7 @@ function postcode($post,$set){
 			if (!isset($tokenstr)) $tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
 			$un_b = $post['blockedlayout'] ? "Unb" : "B";
-			$optionrow = "
+			$optionrow .= "
 			<tr>
 				<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'><b>Status</b>: {$status}</td>
 				<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>&nbsp;<b>Options</b>:
@@ -140,8 +146,6 @@ function postcode($post,$set){
 					<a href='thread.php?user={$post['uid']}'>Posts by user</a>
 				</td>
 			</tr>";
-		} else {
-			$optionrow = "";
 		}
 		
 		$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";

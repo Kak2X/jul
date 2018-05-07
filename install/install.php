@@ -263,6 +263,7 @@ if (!$error) {
 				".set_radio(2,'allow-thread-deletion' , 'Allow thread deletion'  , 'No|Yes'      , 0)."
 				".set_radio(2,'allow-post-deletion'   , 'Allow post deletion'    , 'No|Yes'      , 0)."
 				".set_radio(2,'enable-ratings'        , 'Enable user ratings'    , 'No|Yes'      , 0)."
+				".set_radio(2,'enable-post-ratings'   , 'Enable post ratings'    , 'No|Yes'      , 0)."
 				".set_radio(2,'onlineusers-on-thread' , 'Online users bar detail', 'Forum|Thread', 0)."
 				".set_radio(2,'allow-pmthread-edit'   , 'Allow PM editing'       , 'No|Yes'      , 0)."
 				".set_input(0,'pmthread-dest-limit'   , 'Max partecipants/conv.' , 50, 4)."

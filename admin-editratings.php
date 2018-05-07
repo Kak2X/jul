@@ -1,0 +1,149 @@
+<?php
+	
+	require "lib/function.php";
+	admincheck();
+	
+	$_GET['id'] = filter_int($_GET['id']);
+	
+	if (isset($_POST['submit']) || isset($_POST['submit2'])) {
+		if ($_GET['id'] > 0 && filter_bool($_POST['delete'])) {
+			// Warn before doing potentially bad stuff
+			// This will be somewhat more important when auto-resynching will be a thing
+			$message = "
+				Are you sure you want to <b>permanently DELETE</b> this rating?<br>
+				This will lower the post rating counts! If you only want to soft delete a rating, please disable it instead.<!-- <br>
+				If you continue, user counts will be automatically resynched. -->
+				<input type='hidden' name='delete' value='1'><input type='hidden' name='submit' value='1'>";
+			$form_link = "?id={$_GET['id']}";
+			$buttons       = array(
+				0 => ["Delete rating"],
+				1 => ["Cancel", "?id={$_GET['id']}"]
+			);
+			
+			if (confirmpage($message, $form_link, $buttons)) {
+				$sql->beginTransaction();
+				//--
+				$sql->query("DELETE FROM ratings WHERE id = {$_GET['id']}");
+				$sql->query("DELETE FROM posts_ratings WHERE rating = {$_GET['id']}");
+				$sql->query("DELETE FROM pm_ratings WHERE rating = {$_GET['id']}");
+				//--
+				$sql->commit();
+				$id = 0; // Don't display edit window
+			}
+		} else {
+			check_token($_POST['auth']);
+			$values = array(
+				'title'       => filter_string($_POST['title']),
+				'description' => filter_string($_POST['description']),
+				'image'       => filter_string($_POST['image']),
+				'points'      => filter_int($_POST['points']),
+				'enabled'     => filter_int($_POST['enabled']),
+			);
+			$phs = mysql::setplaceholders($values);
+			
+			if ($_GET['id'] > 0) {
+				$sql->queryp("UPDATE ratings SET {$phs} WHERE id = {$_GET['id']}", $values);
+				$id = $_GET['id'];
+			} else {
+				$sql->queryp("INSERT INTO ratings SET {$phs}", $values);
+				$id = $sql->insert_id();
+			}
+			
+		}
+		$editlink = isset($_POST['submit']) ? "id={$id}" : ""; // Save and continue?
+		return header("Location: ?{$editlink}");
+	}
+	
+	pageheader("Ratings editor");
+	print adminlinkbar();
+	
+	$ratings = get_ratings(true);
+	
+	if ($_GET['id']) {
+		if ($_GET['id'] <= -1 || !isset($ratings[$_GET['id']])) {
+			$x = array(
+				'title'       => 'New rating',
+				'description' => 'Sample description',
+				'image'       => 'images/ratings/default/denied.gif',
+				'points'      => 1,
+				'enabled'     => 1,
+			);
+			$editAction = "New rating";
+			$delrating = "";
+		} else {
+			$x = $ratings[$_GET['id']];
+			$editAction = "Editing rating '".htmlspecialchars($x['title'])."'";
+			$delrating = "<input type='checkbox' name='delete' value=1> Delete rating";
+		}		
+?>
+		<form method="POST" action="?id=<?= $_GET['id'] ?>">
+		<table class="table" style="width: 800px; margin: auto">
+			<tr><td class="tdbgh center b" colspan=7><?= $editAction ?></td></tr>
+			
+			<tr>
+				<td class="tdbg1 center b">Title:</td>
+				<td class="tdbg1"><input type="text" name="title" style="width: 300px" maxwidth=30 value="<?= htmlspecialchars($x['title']) ?>"></td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b">Description:</td>
+				<td class="tdbg1"><input type="text" name="description" style="width: 550px" maxwidth=100 value="<?= htmlspecialchars($x['description']) ?>"></td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b">Image link:</td>
+				<td class="tdbg1"><input type="text" name="image" style="width: 550px" maxwidth=100 value="<?= htmlspecialchars($x['image']) ?>"></td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b">Points awarded:</td>
+				<td class="tdbg1"><input type="text" name="points" style="width: 50px" maxwidth=4 value="<?= htmlspecialchars($x['points']) ?>"></td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b">Options</td>
+				<td class="tdbg1">
+					<label><input type="checkbox" name="enabled" value=1<?= ($x['enabled'] ? " checked" : "") ?>> Enabled</label>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b"></td>
+				<td class="tdbg1">
+					<input type="submit" name="submit" value="Save and continue"> <input type="submit" name="submit2" value="Save and close">
+					<?= auth_tag() ?>
+					<label style="float: right; padding-right: 5px"><?= $delrating ?></label>
+				</td>
+			</tr>
+		</table>
+		</form>
+		<br>
+<?php } ?>
+	
+	<table class='table'>
+		<tr><td class='tdbgh center b' colspan=7>Ratings list</td></tr>
+		<tr>
+			<td class='tdbgc center' style='width: 50px'></td>
+			<td class='tdbgc center' style='width: 50px'>Set</td>
+			<td class='tdbgc center' style='width: 60px'>Preview</td>
+			<td class='tdbgc center'>Title</td>
+			<td class='tdbgc center'>Image</td>
+			<td class='tdbgc center'>Description</td>
+			<td class='tdbgc center' style='width: 50px'>Pts.</td>
+		</tr>
+	<?php
+	$i = 0;
+	foreach ($ratings as $id => $data) {
+		$cell = ($i++%2)+1;
+		print "
+		<tr>
+			<td class='tdbg{$cell} fonts center' ><a href='?id={$id}'>Edit</a></td>
+			<td class='tdbg{$cell} center b'>".rating_colors(($data['enabled'] ? "ON" : "OFF"), ($data['enabled'] ? 1 : -1))."</td>
+			<td class='tdbg{$cell} center'>".rating_image($data)."</td>
+			<td class='tdbg{$cell}'>".htmlspecialchars($data['title'])."</td>
+			<td class='tdbg{$cell}'>".htmlspecialchars($data['image'])."</td>
+			<td class='tdbg{$cell}'>".htmlspecialchars($data['description'])."</td>
+			<td class='tdbg{$cell} center'>".rating_colors($data['points'],$data['points'])."</td>
+		</tr>";
+	}
+?>
+		<tr><td class='tdbgc center b' colspan=7><a href='?id=-1'>&lt; Add a new rating &gt;</a></td></tr>
+	</table>
+<?php
+	
+	pagefooter();

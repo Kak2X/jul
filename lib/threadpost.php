@@ -74,6 +74,12 @@
 				$set['attach'] = "";
 			}
 			
+			if (filter_bool($post['showratings'])) { // Ratings are opt-in
+				$set['rating'] = ratings_html($post['id'], filter_array($post['rating']), ($forum < 0 ? MODE_PM : MODE_POST));
+			} else {
+				$set['rating'] = "";
+			}
+			
 			$post['text'] = doreplace2($post['text'], $post['options']);
 		}
 

@@ -24,6 +24,12 @@ else if ($_POST['knockout']) {
 	echo "SLAM JAM:\n";
 	
 	$sql->beginTransaction();
+	
+	$sql->query("DELETE FROM userratings WHERE userrated = '{$target_id}' OR userfrom = '{$target_id}'");
+	$sql->query("DELETE FROM posts_ratings WHERE user = '{$target_id}' OR post IN (SELECT id FROM threads WHERE user = '{$target_id}') OR post IN (SELECT id FROM posts WHERE user = '{$target_id}')");
+	$sql->query("DELETE FROM pm_ratings WHERE user = '{$target_id}' OR post IN (SELECT id FROM pm_threads WHERE user = '{$target_id}') OR post IN (SELECT id FROM pm_posts WHERE user = '{$target_id}')");
+	echo "Deleted ratings.\n";
+	
 	//$sql->query("DELETE FROM posts_text WHERE pid IN (SELECT id FROM posts WHERE user = '{$target_id}') LIMIT 50");
 	$sql->query("DELETE FROM posts_old WHERE pid IN (SELECT id FROM threads WHERE user = '{$target_id}') OR pid IN (SELECT id FROM posts WHERE user = '{$target_id}')");
 	$sql->query("DELETE FROM posts WHERE user = '{$target_id}' OR id IN (SELECT id FROM threads WHERE user = '{$target_id}')"); // LIMIT 50

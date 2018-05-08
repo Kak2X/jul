@@ -3,16 +3,33 @@
 	require "lib/function.php";
 	admincheck();
 	
-	$_GET['id'] = filter_int($_GET['id']);
+	$_GET['id']     = filter_int($_GET['id']);
+	$_GET['action'] = filter_string($_GET['action']);
+	
+	if ($_GET['action'] == 'resync') {
+		$message = "
+			This will resyncronize the post rating totals for all users.<br>
+			This can be a potentially slow action; please don't flood this page with requests.";
+		$form_link = "?action=resync";
+		$buttons       = array(
+			0 => ["Resyncronize ratings"],
+			1 => ["Cancel", "?"]
+		);
+		
+		if (confirmpage($message, $form_link, $buttons)) {
+			resync_post_ratings();
+			errorpage("The rating counts have been syncronized.<br>Click <a href='?'>here</a> to continue.");
+		}
+	}
+	
 	
 	if (isset($_POST['submit']) || isset($_POST['submit2'])) {
 		if ($_GET['id'] > 0 && filter_bool($_POST['delete'])) {
 			// Warn before doing potentially bad stuff
-			// This will be somewhat more important when auto-resynching will be a thing
 			$message = "
 				Are you sure you want to <b>permanently DELETE</b> this rating?<br>
-				This will lower the post rating counts! If you only want to soft delete a rating, please disable it instead.<!-- <br>
-				If you continue, user counts will be automatically resynched. -->
+				If you only want to soft delete a rating, please disable it instead.<br><br>
+				After deleting the rating, you may want to resyncronize the rating counts.
 				<input type='hidden' name='delete' value='1'><input type='hidden' name='submit' value='1'>";
 			$form_link = "?id={$_GET['id']}";
 			$buttons       = array(
@@ -112,9 +129,11 @@
 			</tr>
 		</table>
 		</form>
-		<br>
 <?php } ?>
 	
+	<div class="font right">
+		Actions: <a href='?id=-1'>Add a new rating</a> - <a href='?action=resync'>Resync ratings</a>
+	</div>
 	<table class='table'>
 		<tr><td class='tdbgh center b' colspan=7>Ratings list</td></tr>
 		<tr>
@@ -142,7 +161,6 @@
 		</tr>";
 	}
 ?>
-		<tr><td class='tdbgc center b' colspan=7><a href='?id=-1'>&lt; Add a new rating &gt;</a></td></tr>
 	</table>
 <?php
 	

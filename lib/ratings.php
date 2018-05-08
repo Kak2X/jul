@@ -78,8 +78,10 @@ function rate_post($post, $rating, $mode = MODE_POST) {
 	global $sql, $loguser;
 	if ($mode == MODE_PM) {
 		$joinpf = "pm";
+		$fmode  = 1;
 	} else {
 		$joinpf = "posts";
+		$fmode  = 0;
 	}
 	//--
 	$data = $sql->fetchq("
@@ -91,9 +93,28 @@ function rate_post($post, $rating, $mode = MODE_POST) {
 	if (!$data['id']) { // whoop de whoop the rating doesn't exist
 		return false;
 	} else if ($data['voted']) {
-		$sql->query("DELETE FROM {$joinpf}_ratings WHERE user = {$loguser['id']} AND post = {$post} AND rating = {$rating}");
+		delete_post_rating($loguser['id'], $post, $rating, $mode);
 	} else {
 		$sql->query("INSERT INTO {$joinpf}_ratings (user, post, rating, `date`) VALUES ({$loguser['id']}, {$post}, {$rating}, ".ctime().")");
+		// User cache update
+		
+		$res = $sql->query("
+			UPDATE ratings_cache SET total = total + 1 
+			WHERE (
+				 (type = 0 AND user = {$loguser['id']}) -- given
+			  OR (type = 1 AND user = (SELECT user FROM posts WHERE id = {$post})) -- received
+			  )
+			  AND rating = {$rating}
+			  AND mode = {$fmode}
+		");
+		if ($sql->num_rows($res) != 2) { // Row not present in the cache yet
+			//die("Missing cache on insert.");
+			$rateduser = $sql->resultq("SELECT user FROM posts WHERE id = {$post}");
+			if (!$sql->resultq("SELECT COUNT(*) FROM ratings_cache WHERE type = 0 AND user = {$loguser['id']} AND rating = {$rating} AND mode = {$fmode}"))
+				$sql->query("INSERT INTO ratings_cache (user, mode, type, rating, total) VALUES ({$loguser['id']}, {$fmode}, 0, {$rating}, 1)");
+			if (!$sql->resultq("SELECT COUNT(*) FROM ratings_cache WHERE type = 1 AND user = {$rateduser} AND rating = {$rating} AND mode = {$fmode}"))
+				$sql->query("INSERT INTO ratings_cache (user, mode, type, rating, total) VALUES ({$rateduser}, {$fmode}, 1, {$rating}, 1)");	
+		}			
 	}
 	return true;
 }
@@ -102,11 +123,23 @@ function delete_post_rating($user, $post, $rating, $mode = MODE_POST) {
 	global $sql;
 	if ($mode == MODE_PM) {
 		$joinpf = "pm";
+		$fmode   = 1;
 	} else {
 		$joinpf = "posts";
+		$fmode   = 0;
 	}
 	//--
 	$sql->query("DELETE FROM {$joinpf}_ratings WHERE user = {$user} AND post = {$post} AND rating = {$rating}");
+	// User cache update
+	$sql->query("
+		UPDATE ratings_cache SET total = total - 1 
+		WHERE (
+		     (type = 0 AND user = {$user}) -- given
+		  OR (type = 1 AND user = (SELECT user FROM posts WHERE id = {$post})) -- received
+		  )
+		  AND rating = {$rating}
+		  AND mode = {$fmode}
+	");
 }
 
 // Detail view for a single post/pm
@@ -127,32 +160,42 @@ function get_post_ratings($post, $mode = MODE_POST) {
 }
 
 // Here we DO calculate the total
-// TODO: This *probably* needs to be cached
 function get_user_post_ratings($user, $mode = MODE_POST) {
 	global $sql;
-	if ($mode == MODE_PM) {
-		$prefix = "pm_";
-		$joinpf = "pm";
-	} else {
-		$prefix = "";
-		$joinpf = "posts";
-	}
+	$mode = (int)($mode == MODE_PM);
+	//--
+	
 	$ratings = $sql->query("
-		SELECT a.rating, IF(a.user = {$user},'given','received') `key`, COUNT(*) total
-		FROM {$prefix}posts p
-		INNER JOIN {$joinpf}_ratings a ON p.id = a.post
-		WHERE p.user = {$user} OR a.user = {$user}
-		GROUP BY `key`, a.rating
+		SELECT type, rating, total
+		FROM ratings_cache
+		WHERE user = {$user} AND mode = {$mode}
 	");
-	$out = array('received' => array(), 'given' => array());
+	$out = array(array(),array());
 	while ($x = $sql->fetch($ratings)) {
-		$out[$x['key']][$x['rating']] = $x['total'];
+		$out[$x['type']][$x['rating']] = $x['total'];
 	}
 	return $out;
 }
 
+// CACHE TIME!
+// type 0 -> given; 1 ->received
 function resync_post_ratings() {
 	global $sql;
-	// WIP
-	return;
+	$prefixes = array('','pm_');
+	$joinpfs  = array('posts','pm');
+	$sql->query("TRUNCATE ratings_cache");
+	$users = $sql->getresults("SELECT id FROM users");
+	for ($i = 0; $i < 1; ++$i) {
+		$resync = $sql->prepare("
+			INSERT INTO ratings_cache (user, mode, type, rating, total)
+			SELECT IF(a.user = ?,a.user,p.user) user, {$i}, IF(a.user = ?,0,1) `key`, a.rating, COUNT(*) total
+			FROM {$prefixes[$i]}posts p
+			INNER JOIN {$joinpfs[$i]}_ratings a ON p.id = a.post
+			WHERE p.user = ? OR a.user = ?
+			GROUP BY `key`, a.rating
+		"); //  --, SUM(r.points) points
+		foreach ($users as $user)
+			$sql->execute($resync, [$user, $user, $user, $user]);
+	}
 }
+//resync_post_ratings();

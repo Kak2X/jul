@@ -1687,6 +1687,34 @@ INSERT INTO `ratings` VALUES (1,'Like','Post approved','images/ratings/default/a
 UNLOCK TABLES;
 
 --
+-- Table structure for table `ratings_cache`
+--
+
+DROP TABLE IF EXISTS `ratings_cache`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ratings_cache` (
+  `user` smallint(5) unsigned NOT NULL,
+  `mode` tinyint(3) unsigned NOT NULL,
+  `type` tinyint(3) unsigned NOT NULL,
+  `rating` tinyint(3) unsigned NOT NULL,
+  `total` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  KEY `user` (`user`),
+  KEY `mode` (`mode`),
+  KEY `type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ratings_cache`
+--
+
+LOCK TABLES `ratings_cache` WRITE;
+/*!40000 ALTER TABLE `ratings_cache` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ratings_cache` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `referer`
 --
 

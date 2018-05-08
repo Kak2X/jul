@@ -259,8 +259,8 @@
 			$ratinglist .= "
 			<tr>
 				<td class='tdbg1 fonts center'>".rating_image($data)."</td>
-				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata['received'][$id]), $data['points'])."</td>
-				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata['given'][$id]),  $data['points'])."</td>
+				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata[1][$id]), $data['points'])."</td>
+				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata[0][$id]),  $data['points'])."</td>
 			</tr>
 			";
 		}

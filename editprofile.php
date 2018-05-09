@@ -244,11 +244,11 @@
 				$user['name'] = str_replace(' ','',$user['name']);
 				if (strcasecmp($user['name'], $username2) == 0) $samename = $user['name'];
 			}
-			 
+			
 			// Extra edituser fields
 			$adminval = array(
 				
-				'name'				=> ($samename || !$username) ? $username : $userdata['name'],
+				'name'				=> ($samename || !$username) ? $userdata['name'] : $username,
 				// No "Imma become a root admin" bullshit
 				'powerlevel' 		=> $sysadmin ? filter_int($_POST['powerlevel']) : min(3, filter_int($_POST['powerlevel'])),
 				'regdate'			=> fieldstotimestamp('reg', '_POST'),

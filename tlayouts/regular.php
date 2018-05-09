@@ -59,6 +59,21 @@ function postcode($post,$set){
 		// $post['text'] .= "<hr><font class='fonts'>{$post['edited']}";
 	//}
 	
+	// Default layout
+	if (!$post['headid']) {
+		$csskey = "_x".$post['id'];
+	} else {
+		$csskey = "_".$post['headid'];
+	}
+	
+	$optionrow = "";
+	if ($set['rating']) {
+		$optionrow .= "<tr>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>{$set['rating']}</td>
+		</tr>"; // &nbsp;<b>Post ratings:</b>
+	}
+	
 	// Deleted user has its own layout
 	// RIP to all the others since we're not Jul
 	
@@ -96,6 +111,7 @@ function postcode($post,$set){
 					{$post['signtext']}
 				</td>
 			</tr>
+			{$optionrow}
 		</table>";
 
 		
@@ -104,21 +120,8 @@ function postcode($post,$set){
 
 		$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
 		
-		// Default layout
-		if (!$post['headid']) {
-			$csskey = "_x".$post['id'];
-		} else {
-			$csskey = "_".$post['headid'];
-		}
-		
 		// EXTENDED LAYOUT OPTS
-		$icqicon = $imood = $optionrow = "";
-		if ($config['enable-post-ratings']) {
-			$optionrow .= "<tr>
-				<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
-				<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>{$set['rating']}</td>
-			</tr>"; // &nbsp;<b>Post ratings:</b>
-		}
+		$icqicon = $imood = "";
 		if ($tlayout == 6) {
 			//if ($post['icq']) $icqicon="<a href='http://wwp.icq.com/{$post['icq']}#pager'><img src='http://wwp.icq.com/scripts/online.dll?icq={$post['icq']}&img=5' border=0 width=13 height=13 align=absbottom></a>";
 			if ($post['imood']) {

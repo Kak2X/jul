@@ -23,6 +23,13 @@
 	} else {
 		$csskey = "_".$post['headid'];
 	}
+	$optionrow = "";
+	if ($set['rating']) {
+		$optionrow .= "<tr>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts'>{$set['rating']}</td>
+		</tr>"; // &nbsp;<b>Post ratings:</b>
+	}
 	
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
@@ -84,6 +91,7 @@ return "
 			{$post['signtext']}
 		</td>
 	</tr>
+	{$optionrow}
 </table>
 ";
 }

@@ -30,6 +30,13 @@
 	
 	$height = $post['deleted'] ? 0 : 220;
 	
+	$optionrow = "";
+	if ($set['rating']) {
+		$optionrow .= "<tr>
+			<td class='tdbg{$set['bg']} fonts' colspan=2>{$set['rating']}</td>
+		</tr>";
+	}
+	
     return "
 	<table class='table' id='{$post['id']}'>
 		<tr>
@@ -55,6 +62,7 @@
 				Posted on {$postdate}{$threadlink}{$post['edited']}
 			</td>
 		</tr>
+		{$optionrow}
 	  </table>
     ";
   }

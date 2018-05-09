@@ -15,7 +15,6 @@
 	}
 	
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
-	
 	if ($post['deleted']) {
 		$sidebar = "";
 	} else {
@@ -31,11 +30,11 @@
     return "
 	<table class='table' id='{$post['id']}'>
 		<tr>
-			<td class='tdbg{$set['bg']} vatop' style='width: 200px'>
+			<td class='tdbg{$set['bg']} vatop' style='width: 200px; border-bottom: none'>
 				{$noobspan}{$set['userlink']}</span>
 				{$sidebar}
 			</td>
-			<td class='tdbg{$set['bg']} vatop' id='post{$post['id']}'>
+			<td class='tdbg{$set['bg']} vatop' style='border-bottom: none' id='post{$post['id']}'>
 				<table class='w fonts' cellspacing=0 cellpadding=2>
 						<tr>
 							<td>Posted on {$postdate}{$threadlink}{$post['edited']}</td>
@@ -48,6 +47,10 @@
 				{$set['attach']}
 				{$post['signtext']}
 			</td>
+		</tr>
+		<tr>
+			<td class='tdbg{$set['bg']}'></td>
+			<td class='tdbg{$set['bg']}'><hr>{$set['rating']}</td>
 		</tr>
 	 </table>
     ";

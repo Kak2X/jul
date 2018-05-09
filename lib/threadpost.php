@@ -25,7 +25,7 @@
 			$post['text'] = "(Post deleted)";
 			$set['userrank'] = $set['location'] = "";
 			$set['picture']  = $set['userpic']  = "";
-			$set['attach'] = "";
+			$set['attach']   = $set['rating']   = "";
 		} else {
 		
 			$set['userrank'] = getrank(

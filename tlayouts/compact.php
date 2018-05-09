@@ -3,7 +3,7 @@
 function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
 function postcode($post,$set){
-	global $controls;
+	global $controls, $config;
 
 	$postnum = ($post['num'] ? " {$post['num']}/":'').$post['posts'];
 
@@ -18,19 +18,19 @@ function postcode($post,$set){
 	return 
 	"<table class='table' id='{$post['id']}'>
 		<tr>
-			<td class='tbl tdbg{$set['bg']} vatop'>
+			<td class='tdbg{$set['bg']} vatop'>
 				<div class='mobile-avatar'>{$set['userpic']}</div>
 				{$noobspan}{$set['userlink']}</span><br>
 				<span class='fonts'> Posts: {$postnum}</span>
 			</td>
-			<td class='tbl tdbg{$set['bg']}' valign=top width=50% align=right>
-				<span class='fonts'> Posted on {$set['date']}$threadlink</span>
-				<br>{$controls['quote']}{$controls['edit']}
-				<br>{$controls['ip']}
+			<td class='tdbg{$set['bg']} vatop' style='width: 50%'>
+				<div class='fonts right'> Posted on {$set['date']}$threadlink</div>
+				<div class='right'>{$controls['quote']}{$controls['edit']}</div>
+				<span style='float: right'>&nbsp;{$controls['ip']}</span>{$set['rating']}
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top height={$height} colspan=2 id='post{$post['id']}'>
+			<td class='tdbg{$set['bg']} vatop' style='height: {$height}px' colspan=2 id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

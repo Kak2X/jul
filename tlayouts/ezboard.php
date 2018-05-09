@@ -27,6 +27,14 @@ function postcode($post,$set) {
 		$csskey = "_".$post['headid'];
 	}
 	
+	$optionrow = "";
+	if ($set['rating']) {
+		$optionrow .= "<tr>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts'>{$set['rating']}</td>
+		</tr>"; // &nbsp;<b>Post ratings:</b>
+	}
+	
 	return "
 <table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 	<tr>
@@ -50,5 +58,6 @@ function postcode($post,$set) {
 			{$post['signtext']}
 		</td>
 	</tr>
+	{$optionrow}
 </table>";
 }

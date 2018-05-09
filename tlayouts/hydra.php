@@ -33,7 +33,7 @@ function postcode($post,$set){
 	return 
 	"<table class='table' id='{$post['id']}'>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top rowspan=2 style='width: 20% !important;'>
+			<td class='tdbg{$set['bg']} vatop' rowspan=3 style='width: 20% !important;'>
 				{$noobspan}{$set['userlink']}</span>
 				<span class='fonts'>
 					<br>
@@ -42,7 +42,7 @@ function postcode($post,$set){
 					<br>
 				</span>
 			</td>
-			<td class='tbl tdbg{$set['bg']}' valign=top height=1>
+			<td class='tdbg{$set['bg']} vatop' style='height: 1px'>
 				<table class='fonts' style='clear: both; width: 100%;'>
 					<tr>
 						<td>
@@ -56,13 +56,14 @@ function postcode($post,$set){
 			</td>
 		</tr>
 		<tr>
-			<td class='tbl tdbg{$set['bg']}' valign=top style='overflow: visible; width: 70%;' height={$height} id='post{$post['id']}'>
+			<td class='tbl tdbg{$set['bg']} vatop' style='overflow: visible; width: 70%;' height={$height} id='post{$post['id']}'>
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}
 				{$post['signtext']}
 			</td>
 		</tr>
+		<tr><td class='tdbg{$set['bg']}'>{$set['rating']}</td></tr>
 	</table>
 	<br>";
 /*

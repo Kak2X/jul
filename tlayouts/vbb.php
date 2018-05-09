@@ -1,6 +1,6 @@
 <?php
   
-function userfields() {return 'posts,sex,powerlevel,picture,title,useranks,location,homepageurl,homepage,u.ban_expire';}
+function userfields() {return 'posts,sex,powerlevel,picture,useranks,location,homepageurl,homepagename,u.ban_expire';}
 
 function postcode($post, $set){
     global $controls, $loguser;
@@ -45,6 +45,13 @@ function postcode($post, $set){
 	}
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
+	$optionrow = "";
+	if ($set['rating']) {
+		$optionrow .= "<tr>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts'>{$set['rating']}</td>
+		</tr>"; // &nbsp;<b>Post ratings:</b>
+	}
 	
     return "
 	<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
@@ -61,14 +68,15 @@ function postcode($post, $set){
 			</td>
 		</tr>
 		<tr>
-			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$postdate}{$post['edited']}</td>
+			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$postdate}</td>
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
-				<table class='w fonts'>
+				<table class='w fonts'><tr>
 					<td>[<a href='profile.php?id=$u'>Profile</a>] [<a href='sendprivate?userid=$u'>Send PM</a>]{$homepage} [<a href='thread.php?user=$u'>Search</a>]{$threadlink}</td>
-					<td style='width: 270px'>{$controls['quote']} {$controls['edit']} {$controls['ip']}
-				</table>
+					<td class='nobr right'>{$post['edited']} {$controls['quote']} {$controls['edit']} {$controls['ip']}</td>
+				</tr></table>
 			</td>
 		</tr>
+		{$optionrow}
 	</table>
     ";
   }

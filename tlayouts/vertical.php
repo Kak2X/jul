@@ -58,10 +58,10 @@ function postcode($post,$set){
 		</table>";
 		$sideright = "
 			Posted: {$postdate}
-			<br>
 			<br>{$threadlink} {$controls['quote']}
 			<br>{$controls['edit']}
-			<br>{$controls['ip']}";
+			<br>{$controls['ip']}
+			<br>{$set['rating']}";
 	}
 	
     return "

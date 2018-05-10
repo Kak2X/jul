@@ -1672,6 +1672,7 @@ CREATE TABLE `ratings` (
   `image` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `points` tinyint(4) NOT NULL DEFAULT '0',
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `minpower` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1682,7 +1683,7 @@ CREATE TABLE `ratings` (
 
 LOCK TABLES `ratings` WRITE;
 /*!40000 ALTER TABLE `ratings` DISABLE KEYS */;
-INSERT INTO `ratings` VALUES (1,'Like','Post approved','images/ratings/default/approved.png',1,1),(2,'Dislike','Post disliked','images/ratings/default/denied.gif',-1,1);
+INSERT INTO `ratings` VALUES (1,'Like','Post approved','images/ratings/default/approved.png',1,1,0),(2,'Dislike','Post disliked','images/ratings/default/denied.gif',-1,1,0);
 /*!40000 ALTER TABLE `ratings` ENABLE KEYS */;
 UNLOCK TABLES;
 

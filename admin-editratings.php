@@ -55,6 +55,7 @@
 				'image'       => filter_string($_POST['image']),
 				'points'      => filter_int($_POST['points']),
 				'enabled'     => filter_int($_POST['enabled']),
+				'minpower'    => filter_int($_POST['minpower']),
 			);
 			$phs = mysql::setplaceholders($values);
 			
@@ -84,6 +85,7 @@
 				'image'       => 'images/ratings/default/denied.gif',
 				'points'      => 1,
 				'enabled'     => 1,
+				'minpower'    => 0,
 			);
 			$editAction = "New rating";
 			$delrating = "";
@@ -114,6 +116,10 @@
 				<td class="tdbg1"><input type="text" name="points" style="width: 50px" maxwidth=4 value="<?= htmlspecialchars($x['points']) ?>"></td>
 			</tr>
 			<tr>
+				<td class="tdbg1 center b">Power level required:</td>
+				<td class="tdbg1"><?= power_select('minpower', $x['minpower']) ?></td>
+			</tr>
+			<tr>
 				<td class="tdbg1 center b">Options</td>
 				<td class="tdbg1">
 					<label><input type="checkbox" name="enabled" value=1<?= ($x['enabled'] ? " checked" : "") ?>> Enabled</label>
@@ -135,7 +141,7 @@
 		Actions: <a href='?id=-1'>Add a new rating</a> - <a href='?action=resync'>Resync ratings</a>
 	</div>
 	<table class='table'>
-		<tr><td class='tdbgh center b' colspan=7>Ratings list</td></tr>
+		<tr><td class='tdbgh center b' colspan=8>Ratings list</td></tr>
 		<tr>
 			<td class='tdbgc center' style='width: 50px'></td>
 			<td class='tdbgc center' style='width: 50px'>Set</td>
@@ -143,6 +149,7 @@
 			<td class='tdbgc center'>Title</td>
 			<td class='tdbgc center'>Image</td>
 			<td class='tdbgc center'>Description</td>
+			<td class='tdbgc center' style='width: 200px'>Power level required</td>
 			<td class='tdbgc center' style='width: 50px'>Pts.</td>
 		</tr>
 	<?php
@@ -151,12 +158,13 @@
 		$cell = ($i++%2)+1;
 		print "
 		<tr>
-			<td class='tdbg{$cell} fonts center' ><a href='?id={$id}'>Edit</a></td>
+			<td class='tdbg{$cell} fonts center'><a href='?id={$id}'>Edit</a></td>
 			<td class='tdbg{$cell} center b'>".rating_colors(($data['enabled'] ? "ON" : "OFF"), ($data['enabled'] ? 1 : -1))."</td>
 			<td class='tdbg{$cell} center'>".rating_image($data)."</td>
 			<td class='tdbg{$cell}'>".htmlspecialchars($data['title'])."</td>
 			<td class='tdbg{$cell}'>".htmlspecialchars($data['image'])."</td>
 			<td class='tdbg{$cell}'>".htmlspecialchars($data['description'])."</td>
+			<td class='tdbg{$cell} center'>{$pwlnames[$data['minpower']]}</td>
 			<td class='tdbg{$cell} center'>".rating_colors($data['points'],$data['points'])."</td>
 		</tr>";
 	}
@@ -165,3 +173,13 @@
 <?php
 	
 	pagefooter();
+	
+	
+function power_select($name, $sel = 0, $limit = 100) {
+	global $pwlnames;
+	$txt = "";
+	foreach ($pwlnames as $pwl => $pwlname)
+		if ($pwl <= $limit)
+			$txt .= "<option value='{$pwl}' ".($sel == $pwl ? " selected" : "").">{$pwlname}</option>";
+	return "<select name='{$name}'>{$txt}</select>";
+}

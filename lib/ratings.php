@@ -4,8 +4,8 @@
 // :(
 
 function get_ratings($all = false) {
-	global $sql;
-	return $sql->fetchq("SELECT ".($all ? "*" : "id, image, title, enabled")." FROM ratings ORDER BY id ASC", PDO::FETCH_UNIQUE, mysql::FETCH_ALL | mysql::USE_CACHE);
+	global $sql, $loguser;
+	return $sql->fetchq("SELECT ".($all ? "*" : "id, image, title, enabled, minpower")." FROM ratings ORDER BY id ASC", PDO::FETCH_UNIQUE, mysql::FETCH_ALL | mysql::USE_CACHE);
 }
 
 // Post rating HTML (rating list & post selection)
@@ -22,7 +22,7 @@ function ratings_html($post, $ratedata = array(), $mode = MODE_POST) {
 		$picture = rating_image($data);
 		if (isset($ratedata[$id]['total']))
 			$list .= " &nbsp; {$picture}<span class='text-rating'>&nbsp;{$data['title']}</span>&nbsp;x&nbsp;<strong>{$ratedata[$id]['total']}</strong>";
-		if ($canrate && $data['enabled'])
+		if ($canrate && $data['enabled'] && $loguser['powerlevel'] >= $data['minpower'])
 			$vote .= "<a href='postratings.php?action=rate&post={$post}&rating={$id}{$typestr}{$tokenstr}' class='icon-rating".(isset($ratedata['my'][$id]) ? " icon-rated" : " ")."'>{$picture}</a> ";
 	}
 	// Like user ratings, only staff (mods this time) can view the detailed list
@@ -88,7 +88,8 @@ function rate_post($post, $rating, $mode = MODE_POST) {
 		SELECT r.id, SUM(a.rating) voted
 		FROM ratings r
 		LEFT JOIN {$joinpf}_ratings a ON r.id = a.rating
-		WHERE r.id = {$rating} AND r.enabled = 1 AND a.user = {$loguser['id']} AND a.post = {$post}
+		WHERE r.id = {$rating} AND r.enabled = 1 AND r.minpower <= {$loguser['powerlevel']}
+		  AND a.user = {$loguser['id']} AND a.post = {$post}
 	");
 	if (!$data['id']) { // whoop de whoop the rating doesn't exist
 		return false;

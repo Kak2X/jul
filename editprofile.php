@@ -461,13 +461,7 @@
 		
 		if ($edituser) {
 			// Powerlevel selection
-			$powerlevel = "";
-			$check1[$userdata['powerlevel']] = 'selected';
-			if (!$sysadmin) unset($pwlnames[4]);
-			foreach ($pwlnames as $pwl => $pwlname) {
-				$powerlevel .= "<option value={$pwl} ".filter_string($check1[$pwl]).">{$pwlname}</option>";
-			}
-			$powerlevel = "<select name=powerlevel>{$powerlevel}</select>";
+			$powerlevel = power_select('powerlevel', $userdata['powerlevel'], $loguser['powerlevel']);
 			
 			// Registration time
 			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);

@@ -135,10 +135,13 @@
 	$_POST['sortord']           = filter_int($_POST['sortord']);
 	$_POST['sorttype']          = numrange(filter_int($_POST['sorttype']), 0, count($sort_types) - 1);
 	
-	$powersel[$_POST['sortpower']]       = 'selected';
 	$sortsel[$_POST['sorttype']]         = 'selected';
 	$ordsel[$_POST['sortord']]           = 'checked';
 
+	// Hack around adding extra elements to the select list
+	$pwlnames[SHOW_ALL]    = "* Any powerlevel";
+	$pwlnames[SHOW_BANNED] = "* All banned (default)";
+	ksort($pwlnames);
  
  ?>
 <form method="POST" action="?">
@@ -151,15 +154,7 @@
 	<tr><td class="tdbg1 center b">Show users with less than:</td>
 		<td class="tdbg2"><input type='text' name="maxposts"   size=15 maxlength=9  value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
 	<tr><td class="tdbg1 center b">Powerlevel:</td>
-		<td class="tdbg2">
-			<select name="sortpower">
-				<option value='<?= SHOW_ALL    ?>' <?=filter_string($powersel[SHOW_ALL])    ?>>* Any powerlevel</option>
-				<option value='<?= SHOW_BANNED ?>' <?=filter_string($powersel[SHOW_BANNED]) ?>>* All banned (default)</option>
-<?php			foreach ($pwlnames as $groupid => $groupname) { ?>
-					<option value=<?= $groupid ?> <?= filter_string($groupsel[$groupid]) ?>><?= $groupname ?></option>
-<?php			} ?> 
-			</select>
-		</td>
+		<td class="tdbg2"><?= power_select('sortpower', $_POST['sortpower']) ?></td>
 	</tr>
 	<tr><td class="tdbg1 center b">Sort by:</td>
 		<td class="tdbg2">

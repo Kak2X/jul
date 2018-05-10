@@ -2341,6 +2341,15 @@ function user_select($name, $sel = 0, $condition = '1') {
 	</select>";
 }
 
+function power_select($name, $sel = 0, $limit = 100) {
+	global $pwlnames;
+	$txt = "";
+	foreach ($pwlnames as $pwl => $pwlname)
+		if ($pwl <= $limit)
+			$txt .= "<option value='{$pwl}' ".($sel == $pwl ? " selected" : "").">{$pwlname}</option>";
+	return "<select name='{$name}'>{$txt}</select>";
+}
+
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;
 

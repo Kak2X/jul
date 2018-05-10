@@ -383,7 +383,7 @@
 		
 		// $user consistency support
 		if (!is_array($user)) {
-			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, postsignature FROM users WHERE id = {$user}");
+			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature FROM users WHERE id = {$user}");
 			if (!$user) return 0;
 		}
 		

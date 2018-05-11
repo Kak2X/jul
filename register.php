@@ -31,8 +31,9 @@
 		 
 		check_token($_POST['auth'], TOKEN_REGISTER);
 		
-		$name = filter_string($_POST['name'], true);
-		$pass = filter_string($_POST['pass']);
+		$name = filter_string($_POST['name']);
+		$pass  = filter_string($_POST['pass']);
+		$pass2 = filter_string($_POST['pass2']);
 		
 
 		/*
@@ -44,6 +45,7 @@
 		*/
 
 		/* do curl here */
+		// TODO: Change how this is done
 		if (!$config['no-curl']) {
 			$ch = curl_init();
 			curl_setopt ($ch,CURLOPT_URL, "http://". $_SERVER['REMOTE_ADDR']);
@@ -150,21 +152,19 @@
 		
 		
 		$shortpass = (strlen($pass) < 8 && !$isadmin); 
+		$retyped   = ($pass == $pass2);
 		
 		// Making sure
-		
-		//print "<table class='table'>";
-
-		if (!$samename && $pass && $pass != "123" && $username && !$shortpass && !$nomultis && !$badcode) {
+		if (!$samename && $retyped && $pass && $pass != "123" && $username && !$shortpass && !$nomultis && !$badcode) {
 			
 			// The first user is super admin
-			$userlevel 		= $sql->num_rows($users) ? 0 : 4; // The first user is sysadminned automatically
+			$userlevel 		= $sql->num_rows($users) ? 0 : 4;
 			$newuserid 		= $sql->resultq("SELECT MAX(id) FROM users") + 1;
 			$makedeluser    = ($config['deleted-user-id'] == $newuserid + 1);
 			$currenttime 	= ctime();
 			
 			
-			if (!$x_hacks['host'] && $regmode == 2) {
+			if (!$x_hacks['host'] && $regmode == 2) { // || $flagged
 				
 				$sql->queryp("
 					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `date` = :date",
@@ -244,8 +244,10 @@
 				$reason = "You haven't entered a username or password.";
 			} elseif ( (stripos($username, '3112')) === true || (stripos($username, '3776')) === true || (stripos($username, '460')) ) {
 				$reason = "You have entered a banned username";
-			}  elseif ($shortpass) {
+			} elseif ($shortpass) {
 				$reason = "That password is too short.";
+			} elseif (!$retyped) {
+				$reason = "That passwords do not match. Re-type it correctly.";
 			} else {
 				$reason = "Unknown reason.";
 			}
@@ -288,7 +290,7 @@
 				</div>
 			</td>
 			<td class='tdbg2' style='width: 50%'>
-				<input type='text' autofocus name=name SIZE=25 MAXLENGTH=25>
+				<input type='text' autofocus name='name' SIZE=25 MAXLENGTH=25>
 			</td>
 		</tr>
 		
@@ -301,7 +303,17 @@
 				</div>
 			</td>
 			<td class='tdbg2'>
-				<input type='password' name=pass SIZE=15 MAXLENGTH=64>
+				<input type='password' name='pass' SIZE=15 MAXLENGTH=64>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'>
+				<div class='fonts'>
+					&nbsp; Retype the password again.
+				</div>
+			</td>
+			<td class='tdbg2'>
+				<input type='password' name='pass2' SIZE=15 MAXLENGTH=64>
 			</td>
 		</tr>
 		

@@ -193,7 +193,7 @@
 	// heh
 	$posts = $sql->query(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid,
-				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted,
+				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, 0 revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM pm_posts p
 		

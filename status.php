@@ -27,7 +27,7 @@
 		$class = $sql->fetchq("SELECT * FROM `rpg_classes` WHERE `id` = '{$user['class']}'");
 
 	if($ct) {
-		$GPdif = floor($items[$user['eq'.$ct]][coins]*0.6)-$items[$it][coins];
+		$GPdif = floor($items[$user['eq'.$ct]]['coins']*0.6)-$items[$it]['coins'];
 		$user['eq'.$ct] = $it;
 	}
 
@@ -200,7 +200,7 @@ function bars(){
 		ImageFilledRectangle($img,137,41+24,136+$st['HP']/$sc[$s],47+24,$c['bxb0']);
 		ImageFilledRectangle($img,136,40+24,135+$st['HP']/$sc[$s],46+24,$c['bar1'][$s]);
 		if ($user['damage'] > 0) {
-			$dmg	= max($st[HP] - $user['damage'], 0) / $sc[$s];
+			$dmg	= max($st['HP'] - $user['damage'], 0) / $sc[$s];
 			$ctemp	= imagecolorsforindex($img, $c['bar1'][$s]);
 			$df		= 0.6;
 			ImageFilledRectangle($img,135 + $st['HP']/$sc[$s],40+24,135+$dmg,46+24,imagecolorallocate($img, $ctemp['red'] * $df, $ctemp['green'] * $df, $ctemp['blue'] * $df));

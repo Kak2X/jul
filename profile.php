@@ -293,9 +293,10 @@
 	// Base
 	$options = [
 		0 => [
-			"Show posts"                => ["thread.php?user={$_GET['id']}"],
-			"View threads by this user" => ["forum.php?user={$_GET['id']}"],
+			"Show posts"                 => ["thread.php?user={$_GET['id']}"],
+			"View threads by this user"  => ["forum.php?user={$_GET['id']}"],
 			"View comments by this user" => ["usercomment.php?id={$_GET['id']}"],
+			"View layout code"           => ["postlayouts.php?id={$_GET['id']}"],
 		],
 		1 => [
 			"View forum bans to this user" => ["forumbansbyuser.php?id={$_GET['id']}"],

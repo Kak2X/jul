@@ -184,22 +184,14 @@
 			$post['csstext']  = doreplace($post['csstext'] ,$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
 		}
 		
-		$post['headtext'] = doreplace2($post['headtext']);
-		$post['signtext'] = doreplace2($post['signtext']);
+		$post['headtext'] = "<span id='body{$post['id']}'>".doreplace2($post['headtext']);
+		$post['signtext'] = doreplace2($post['signtext'])."</span>";
 		if ($post['csstext']) {
-			$post['headtext'] = "<style type='text/css'>".doreplace2($post['csstext'], "0|0", true)."</style>{$post['headtext']}";
+			$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".doreplace2($post['csstext'], "0|0", true)."</style>{$post['headtext']}";
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
 		$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['headtext']);
-		
-		/*
-		if ($post['cssid']) {
-			$post['csstext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_{$post['headid']}", $post['csstext']);
-		} else {
-			$post['csstext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['csstext']);
-		}*/
-		
 		
 
 
@@ -272,6 +264,7 @@
 
 		$ppost           = $user;
 		$ppost['posts']  = $posts;
+		$ppost['id']     = 0;
 		$ppost['uid']    = $user['id'];
 		$ppost['num']    = filter_int($data['num']); // Not sent on PMs
 		$ppost['date']   = $data['date'];
@@ -291,6 +284,7 @@
 		}
 
 		$ppost['deleted']       = 0;
+		$ppost['revision']      = 0;
 		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
 		
@@ -340,9 +334,7 @@
 			</td>
 		</tr>
 	</table>" : "")."
-	<table class='table'>
-		".threadpost($ppost, 1, $data['forum'])."
-	</table>
+	".threadpost($ppost, 1, $data['forum'])."
 	<br>";
 	}
 	

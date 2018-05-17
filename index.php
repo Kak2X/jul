@@ -65,6 +65,14 @@
 		header("Location: index.php");
 		die;
 	}
+	
+	// Collapsable categories support
+	$_GET['cat']	= filter_int($_GET['cat']);
+	if (isset($_GET['toggle'])) {
+		setcookie("hcat[{$_GET['cat']}]", (1 - filter_int($_COOKIE['hcat'][$_GET['cat']])), 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+		header("Location: index.php");
+		die;
+	}
 
 	// Move it after the auto-redirect actions, otherwise the redirect breaks
 	pageheader();
@@ -332,20 +340,20 @@
 		");
 	}
 
-	// Category filtering
-	$cat	= filter_int($_GET['cat']);
-	
+	// Category filtering	
 	foreach ($categories as $category) {
 		
+		$hidden = filter_int($_COOKIE['hcat'][$category['id']]);
 		$forumlist .= "
-			<tr>
+			<tr id='cat{$category['id']}'>
 				<td class='tbl tdbgc center font' colspan=5>
 					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
+					<div style='float: right'><a href='?cat={$category['id']}&toggle'>[".($hidden ? "+" : "-")."]</a></div>
 				</td>
 			</tr>";
 		
 		
-		if($cat && $cat != $category['id'])
+		if(($hidden || $_GET['cat']) && $_GET['cat'] != $category['id'])
 		  continue;
 
 		foreach ($forums as $forumplace => $forum) {

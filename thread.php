@@ -54,7 +54,7 @@
 	} else {
 		$_GET['page']		= filter_int($_GET['page']);
 	}
-	$specialscheme = $specialtitle = NULL;
+	$specialscheme = $specialtitle = $nolinkrefresh = NULL;
 	$forum_error   = "";
 	if ($_GET['id']) {
 		load_thread($_GET['id']);
@@ -107,6 +107,7 @@
 		}
 		$windowtitle = "{$forum['title']}: {$thread['title']}";
 		
+		$nolinkrefresh = true;
 	}
 	else if ($_GET['user']) {
 		// Posts by user
@@ -248,7 +249,7 @@
 		$bg = $i % 2 + 1;
 		
 		// link & quote
-		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
+		$controls['quote'] = "<a href=\"".($nolinkrefresh ? "" : "?pid={$post['id']}")."#{$post['id']}\">Link</a>";
 		if (!$post['deleted']) {
 			if ($_GET['id'] && ! $thread['closed']) {
 				$controls['quote'] .= " | <a href='newreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
@@ -309,7 +310,6 @@
 				$post['rating'] = $ratings[$post['id']];
 			}
 		}
-
 
 		$pforum		= NULL;
 		$pthread	= NULL;

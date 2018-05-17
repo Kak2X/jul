@@ -209,7 +209,8 @@
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
 		$bg = $i % 2 + 1;
 
-		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
+		// "?pid={$post['id']}"
+		$controls['quote'] = "<a href=\"#{$post['id']}\">Link</a>";
 		if (!$post['deleted'] && !$thread['closed']) {
 			$controls['quote'] .= " | <a href='sendprivate.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
 		}

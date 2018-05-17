@@ -131,6 +131,9 @@
 			$nosmilies 	= $options[0];
 			$nohtml		= $options[1];
 			$moodid		= $post['moodid'];
+			
+			sbr(1, $head);
+			sbr(1, $sign);
 		}
 
 		$selsmilies = $nosmilies ? "checked" : "";

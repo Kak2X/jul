@@ -186,8 +186,11 @@
 
 			$moodid		= $post['moodid'];
 			//$user=$sql->fetchq("SELECT name FROM users WHERE id=$post[user]");		
-			
+			sbr(1, $head);
+			sbr(1, $sign);
 		}
+		
+
 
 		$selsmilies = $nosmilies ? "checked" : "";
 		$selhtml    = $nohtml    ? "checked" : "";	

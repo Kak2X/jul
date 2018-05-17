@@ -195,8 +195,8 @@
 	";
 
 	$links = array(
-		$forum['title']   => "forum.php?id={$forum['id']}",
-		$thread['title']  => NULL,
+		[$forum['title']   , "forum.php?id={$forum['id']}"],
+		[$thread['title']  , NULL],
 	);
 	// New Reply / Thread / Poll links
 	$newxlinks = "";

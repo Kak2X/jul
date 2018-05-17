@@ -55,9 +55,9 @@
 		}
 		
 		$links = array(
-			$ftitle => $furl,
-			$thread['title']  => "{$redirpage}.php?id={$thread['id']}",
-			"Ratings for post #{$_GET['post']}" => NULL,
+			[$ftitle                             , $furl],
+			[$thread['title']                    , "{$redirpage}.php?id={$thread['id']}"],
+			["Ratings for post #{$_GET['post']}" , NULL],
 		);
 		$barlinks = dobreadcrumbs($links);
 		

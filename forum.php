@@ -108,7 +108,7 @@
 
 	// Breadcrumbs bar / new thread links
 	$links = array(
-		$forum['title'] => NULL
+		[$forum['title'], NULL]
 	);
 	$barright = $forumlist = '';
 	if ($_GET['id']) {

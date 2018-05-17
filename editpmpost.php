@@ -133,9 +133,9 @@
 		$selhtml    = $nohtml    ? "checked" : "";	
 		
 		$links = array(
-			"Private messages" => "private.php",
-			$thread['title']   => "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",
-			"Edit post"        => NULL,
+			["Private messages" , "private.php"],
+			[$thread['title']   , "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"],
+			["Edit post"        , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		

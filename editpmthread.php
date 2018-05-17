@@ -195,9 +195,9 @@
 		pageheader();
 		
 		$links = array(
-			"Private messages" => "private.php",
-			$thread['title']   => "showprivate.php?id={$_GET['id']}",
-			"Edit thread"      => NULL,
+			["Private messages" , "private.php"],
+			[$thread['title']   , "showprivate.php?id={$_GET['id']}"],
+			["Edit thread"      , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		$other_p  = $isadmin ? "P" : "Other p";

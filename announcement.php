@@ -34,12 +34,12 @@
 	$links    = array();
 	$barright = "";
 	if ($forumannc) {
-		$links[$forum['title']] = "forum.php?id={$forum['id']}";
+		$links[] = [$forum['title'], "forum.php?id={$forum['id']}"];
 		if ($canthread) $barright = "<a href='newthread.php?id={$_GET['f']}&a=1'>Post new announcement</a>";
 	} else {
 		if ($canthread) $barright = "<a href='newthread.php?id={$_GET['f']}'>Post new announcement</a>";
 	}
-	$links['Announcements'] = NULL;
+	$links[] = ['Announcements', NULL];
 	print dobreadcrumbs($links, $barright); 
 	
 	loadtlayout();

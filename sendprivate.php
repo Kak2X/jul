@@ -155,9 +155,9 @@ if ($_GET['id']) {
 	$nohtmlchk      = $_POST['nohtml']    ? "checked" : "";
 	
 	$links = array(
-		"Private messages" => "private.php",
-		$thread['title']   => "showprivate.php?id={$_GET['id']}",
-		"New reply"        => NULL,
+		["Private messages" , "private.php"],
+		[$thread['title']   , "showprivate.php?id={$_GET['id']}"],
+		["New reply"        , NULL],
 	);
 	$barlinks = dobreadcrumbs($links); 
 	
@@ -360,8 +360,8 @@ else {
 	}		
 	
 	$links = array(
-		"Private messages" => "private.php",
-		"New conversation" => NULL,
+		["Private messages" , "private.php"],
+		["New conversation" , NULL],
 	);
 	$barlinks = dobreadcrumbs($links); 
 	

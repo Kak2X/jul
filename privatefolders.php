@@ -120,8 +120,8 @@ if (LIMIT_REACHED) {
 
 $users_p = ($u != $loguser['id']) ? htmlspecialchars(load_user($u)['name'])."'s p" : "P";
 $links = array(
-	"{$users_p}rivate messages" => "private.php?{$idparam}",
-	"Manage folders" => NULL,
+	["{$users_p}rivate messages", "private.php?{$idparam}"],
+	["Manage folders", NULL],
 );
 $right = "<a href='sendprivate.php?'>New conversation</a> - Manage folders";
 ?>

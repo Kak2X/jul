@@ -153,9 +153,9 @@
 	pageheader("Edit poll", $forum['specialscheme'], $forum['specialtitle']);
 
 	$links = array(
-		$forum['title']  => "forum.php?id={$forum['id']}",
-		$thread['title'] => "thread.php?id={$_GET['id']}",
-		"Edit poll"      => NULL,
+		[$forum['title']  , "forum.php?id={$forum['id']}"],
+		[$thread['title'] , "thread.php?id={$_GET['id']}"],
+		["Edit poll"      , NULL],
 	);
 	$barlinks = dobreadcrumbs($links); 
 	

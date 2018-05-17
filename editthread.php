@@ -100,9 +100,9 @@
 		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);
 		
 		$links = array(
-			$forum['title']    => "forum.php?id={$forum['id']}",
-			$thread['title']   => "thread.php?id={$_GET['id']}",
-			"Edit thread"      => NULL,
+			[$forum['title']    , "forum.php?id={$forum['id']}"],
+			[$thread['title']   , "thread.php?id={$_GET['id']}"],
+			["Edit thread"      , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		

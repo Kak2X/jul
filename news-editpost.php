@@ -95,8 +95,8 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			$config['news-name'] => "news.php",
-			$windowtitle         => NULL,
+			[$config['news-name'] , "news.php"],
+			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		
@@ -191,8 +191,8 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			$config['news-name'] => "news.php",
-			$windowtitle         => NULL,
+			[$config['news-name'] , "news.php"],
+			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		

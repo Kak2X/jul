@@ -213,8 +213,8 @@
 	}
 	
 	$links = array(
-		$forum['title']  => "forum.php?id={$_GET['id']}",
-		"New thread"      => NULL,
+		[$forum['title']  , "forum.php?id={$_GET['id']}"],
+		["New thread"     , NULL],
 	);
 	$barlinks = dobreadcrumbs($links); 
 

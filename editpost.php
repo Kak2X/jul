@@ -37,9 +37,9 @@
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	$links = array(
-		$forum['title']    => "forum.php?id={$forum['id']}",
-		$thread['title']   => "thread.php?id={$post['thread']}",
-		"Edit post"        => NULL,
+		[$forum['title']    , "forum.php?id={$forum['id']}"],
+		[$thread['title']   , "thread.php?id={$post['thread']}"],
+		["Edit post"        , NULL],
 	);
 	$barlinks = dobreadcrumbs($links); 
 

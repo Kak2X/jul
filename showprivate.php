@@ -163,8 +163,8 @@
 	";
 	
 	$links = array(
-		"Private messages" => "private.php",
-		$thread['title']   => NULL,
+		["Private messages" , "private.php"],
+		[$thread['title']   , NULL],
 	);
 	// New reply text
 	$newxlinks = "<a href='sendprivate.php'>New conversation</a>";

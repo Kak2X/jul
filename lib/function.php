@@ -873,11 +873,11 @@ function settags($text, $tags) {
 function dobreadcrumbs($set, $right = "") {
 	global $config;
 	$out = "<a href='index.php'>{$config['board-name']}</a>";
-	foreach ($set as $var => $link) {
-		if ($link !== NULL) {
-			$out .= " - <a href='{$link}'>".htmlspecialchars($var)."</a>";
+	foreach ($set as $link) {
+		if ($link[1] !== NULL) {
+			$out .= " - <a href='{$link[1]}'>".htmlspecialchars($link[0])."</a>";
 		} else {
-			$out .= " - ".htmlspecialchars($var);
+			$out .= " - ".htmlspecialchars($link[0]);
 		}
 	}
 	return "<table class='font w'><tr><td>{$out}</td><td class='fonts right'>{$right}</td></tr></table>";

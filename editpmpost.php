@@ -39,6 +39,7 @@
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
+			$css 		= filter_string($_POST['css']);
 			$nosmilies	= filter_int($_POST['nosmilies']);
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
@@ -53,20 +54,19 @@
 				$numdays 	= (ctime() - $loguser['regdate']) / 86400;
 				$message 	= doreplace($message,$loguser['posts'],$numdays,$loguser['id']);
 				$edited 	= getuserlink($loguser);
-				$headid = $signid = 0;
-				if ($head) {
-					$headid = $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$head]);
-					if ($headid) $head = "";
-				}
-				if ($sign) {
-					$signid = $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$sign]);
-					if ($signid) $sign = "";
-				}
+				
+
+				if ($headid = getpostlayoutid($head, false)) $head = "";
+				if ($signid = getpostlayoutid($sign, false)) $sign = "";
+				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
+
 				
 				$data = [
 					'text'		=> xssfilters($message),
 					'headtext'	=> xssfilters($head),
 					'signtext'	=> xssfilters($sign),
+					'csstext'	=> xssfilters($css),
+					
 					
 					'options'	=> $nosmilies . "|" . $nohtml,
 					'edited'	=> $edited,
@@ -74,6 +74,7 @@
 					
 					'headid'	=> $headid,
 					'signid'	=> $signid,
+					'cssid'		=> $cssid,
 					'moodid'	=> $moodid,		
 				];
 				$sql->beginTransaction();
@@ -93,6 +94,7 @@
 					'message' => $message,	
 					'head'    => $head,
 					'sign'    => $sign,
+					'css'     => $css,
 					// Post metadata
 					'id'      => $post['id'],
 					'forum'   => -1,
@@ -122,6 +124,8 @@
 			else $head = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['headid']}");
 			if(!$post['signid']) $sign = $post['signtext'];
 			else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
+			if(!$post['cssid'])  $css = $post['csstext'];
+			else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
 			
 			$options    = explode("|", $post['options']);
 			$nosmilies 	= $options[0];
@@ -153,11 +157,18 @@
 			</tr>
 			
 			<tr>
+				<td class='tdbg1 center b'>CSS:</td>
+				<td class='tdbg2' style='width: 800px' valign=top>
+					<textarea wrap=virtual name=css ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($css)?></textarea>
+				</td>
+				<td class='tdbg2' width=* rowspan=4>
+					<?=mood_layout(0, $post['user'], $moodid)?>
+				</td>
+			</tr>
+			<tr>
 				<td class='tdbg1 center b'>Header:</td>
 				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
-				<td class='tdbg2' width=* rowspan=3>
-					<?=mood_layout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>

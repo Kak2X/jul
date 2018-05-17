@@ -57,6 +57,7 @@
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
+			$css 		= filter_string($_POST['css']);
 			
 			$nosmilies	= filter_int($_POST['nosmilies']);
 			$nohtml		= filter_int($_POST['nohtml']);
@@ -88,16 +89,9 @@
 				*/
 				
 				// Check if we have already stored this layout, so we won't have to duplicate it
-				$headid = $signid = 0;
-				if ($head) {
-					$headid = (int) $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$head]);
-					if ($headid) $head = "";
-				}
-				if ($sign) {
-					$signid = (int) $sql->resultp("SELECT `id` FROM `postlayouts` WHERE `text` = ? LIMIT 1", [$sign]);
-					if ($signid) $sign = "";
-				}
-				
+				if ($headid = getpostlayoutid($head, false)) $head = "";
+				if ($signid = getpostlayoutid($sign, false)) $sign = "";
+				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";				
 				
 				$sql->beginTransaction();
 				
@@ -109,7 +103,7 @@
 					'moodid'	=> $moodid,
 				);
 				
-				if ($post['text'] != $message || $post['headtext'] != $head || $post['signtext'] != $sign) {
+				if ($post['text'] != $message || $post['headtext'] != $head || $post['signtext'] != $sign || $post['csstext'] != $css) {
 					// Old revisions are stored in their own containment area, and not in the same table
 					$save = array(
 						'pid'      => $_GET['id'],
@@ -118,8 +112,10 @@
 						'text'     => $post['text'],
 						'headtext' => $post['headtext'],
 						'signtext' => $post['signtext'],
+						'signtext' => $post['csstext'],
 						'headid'   => $post['headid'],
 						'signid'   => $post['signid'],
+						'cssid'    => $post['cssid'],
 						'revision' => $post['revision'],
 					);
 					$sql->queryp("INSERT INTO posts_old SET ".mysql::setplaceholders($save), $save);
@@ -127,8 +123,10 @@
 					$pdata['text']     = xssfilters($message);
 					$pdata['headtext'] = xssfilters($head);
 					$pdata['signtext'] = xssfilters($sign);
+					$pdata['csstext']  = xssfilters($css);
 					$pdata['headid']   = $headid;
 					$pdata['signid']   = $signid;
+					$pdata['cssid']    = $cssid;
 					$pdata['revision'] = $post['revision'] + 1;
 				}
 				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
@@ -149,6 +147,7 @@
 					'message' => $message,	
 					'head'    => $head,
 					'sign'    => $sign,
+					'css'     => $css,
 					// Post metadata
 					'id'      => $post['id'],
 					'forum'   => $thread['forum'],
@@ -178,6 +177,8 @@
 			else $head = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['headid']}");
 			if(!$post['signid']) $sign = $post['signtext'];
 			else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
+			if(!$post['cssid'])  $css = $post['csstext'];
+			else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
 
 			$options    = explode("|", $post['options']);
 			$nosmilies  = $options[0];
@@ -202,12 +203,18 @@
 			</tr>
 			
 			<tr>
+				<td class='tdbg1 center b'>CSS:</td>
+				<td class='tdbg2' style='width: 800px' valign=top>
+					<textarea wrap=virtual name=css ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($css)?></textarea>
+				</td>
+				<td class='tdbg2' width=* rowspan=4>
+					<?=mood_layout(0, $post['user'], $moodid)?>
+				</td>
+			</tr>
+			<tr>
 				<td class='tdbg1 center b'>Header:</td>
 				<td class='tdbg2' style='width: 800px' valign=top>
 					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
-				</td>
-				<td class='tdbg2' width=* rowspan=3>
-					<?=mood_layout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>

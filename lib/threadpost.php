@@ -119,7 +119,7 @@
 		return dofilters(postcode($post,$set), $forum);
 	}
 
-	function preplayouts($posts) {
+	function preplayouts($posts, $oldrev = array()) {
 		global $sql, $postl;
 
 		$ids = array();
@@ -128,6 +128,13 @@
 		while ($ps = $sql->fetch($posts)) {
 			if ($ps['headid']) $ids[] = $ps['headid'];
 			if ($ps['signid']) $ids[] = $ps['signid'];
+			if ($ps['cssid'])  $ids[] = $ps['cssid'];
+		}
+		
+		if ($oldrev) {
+			if ($oldrev['headid']) $ids[] = $oldrev['headid'];
+			if ($oldrev['signid']) $ids[] = $oldrev['signid'];
+			if ($oldrev['cssid'])  $ids[] = $oldrev['cssid'];
 		}
 
 		if (!count($ids)) return;
@@ -139,13 +146,13 @@
 		
 		
 		if ($loguser['viewsig']!=1) { // Autoupdate
-			$post['headid']=$post['signid']=0;
+			$post['headid']=$post['signid']=$post['cssid']=0;
 		}
 
 		$post['blockedlayout'] = isset($blockedlayouts[$post['uid']]);
 		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout']) { // Disabled
-			$post['headtext']=$post['signtext']='';
-			$post['headid']=$post['signid']=0;
+			$post['headtext']=$post['signtext']=$post['csstext']='';
+			$post['headid']=$post['signid']=$post['cssid']=0;
 			return $post;
 		}
 
@@ -160,29 +167,57 @@
 				if($postl[$signid] === NULL) $postl[$signid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$signid");
 				$post['signtext']=$postl[$signid];
 			}
+			if ($cssid=filter_int($post['cssid'])) {
+				// just in case
+				if($postl[$cssid] === NULL) $postl[$cssid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$cssid");
+				$post['csstext']=$postl[$cssid];
+			}
 		}
 
 		$post['headtext'] = settags($post['headtext'],filter_string($post['tagval']));
 		$post['signtext'] = settags($post['signtext'],filter_string($post['tagval']));
+		$post['csstext']  = settags($post['csstext'], filter_string($post['tagval']));
 
 		if ($loguser['viewsig'] == 2) { // Autoupdate
 			$post['headtext'] = doreplace($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
 			$post['signtext'] = doreplace($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+			$post['csstext']  = doreplace($post['csstext'] ,$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
+		}
+		
+		$post['headtext'] = doreplace2($post['headtext']);
+		$post['signtext'] = doreplace2($post['signtext']);
+		if ($post['csstext']) {
+			$post['headtext'] = "<style type='text/css'>".doreplace2($post['csstext'], "0|0", true)."</style>{$post['headtext']}";
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
-		if ($post['headid']) {
-			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_{$post['headid']}", $post['headtext']);
+		$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['headtext']);
+		
+		/*
+		if ($post['cssid']) {
+			$post['csstext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_{$post['headid']}", $post['csstext']);
 		} else {
-			$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['headtext']);
-		}
-		$post['headtext'] = doreplace2($post['headtext']);
-		$post['signtext'] = doreplace2($post['signtext']);
+			$post['csstext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}_x{$post['id']}", $post['csstext']);
+		}*/
+		
+		
+
+
+		
 		//	$post['text'] = doreplace2($post['text'], $post['options']);
 		return $post;
 	}
 	
-	function getpostlayoutid($text) {
+	// Determines the extra text appended to .mainbar/.topbar/... to prevent overlaps.
+	function getcsskey($post) {
+		$csskey = "";
+		if ($post['headid']) $csskey .= "_h{$post['headid']}";
+		if ($post['cssid'])  $csskey .= "_c{$post['cssid']}";
+		if (!$csskey)        $csskey .= "_p{$post['id']}"; // Failsafe: use current post id
+		return $csskey;
+	}
+	
+	function getpostlayoutid($text, $add = true) {
 		global $sql;
 		
 		// Everything breaks on transactions if $text is blank
@@ -190,7 +225,7 @@
 		
 		$id = $sql->resultp("SELECT id FROM postlayouts WHERE text = ? LIMIT 1", [$text]);
 		// Is this a new layout?
-		if (!$id) {
+		if (!$id && $add) {
 			$sql->queryp("INSERT INTO postlayouts (text) VALUES (?)", [$text]);
 			$id = $sql->insert_id();
 		}
@@ -229,6 +264,7 @@
 			$data['num']  = $posts;
 			$data['head'] = $user['postheader'];
 			$data['sign'] = $user['signature'];
+			$data['css']  = $user['css'];
 			$tags         = array();
 		}
 		
@@ -247,9 +283,11 @@
 		if ($data['nolayout']) {
 			$ppost['headtext'] = "";
 			$ppost['signtext'] = "";
+			$ppost['csstext']  = "";
 		} else {
 			$ppost['headtext'] = doreplace($data['head'],$posts,$numdays,$user['id']);	
 			$ppost['signtext'] = doreplace($data['sign'],$posts,$numdays,$user['id']);
+			$ppost['csstext']  = doreplace($data['css'],$posts,$numdays,$user['id']);
 		}
 
 		$ppost['deleted']       = 0;
@@ -321,6 +359,7 @@ function thread_history($thread, $num, $pm = false) {
 		$nf    = "p.";
 	}
 	
+	++$num; // No LIMIT expressions
 	$posts = $sql->query("
 		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, {$nf}num
 		FROM {$table} p
@@ -329,6 +368,8 @@ function thread_history($thread, $num, $pm = false) {
 		ORDER BY p.id DESC
 		LIMIT {$num}
 	");
+	--$num;
+	
 	$i = 0;
 	
 	$postlist = "";

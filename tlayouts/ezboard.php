@@ -21,11 +21,7 @@ function postcode($post,$set) {
 	// remove paranthesis and uppercase the first letter
 	if ($post['edited']) $post['edited'] = ucfirst(str_replace(array("(",")"), "", trim($post['edited'])))."<br>";
 	
-	if (!$post['headid']) {
-		$csskey = "_x".$post['id'];
-	} else {
-		$csskey = "_".$post['headid'];
-	}
+	$csskey = getcsskey($post);
 	
 	$optionrow = "";
 	if ($set['rating']) {

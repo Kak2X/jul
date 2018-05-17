@@ -178,8 +178,8 @@
 	loadtlayout();
 	
 	switch ($loguser['viewsig']) {
-		case 1:  $sfields = ',p.headtext,p.signtext'; break;
-		case 2:  $sfields = ',u.postheader headtext,u.signature signtext'; break;
+		case 1:  $sfields = ',p.headtext,p.signtext,p.csstext'; break;
+		case 2:  $sfields = ',u.postheader headtext,u.signature signtext,u.css csstext'; break;
 		default: $sfields = ''; break;
 	}
 	$ufields = userfields();
@@ -217,8 +217,9 @@
 	else               $searchon = "p.thread={$_GET['id']}";
 
 	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT p.headid, p.signid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
-	preplayouts($layouts);
+	$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
+	preplayouts($layouts, $oldrev);
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
@@ -230,7 +231,7 @@
 	
 	// heh
 	$posts = $sql->query(set_avatars_sql("
-		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid,
+		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM posts p
@@ -282,13 +283,12 @@
 			}
 			// Fetch the selected post revision
 			if ($ismod && $post['id'] == $_GET['pin'] && $_GET['rev']) {
-				$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, headid, signid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
 				if (!$oldrev) {
 					$post['text'] = "(Post revision #{$_GET['rev']} not found)";
-					$post['headtext'] = $post['signtext'] = "";
-					$post['headid']   = $post['signid']   = 0;
+					$post['headtext'] = $post['signtext'] = $post['csstext'] = "";
+					$post['headid']   = $post['signid']   = $posr['cssid']   = 0;
 				} else {
-					$post = array_merge($post, $oldrev);
+					$post  = array_merge($post, $oldrev);
 				}
 			}
 			if ($sysadmin && $config['allow-post-deletion']) {

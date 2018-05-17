@@ -18,11 +18,7 @@
 		$threadlink	= ", in {$set['threadlink']}";
 	}
 
-	if (!$post['headid']) {
-		$csskey = "_x".$post['id'];
-	} else {
-		$csskey = "_".$post['headid'];
-	}
+	$csskey = getcsskey($post);
 	$optionrow = "";
 	if ($set['rating']) {
 		$optionrow .= "<tr>

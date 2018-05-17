@@ -67,7 +67,7 @@
 	
 	$ufields = userfields();
 	$layouts = $sql->query("
-		SELECT p.headid, p.signid, MIN(p.id) pid 
+		SELECT p.headid, p.signid, p.cssid, MIN(p.id) pid 
 		FROM threads t
 		LEFT JOIN posts p ON p.thread = t.id
 		WHERE {$searchon}

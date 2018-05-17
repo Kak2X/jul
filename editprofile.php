@@ -58,11 +58,11 @@
 		
 		
 		// \n -> <br> conversion
-		$postheader = filter_string($_POST['postheader'], true);
-		$signature 	= filter_string($_POST['signature'], true);
+		$_POST['postheader'] = filter_string($_POST['postheader'], true);
+		$_POST['signature'] 	= filter_string($_POST['signature'], true);
 		$bio 		= filter_string($_POST['bio'], true);
-		sbr(0,$postheader);
-		sbr(0,$signature);
+		sbr(0,$_POST['postheader']);
+		sbr(0,$_POST['signature']);
 		sbr(0,$bio);
 		
 		// Make sure the thread layout does exist to prevent "funny" shit
@@ -145,8 +145,9 @@
 			'namecolor'			=> $namecolor,
 			'namecolor_bak'		=> $namecolor_bak,
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
-			'postheader' 		=> xssfilters($postheader),
-			'signature' 		=> xssfilters($signature),
+			'css' 				=> xssfilters(filter_string($_POST['css'])), // NOT nl2br'd
+			'postheader' 		=> xssfilters($_POST['postheader']),
+			'signature' 		=> xssfilters($_POST['signature']),
 			// Personal information
 			'sex' 				=> numrange(filter_int($_POST['sex']), 0, 2),
 			'aka' 				=> filter_string($_POST['aka'], true),
@@ -357,6 +358,7 @@
 			));
 		}
 		table_format("Appareance", array(
+			"Post layout"       => [1, "css", "CSS added here will be added on its own tag.", 16],
 			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
 			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
@@ -505,8 +507,10 @@
 					if (!isset($data[4])) $data[4] = 100;
 					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".htmlspecialchars($userdata[$data[1]])."\">";
 				}
-				else if ($data[0] == 1) // large
-					$input = "<textarea name='$data[1]' rows=8 style='width: 100%' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+				else if ($data[0] == 1) { // large
+					if (!isset($data[3])) $data[3] = 8; // Rows
+					$input = "<textarea name='$data[1]' rows={$data[3]} style='width: 100%' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+				}
 				else if ($data[0] == 2){ // radio
 					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]
 					$choices = explode("|", $data[3]);

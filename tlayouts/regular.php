@@ -60,11 +60,7 @@ function postcode($post,$set){
 	//}
 	
 	// Default layout
-	if (!$post['headid']) {
-		$csskey = "_x".$post['id'];
-	} else {
-		$csskey = "_".$post['headid'];
-	}
+	$csskey = getcsskey($post);
 	
 	$optionrow = "";
 	if ($set['rating']) {

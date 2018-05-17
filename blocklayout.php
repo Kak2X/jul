@@ -38,7 +38,7 @@
 			check_token($_POST['auth']);
 			$text = addslashes("<hr>[<span class='font b' style='font-size: 10pt; color: f00'>ATTENTION</span>: Your layout has been removed for being terrible.]");
 			//$text = addslashes("<hr><font face=\"Verdana\" style=font-size:10pt color=ff0000><b>[ATTENTION IDIOT: YOUR LAYOUT HAS BEEN NUKED FOR BEING <font color=ff8080>EXTREMELY BAD</font>. PLEASE READ THE <a href='announcement.php'>ANNOUNCEMENTS</a> BEFORE CREATING ANOTHER ATROCITY, OR YOU <i><font color=ff8080>WILL BE BANNED</font></i>.]</b></font>");
-			$sql->query("UPDATE `users` SET `signature` = '{$text}', `bio` = '{$text}', `postheader` = '' WHERE `id` = '{$_GET['id']}'");
+			$sql->query("UPDATE `users` SET `signature` = '{$text}', `bio` = '{$text}', `postheader` = '', `css` = '' WHERE `id` = '{$_GET['id']}'");
 			errorpage("Bio, header, and signature fields nuked!", "profile.php?id={$_GET['id']}", 'the user\'s profile page', 0);
 		}
 	} else if ($_GET['action'] == 'view' && $isadmin) {

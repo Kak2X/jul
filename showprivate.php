@@ -147,8 +147,8 @@
 	loadtlayout();
 	
 	switch($loguser['viewsig']) {
-		case 1:  $sfields = ',p.headtext,p.signtext'; break;
-		case 2:  $sfields = ',u.postheader headtext,u.signature signtext'; break;
+		case 1:  $sfields = ',p.headtext,p.signtext,p.csstext'; break;
+		case 2:  $sfields = ',u.postheader headtext,u.signature signtext,u.css csstext'; break;
 		default: $sfields = ''; break;
 	}
 	$ufields = userfields();
@@ -179,7 +179,7 @@
 	$searchon = "p.thread = {$_GET['id']}";
 	
 	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT p.headid, p.signid FROM pm_posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
+	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM pm_posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
 	preplayouts($layouts);
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
@@ -192,7 +192,7 @@
 	
 	// heh
 	$posts = $sql->query(set_avatars_sql("
-		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid,
+		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, 0 revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM pm_posts p

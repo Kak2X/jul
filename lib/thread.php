@@ -383,7 +383,7 @@
 		
 		// $user consistency support
 		if (!is_array($user)) {
-			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature FROM users WHERE id = {$user}");
+			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature, css FROM users WHERE id = {$user}");
 			if (!$user) return 0;
 		}
 		
@@ -396,9 +396,11 @@
 		if ($nolayout) {
 			$headid = 0;
 			$signid = 0;
+			$cssid  = 0;
 		} else {
 			$headid = getpostlayoutid($user['postheader']);
 			$signid = getpostlayoutid($user['signature']);
+			$cssid  = getpostlayoutid($user['css']);
 		}
 		$currenttime = ctime();
 		
@@ -412,6 +414,7 @@
 			
 			'headid'        => $headid,
 			'signid'        => $signid,
+			'cssid'         => $cssid,
 			'moodid'        => $moodid,
 			
 			'text'          => xssfilters($message),

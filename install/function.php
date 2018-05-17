@@ -4,7 +4,7 @@
 	}
 	
 	function get_input_val($name, $default) {
-		global $configvar;
+		global $configvar,${$configvar};
 		if      (isset($_POST['inptconf'][$configvar][$name])) return $_POST['inptconf'][$configvar][$name][0]; // Passed via page
 		else if (isset(${$configvar}[$name]))                  return ${$configvar}[$name]; // Board already installed; use from defined config var
 		else                                                   return $default; // Not installed, use default
@@ -29,7 +29,7 @@
 			<tr>
 				<td class='tdbg1 b center'>$desc</td>
 				<td class='tdbg2'>
-					<input type='text' name='{$key}[0]' style='width: {$width}px' value=\"$field\">$extra
+					<input type='text' name='{$key}[0]' style='width: {$width}px' value=\"".htmlspecialchars($field)."\">$extra
 					<input type='hidden' name='{$key}[1]' value='{$type}'>
 				</td>
 			</tr>";

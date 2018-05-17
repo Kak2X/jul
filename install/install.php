@@ -1,4 +1,10 @@
 <?php
+
+// 'The required libraries have not been defined'
+if (!defined('OK_INSTALL')) {
+	return header("Location: ./");
+}
+
 chdir("..");
 require "install/function.php";
 require "lib/defines.php";
@@ -46,19 +52,20 @@ if (!isset($_POST['dbname'])) 	$_POST['dbname'] 	= filter_string($dbname);
 $_POST['dropdb'] = filter_int($_POST['dropdb']);
 
 // Page handler
-$_POST['step'] 	  = filter_int($_POST['step']);
-$_POST['stepcmd'] = filter_string($_POST['stepcmd']);
+$_POST['step']       = filter_int($_POST['step']);
+$_POST['stepcmd']    = filter_string($_POST['stepcmd']);
+$_POST['__chconfig'] = filter_bool($_POST['__chconfig']);
 if ($_POST['stepcmd'] == 'Next')
 	$_POST['step']++;
 else
 	$_POST['step']--;
 
-
+$firststep = $_POST['__chconfig'] ? STEP_CONFIG : STEP_INTRO;
 
 	
 // Every page but the first one has a back button
-if ($_POST['step'] <= STEP_INTRO)  {
-	$_POST['step'] = STEP_INTRO;
+if ($_POST['step'] <= $firststep)  {
+	$_POST['step'] = $firststep;
 	$buttons = BTN_NEXT;
 } else {
 	$buttons = BTN_NEXT | BTN_PREV;
@@ -72,7 +79,7 @@ if ($_POST['step'] <= STEP_INTRO)  {
 		<link rel='stylesheet' href='../schemes/spec-install.css' type='text/css'>
 	</head>
 	<body>
-	<form method='POST' action='?'>
+	<form method='POST' action='./'>
 	<center>
 		<table class='container'>
 			<tr><td class='tdbgh b'>Acmlmboard Installer</td></tr>
@@ -352,14 +359,25 @@ if (!$error) {
 			break;
 		
 		case STEP_REVIEW:
+		
+			if (!$_POST['__chconfig']) {
 			?>
-			The board will now be configured.
-			<div class='warn'>WARNING: IF YOU HAVE SELECTED TO DROP THE DATABASE, ALL DATA WILL BE DELETED</div>
-			<br>
-			<br>You can go back to review the choices, or click <span class='highlight'>'Next'</span> to start the installation.
-			<br>
-			<br>
-			<?php
+				The board will now be configured.
+				<div class='warn'>WARNING: IF YOU HAVE SELECTED TO DROP THE DATABASE, ALL DATA WILL BE DELETED</div>
+				<br>
+				<br>You can go back to review the choices, or click <span class='highlight'>'Next'</span> to start the installation.
+				<br>
+				<br>
+				<?php
+			} else {
+				?>
+				The board will now be configured.
+				<br>
+				<br>You can go back to review the choices, or click <span class='highlight'>'Next'</span> to save the changes.
+				<br>
+				<br>
+				<?php
+			}
 			break;
 	
 		case STEP_INSTALL:
@@ -412,7 +430,13 @@ if (!$error) {
 			$res = file_put_contents("lib/config.php", $configfile);
 			print checkres($res);
 			
-		
+			if ($_POST['__chconfig']) { // we are done here
+				print "\nOperation completed successfully.\n";
+				print "Click <a href='../admin.php'>here</a> to return to the admin control panel.";
+				$buttons = 0;
+				break;
+			}
+			
 			// Decided to drop the database?
 			if ($db && $_POST['dropdb'] == 1) {
 				print "Dropping database `{$_POST['dbname']}`...\n";
@@ -489,7 +513,7 @@ print "<br>".implode('&nbsp;-&nbsp;', $btnl);
 			</tr>
 			<tr>
 				<td class='tdbgh'>
-					Acmlmboard Installer v1.6 (25-04-18)
+					Acmlmboard Installer v1.6b (17-05-18)
 				</td>
 			</tr>
 		</table>

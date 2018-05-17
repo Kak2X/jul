@@ -58,6 +58,7 @@
 
 	// For read only entries
 	$sysset = (!$sysadmin) ? "readonly disabled" : "";
+	
 	// Selections
 	$reg_sel[$misc['regmode']] = 'selected';
 	$prv_sel[$misc['private']] = 'selected';
@@ -71,6 +72,7 @@
 			&nbsp;<br>
 			There are a few features you can use. Select one from above.<br>
 			Alternatively you can change some general board options in the panel below.
+			<?= (false && $sysadmin ? "<br><br>To change the hard configuration, click <a href='install/?chconfig'>here</a>." : "") ?>
 			<br>&nbsp;
 		</td></tr>
 	</table>

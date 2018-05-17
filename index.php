@@ -10,6 +10,7 @@
 		header("Location: thread.php?id=". $_GET['t']);
 		die();
 	}
+	
 
 /*
 	if ($_GET["letitsnow"]) {
@@ -31,6 +32,10 @@
 */
 
 	require 'lib/function.php';
+	
+	if (isset($_GET['wtf'])) {
+		$loguser['splitcat'] = 1 - $loguser['splitcat'];
+	}
 
 	/* 
 	$sql->query("UPDATE `users` SET `name` = 'Xkeeper' WHERE `id` = 1"); # I'm hiding it here too as a 'last resort'. Remove this and I'll make that Z-line a month instead.
@@ -277,7 +282,7 @@
 	}
 
 // Hopefully this version won't break horribly if breathed on wrong
-	$forumlist="
+	$forumheaders ="
 		<tr>
 			<td class='tdbgh center' width=50>&nbsp;</td>
 			<td class='tdbgh center'>Forum</td>
@@ -297,7 +302,7 @@
 		ORDER BY c.corder, f.catid, f.forder
 	");
 	$catquery = $sql->query("
-		SELECT id, name
+		SELECT id, name, ".($loguser['splitcat'] ? "" : "0 ")."side
 		FROM categories
 		WHERE (!minpower OR minpower <= {$loguser['powerlevel']})
 		ORDER BY corder, id
@@ -339,12 +344,16 @@
 			GROUP BY forum
 		");
 	}
+	
+	
+	$forumlist = array('','');
 
 	// Category filtering	
 	foreach ($categories as $category) {
 		
+		// Hide category by cookie
 		$hidden = filter_int($_COOKIE['hcat'][$category['id']]);
-		$forumlist .= "
+		$forumlist[$category['side']] .= "
 			<tr id='cat{$category['id']}'>
 				<td class='tbl tdbgc center font' colspan=5>
 					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
@@ -418,7 +427,7 @@
 				$new = $statusicons['new'] ."<br>". generatenumbergfx($newcount);
 			}
 */
-		  $forumlist.="
+		  $forumlist[$category['side']] .= "
 			<tr>
 				<td class='tdbg1 center'>$new</td>
 				<td class='tdbg2'>
@@ -441,11 +450,20 @@
 			unset($forums[$forumplace]);
 		}
 	}
-
+	
+	// Split categories
+	$fsep = "";
+	if ($forumlist[0] && $forumlist[1]) $fsep = "<td></td>";
+	if ($forumlist[0]) $forumlist[0] = "<td style='width: 49%' class='vatop'><table class='table'>{$forumheaders}{$forumlist[0]}</table></td>";
+	if ($forumlist[1]) $forumlist[1] = "<td style='width: 49%' class='vatop'><table class='table'>{$forumheaders}{$forumlist[1]}</table></td>";
+	
+	
 	?>
 	<br>
-	<table class='table'>
-		<?=$forumlist?>
+	<table class='w' cellpadding=0 cellspacing=0 border=0>
+		<tr>
+			<?= $forumlist[0] . $fsep . $forumlist[1] ?>
+		</tr>
 	</table>
 	<?php
 	

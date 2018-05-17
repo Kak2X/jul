@@ -99,6 +99,7 @@ elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 		'name' 			=> xssfilters(filter_string($_POST['catname'], true)),
 		'minpower' 		=> filter_int($_POST['minpower']),
 		'corder' 		=> filter_int($_POST['catorder']), 
+		'side' 			=> filter_int($_POST['side']),
 	);
 	$qadd = mysql::setplaceholders($values);
 	
@@ -196,6 +197,21 @@ else if ($_GET['id']) {
 	$forum = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
 	if (!$forum) {
 		$_GET['id'] = -1;
+		$forum = array(
+			'pollstyle' => -1,
+			'title' => '',
+			'description' => '',
+			'minpower' => 0,
+			'minpowerthread' => 0,
+			'minpowerreply' => 0,
+			'numthreads' => 0,
+			'forder' => 0,
+			'numposts'      => 0,
+			'specialscheme' => -1,
+			'catid'         => 1,
+			'specialtitle'  => '',
+			'hidden'        => 0
+		);
 		$forum['pollstyle'] = -1;
 	} else {
 		if (!isset($categories[$forum['catid']]))
@@ -209,7 +225,7 @@ else if ($_GET['id']) {
 	<form method="post" action="?id=<?=$_GET['id']?><?=$prevtext?>">
 	<table class='table'>
 		<tr>
-			<td class='tdbgh center' colspan=6>Editing <b><?=($forum ? htmlspecialchars($forum['title']) : "a new forum")?></b></td>
+			<td class='tdbgh center' colspan=6>Editing <b><?=($_GET['id'] != -1 ? htmlspecialchars($forum['title']) : "a new forum")?></b></td>
 		</tr>
 
 		<tr>
@@ -322,10 +338,14 @@ else if ($_GET['catid']) {
 			<td class='tdbgh center'>Category Name</td>
 			<td class='tdbg1' colspan=3><input type="text" name="catname" value="<?=htmlspecialchars($category['name'])?>"  style="width: 100%;" maxlength="250"></td>
 			<td class='tdbgh center'  width='10%'>Category order</td>
-			<td class='tdbg1' width='23%' colspan=2><input type="text" name="catorder" maxlength="8" size="10" value="<?=($category['corder'] ? $category['corder'] : "0")?>" class="right"></td>
+			<td class='tdbg1' width='23%' colspan=2>
+				<input type="text" name="catorder" maxlength="8" size="10" value="<?=($category['corder'] ? $category['corder'] : "0")?>" class="right">
+			</td>
 		</tr>
 		<tr>
-			<td class='tdbg2' colspan=4>&nbsp;</td>
+			<td class='tdbg2' colspan=2>&nbsp;</td>
+			<td class='tdbgh center nobr'>Options</td>
+			<td class='tdbg1'><label><input type="checkbox" name="side" value="1" <?=($category['side'] ? " checked" : "")?>> Right side</label></td>
 			<td class='tdbgh center nobr'>Minimum power needed to view</td>
 			<td class='tdbg1'><?=dropdownList($powers, $category['minpower'], "minpower")?></td>
 		</tr>		
@@ -340,7 +360,8 @@ else if ($_GET['catid']) {
 <?php
 }
 
-$forumlist="
+
+$forumheaders="
 	<tr>
 		<td class='tdbgh center' width=90px>Actions</td>
 		<td class='tdbgh center'>Forum</td>
@@ -360,7 +381,7 @@ if (isset($preview)) {
 		AND (f.hidden = '0' OR $sysadmin) 
 		ORDER BY catid, forder");
 	$catquery = $sql->query("
-		SELECT id, name
+		SELECT id, name, side
 		FROM categories
 		WHERE (!minpower OR minpower <= $preview)
 		ORDER BY corder, id
@@ -373,7 +394,7 @@ if (isset($preview)) {
 		LEFT JOIN categories c ON f.catid = c.id
 		ORDER BY c.corder, f.catid, f.forder
 	");
-	$catquery = $sql->query("SELECT id, name FROM categories ORDER BY corder, id");
+	$catquery = $sql->query("SELECT id, name, side FROM categories ORDER BY corder, id");
 }
 
 $modquery = $sql->query("SELECT $userfields,m.forum FROM users u INNER JOIN forummods m ON u.id = m.user ORDER BY name");
@@ -382,10 +403,9 @@ $categories = $sql->fetchAll($catquery, PDO::FETCH_ASSOC);
 $forums 	= $sql->fetchAll($forumquery, PDO::FETCH_ASSOC);
 $mods 		= $sql->fetchAll($modquery, PDO::FETCH_ASSOC);
 
-$forumlist .= "<tr><td class='tdbgc center' colspan=5>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>";
-
+$forumlist = array(-1 => '', '','');
 foreach ($categories as $category) {
-	$forumlist .= "<tr><td class='tdbgc center fonts nobr'><a href=admin-editforums.php?catid={$category['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?catdelete={$category['id']}$prevtext>Delete</a></td><td class='tdbgc center' colspan=4><b>".htmlspecialchars($category['name'])."</b></td></tr>";
+	$forumlist[$category['side']] .= "<tr><td class='tdbgc center fonts nobr'><a href=admin-editforums.php?catid={$category['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?catdelete={$category['id']}$prevtext>Delete</a></td><td class='tdbgc center' colspan=4><b>".htmlspecialchars($category['name'])."</b></td></tr>";
 
 	foreach ($forums as $forumplace => $forum) {
 		// loop over until we have reached the category this forum's in
@@ -431,7 +451,7 @@ foreach ($categories as $category) {
 			$tc2	= '2';
 		}
 
-	  $forumlist.="
+	  $forumlist[$category['side']].="
 		<tr>
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
@@ -450,7 +470,7 @@ foreach ($categories as $category) {
 
 // Leftover forums
 if (!isset($preview) && count($forums)) {
-	$forumlist .= "<tr><td class='tdbgc center' colspan=5><b><i>These forums are not associated with a valid category ID</i></b></td></tr>";
+	$forumlist[-1] .= "<tr><td class='tdbgc center' colspan=5><b><i>These forums are not associated with a valid category ID</i></b></td></tr>";
 
 	foreach ($forums as $forum) {
 		
@@ -492,7 +512,7 @@ if (!isset($preview) && count($forums)) {
 			$tc2	= '2';
 		}
 
-		$forumlist.="
+		$forumlist[-1].="
 		<tr>
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
@@ -507,8 +527,24 @@ if (!isset($preview) && count($forums)) {
 	}
 }
 
+// Split categories
+$fsep = "";
+if ($forumlist[0] && $forumlist[1]) $fsep = "";
+if ($forumlist[0]) $forumlist[0] = "<td style='width: 50%' class='vatop'><table class='table'>{$forumheaders}{$forumlist[0]}</table></td>";
+if ($forumlist[1]) $forumlist[1] = "<td style='width: 50%' class='vatop'><table class='table'>{$forumheaders}{$forumlist[1]}</table></td>";
+if ($forumlist[-1]) $forumlist[-1] = "<br><table class='table'>{$forumheaders}{$forumlist[-1]}</table>";
+
 print "<center><b>Preview forums with powerlevel:</b> ".previewbox()."</center>\n";
-print "<table class='table'>$forumlist</table>";
+print "
+<table class='table'>
+	<tr><td class='tdbgc center' colspan=2>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>
+</table>
+<br>
+<table class='w' cellpadding=0 cellspacing=0 border=0>
+	{$forumlist[0]}{$fsep}{$forumlist[1]}
+</table>
+{$forumlist[-1]}";
+
 pagefooter();
 
 function dropdownList($links, $sel, $n) {

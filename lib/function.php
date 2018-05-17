@@ -222,6 +222,7 @@
 			'hideactivity'	=> 0,
 			'uploads_locked'=> 0,
 			'pagestyle'     => 0,
+			'splitcat'      => 0,
 		);	
 	}
 	

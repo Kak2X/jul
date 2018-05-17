@@ -175,6 +175,8 @@
 			'signsep' 			=> numrange(filter_int($_POST['signsep']), 0, 3),
 			'scheme' 			=> filter_int($_POST['scheme']),
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
+			'splitcat' 			=> filter_int($_POST['splitcat']),
+			
 		);
 		
 		if ($config['allow-avatar-storage']) {
@@ -286,7 +288,7 @@
 	}
 	else {
 		
-			
+		$splitcount = $sql->resultq("SELECT COUNT(*) FROM `users` WHERE `splitcat` = '1'");
 		//squot(0,$userdata['title']);
 		//squot(0,$userdata['realname']);
 		//squot(0,$userdata['aka']);
@@ -385,6 +387,7 @@
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
 			"Post layouts"	                => [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.", "Disabled|Enabled|Auto-updating"],
+			"Forum List layout"				=> [2, "splitcat", "'Split' uses two columns instead of one.", "Normal|Split ({$splitcount})"],
 			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Seperate Line (shows more pages)", "Inline|Seperate line"],
 			"Poll vote system"				=> [2, "pollstyle", "Normal (based on users) or Influence (based on levels)", "Normal|Influence"],
 			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here."],
@@ -576,4 +579,5 @@
 		}
 		return "<select name='$val'>$txt</select>";
 	}
+	
 	

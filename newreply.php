@@ -233,8 +233,8 @@
 		
 		<tr>
 			<td class='tdbg1 center b'>Reply:</td>
-			<td class='tdbg2' style='width: 800px' valign=top>
-				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
+			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
+				<textarea wrap=virtual id="msgtxt" name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
 				<?=mood_layout(0, $userid, $_POST['moodid'])?>
@@ -268,5 +268,6 @@
 	<?=$barlinks?>
 <?php
 	
+	replytoolbar('msg', $smilies);
 	
 	pagefooter();

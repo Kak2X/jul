@@ -16,9 +16,6 @@
 	
 	$smilies = readsmilies();
 	
-	replytoolbar(1);
-
-	
 	if (isset($forum['error']))
 		errorpage("You cannot post new threads in invalid forums.");
 	if ($banned || $loguser['powerlevel'] < $forum['minpowerthread'])
@@ -352,8 +349,8 @@
 			</tr>			
 			<tr>
 				<td class='tdbg1 center b'>Briefing:</td>
-				<td class='tdbg2' colspan=2>
-					<textarea wrap=virtual name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($_POST['briefing'])?></TEXTAREA>
+				<td class='tdbg2' id="brieftd" colspan=2>
+					<textarea wrap=virtual id="brieftxt" name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($_POST['briefing'])?></TEXTAREA>
 				</td>
 			</tr>
 			
@@ -374,9 +371,8 @@
 <?php	} ?>
 			<tr>
 				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<?=replytoolbar(2)?>
-					<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
+				<td class='tdbg2 vatop' style='width: 800px' id='msgtd'>
+					<textarea id='msgtxt' wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
 				</td>
 				<td class='tdbg2' width=*>
 					<?=mood_layout(0, $userid, $_POST['moodid'])?>
@@ -417,7 +413,10 @@
 		</table>
 		</form>
 		<?= $barlinks ?>
-		<?= replytoolbar(4) ?>
 <?php
+
+	replytoolbar('msg', $smilies);
+	if ($_GET['poll'])
+		replytoolbar('brief', $smilies);
 
 	pagefooter();

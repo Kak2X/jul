@@ -137,6 +137,34 @@ input[type=radio] {
 	.text-rating { display: none; }
 }
 
+/* Post toolbar */
+.toolbar-popup, .toolbar-button:hover, .toolbar-popup td:hover {
+	background: rgba(255,255,255,0.35);
+}
+/*.toolbar-button:hover, .toolbar-popup td:hover {
+	border: 1px solid #fff;
+	padding: 0px;
+}*/
+.toolbar {
+	z-index: 1;
+	background: rgba(50,50,100);
+}
+.toolbar-sep {
+	border-right: 1px solid rgba(255,255,255,0.25);
+}
+.toolbar-button {
+	height: 15px;
+	width: 25px;
+	text-align: center;
+}
+.toolbar-popup {
+	width: auto !important;
+	position: absolute; 
+	z-index: 2;
+	text-align: center;
+}
+
+
 /* Ikachan cursor (disabled) */
 /*			
 body {

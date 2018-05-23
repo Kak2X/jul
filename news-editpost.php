@@ -12,6 +12,7 @@
 		news_errorpage("You aren't allowed to edit posts.<br>Click <a href='news.php'>here</a> to return to the main page.");	
 	
 	$_GET['id']	= filter_int($_GET['id']);
+	$smilies = readsmilies();
 	
 	if (isset($_GET['edit'])){
 		
@@ -281,7 +282,7 @@
 	
 ?>
 	<center>
-	<form method='POST' action='?id=<?= $_GET['id'] ?>&edit'>
+	<form method='POST' action='?id=<?= $_GET['id'] ?>&new'>
 	<input type='hidden' name='auth' value='$token'>
 
 	<table class='table'>
@@ -294,8 +295,8 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Message:</td>
-			<td class='tdbg2'>
-				<textarea name='text' rows='21' cols='80' width='800px' style='resize:both' wrap='virtual'><?= htmlspecialchars($_POST['text']) ?></textarea>
+			<td class='tdbg2' id='msgtd'>
+				<textarea id='msgtxt' name='text' rows='21' cols='80' width='800px' style='resize:both' wrap='virtual'><?= htmlspecialchars($_POST['text']) ?></textarea>
 			</td>
 		</tr>
 		<tr>
@@ -323,6 +324,7 @@
 <?php
 	print $barlinks;
 	
+	replytoolbar('msg', $smilies);
 	news_footer();
 	
 	

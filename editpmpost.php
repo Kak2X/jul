@@ -170,20 +170,20 @@
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Header:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<textarea wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
+				<td class='tdbg2' id="headtd" style='width: 800px' valign=top>
+					<textarea id="headtxt" wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<textarea wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
+				<td class='tdbg2' id="msgtd"  style='width: 800px' valign=top>
+					<textarea id="msgtxt" wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Signature:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<textarea wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($sign)?></textarea>
+				<td class='tdbg2' id="signtd" style='width: 800px' valign=top>
+					<textarea id="signtxt" wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($sign)?></textarea>
 				</td>
 			</tr>
 			
@@ -209,6 +209,10 @@
 		</form>
 		<?=$barlinks?>
 		<?php
+		
+		replytoolbar('msg', $smilies);
+		replytoolbar('head', $smilies);
+		replytoolbar('sign', $smilies);
 	}
 	else if ($isadmin && $_GET['action'] == 'noob') {
 		check_token($_GET['auth'], TOKEN_MGET);

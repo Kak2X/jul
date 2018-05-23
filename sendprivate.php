@@ -172,8 +172,8 @@ if ($_GET['id']) {
 		
 		<tr>
 			<td class='tdbg1 center b'>Reply:</td>
-			<td class='tdbg2' style='width: 800px' valign=top>
-				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
+			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
+				<textarea id="msgtxt" wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
 				<?=mood_layout(0, $loguser['id'], $_POST['moodid'])?>
@@ -403,8 +403,8 @@ else {
 		
 		<tr>
 			<td class='tdbg1 center b'>Post:</td>
-			<td class='tdbg2' style='width: 800px' valign=top>
-				<textarea wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
+			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
+				<textarea id="msgtxt" wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
 				<?=mood_layout(0, $loguser['id'], $_POST['moodid'])?>
@@ -443,6 +443,8 @@ else {
 	<?php
 	
 }
+		
+replytoolbar('msg', $smilies);
 
 pagefooter();
 	

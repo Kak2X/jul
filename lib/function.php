@@ -223,6 +223,7 @@
 			'uploads_locked'=> 0,
 			'pagestyle'     => 0,
 			'splitcat'      => 0,
+			'posttool'      => 0,
 		);	
 	}
 	
@@ -2024,9 +2025,22 @@ require 'lib/thread.php';
 require 'lib/pm.php';
 require 'lib/ratings.php';
 
-// require 'lib/replytoolbar.php';
-
-function replytoolbar() { return; }
+// New reply toolbar loader
+function replytoolbar($elem, $smil) {
+	global $loguser;
+	if (!$loguser['posttool']) {
+		return;
+	}
+	static $loaded = false;
+	if (!$loaded) {
+		//global $tableheadbg;
+		print "\n<input type='hidden' id='js_smilies' value='".json_encode($smil)."'>";
+		//print "\n<style type='text/css'>.toolbar{background: #{$tableheadbg};}</style>";
+		print "\n<script type='text/javascript' src='js/toolbar.js'></script>";
+		$loaded = true;
+	}
+	print "\n<script type='text/javascript'>toolbarHook('{$elem}');</script>";
+}
 
 function addslashes_array($data) {
 	if (is_array($data)){

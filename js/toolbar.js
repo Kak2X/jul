@@ -40,7 +40,7 @@ var buttons = [
 	{title: "Strikethrough",	img: "strike.gif", 		action: 'insertText', arguments: ['[s]', '[/s]']},
 	{title: null},
 	{title: "Link",				img: "link.gif",		action: 'insertText', arguments: ['[url]', '[/url]']},
-	{title: "Image", 			img: "image.gif", 		action: 'insertText', arguments: ['[image]', '[/image]']},
+	{title: "Image", 			img: "image.gif", 		action: 'insertText', arguments: ['[img]', '[/img]']},
 	{title: "Smilies", 			img: "smiley.gif", 		action: 'createMenu', arguments: ['smilMenu', 100, 7]},
 ];
 /* --- */

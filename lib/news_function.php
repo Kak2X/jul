@@ -1,7 +1,7 @@
 <?php
 	
-	const NEWS_VERSION = "v0.4 -- 06/05/18";
-	const SHOW_SPECIAL_HEADER = false;
+	const NEWS_VERSION = "v0.4a -- 23/05/18";
+	const SHOW_SPECIAL_HEADER = true;
 	
 	if (!$config['enable-news']){
 		return header("Location: index.php");
@@ -61,8 +61,7 @@
 			<table class='table center news-container new-post' style='padding: 5px 50px; width: 400px'>
 				<tr>
 					<td>
-						News Engine <?= NEWS_VERSION ?><br>
-						Programmed by Kak
+						News Engine (<?= NEWS_VERSION ?>)
 					</td>
 				</tr>
 			</table>

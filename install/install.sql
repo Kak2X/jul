@@ -104,6 +104,68 @@ LOCK TABLES `announcements` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `archive_cat`
+--
+
+DROP TABLE IF EXISTS `archive_cat`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `archive_cat` (
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(63) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `count` smallint(6) NOT NULL DEFAULT '0',
+  `minpower` tinyint(4) NOT NULL DEFAULT '0',
+  `ord` tinyint(4) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `minpower` (`minpower`),
+  KEY `ord` (`ord`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `archive_cat`
+--
+
+LOCK TABLES `archive_cat` WRITE;
+/*!40000 ALTER TABLE `archive_cat` DISABLE KEYS */;
+/*!40000 ALTER TABLE `archive_cat` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `archive_items`
+--
+
+DROP TABLE IF EXISTS `archive_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `archive_items` (
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(63) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `features` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `date` int(10) unsigned NOT NULL,
+  `links` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `cat` tinyint(3) unsigned NOT NULL,
+  `minpower` tinyint(4) NOT NULL DEFAULT '0',
+  `ord` tinyint(4) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `cat` (`cat`),
+  KEY `minpower` (`minpower`),
+  KEY `ord` (`ord`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `archive_items`
+--
+
+LOCK TABLES `archive_items` WRITE;
+/*!40000 ALTER TABLE `archive_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `archive_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `attachments`
 --
 

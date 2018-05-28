@@ -123,10 +123,10 @@ input[type=radio] {
 	vertical-align: top;
 	height: 50px;
 }
-/*
 .attachment-box-controls {
 	vertical-align: bottom;
-}*/
+	height: 100%;
+}
 
 /* Post ratings */
 .rating-container {	width: 100%; }

@@ -111,6 +111,7 @@ function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) 
 
 // Assumes to receive an array of elements fetched off the DB
 function attachfield($list, $extra = "") {
+	global $isadmin;
 	$out = "";
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
@@ -135,6 +136,11 @@ function attachfield($list, $extra = "") {
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>
+				".($isadmin ? "
+				<td class='attachment-box-controls fonts'>
+					<a href='admin-attachments.php?id={$x['id']}&r=1&action=edit'>Edit</a> - 
+					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a>
+				</td>" : "")."
 			</tr>
 		</table>";
 	}
@@ -235,6 +241,7 @@ function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array
 		remove_attachments(array_keys($remove));
 	}
 	$field = ($flags & ATTACH_PM) ? 'pm' : 'post';
+	$ids = array();
 	//--
 	// Check if any current attachments are in the temp folder
 	// and move them to the proper attachment folder and save to the DB
@@ -258,6 +265,7 @@ function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array
 		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
 		
 		$rowid = $sql->insert_id();
+		$ids[] = $rowid;
 		// Move the thumbnail we previously generated off the temp folder
 		if ($metadata['is_image']) {
 			rename("{$path}_t", attachment_name($rowid, true));
@@ -266,6 +274,7 @@ function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array
 		unlink("{$path}.dat");
 	}
 	//--
+	return $ids;
 }
 
 function get_saved_attachments($post, $pm = false, $remove = array()) {
@@ -492,7 +501,7 @@ function resize_image($image, $max_width, $max_height) {
 	return $dst_image;
 }
 
-function upload_error($file) {
+function upload_error($file, $allowblank = false) {
 	$err = filter_int($file['error']);
 	$x = "Sorry, but the file could not be uploaded.<br/>";
 	switch ($err) {
@@ -500,7 +509,10 @@ function upload_error($file) {
 		case 1: errorpage("{$x}The file you're trying to upload is too large."); // over php.ini
 		case 2: errorpage("{$x}The file you're trying to upload is too large."); // over hidden tag
 		case 3: errorpage("{$x}The file wasn't uploaded properly."); // partial upload
-		case 4: errorpage("{$x}No file was selected."); // blank file input
+		case 4: 
+			if (!$allowblank)
+				errorpage("{$x}No file was selected."); // blank file input
+			return true;
 		case 5: errorpage("{$x}An internal PHP error occurred."); // oops
 		case 6: errorpage("{$x}An internal PHP error occurred."); // oops
 		case 7: errorpage("{$x}An internal PHP error occurred."); // oops

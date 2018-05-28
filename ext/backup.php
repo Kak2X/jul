@@ -18,6 +18,9 @@
 	
 	
 	$tables = array(
+		'attachments',
+		'archive_cat',
+		'archive_items',
 		//'actionlog', # Not used (yet?)
 		//'biggestposters',
 		'blockedlayouts',
@@ -33,6 +36,8 @@
 		'favorites',
 		'filters',
 		'forums',
+		'forummods',
+		'forumbans',
 //		'irc',
 		'items',
 		'itemcateg',
@@ -41,6 +46,8 @@
 		'misc',
 		'news',
 		'news_comments',
+		'news_tags',
+		'news_tags_assoc',
 		'pendingusers',
 //		'perm_definitions',
 //		'perm_forums',

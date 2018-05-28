@@ -234,8 +234,11 @@
 	if ($x_hacks['superadmin']) $loguser['powerlevel'] = 4;
 	
 	register_shutdown_function('error_printer', false, ($loguser['powerlevel'] == 4), $GLOBALS['errors']);
-
 	
+	// Support for stupid shit
+	if (file_exists("lib/hacks.php")) {
+		require "lib/hacks.php";
+	}
 	
 	$banned    = (int) ($loguser['powerlevel'] <  0);
 	$issuper   = (int) ($loguser['powerlevel'] >= 1);
@@ -256,11 +259,6 @@
 	// Doom timer setup
 	//$getdoom = true;
 	//require "ext/mmdoom.php";
-	
-	// Support for stupid shit
-	if (file_exists("lib/hacks.php")) {
-		require "lib/hacks.php";
-	}
 	
 	if ($miscdata['disable']) {
 		if (!$sysadmin && $_SERVER['REMOTE_ADDR'] != $x_hacks['adminip']) {
@@ -810,6 +808,7 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 		if (!$smilies) $smilies = readsmilies();
 		for($s = 0; $smilies[$s][0]; ++$s){
 			$smilie = $smilies[$s];
+			if ($htmloff) $smilie[0] = htmlspecialchars($smilie[0]);
 			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);
 		}
 	}
@@ -1854,6 +1853,10 @@ function adminlinkbar($sel = NULL) {
 			'admin-editforums.php'  => "Edit Forum List",
 			'admin-editmods.php'    => "Edit Forum Moderators",
 			'admin-forumbans.php'   => "Edit Forum Bans",
+			'admin-editmods.php'    => "Edit Forum Moderators",
+			'admin-forumbans.php'   => "Edit Forum Bans",
+			'admin-attachments.php' => "Edit Attachments",
+			
 		),
 		array(
 			'admin-threads.php'     => "ThreadFix",
@@ -2341,10 +2344,10 @@ function ban_hours($name, $time = 0, $condition = true) {
 		return "<select name='{$name}'>{$out}</select>";
 }
 
-function user_select($name, $sel = 0, $condition = '1') {
+function user_select($name, $sel = 0, $condition = '') {
 	global $sql;
 	$userlist = "";
-	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` WHERE {$condition} ORDER BY `name`");
+	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` ".($condition ? "WHERE {$condition} " : "")."ORDER BY `name`");
 	while($x = $sql->fetch($users)) {
 		$selected = ($x['id'] == $sel) ? " selected" : "";
 		$userlist .= "<option value='{$x['id']}'{$selected}>{$x['name']} -- [{$x['powerlevel']}]</option>\r\n";

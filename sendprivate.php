@@ -67,7 +67,14 @@ if ($_GET['id']) {
 				
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
-			$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
+			if ($isadmin || $mythread) {
+				$modq = array(
+					'closed' => $_POST['close'],
+				);
+			} else {
+				$modq = array();
+			}
+			//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
 			$pid = create_pm_post($loguser, $_GET['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
 				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);

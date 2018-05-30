@@ -261,7 +261,7 @@
 				}
 
 				if ($loguser['id'] && !$poll['closed']) {
-					$link = "<a href='?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
+					$link = "<a href='thread.php?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
 				}
 				
 				// Edit poll linkery
@@ -378,7 +378,7 @@
 			return $tid;
 	}
 	
-	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = "") {
+	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = array()) {
 		global $sql;
 		
 		// $user consistency support
@@ -427,7 +427,8 @@
 		$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '{$currenttime}', `lastpostuser` = '{$user['id']}', `lastpostid` = '{$pid}' WHERE `id` = '{$forum}'");
 		if ($sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$thread}") > 1) {
 			// Not the first post: update other stats
-			$sql->query("UPDATE `threads` SET {$threadupdate} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'");
+			$modq = ($threadupdate ? mysql::setplaceholders($threadupdate)."," : "");
+			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'", $threadupdate);
 			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
 		}
@@ -560,4 +561,21 @@
 			}
 		}
 		return true;
+	}
+	
+	
+	
+	function feature_thread($id, $change = true, $archive = true) {
+		global $sql;
+		if ($change) 
+			$sql->query("UPDATE threads SET featured = 1 WHERE id = {$id}");
+		if ($archive) 
+			$sql->query("INSERT INTO threads_featured (thread, date, enabled) VALUES ({$id}, ".ctime().", 1) ON DUPLICATE KEY UPDATE date = VALUES(date), enabled = 1");
+	}
+	
+	function unfeature_thread($id, $archive = true) {
+		global $sql;
+		$sql->query("UPDATE threads SET featured = 0 WHERE id = {$id}");
+		if ($archive) 
+			$sql->query("UPDATE threads_featured SET enabled = 0 WHERE thread = {$id}");
 	}

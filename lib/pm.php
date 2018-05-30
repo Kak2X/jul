@@ -371,7 +371,7 @@ function create_pm_thread($user, $title, $description, $posticon, $closed = 0) {
 	return $sql->insert_id();
 }
 
-function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = "") {
+function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = array()) {
 	global $sql;
 	
 	// $user consistency support
@@ -420,7 +420,8 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 	
 	//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : "";
 	if ($sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$thread}") > 1) {
-		$sql->query("UPDATE `pm_threads` SET {$threadupdate} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'");
+		$modq = ($threadupdate ? mysql::setplaceholders($threadupdate)."," : "");
+		$sql->queryp("UPDATE `pm_threads` SET {$modq} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'", $threadupdate);
 		$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
 		$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
 		$sql->query("UPDATE `users` SET `lastpmtime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");

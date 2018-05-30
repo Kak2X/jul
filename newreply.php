@@ -88,7 +88,16 @@
 			check_token($_POST['auth']);
 			$sql->beginTransaction();
 			
-			$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
+			if ($ismod) {
+				$modq = array(
+					'closed'       => $_POST['close'],
+					'sticky'       => $_POST['stick'],
+					'announcement' => $_POST['tannc'],
+				);
+			} else {
+				$modq = array();
+			}
+			//$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
 			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 			if ($config['allow-attachments']) {
 				confirm_attachments($attach_key, $userid, $pid);
@@ -102,6 +111,7 @@
 				'pid'		=> $pid,
 				'pow'		=> $forum['minpower'],
 			));
+			
 			return header("Location: thread.php?pid={$pid}#{$pid}");
 
 		}

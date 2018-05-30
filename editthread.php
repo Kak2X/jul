@@ -24,14 +24,18 @@
 	// Quickmod
 	if ($ismod && substr($_GET['action'], 0, 1) == 'q') {
 		check_token($_GET['auth'], TOKEN_MGET);
+		$update = "";
 		switch ($_GET['action']) {
 			case 'qstick':   $update = 'sticky=1'; break;
 			case 'qunstick': $update = 'sticky=0'; break;
 			case 'qclose':   $update = 'closed=1'; break;
 			case 'qunclose': $update = 'closed=0'; break;
+			case 'qfeat':    feature_thread($_GET['id']); break;
+			case 'qunfeat':  unfeature_thread($_GET['id']); break;
 			default: return header("Location: thread.php?id={$_GET['id']}");
 		}
-		$sql->query("UPDATE threads SET {$update} WHERE id={$_GET['id']}");
+		if ($update)
+			$sql->query("UPDATE threads SET {$update} WHERE id={$_GET['id']}");
 		return header("Location: thread.php?id={$_GET['id']}");
 	}
 	else if ($ismod && $_GET['action'] == 'trashthread') {
@@ -130,12 +134,15 @@
 				$_POST['closed']       = filter_int($_POST['closed']);
 				$_POST['sticky']       = filter_int($_POST['sticky']);
 				$_POST['announcement'] = filter_int($_POST['announcement']);
+				$_POST['featured']     = filter_int($_POST['featured']);
 			} else {
 				$_POST['forummove']    = $thread['forum'];
 				$_POST['closed']       = $thread['closed'];
 				$_POST['sticky']       = $thread['sticky'];
 				$_POST['announcement'] = $thread['announcement'];
+				$_POST['featured']     = $thread['featured'];
 			}
+			$_POST['featarch'] = filter_int($_POST['featarch']); // Delete archive option
 			
 			// Here we go
 			$sql->beginTransaction();
@@ -148,6 +155,16 @@
 				'sticky'       => $_POST['sticky'],
 				'announcement' => $_POST['announcement'],
 			];
+			// Unfeature thread (with optional deletion from archive)
+			if ($ismod && ($thread['featured'] != $_POST['featured'] || (!$_POST['featured'] && $_POST['featarch']))) {
+				$data['featured'] = $_POST['featured'];
+				if ($data['featured']) {
+					feature_thread($_GET['id'], false);
+				} else {
+					unfeature_thread($_GET['id'], false, true, $_POST['featarch']);
+				}
+			}
+			
 			$sql->queryp("UPDATE threads SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 			
 			if ($_POST['forummove'] != $thread['forum']) {
@@ -163,6 +180,8 @@
 		$check1[$thread['closed']]='checked=1';
 		$check2[$thread['sticky']]='checked=1';
 		$check3[$thread['announcement']]='checked=1';
+		$check4[$thread['featured']]='checked=1';
+		
 		
 		$forummovelist = doforumlist($thread['forum'], 'forummove'); // Return a pretty forum list
 		
@@ -200,7 +219,7 @@
 			</tr>
 <?php	if ($ismod) { ?>
 			<tr>
-				<td class='tdbg1 center' rowspan=3>&nbsp;</td>
+				<td class='tdbg1 center' rowspan=4>&nbsp;</td>
 				<td class='tdbg2'>
 					<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
 					<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>>Closed
@@ -218,6 +237,13 @@
 					<input type=radio class='radio' name=announcement value=1 <?=filter_string($check3[1])?>>Forum Announcement
 				</td>
 			</tr>
+			<tr>
+				<td class='tdbg2'>
+					<input type=radio class='radio' name=featured value=0 <?=filter_string($check4[0])?> onclick="hideArch(0)"> Unfeatured &nbsp; &nbsp;
+					<input type=radio class='radio' name=featured value=1 <?=filter_string($check4[1])?> onclick="hideArch(1)"> Featured &nbsp; &nbsp;
+					 <input type="checkbox" name="featarch" id="featarch" value=1> Delete from archives
+				</td>
+			</tr>
 			
 			<tr>
 				<td class='tdbg1 center b'>Forum</td>
@@ -233,6 +259,21 @@
 			</tr>
 		</table>
 		</form>
+<script type="text/javascript">
+	var choice = document.getElementById('featarch');
+	function hideArch(sel) {
+		if (choice !== undefined) {
+			if (sel) {
+				choice.disabled = true;
+				choice.checked = false;
+			} else {
+				choice.disabled = false;
+			}
+		}
+	}
+	hideArch(<?= $thread['featured'] ?>)
+</script>
+		
 		<?= $barlinks ?>
 		<?php
 	}

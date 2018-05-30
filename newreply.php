@@ -41,6 +41,8 @@
 	$_POST['stick'] = filter_int($_POST['stick']);
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = filter_int($_POST['tannc']);
+	$_POST['tfeat'] = filter_int($_POST['tfeat']);
+	
 	
 	$attach_key = $_GET['id'];
 	$userid     = $loguser['id'];
@@ -94,6 +96,9 @@
 					'sticky'       => $_POST['stick'],
 					'announcement' => $_POST['tannc'],
 				);
+				if ($_POST['tfeat'] != $thread['featured']) { // Save a query if it wasn't changed, as it would call (un)feature_thread()
+					$modq['featured'] = $_POST['tfeat'];
+				}
 			} else {
 				$modq = array();
 			}
@@ -193,6 +198,7 @@
 		$_POST['stick'] = $thread['sticky'];
 		$_POST['close'] = $thread['closed'];
 		$_POST['tannc'] = $thread['announcement'];
+		$_POST['tfeat'] = $thread['featured'];
 	}
 	
 	$modoptions	= "";
@@ -200,6 +206,7 @@
 		$selsticky = $_POST['stick'] ? "checked" : "";
 		$selclosed = $_POST['close'] ? "checked" : "";
 		$seltannc  = $_POST['tannc'] ? "checked" : "";
+		$seltfeat  = $_POST['tfeat'] ? "checked" : "";
 		
 		$modoptions = 
 		"<tr>
@@ -210,6 +217,7 @@
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
 				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
 				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
+				<input type='checkbox' name='tfeat' id='tfeat' value=1 $seltfeat ><label for='tfeat'>Featured</label>
 			</td>
 		</tr>";
 	}

@@ -5,6 +5,7 @@
 	
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['user']   = filter_int($_GET['user']);
+	$_GET['feat']   = filter_int($_GET['feat']);
 	$_GET['fav']    = filter_bool($_GET['fav']);
 	$_GET['act']    = filter_string($_GET['act']);
 	
@@ -58,6 +59,26 @@
 		
 		$threadcount = $sql->resultq("SELECT COUNT(*) FROM favorites where user = {$_GET['user']}");
 		$pageurl = "fav=1";
+	}
+	// Featured threads display
+	else if ($_GET['feat']) {
+		$pageurl        = "feat={$_GET['feat']}";
+		$forum['title'] = "Featured threads";
+		$where          = "enabled = ".($_GET['feat']-1);
+		if ($_GET['user']) {
+			$userdata = load_user($_GET['user']);
+			if (!$userdata) {
+				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
+				errorpage("No user with that ID exists.",'index.php','the index page');
+			}
+			$pageurl        .= "&user={$_GET['user']}";
+			$forum['title'] .= " by {$userdata['name']}";
+			$where          .= " AND user = {$_GET['user']}";
+		}
+		if ($_GET['feat'] == 1) {
+			$forum['title'] .= " (Archive)";
+		}
+		$threadcount = $sql->resultq("SELECT COUNT(*) FROM threads_featured WHERE {$where}");
 	}
 	// Posts by user
 	else if ($_GET['user']) {
@@ -121,6 +142,9 @@
 		if ($ismod) {
 			$barright .= " - <a href='admin-forumbans.php?forum={$_GET['id']}'>Edit forum bans</a>";
 		}
+	}
+	if ($_GET['feat']) {
+		$barright = "Show: <a href='?feat=2'>Current</a> - <a href='?feat=1'>Archive</a>";
 	}
 	$infotable = dobreadcrumbs($links, $barright); 
 	
@@ -212,6 +236,25 @@
 			LIMIT $min,$tpp			
 		");
 
+	} else if ($_GET['feat']) {
+		$threads = $sql->query("
+			SELECT 	t.*, f.id forumid, f.minpower,
+			        ".set_userfields('u1')." uid, 
+			        ".set_userfields('u2')." uid
+			        $q_trval
+			
+			FROM threads t
+			LEFT JOIN threads_featured  tf ON t.id         = tf.thread
+			LEFT JOIN users             u1 ON t.user       = u1.id
+			LEFT JOIN users             u2 ON t.lastposter = u2.id
+			LEFT JOIN forums             f ON t.forum      =  f.id
+			$q_trjoin
+			
+			WHERE (tf.enabled = ".($_GET['feat']-1).")".($_GET['user'] ? " AND t.user = {$_GET['user']}" : "")."
+			ORDER BY t.lastpostdate DESC
+					
+			LIMIT $min,$tpp			
+		"); //  OR t.featured = 1
 	} else if ($_GET['user']) {
 		$vals = [
 			'u1name'		=> $userdata['name'],		
@@ -278,11 +321,12 @@
 			</tr>";
 	} else for ($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
 		
-		// Sticky separator
-		if($sticklast && !$thread['sticky'])
+		// Sticky (or featured) separator
+		$marker = ($_GET['feat'] ? $thread['featured'] : $thread['sticky']);
+		if ($sticklast && !$marker)
 			$threadlist .= "<tr><td class='tdbgh center' colspan=7><img src='images/_.gif' height=6 width=6>";
-		$sticklast = $thread['sticky'];
-
+		$sticklast = $marker;
+		
 		// Always check the powerlevel if we're not showing a forum id
 		if(!$_GET['id'] && $thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) {
 			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
@@ -348,11 +392,16 @@
 		if ($thread['sticky'])	{
 			$threadtitle	= "<i>". $threadtitle ."</i>";
 			$sicon	.= "sticky";
+		}		
+		if ($thread['poll']) {
+			$sicon	.= "poll";
 		}
-		
-		if ($thread['poll'])	$sicon	.= "poll";
 		if ($sicon)
 			$threadtitle	= "<i>{$statusicons[$sicon]}</i> {$threadtitle}";
+		
+		if ($thread['featured']) {
+			$threadtitle = "<b>Featured</b> | {$threadtitle}";
+		}
 
 		// Show forum name if not in a forum
 		if (!$_GET['id'])

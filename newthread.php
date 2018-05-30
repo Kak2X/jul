@@ -58,6 +58,7 @@
 	$_POST['stick'] = filter_int($_POST['stick']);
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = (int) (filter_int($_POST['tannc']) || isset($_GET['a']));
+	$_POST['tfeat'] = filter_int($_POST['tfeat']);
 	
 	
 	$userid = $loguser['id'];	
@@ -142,8 +143,9 @@
 				$_POST['close'] = 0;
 				$_POST['stick'] = 0;
 				$_POST['tannc'] = 0;
+				$_POST['tfeat'] = 0;
 			}
-			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc']);
+			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc'], $_POST['tfeat']);
 			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 			
 			if ($config['allow-attachments']) {
@@ -207,6 +209,7 @@
 		$selsticky  = $_POST['stick'] ? "checked" : "";
 		$selclosed  = $_POST['close'] ? "checked" : "";
 		$seltannc   = $_POST['tannc'] ? "checked" : "";
+		$seltfeat   = $_POST['tfeat'] ? "checked" : "";
 	}
 	
 	$links = array(
@@ -404,7 +407,8 @@
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name='close' id='close' value="1" <?=$selclosed?>><label for='close'>Close</label> -
 					<input type='checkbox' name='stick' id='stick' value="1" <?=$selsticky?>><label for='stick'>Sticky</label> - 
-					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label>
+					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label> - 
+					<input type='checkbox' name='tfeat' id='tfeat' value="1" <?=$seltfeat ?>><label for='tfeat'>Featured</label>
 				</td>
 			</tr>
 <?php } ?>

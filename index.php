@@ -1,5 +1,7 @@
 <?php
 
+	const WND_FEATURED = -3;
+	
 	if (isset($_GET['u']) && $_GET['u']) {
 		header("Location: profile.php?id=". $_GET['u']);
 		die();
@@ -11,6 +13,7 @@
 		die();
 	}
 	
+
 
 /*
 	if ($_GET["letitsnow"]) {
@@ -260,7 +263,7 @@
 		LIMIT 1
 	");
 	
-	if($annc) {
+	if ($annc) {
 		?>
 		<table class='table'>
 			<tr>
@@ -279,6 +282,79 @@
 		</table>
 		<br>
 		<?php
+	}
+	
+/*
+	Grab a random featured thread (if one is set)
+*/
+	// there shouldn't be too many featured threads at once
+	$featured = $sql->getresults("
+		SELECT t.id FROM threads t 
+		INNER JOIN forums f ON t.forum = f.id
+		WHERE t.featured = 1 AND (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
+	");
+	if ($featured) {
+		$hidden = filter_int($_COOKIE['hcat'][WND_FEATURED]);
+?>
+		<table class="table">
+			<tr><td class="tdbgh center fonts" colspan="2">Featured thread<?= collapse_toggle(WND_FEATURED, $hidden) ?></td></tr>
+<?php
+		if (!$hidden) {
+			$featid = pick_any($featured);
+			$total  = count($featured);
+			$cur    = array_search($featid, $featured) + 1;
+			$counter = " ({$cur}/{$total})";
+			
+			$fthread = $sql->fetchq("
+				SELECT t.id, t.title, t.description, t.firstpostdate, t.replies, t.icon, t.forum, t.poll,
+					   f.pollstyle ,p.text, p.options, {$userfields} uid
+				FROM threads t
+				LEFT JOIN forums f ON t.forum = f.id
+				LEFT JOIN users  u ON t.user  = u.id
+				LEFT JOIN posts  p ON t.id    = p.thread
+				WHERE t.id = {$featid}
+				ORDER BY p.id ASC
+				LIMIT 1
+			");		
+			
+			if ($fthread['pollstyle'] != -2 && $fthread['poll']) {
+				if (load_poll($fthread['poll'], $fthread['pollstyle'])) {
+					print "<tr><td class='tdbg2' colspan='2'>".print_poll($poll, $fthread, $fthread['forum'])."</td></tr>";
+				}
+			}
+			
+		// TODO: move the thread icon CSS to base.css
+?>
+			<tr>
+				<td class="tdbg1 center" style="width: 40px">
+					<div style="max-width:60px; max-height:30px; overflow:hidden">
+						<img src="<?= htmlspecialchars($fthread['icon']) ?>" alt="->">
+					</div>
+				</td>
+				<td class="tdbg1">
+					<a href="thread.php?id=<?= $fthread['id'] ?>"><?= htmlspecialchars($fthread['title']) ?></a>
+					<br><span class="fonts"><?= $fthread['description'] ?></span>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg1"></td>
+				<td class="tdbg2">
+					<div style="max-height: 100px; overflow-y: scroll">
+						<?= dofilters(doreplace2($fthread['text'], $fthread['options']), $fthread['forum']) ?>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg2" colspan="2">
+					<b><a href="forum.php?feat=2">Featured thread</a><?= $counter ?></b> - <?= getuserlink($fthread) ?> - <?= printdate($fthread['firstpostdate']) ?>
+					<span style="float: right">Replies: <?= $fthread['replies'] ?> - <a href="thread.php?id=<?= $fthread['id'] ?>">Read More</a></span>
+				</td>
+			</tr>
+<?php
+		}
+?>
+		</table>
+<?php
 	}
 
 // Hopefully this version won't break horribly if breathed on wrong
@@ -357,7 +433,7 @@
 			<tr id='cat{$category['id']}'>
 				<td class='tbl tdbgc center font' colspan=5>
 					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
-					<div style='float: right'><a href='?cat={$category['id']}&toggle'>[".($hidden ? "+" : "-")."]</a></div>
+					".collapse_toggle($category['id'], $hidden)."
 				</td>
 			</tr>";
 		
@@ -469,4 +545,7 @@
 	
 	pagefooter();
 	
-?>
+
+function collapse_toggle($cat, $hidden) {
+	return "<div style='float: right'><a href='?cat={$cat}&toggle'>[".($hidden ? "+" : "-")."]</a></div>";
+}

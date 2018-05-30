@@ -1952,12 +1952,14 @@ CREATE TABLE `threads` (
   `poll` smallint(5) unsigned NOT NULL DEFAULT '0',
   `locked` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `announcement` tinyint(1) NOT NULL DEFAULT '0',
+  `featured` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `forum` (`forum`),
   KEY `user` (`user`),
   KEY `sticky` (`sticky`),
   KEY `pollid` (`poll`),
-  KEY `lastpostdate` (`lastpostdate`)
+  KEY `lastpostdate` (`lastpostdate`),
+  KEY `featured` (`featured`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1968,6 +1970,31 @@ CREATE TABLE `threads` (
 LOCK TABLES `threads` WRITE;
 /*!40000 ALTER TABLE `threads` DISABLE KEYS */;
 /*!40000 ALTER TABLE `threads` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `threads_featured`
+--
+
+DROP TABLE IF EXISTS `threads_featured`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `threads_featured` (
+  `thread` int(10) unsigned NOT NULL,
+  `date` int(10) unsigned NOT NULL,
+  `enabled` tinyint(3) unsigned NOT NULL DEFAULT '1',
+  PRIMARY KEY (`thread`),
+  KEY `enabled` (`enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `threads_featured`
+--
+
+LOCK TABLES `threads_featured` WRITE;
+/*!40000 ALTER TABLE `threads_featured` DISABLE KEYS */;
+/*!40000 ALTER TABLE `threads_featured` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

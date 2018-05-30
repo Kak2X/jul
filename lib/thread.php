@@ -342,7 +342,7 @@
 		return true;
 	}
 	
-	function create_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0) {
+	function create_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0, $featured = 0) {
 		global $sql;
 			// $user consistency support
 			if (is_array($user)) {
@@ -359,6 +359,7 @@
 				'closed'            => $closed,
 				'sticky'            => $sticky,
 				'announcement'      => $announcement,
+				'featured'          => $featured,
 				
 				'poll'              => $pollid,
 				
@@ -375,6 +376,9 @@
 			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
 			$tid = $sql->insert_id();
 			$sql->query("UPDATE `forums` SET `numthreads` = `numthreads` + 1 WHERE id = {$forum}");
+			if ($featured) {
+				feature_thread($thread, false, true);
+			}
 			return $tid;
 	}
 	
@@ -429,6 +433,14 @@
 			// Not the first post: update other stats
 			$modq = ($threadupdate ? mysql::setplaceholders($threadupdate)."," : "");
 			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'", $threadupdate);
+			// If this value is missing altogether, it likely means the status wasn't changed
+			if (isset($threadupdate['featured'])) {
+				if ($threadupdate['featured']) {
+					feature_thread($thread, false, true);
+				} else {
+					unfeature_thread($thread, false, true);
+				}
+			}
 			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
 		}
@@ -573,9 +585,14 @@
 			$sql->query("INSERT INTO threads_featured (thread, date, enabled) VALUES ({$id}, ".ctime().", 1) ON DUPLICATE KEY UPDATE date = VALUES(date), enabled = 1");
 	}
 	
-	function unfeature_thread($id, $archive = true) {
+	function unfeature_thread($id, $change = true, $archive = true, $hard = false) {
 		global $sql;
-		$sql->query("UPDATE threads SET featured = 0 WHERE id = {$id}");
-		if ($archive) 
-			$sql->query("UPDATE threads_featured SET enabled = 0 WHERE thread = {$id}");
+		if ($change)
+			$sql->query("UPDATE threads SET featured = 0 WHERE id = {$id}");
+		if ($archive) { 
+			if (!$hard)
+				$sql->query("UPDATE threads_featured SET enabled = 0 WHERE thread = {$id}");
+			else
+				$sql->query("DELETE FROM threads_featured WHERE thread = {$id}");
+		}
 	}

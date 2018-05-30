@@ -155,6 +155,11 @@
 			else
 				$linklist[] = "$link=qunclose'>Open</a>";
 
+			if (!$thread['featured'])
+				$linklist[] = "$link=qfeat'>Feature</a>";
+			else
+				$linklist[] = "$link=qunfeat'>Unfeature</a>";
+
 			if ($thread['forum'] != $config['trash-forum'])
 				$linklist[] = "<a href='editthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
 

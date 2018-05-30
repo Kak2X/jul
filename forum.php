@@ -434,10 +434,8 @@
 		$threadlist .= 
 			"<tr>
 				<td class='tdbg1 center'>$new</td>
-				<td class='tdbg2 center' width=40px>
-					<div style='max-width:60px;max-height:30px;overflow:hidden;'>
-						$posticon
-					</div>
+				<td class='tdbg2 center thread-icon-td'>
+					<div class='thread-icon'>$posticon</div>
 				</td>
 				<td class='tdbg2'>
 					". ($newpost ? "<a href='thread.php?id={$thread['id']}&lpt=$newpostt'>{$statusicons['getnew']}</a> " : "") ."

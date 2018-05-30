@@ -186,10 +186,8 @@
 		$threadlist .= 
 			"<tr>
 				<td class='tdbg1 center'>".($threadstatus ? $statusicons[$threadstatus] : "&nbsp;")."</td>
-				<td class='tdbg2 center' style='width: 40px'>
-					<div style='max-width:60px;max-height:30px;overflow:hidden;'>
-						$posticon
-					</div>
+				<td class='tdbg2 center thread-icon-td'>
+					<div class='thread-icon'>$posticon</div>
 				</td>
 				<td class='tdbg2'>
 					". ($newpost ? "<a href='showprivate.php?id={$thread['id']}{$navlink}&lpt=$newpost'>{$statusicons['getnew']}</a> " : "") ."

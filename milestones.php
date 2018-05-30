@@ -101,7 +101,7 @@
 		while (($tmp2 -= $threads) > $tmp1) {
 				$threadstable .= "<tr>
 					<td class='tdbg1 center'>$tmp2</td>
-					<td class='tdbg1 center' width=40px>&nbsp;</td>
+					<td class='tdbg1 center thread-icon-td'>&nbsp;</td>
 					<td class='tdbg2'><i>(thread deleted)</i></td>
 					<td class='tdbg2 center'>????</td>
 					<td class='tdbg1 center'>????</td>
@@ -137,7 +137,7 @@
 			}
 			$threadstable .= "<tr>
 				<td class='tdbg1 center'>{$ms['id']}</td>
-				<td class='tdbg1 center' width=40px style='max-width:40px;max-height:30px;overflow:hidden;'>$tpic</td>
+				<td class='tdbg1 center'><div class='thread-icon'>$tpic</div></td>
 				<td class='tdbg2'>$threadlink</td>
 				<td class='tdbg2 center'>$threadauthor</td>
 				<td class='tdbg1 center'>$replies</td>

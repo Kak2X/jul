@@ -99,6 +99,17 @@ input[type=radio] {
 	max-width:	100%;
 }
 
+/* Prevent huge thread icons from breaking the layout */
+.thread-icon-td {
+	width:	40px;
+}
+.thread-icon {
+	max-width:		60px; 
+	max-height:		30px; 
+	overflow:		hidden;
+}
+
+
 /* Attachments */
 .attachment-box, .attachment-box-addnew{
 	float: left;

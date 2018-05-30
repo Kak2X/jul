@@ -326,8 +326,8 @@
 		// TODO: move the thread icon CSS to base.css
 ?>
 			<tr>
-				<td class="tdbg1 center" style="width: 40px">
-					<div style="max-width:60px; max-height:30px; overflow:hidden">
+				<td class="tdbg1 center thread-icon-td">
+					<div class="thread-icon">
 						<img src="<?= htmlspecialchars($fthread['icon']) ?>" alt="->">
 					</div>
 				</td>

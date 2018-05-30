@@ -1,5 +1,4 @@
 <?php
-
 	const WND_FEATURED = -3;
 	
 	if (isset($_GET['u']) && $_GET['u']) {
@@ -317,9 +316,14 @@
 				LIMIT 1
 			");		
 			
+			$polltbl = "";
 			if ($fthread['pollstyle'] != -2 && $fthread['poll']) {
 				if (load_poll($fthread['poll'], $fthread['pollstyle'])) {
-					print "<tr><td class='tdbg2' colspan='2'>".print_poll($poll, $fthread, $fthread['forum'])."</td></tr>";
+					// CSS Hack around removing the <br> tag, which is unnecessary here
+					$polltbl = "<tr><td class='tdbg2 welp' colspan='2'>
+						".print_poll($poll, $fthread, $fthread['forum'])."
+						<style>.welp > br {display: none}</style>
+					</td></tr>";
 				}
 			}
 			
@@ -336,6 +340,7 @@
 					<br><span class="fonts"><?= $fthread['description'] ?></span>
 				</td>
 			</tr>
+			<?= $polltbl ?>
 			<tr>
 				<td class="tdbg1"></td>
 				<td class="tdbg2">

@@ -433,24 +433,33 @@ function load_syndromes() {
 }
 
 function syndrome($num, $double=false, $bar=true){
+	static $syndromes;
 	$bar	= false;
-	$a		= '\'>Affected by';
 	$syn	= "";
-	if($num>=75)  {  $syn="83F3A3$a 'Reinfors Syndrome'";           $last=  75; $next=  25;	}
-	if($num>=100) {  $syn="FFE323$a 'Reinfors Syndrome' +";         $last= 100; $next=  50;	}
-	if($num>=150) {  $syn="FF5353$a 'Reinfors Syndrome' ++";        $last= 150; $next=  50;	}
-	if($num>=200) {  $syn="CE53CE$a 'Reinfors Syndrome' +++";       $last= 200; $next=  50;	}
-	if($num>=250) {  $syn="8E83EE$a 'Reinfors Syndrome' ++++";      $last= 250; $next=  50;	}
-	if($num>=300) {  $syn="BBAAFF$a 'Wooster Syndrome'!!";          $last= 300; $next=  50;	}
-	if($num>=350) {  $syn="FFB0FF$a 'Wooster Syndrome' +!!";        $last= 350; $next=  50;	}
-	if($num>=400) {  $syn="FFB070$a 'Wooster Syndrome' ++!!";       $last= 400; $next=  50;	}
-	if($num>=450) {  $syn="C8C0B8$a 'Wooster Syndrome' +++!!";      $last= 450; $next=  50;	}
-	if($num>=500) {  $syn="A0A0A0$a 'Wooster Syndrome' ++++!!";     $last= 500; $next= 100;	}
-	if($num>=600) {  $syn="C762F2$a 'Anya Syndrome' +++++!!!";      $last= 600; $next= 200;	}
-	if($num>=800) {  $syn="62C7F2$a 'Xkeeper Syndrome' +++++!!";/*  $last= 600; $next= 200;		}
-	if($num>=1000) {  $syn="FFFFFF$a 'Something higher than Xkeeper Syndrome' +++++!!";*/		}
-
-	if($syn) {
+	
+	// Syndromes defined in their own file
+	// <post req>,<color>,<name>,[<disabled>]
+	if ($syndromes === NULL) {
+		// Load the syndromes on the first call (will place a dummy blank entry at the last position)
+		$syndromes = array();
+		$h = fopen('syndromes.dat', 'r');
+		for ($i=0; $syndromes[$i] = fgetcsv($h,100,','); ++$i) {
+			if (isset($syndromes[$i][3])) --$i; // Skip disabled
+		}
+	}
+	// Find the first postcount < post req
+	for ($i = 0; $syndromes[$i] && $num >= $syndromes[$i][0]; ++$i);
+	--$i;
+	
+	// If it exists, print out the syndrome text
+	if (isset($syndromes[$i])) {
+		if ($syndromes[$i+1]) {
+			$next = $syndromes[$i+1][0];
+			$last = $syndromes[$i+1][0] - $syndromes[$i][0];
+		} else {
+			$next = 0; // Reached the last entry?
+		}
+		
 		if ($next && $bar) {
 			$special = ($next >= 100) ? "special" : ""; 
 			$barimg = array(
@@ -468,7 +477,10 @@ function syndrome($num, $double=false, $bar=true){
 					". generatenumbergfx($next - ($num - $last), 3, $double) ."
 				</nobr>";
 		}
-		$syn="<br><i><span style='color: #$syn</span></i>$bar<br>";
+		$syn = "<br>
+		<span style='font-style: italic; color: {$syndromes[$i][1]}'>Affected by {$syndromes[$i][2]}</span>
+		$bar
+		<br>";
 	}
 
 	return $syn;

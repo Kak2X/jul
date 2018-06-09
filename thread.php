@@ -222,7 +222,11 @@
 	else               $searchon = "p.thread={$_GET['id']}";
 
 	// Workaround for the lack of scrollable cursors
-	$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+	if ($_GET['pin'] && $_GET['rev']) {
+		$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+	} else {
+		$oldrev = array();
+	}
 	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
 	preplayouts($layouts, $oldrev);
 	

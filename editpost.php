@@ -304,7 +304,7 @@
 		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM posts WHERE id = {$_GET['id']}");
-			
+			$sql->query("DELETE FROM posts_old WHERE pid = {$_GET['id']}");
 			
 			if ($pcount <= 1) {
 				// We have deleted the last remaining post from a thread

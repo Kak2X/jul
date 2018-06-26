@@ -296,7 +296,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (1,'Main',0,1),(2,'Special',1,2);
+INSERT INTO `categories` VALUES (1,'Main',0,1,0),(2,'Special',1,2,0);
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 

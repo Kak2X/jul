@@ -117,7 +117,7 @@
 		}
 		
 		// All OK!
-		if ($config['allow-attachments']) {
+		if ($config['allow-attachments'] && !$user['uploads_locked']) {
 			$attach_key = "n{$_GET['id']}";
 			$input_tid = process_attachments($attach_key, $userid, 0, ATTACH_INCKEY);
 		}
@@ -148,7 +148,7 @@
 			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc'], $_POST['tfeat']);
 			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 			
-			if ($config['allow-attachments']) {
+			if ($config['allow-attachments'] && !$user['uploads_locked']) {
 				confirm_attachments($attach_key, $userid, $pid);
 			}		
 			

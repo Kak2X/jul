@@ -81,7 +81,7 @@
 		}
 		
 		// Process attachments removal
-		if ($config['allow-attachments']) {
+		if ($config['allow-attachments'] && !$user['uploads_locked']) {
 			process_attachments($attach_key, $userid);
 		}
 		
@@ -104,7 +104,7 @@
 			}
 			//$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
 			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
-			if ($config['allow-attachments']) {
+			if ($config['allow-attachments'] && !$user['uploads_locked']) {
 				confirm_attachments($attach_key, $userid, $pid);
 			}
 			$sql->commit();

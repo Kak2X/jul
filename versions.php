@@ -365,7 +365,7 @@
 					<div>(".printdate($x['date'], true).")</div>
 				</td>
 				<td class='tdbg{$cell} vatop'>
-					<div>{$x['description']}</div>
+					<div>".nl2br($x['description'])."</div>
 					".($_COOKIE['verAll'] || $x['id'] == $_GET['id'] ? "
 					<br>
 					<div>".

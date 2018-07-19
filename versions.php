@@ -1,9 +1,26 @@
 <?php
+	
+	// Change how descriptions are shown
+	if (isset($_GET['all'])) {
+		setcookie('verAll', (int)($_GET['all'] > 0));		
+		$redirStr = "";
+		if (isset($_GET['cat']))    $redirStr .= "&cat={$_GET['cat']}";
+		if (isset($_GET['id']))     $redirStr .= "&id={$_GET['id']}";
+		if (isset($_GET['action'])) $redirStr .= "&action={$_GET['action']}";
+		
+		return header("Location: ?{$redirStr}");
+	}
+	
 	require "lib/function.php";
 	
 	$_GET['action'] = filter_string($_GET['action']);
 	$_GET['cat']    = filter_int($_GET['cat']);
 	$_GET['id']     = filter_int($_GET['id']);
+	
+	$_COOKIE['verAll'] = filter_int($_COOKIE['verAll']);
+	
+
+
 	
 	if ($_GET['action'] && !$isadmin) {
 		errorpage("No.");
@@ -263,7 +280,7 @@
 			</tr>
 			<tr>
 				<td class="tdbg1 center b"></td>
-				<td class="tdbg2">
+				<td class="tdbg2" colspan="3">
 					<input type="submit" name="submit" value="Save and continue">&nbsp;<input type="submit" name="submit2" value="Save and close">
 					<?= auth_tag() ?>
 				</td>
@@ -338,7 +355,7 @@
 			else
 				$cell = (++$i%2)+1;
 			
-			$editlink = ($isadmin ? "<a href='?cat={$_GET['cat']}&id={$x['id']}&action=edit'>Edit</a> - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=delete'>Delete</a>" : "");
+			$editlink = "<a href='?cat={$_GET['cat']}&id={$x['id']}'>View</a>".($isadmin ? " - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=edit'>Edit</a> - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=delete'>Delete</a>" : "");
 			
 			$txt .= "
 			<tr>
@@ -349,6 +366,7 @@
 				</td>
 				<td class='tdbg{$cell} vatop'>
 					<div>{$x['description']}</div>
+					".($_COOKIE['verAll'] || $x['id'] == $_GET['id'] ? "
 					<br>
 					<div>".
 						preg_replace_callback(
@@ -369,6 +387,7 @@
 							},
 							doreplace2($x['features'], '0|0')
 						)."</div>
+					" : "")."
 				</td>
 				<td class='tdbg{$cell} center vatop'>
 					".str_replace("\n", "<br><br>", $x['links'])."
@@ -381,7 +400,19 @@
 		}
 		
 		if ($txt) {
+			
+			// The selected link becomes bolded to highlight the choice
+			if ($_COOKIE['verAll']) {
+				$wa = "b";
+				$wo = "a";
+			} else {
+				$wa = "a";
+				$wo = "b";
+			}
+			
+			print "<br><div class='fonts right'>Show description: <{$wa} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=1'>All</{$wa}> - <{$wo} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=0'>Only selected</{$wo}></div>";
 ?>
+			
 			<table class="table" style="border-top: none">
 				<tr><td class="tdbgh center b" colspan="3">Items</td></tr>
 				<tr>

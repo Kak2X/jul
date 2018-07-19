@@ -2498,7 +2498,7 @@ function gethttpheaders() {
 	return $ret;
 }
 
-function error_reporter($type, $msg, $file, $line, $context) {
+function error_reporter($type, $msg, $file, $line) {
 	
  	global $loguser, $errors;
 

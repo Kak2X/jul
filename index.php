@@ -290,7 +290,7 @@
 	$featured = $sql->getresults("
 		SELECT t.id FROM threads t 
 		INNER JOIN forums f ON t.forum = f.id
-		WHERE t.featured = 1 AND (!f.minpower OR f.minpower <= {$loguser['powerlevel']}) AND ({$loguser['id']} OR !f.login)
+		WHERE t.featured = 1 AND ".can_view_forum_query()."
 	");
 	if ($featured) {
 		$hidden = filter_int($_COOKIE['hcat'][WND_FEATURED]);
@@ -378,8 +378,8 @@
 		FROM forums f
 		LEFT JOIN users u      ON f.lastpostuser = u.id
 		LEFT JOIN categories c ON f.catid = c.id
-		WHERE (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
-		AND (!f.hidden OR $sysadmin) AND ({$loguser['id']} OR !f.login)
+		WHERE ".can_view_forum_query()."
+		AND (!f.hidden OR $sysadmin)
 		ORDER BY c.corder, f.catid, f.forder
 	");
 	$catquery = $sql->query("

@@ -330,7 +330,7 @@
 			// Enable caching for these
 			$pthread = $sql->fetchq("SELECT id,title,forum FROM threads WHERE id={$post['thread']}", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 			$pforum  = $sql->fetchq("SELECT minpower,login FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, mysql::USE_CACHE);
-			if (($pforum['minpower'] && $pforum['minpower'] > $loguser['powerlevel']) || ($pforum['login'] && !$loguser['id'])) {
+			if (!can_view_forum($pforum)) {
 				$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
 				continue;
 			}

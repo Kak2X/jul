@@ -62,7 +62,7 @@
 
 	for ($i = 1; $f=$sql->fetch($posters); ++$i) {
 		
-		if (($f['minpower'] && $f['minpower'] > $loguser['powerlevel']) || ($f['login'] && !$loguser['id'])) {
+		if (!can_view_forum($f)) {
 			$link="(restricted)";
 			$viewall="(<s><b>view</b></s>)";
 		} else {

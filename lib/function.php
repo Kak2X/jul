@@ -1811,6 +1811,20 @@ function ismod($forum = 0, $user = NULL) {
 	return ($forum && $sql->resultq("SELECT COUNT(*) FROM forummods WHERE forum = '{$forum}' and user = '{$user['id']}'"));
 }
 
+function can_view_forum($forum) {
+	global $loguser;
+	return (
+		   $forum // Forum exists
+		&& (!$forum['minpower'] || $loguser['powerlevel'] >= $forum['minpower']) // You are allowed to view it
+		&& ($loguser['id'] || !$forum['login']) // Logged in or forum not login-restricted
+	);
+}
+function can_view_forum_query($f = 'f') {
+	global $loguser;
+	if ($f) $f .= "."; // Table alias
+	return "((!{$f}minpower OR {$f}minpower <= '{$loguser['powerlevel']}') AND ('{$loguser['id']}' OR !{$f}login))";
+}
+
 function admincheck() {
 	global $isadmin;
 	if (!$isadmin) {

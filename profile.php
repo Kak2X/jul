@@ -126,7 +126,7 @@
 			INNER JOIN forums  f ON t.forum  = f.id
 			WHERE p.user = {$_GET['id']} AND p.date = {$user['lastposttime']} 
 		");
-		if (!$post || ($post['minpower'] && $post['minpower'] > $loguser['powerlevel']) || ($post['login'] && !$loguser['id'])) {
+		if (!can_view_forum($post)) {
 			$lastpostlink = ", in a restricted forum";
 		} else {
 			$threadtitle  = htmlspecialchars($post['ttitle']);

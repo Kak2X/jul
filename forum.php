@@ -328,7 +328,7 @@
 		$sticklast = $marker;
 		
 		// Always check the powerlevel if we're not showing a forum id
-		if(!$_GET['id'] && (($thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) || ($thread['login'] && !$loguser['id']))) {
+		if (!$_GET['id'] && !can_view_forum($thread)) {
 			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
 			continue;
 		}

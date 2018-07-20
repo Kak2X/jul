@@ -61,7 +61,7 @@
 
 	for ($i = 1; $t=$sql->fetch($posters); ++$i) {
 		
-		if (($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) || ($t['login'] && !$loguser['id'])) {
+		if (!can_view_forum($t)) {
 			$forum  = '(restricted forum)';
 			$thread = '(private thread)';
 		} else {

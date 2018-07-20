@@ -20,10 +20,9 @@
 		LEFT JOIN `users`   u ON p.user   = u.id
 		".($loguser['id'] ? "LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']} " : "")."
 		
-		WHERE 	f.minpower <= {$loguser['powerlevel']}
+		WHERE 	".can_view_forum_query()."
 				AND p.date >= ".($maxtime ? (ctime()-$maxtime) : (ctime()-86400*7)) // time limit here
 				.($_GET['lastid'] ? "AND p.id > {$_GET['lastid']} ":"")."
-				AND ({$loguser['id']} OR !f.login)
 				AND ($ismod OR !ISNULL(f.id))
 		ORDER BY `id` DESC
 		".($maxposts ? "LIMIT 0, $maxposts" : '')); // posts limit here		

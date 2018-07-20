@@ -47,12 +47,12 @@
 					'login'          => 0,
 					'error'          => true,
 				);
-			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel'] ) {
-				trigger_error("Attempted to access level-{$forum['minpower']} restricted forum {$id} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
-				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-				notAuthorizedError();
-			} else if ($forum['login'] && !$loguser['id']) {
-				trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
+			} else if (!can_view_forum($forum)) {
+				if ($forum['login'] && !$loguser['id']) {
+					trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
+				} else {
+					trigger_error("Attempted to access level-{$forum['minpower']} restricted forum {$id} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+				}
 				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				notAuthorizedError();
 			}
@@ -65,7 +65,7 @@
 		}
 	}
 	
-	function load_thread($id, $check_forum = true) { // we boardc now
+	function load_thread($id, $check_forum = true, $ignore_errors = false) { // we boardc now
 		global $sql, $meta, $loguser, $ismod, $thread, $forum, $forum_error;
 		$error        = 0;
 		$forum_error = "";
@@ -74,13 +74,14 @@
 
 		if (!$thread) {
 			$meta['noindex'] = true; // prevent search engines from indexing
-			if (!$ismod) {
+			if (!$ismod && !$ignore_errors) {
 				trigger_error("Accessed nonexistant thread number #$id", E_USER_NOTICE);
 				notAuthorizedError();
 			}
 
 			$badposts = $sql->resultq("SELECT COUNT(*) FROM `posts` WHERE `thread` = '{$id}'");
 			if ($badposts <= 0) {
+				if ($ignore_errors) return NO_THREAD;
 				errorpage("Thread ID #{$id} doesn't exist, and no posts are associated with the invalid thread ID.", "index.php", 'the index page');
 			}
 
@@ -103,6 +104,8 @@
 				'minpowerreply'  => 2,
 				'minpowerthread' => 2,
 			);
+			
+			if ($ignore_errors) return $error;
 			$check_forum = false;
 		}
 		if ($check_forum) {
@@ -110,7 +113,7 @@
 
 			if (!$forum) {
 				$meta['noindex'] = true; // prevent search engines from indexing
-				if (!$ismod) {
+				if (!$ismod && !$ignore_errors) {
 					trigger_error("Accessed thread number #{$id} with bad forum ID {$thread['forum']}", E_USER_WARNING);
 					notAuthorizedError();
 				}
@@ -127,12 +130,13 @@
 					'login'          => 0,
 					'error'          => true,
 				);
-			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
-				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-				trigger_error("Attempted to access thread $id in level-{$forum['minpower']} restricted forum {$thread['forum']} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
-				notAuthorizedError();
-			} else if ($forum['login'] && !$loguser['id']) {
-				trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
+				if ($ignore_errors) return $error;
+			} else if (!can_view_forum($forum) && !$ignore_errors) {
+				if ($forum['login'] && !$loguser['id']) {
+					trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
+				} else {
+					trigger_error("Attempted to access level-{$forum['minpower']} restricted forum {$id} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+				}
 				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				notAuthorizedError();
 			}
@@ -145,7 +149,7 @@
 			}
 			$forum_error = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>{$errortext}</td></tr>";
 		}
-		
+		return 1;
 	}
 	
 	function load_poll($id, $pollstyle = -1) {

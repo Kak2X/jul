@@ -46,6 +46,7 @@
 		PMFOLDER_TRASH => "The Trash&trade;"
 	);
 	
+	const NO_THREAD =  0;
 	const INVALID_THREAD = -1;
 	const INVALID_FORUM  = -2;
 	

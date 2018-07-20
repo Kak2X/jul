@@ -699,9 +699,11 @@ CREATE TABLE `forums` (
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   `specialtitle` tinytext COLLATE utf8mb4_unicode_ci,
   `pollstyle` tinyint(2) NOT NULL DEFAULT '0',
+  `login` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `catid` (`catid`),
-  KEY `minpower` (`minpower`)
+  KEY `minpower` (`minpower`),
+  KEY `login` (`login`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -711,7 +713,7 @@ CREATE TABLE `forums` (
 
 LOCK TABLES `forums` WRITE;
 /*!40000 ALTER TABLE `forums` DISABLE KEYS */;
-INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0);
+INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0,0),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0,0),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0,0),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0,0);
 /*!40000 ALTER TABLE `forums` ENABLE KEYS */;
 UNLOCK TABLES;
 

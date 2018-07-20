@@ -290,7 +290,7 @@
 	$featured = $sql->getresults("
 		SELECT t.id FROM threads t 
 		INNER JOIN forums f ON t.forum = f.id
-		WHERE t.featured = 1 AND (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
+		WHERE t.featured = 1 AND (!f.minpower OR f.minpower <= {$loguser['powerlevel']}) AND ({$loguser['id']} OR !f.login)
 	");
 	if ($featured) {
 		$hidden = filter_int($_COOKIE['hcat'][WND_FEATURED]);
@@ -305,13 +305,13 @@
 			$counter = " ({$cur}/{$total})";
 			
 			$fthread = $sql->fetchq("
-				SELECT t.id, t.title, t.description, t.firstpostdate, t.replies, t.icon, t.forum, t.poll,
-					   f.pollstyle ,p.text, p.options, {$userfields} uid
+				SELECT t.id, t.title, t.description, t.firstpostdate, t.replies, t.icon, t.forum, t.poll, t.user,
+					   f.pollstyle, p.text, p.options, {$userfields} uid
 				FROM threads t
 				LEFT JOIN forums f ON t.forum = f.id
 				LEFT JOIN users  u ON t.user  = u.id
 				LEFT JOIN posts  p ON t.id    = p.thread
-				WHERE t.id = {$featid}
+				WHERE t.id = {$featid} AND ({$loguser['id']} OR !f.login)
 				ORDER BY p.id ASC
 				LIMIT 1
 			");		
@@ -379,7 +379,7 @@
 		LEFT JOIN users u      ON f.lastpostuser = u.id
 		LEFT JOIN categories c ON f.catid = c.id
 		WHERE (!f.minpower OR f.minpower <= {$loguser['powerlevel']})
-		AND (!f.hidden OR $sysadmin)
+		AND (!f.hidden OR $sysadmin) AND ({$loguser['id']} OR !f.login)
 		ORDER BY c.corder, f.catid, f.forder
 	");
 	$catquery = $sql->query("

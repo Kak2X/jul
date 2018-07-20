@@ -120,13 +120,13 @@
 		$lastpostdate = printdate($user['lastposttime']);
 		$postsfound = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$_GET['id']}");
 		$post = $sql->fetchq("
-			SELECT p.id, t.title ttitle, f.id fid, f.title ftitle, f.minpower
+			SELECT p.id, t.title ttitle, f.id fid, f.title ftitle, f.minpower, f.login
 			FROM posts p
 			INNER JOIN threads t ON p.thread = t.id
 			INNER JOIN forums  f ON t.forum  = f.id
-			WHERE p.user = {$_GET['id']} AND p.date = {$user['lastposttime']}
+			WHERE p.user = {$_GET['id']} AND p.date = {$user['lastposttime']} 
 		");
-		if (!$post || ($post['minpower'] && $post['minpower'] > $loguser['powerlevel'])) {
+		if (!$post || ($post['minpower'] && $post['minpower'] > $loguser['powerlevel']) || ($post['login'] && !$loguser['id'])) {
 			$lastpostlink = ", in a restricted forum";
 		} else {
 			$threadtitle  = htmlspecialchars($post['ttitle']);

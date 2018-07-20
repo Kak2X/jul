@@ -28,7 +28,7 @@
 	else $qwhere = implode(' AND ', $qstrings);	
 
 	$posters = $sql->query(
-		"SELECT t.id, t.replies, t.title, t.forum, f.minpower, f.title ftitle, COUNT(p.id) cnt ".
+		"SELECT t.id, t.replies, t.title, t.forum, f.minpower, f.title ftitle, f.login, COUNT(p.id) cnt ".
 		"FROM threads t ".
 		"LEFT JOIN forums  f ON f.id = t.forum ".
 		"LEFT JOIN posts   p ON t.id = p.thread ".
@@ -61,7 +61,7 @@
 
 	for ($i = 1; $t=$sql->fetch($posters); ++$i) {
 		
-		if ($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) {
+		if (($t['minpower'] && $t['minpower'] > $loguser['powerlevel']) || ($t['login'] && !$loguser['id'])) {
 			$forum  = '(restricted forum)';
 			$thread = '(private thread)';
 		} else {

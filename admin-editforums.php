@@ -39,7 +39,8 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'specialscheme' 	=> $_POST['specialscheme'],
 		'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 		'hidden' 			=> filter_int($_POST['hideforum']),
-		'pollstyle' 		=> filter_int($_POST['pollstyle'])
+		'pollstyle' 		=> filter_int($_POST['pollstyle']),
+		'login' 			=> filter_int($_POST['login'])
 	);
 	$qadd = mysql::setplaceholders($values);
 	if ($_GET['id'] <= -1) {
@@ -198,21 +199,22 @@ else if ($_GET['id']) {
 	if (!$forum) {
 		$_GET['id'] = -1;
 		$forum = array(
-			'pollstyle' => -1,
-			'title' => '',
-			'description' => '',
-			'minpower' => 0,
-			'minpowerthread' => 0,
-			'minpowerreply' => 0,
-			'numthreads' => 0,
-			'forder' => 0,
-			'numposts'      => 0,
-			'specialscheme' => -1,
-			'catid'         => 1,
-			'specialtitle'  => '',
-			'hidden'        => 0
+			'pollstyle'      => -1,
+			'title'          => '',
+			'description'    => '',
+			'minpower'       =>  0,
+			'minpowerthread' =>  0,
+			'minpowerreply'  =>  0,
+			'numthreads'     =>  0,
+			'forder'         =>  0,
+			'numposts'       =>  0,
+			'specialscheme'  => -1,
+			'catid'          =>  1,
+			'specialtitle'   => '',
+			'hidden'         =>  0,
+			'pollstyle'      => -1,
+			'login'          =>  0,
 		);
-		$forum['pollstyle'] = -1;
 	} else {
 		if (!isset($categories[$forum['catid']]))
 			$categories[$forum['catid']] = "Unknown category #" . $forum['catid'];
@@ -231,7 +233,10 @@ else if ($_GET['id']) {
 		<tr>
 			<td class='tdbgh center'>Forum Name</td>
 			<td class='tdbg1' colspan=4><input type="text" name="forumtitle" value="<?=htmlspecialchars($forum['title'])?>"  style="width: 100%;" maxlength="250"></td>
-			<td class='tdbg1' width=10%><input type="checkbox" id="hideforums" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> <label for="hideforums">Hidden</label></td>
+			<td class='tdbg1' width=10%>
+				<label><input type="checkbox" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> Hidden</label>
+				<label><input type="checkbox" name="login" value="1"<?=($forum['login'] ? " checked" : "")?>> Login required</label>
+			</td>
 		</tr>
 
 		<tr>

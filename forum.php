@@ -218,7 +218,7 @@
 	// Now with FETCH_NAMED capabilities
 	if ($_GET['fav']) {
 		$threads = $sql->query("
-			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid,
+			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
 			        ".set_userfields('u1')." uid, 
 			        ".set_userfields('u2')." uid
 					$q_trval
@@ -238,7 +238,7 @@
 
 	} else if ($_GET['feat']) {
 		$threads = $sql->query("
-			SELECT 	t.*, f.id forumid, f.minpower,
+			SELECT 	t.*, f.id forumid, f.minpower, f.login,
 			        ".set_userfields('u1')." uid, 
 			        ".set_userfields('u2')." uid
 			        $q_trval
@@ -265,7 +265,7 @@
 			'u1namecolor'	=> $userdata['namecolor']
 		];
 		$threads = $sql->queryp("
-			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid,
+			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
 			        ".set_userfields('u1', $vals).", 
 			        ".set_userfields('u')." uid
 					$q_trval
@@ -328,7 +328,7 @@
 		$sticklast = $marker;
 		
 		// Always check the powerlevel if we're not showing a forum id
-		if(!$_GET['id'] && $thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) {
+		if(!$_GET['id'] && (($thread['minpower'] && $thread['minpower'] > $loguser['powerlevel']) || ($thread['login'] && !$loguser['id']))) {
 			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
 			continue;
 		}

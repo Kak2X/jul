@@ -18,8 +18,8 @@
 
 
 	if ($_GET['forum']) {
-		$forum = $sql->fetchq("SELECT title, minpower FROM forums WHERE id = {$_GET['forum']}");
-		if (!$forum || ($forum['minpower'] && $loguser['powerlevel'] < $forum['minpower'])) {
+		$forum = $sql->fetchq("SELECT title, minpower, login FROM forums WHERE id = {$_GET['forum']}");
+		if (!$forum || ($forum['minpower'] && $loguser['powerlevel'] < $forum['minpower']) || ($forum['login'] && !$loguser['id'])) {
 			errorpage("You don't have access to view posts in this forum.", 'index.php', 'return to the board');
 		}
 		$where 		= "in ".htmlspecialchars($forum['title']);

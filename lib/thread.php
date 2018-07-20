@@ -44,10 +44,15 @@
 					'minpower'       => 2,
 					'minpowerreply'  => 2,
 					'minpowerthread' => 2,
+					'login'          => 0,
 					'error'          => true,
 				);
-			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
+			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel'] ) {
 				trigger_error("Attempted to access level-{$forum['minpower']} restricted forum {$id} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
+				notAuthorizedError();
+			} else if ($forum['login'] && !$loguser['id']) {
+				trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
 				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				notAuthorizedError();
 			}
@@ -119,11 +124,16 @@
 					'minpower'       => 2,
 					'minpowerreply'  => 2,
 					'minpowerthread' => 2,
+					'login'          => 0,
 					'error'          => true,
 				);
 			} else if ($forum['minpower'] && $forum['minpower'] > $loguser['powerlevel']) {
 				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				trigger_error("Attempted to access thread $id in level-{$forum['minpower']} restricted forum {$thread['forum']} (".($loguser['id'] ? "user's powerlevel: {$loguser['powerlevel']}; user's name: ".$loguser['name'] : "guest's IP: ".$_SERVER['REMOTE_ADDR']).")", E_USER_NOTICE);
+				notAuthorizedError();
+			} else if ($forum['login'] && !$loguser['id']) {
+				trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
+				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
 				notAuthorizedError();
 			}
 		}

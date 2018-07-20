@@ -23,6 +23,7 @@
 		WHERE 	f.minpower <= {$loguser['powerlevel']}
 				AND p.date >= ".($maxtime ? (ctime()-$maxtime) : (ctime()-86400*7)) // time limit here
 				.($_GET['lastid'] ? "AND p.id > {$_GET['lastid']} ":"")."
+				AND ({$loguser['id']} OR !f.login)
 				AND ($ismod OR !ISNULL(f.id))
 		ORDER BY `id` DESC
 		".($maxposts ? "LIMIT 0, $maxposts" : '')); // posts limit here		

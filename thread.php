@@ -271,10 +271,12 @@
 		if ($ismod || (!$banned && !$post['deleted'] && $post['user'] == $loguser['id'])) {
 			$tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
+			// Non-mods can edit the post as long as the thread isn't closed.
         	if ($ismod || ($_GET['id'] && !$thread['closed'])) {
 				$controls['edit'] = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
 			}
 			
+			// If a post is deleted, the author can undelete it (and a mod can silently peek it)
 			if ($post['deleted']) {
 				if ($ismod) {
 					// Post peeking feature
@@ -300,6 +302,8 @@
 					$post  = array_merge($post, $oldrev);
 				}
 			}
+			
+			// Danger zone
 			if ($sysadmin && $config['allow-post-deletion']) {
 				$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";
 			}
@@ -325,14 +329,15 @@
 		if (!$_GET['id']) {
 			// Enable caching for these
 			$pthread = $sql->fetchq("SELECT id,title,forum FROM threads WHERE id={$post['thread']}", PDO::FETCH_ASSOC, mysql::USE_CACHE);
-			$pforum  = $sql->resultq("SELECT minpower FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, mysql::USE_CACHE);
+			$pforum  = $sql->fetchq("SELECT minpower,login FROM forums WHERE id=".filter_int($pthread['forum']), 0, 0, mysql::USE_CACHE);
+			if (($pforum['minpower'] && $pforum['minpower'] > $loguser['powerlevel']) || ($pforum['login'] && !$loguser['id'])) {
+				$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
+				continue;
+			}
 		}
-		
-		$post['act']     = filter_int($act[$post['user']]);
-		if (!$pforum || $pforum <= $loguser['powerlevel'])
-			$postlist .= threadpost($post, $bg, $forum['id'], $pthread);
-		else
-			$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
+		$post['act']     = filter_int($act[$post['user']]);		
+		$postlist .= threadpost($post, $bg, $forum['id'], $pthread);
+			
 	}
 
 	// Strip _GET variables that can set the page number

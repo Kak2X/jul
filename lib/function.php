@@ -953,9 +953,10 @@ function doforumlist($id, $name = '', $shownone = ''){
 
 // Note: -1 becomes NULL
 function doschemeList($all = false, $sel = 0, $name = 'scheme'){
-	global $sql;
+	global $sql, $loguser;
 	
-	$schemes = $sql->query("SELECT * FROM schemes ".($all ? "ORDER BY special," : "WHERE special = 0 ORDER BY")." ord, id");
+	$sortmode = $loguser['schemesort'] ? "name" : "ord";
+	$schemes = $sql->query("SELECT * FROM schemes ".($all ? "ORDER BY special," : "WHERE special = 0 ORDER BY")." {$sortmode}, id");
 	
 	if ($sel === NULL) $sel = '-1';
 	$scheme[$sel] = "selected";

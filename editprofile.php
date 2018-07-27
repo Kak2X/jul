@@ -178,7 +178,7 @@
 			'scheme' 			=> filter_int($_POST['scheme']),
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			'splitcat' 			=> filter_int($_POST['splitcat']),
-			
+			'schemesort' 		=> filter_int($_POST['schemesort']),
 		);
 		
 		if ($config['allow-avatar-storage']) {
@@ -397,6 +397,7 @@
 			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here."],
 			"Signature separator"			=> [4, "signsep", "You can choose from a few signature separators here."],
 			"Color scheme / layout"	 		=> [4, "scheme", "You can select from a few color schemes here."],
+			"Scheme sorting mode"	 		=> [2, "schemesort", "Determines how scheme lists are sorted.", "Normal|Alphabetical"],
 			"Hide activity"			 		=> [2, "hideactivity", "You can choose to hide your online status.", "Show|Hide"],
 		));
 		if ($edituser){
@@ -479,10 +480,13 @@
 
 		
 		// listbox with <name> <used>
-		if (!$edituser && !$isadmin)
-			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.ord");
-		else
+		if (!$edituser && !$isadmin) {
+			// herp derp
+			$sortmode = $userdata['schemesort'] ? "name" : "ord";
+			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.{$sortmode}");
+		} else {
 			$scheme = doschemelist(true, $userdata['scheme'], 'scheme');
+		}
 		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
 		

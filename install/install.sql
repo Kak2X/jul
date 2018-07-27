@@ -422,7 +422,8 @@ CREATE TABLE `delusers` (
   `aka` varchar(25) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
   `ban_expire` int(11) NOT NULL DEFAULT '0',
-  `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0'
+  `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2298,6 +2299,7 @@ CREATE TABLE `users` (
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `posts` (`posts`),
   KEY `name` (`name`),

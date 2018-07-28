@@ -179,6 +179,7 @@
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			'splitcat' 			=> filter_int($_POST['splitcat']),
 			'schemesort' 		=> filter_int($_POST['schemesort']),
+			'comments' 			=> filter_int($_POST['comments']),
 		);
 		
 		if ($config['allow-avatar-storage']) {
@@ -399,6 +400,7 @@
 			"Color scheme / layout"	 		=> [4, "scheme", "You can select from a few color schemes here."],
 			"Scheme sorting mode"	 		=> [2, "schemesort", "Determines how scheme lists are sorted.", "Normal|Alphabetical"],
 			"Hide activity"			 		=> [2, "hideactivity", "You can choose to hide your online status.", "Show|Hide"],
+			"Profile comments"			 	=> [2, "comments", "You can disable them here.", "Disable|Enable"],
 		));
 		if ($edituser){
 			table_format("Options", array(

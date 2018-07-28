@@ -423,7 +423,8 @@ CREATE TABLE `delusers` (
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
-  `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0'
+  `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `comments` tinyint(1) unsigned NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2300,6 +2301,7 @@ CREATE TABLE `users` (
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `posts` (`posts`),
   KEY `name` (`name`),
@@ -2366,6 +2368,7 @@ CREATE TABLE `users_comments` (
   `userto` smallint(5) unsigned NOT NULL,
   `date` int(32) NOT NULL,
   `text` text NOT NULL,
+  `read` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `userfrom` (`userfrom`),
   KEY `userto` (`userto`)

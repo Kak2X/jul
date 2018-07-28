@@ -9,7 +9,7 @@
 	$_GET['act']    = filter_string($_GET['act']);
 	$_GET['page']   = filter_int($_GET['page']);
 	
-
+	$cancomment = $sql->resultq("SELECT comments FROM users WHERE id = {$_GET['id']}");
 	
 	if ($_GET['act'] == 'add'){
 		check_token($_POST['auth']);
@@ -23,6 +23,8 @@
 			errorpage("Your comment was blank.", "profile.php?id={$_GET['id']}", "the user's profile");	
 		if (ctime() - $lastcomment < 15) 
 			errorpage("You are commenting too fast!"); // No redirect, to allow refreshing
+		if (!$cancomment)
+			errorpage("This user has profile comments disabled!", 'index.php', 'the index page');
 		
 		$vals = array(
 			'userfrom' => $loguser['id'], 
@@ -42,6 +44,8 @@
 		$sql->query("DELETE FROM users_comments WHERE id = {$_GET['id']}");
 		return header("Location: profile.php?id={$_GET['id']}#comments");
 	} else {
+		
+		pageheader("Profile comments");
 		
 		$ppp = get_ppp();
 		$query = "?id={$_GET['id']}";
@@ -67,28 +71,38 @@
 			$htitle = "Profile comments by {$thisuser}";
 		}
 		
-
+		
 		
 		$comments = $sql->query("
-			SELECT c.id cid, c.userfrom, c.date, c.text, $userfields
+			SELECT c.id cid, c.userfrom, c.date, c.text, c.`read`, $userfields
 			FROM users_comments c
 			LEFT JOIN users u ON c.{$join} = u.id
 			WHERE c.{$assoc} = {$_GET['id']}
 			ORDER BY c.id DESC
 			LIMIT ".($_GET['page'] * $ppp).", {$ppp}
 		");
-		$total = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userfrom = {$_GET['id']}");
+		$total = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE {$assoc} = {$_GET['id']}");
 		$pagelinks = pagelist($query, $total, $ppp);
 	
+		$unmark = array();
 		$list  = "";
 		$i     = 0;
 		$token = generate_token(TOKEN_MGET);
 		if (!$sql->num_rows($comments)) {
-			$list = "<tr><td class='tdbg1 center' colspan=4>No comments found.</td></tr>";
+			$list = "<tr><td class='tdbg1 center' colspan=5>No comments found.</td></tr>";
 		} else while ($x = $sql->fetch($comments)) {
 			$dellink = $isadmin ? "<a href='usercomment.php?act=del&id={$x['cid']}&auth={$token}'>Remove</a>" : $x['cid'];
+			//--
+			if (!$x['read'] && isset($_GET['to']) && $_GET['id'] == $loguser['id']) {
+				$newmark = $statusicons['new'];
+				$unmark[] = $x['cid'];
+			} else {
+				$newmark = "";
+			}
+			//--
 			$cell = ($i++ % 2) + 1;
 			$list .= "<tr>
+				<td class='tdbg{$cell} center' style='width: 1px'>{$newmark}</td>
 				<td class='tdbg{$cell} center fonts'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr'>".getuserlink($x)."</td>
 				<td class='tdbg{$cell} center nobr'>".printdate($x['date'])."</td>
@@ -96,12 +110,17 @@
 			</tr>";
 		}
 		
-		pageheader("Profile comments");
+		if ($unmark) {
+			$sql->query("UPDATE users_comments SET `read` = 1 WHERE id IN (".implode(',', $unmark).")");
+		}
+		
+		
 ?>
 	<?= $pagelinks ?>
 	<table class="table">
-		<tr><td class='tdbgh center b' colspan=4><?= $htitle ?></td></tr>
+		<tr><td class='tdbgh center b' colspan=5><?= $htitle ?></td></tr>
 		<tr>
+			<td class='tdbgh center' style='width: 1px'></td>
 			<td class='tdbgh center' style='width: 70px'>#</td>
 			<td class='tdbgh center nobr' style='width: 150px'>User</td>
 			<td class='tdbgh center nobr' style='width: 200px'>Date</td>

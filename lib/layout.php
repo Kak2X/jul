@@ -235,6 +235,20 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		}
 	}
 	
+	// Pretty similar to the above but for profile comments
+	// Of course this is simpler
+	if ($loguser['id'] && $loguser['comments']) {
+		$unreadcount = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userto = {$loguser['id']} AND `read` = 0");
+		if ($unreadcount) {
+			$privatebox .= "
+			<tr>
+				<td colspan=3 class='tdbg2 center fonts'>
+					{$statusicons['new']} <a href='usercomment.php?id={$loguser['id']}&to=1'>You have {$unreadcount} new profile comment".($unreadcount != 1 ? 's' : '')."</a>
+				</td>
+			</tr>";
+		}
+	}
+	
 	
 	/*
 		CSS

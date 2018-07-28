@@ -140,6 +140,7 @@
 	}
 	
 	// Last activity (IP info)
+	$lastip = "";
 	if ($isadmin && $user['lastip']) {
 		$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
 	}
@@ -339,12 +340,13 @@
 		$options[0]["Preview mood avatar"] = ["avatar.php?id={$_GET['id']}", "class='popout' target='_blank'"];	
 	}
 	
+	
 	/*
 		Profile comments
 	*/
 	$ppp = get_ppp();
 	$comments = $sql->query("
-		SELECT c.id cid, c.userfrom, c.date, c.text, $userfields
+		SELECT c.id cid, c.userfrom, c.date, c.text, c.`read`, $userfields
 		FROM users_comments c
 		LEFT JOIN users u ON c.userfrom = u.id
 		WHERE c.userto = {$_GET['id']}
@@ -357,24 +359,41 @@
 		$pagelinks = "<tr><td class='tdbg2' colspan=3>{$pagelinks}</td></tr>";
 	
 	// Comment list
+	
 	$comm_txt = "";
+	$unmark   = array();
 	$i = 0;
-		
+	
 	if (!$sql->num_rows($comments)) {
 		$comm_txt = "<tr><td class='tdbg1 center' colspan=3><i>There are no profile comments for this user.</i></td></tr>";
 	} else while ($x = $sql->fetch($comments)){
 		$dellink = $isadmin ? "<a href='usercomment.php?act=del&id={$x['cid']}&auth={$token}'>Remove</a>" : $x['cid'];
+		//--
+		if (!$x['read'] && $_GET['id'] == $loguser['id']) {
+			$newmark = $statusicons['new'];
+			$unmark[] = $x['cid'];
+		} else {
+			$newmark = "";
+		}
+		//--
 		$cell = ($i++ % 2) + 1;
 		$comm_txt .= "
 			<tr>
+				<td class='tdbg{$cell} center' style='width: 1px'>{$newmark}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 60px'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 150px'>".printdate($x['date'])."</td>
 				<td class='tdbg{$cell}'>".getuserlink($x).": ".htmlspecialchars($x['text'])."</td>
 			</tr>";
 	}
 	
+	if ($unmark) {
+		$sql->query("UPDATE users_comments SET `read` = 1 WHERE id IN (".implode(',', $unmark).")");
+	}
+	
 	// New comment link
-	if (!$loguser['id']) {
+	if (!$user['comments']) {
+		$comm_new = "This user has profile comments disabled.";
+	} else if (!$loguser['id']) {
 		$comm_new = "You must be logged in to add a comment for this user.";
 	} else if ($banned) {
 		$comm_new = "Banned users aren't allowed to add profile comments.";
@@ -419,10 +438,10 @@
 <?= preview_post($user, $data, PREVIEW_PROFILE, "Sample post") ?>
 <br>
 <table class='table fonts' id='comments'>
-	<tr><td class='tdbgh center' colspan=3>Profile Comments</td></tr>
+	<tr><td class='tdbgh center' colspan=4>Profile Comments</td></tr>
 	<?= $comm_txt ?>
 	<?= $pagelinks ?>
-	<tr><td class='tdbg2' colspan=3><?= $comm_new ?></td></tr>
+	<tr><td class='tdbg2' colspan=4><?= $comm_new ?></td></tr>
 </table>
 <br>
 <table class='table'>

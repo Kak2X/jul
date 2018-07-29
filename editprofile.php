@@ -4,6 +4,7 @@
 	pageheader();
 	
 	$id = filter_int($_GET['id']);
+	$noeffect = "";
 	
 	if ($id) {
 		admincheck();
@@ -31,7 +32,16 @@
 		
 		$id 		= $loguser['id'];
 		$id_q		= "";
-		$userdata 	= $loguser;
+
+		// Usually you can get away with reusing $loguser data for this
+		// Not on mobile mode though, as certain options are hardcoded to $loguser
+		if (!$x_hacks['smallbrowse']) {
+			$userdata 	= $loguser;
+		} else {
+			//die("what are you doing. just stop");
+			$userdata = $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+			$noeffect = "<br><b>This option will currently have no effect as you're using a mobile browser.</b>";
+		}
 		$edituser 	= false;
 	}
 	
@@ -391,11 +401,11 @@
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
 			"Use post toolbar" 				=> [2, "posttool", "You can disable it here, which can make thread pages smaller and load faster.", "Disabled|Enabled"],
-			"Post layouts"	                => [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.", "Disabled|Enabled|Auto-updating"],
+			"Post layouts"	                => [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.{$noeffect}", "Disabled|Enabled|Auto-updating"],
 			"Forum List layout"				=> [2, "splitcat", "'Split' uses two columns instead of one.", "Normal|Split ({$splitcount})"],
 			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Seperate Line (shows more pages)", "Inline|Seperate line"],
 			"Poll vote system"				=> [2, "pollstyle", "Normal (based on users) or Influence (based on levels)", "Normal|Influence"],
-			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here."],
+			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here.{$noeffect}"],
 			"Signature separator"			=> [4, "signsep", "You can choose from a few signature separators here."],
 			"Color scheme / layout"	 		=> [4, "scheme", "You can select from a few color schemes here."],
 			"Scheme sorting mode"	 		=> [2, "schemesort", "Determines how scheme lists are sorted.", "Normal|Alphabetical"],

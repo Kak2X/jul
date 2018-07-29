@@ -66,7 +66,7 @@
 		
 	
 return "
-<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+<table class='table tlayout-rpg contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop' rowspan=2 style='width: 200px'>
 			{$noobspan}{$set['userlink']}</span>

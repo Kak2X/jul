@@ -174,7 +174,7 @@ function postcode($post,$set){
 		
 		return 
 		"<div style='position:relative'>
-			<table class='table contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+			<table class='table tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
 					<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
 						{$noobspan}{$set['userlink']}</span>

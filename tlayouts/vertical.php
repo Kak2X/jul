@@ -65,7 +65,7 @@ function postcode($post,$set){
 	}
 	
     return "
-<table class='table' id='{$post['id']}'>
+<table class='table tlayout-vertical' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} vatop'>
 			{$sideleft}

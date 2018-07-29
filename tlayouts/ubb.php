@@ -28,7 +28,7 @@
 		</span>";
 	}
     return "
-	<table class='table tlayout-ubb' id='{$post['id']}'>
+	<table class='table post tlayout-ubb' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} vatop' style='width: 200px; border-bottom: none'>
 				{$noobspan}{$set['userlink']}</span>

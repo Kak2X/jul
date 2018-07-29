@@ -32,7 +32,7 @@ function postcode($post,$set) {
 	}
 	
 	return "
-<table class='table tlsyout-ezboard contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+<table class='table post tlayout-ezboard contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop' style='width: 200px'>
 			{$noobspan}{$set['userlink']}</span>

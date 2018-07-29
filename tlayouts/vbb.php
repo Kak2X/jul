@@ -50,7 +50,7 @@ function postcode($post, $set){
 	}
 	
     return "
-	<table class='table tlayout-vbb contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+	<table class='table post tlayout-vbb contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} vatop sidebar{$post['uid']}{$csskey}' style='width: 200px'>
 				{$noobspan}{$set['userlink']}</span>

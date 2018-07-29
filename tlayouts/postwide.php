@@ -38,7 +38,7 @@
 	}
 	
     return "
-	<table class='table tlayout-postwide' id='{$post['id']}'>
+	<table class='table post tlayout-postwide' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} w' height=1 colspan=2>
 				<table cellspacing=0 cellpadding=2 class='w fonts'>

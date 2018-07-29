@@ -79,7 +79,7 @@ function postcode($post,$set){
 		$fcol3			= "#181818";
 
 		return 
-		"<table class='table' id='{$post['id']}'>
+		"<table class='table post tlayout-regular' id='{$post['id']}'>
 			<tr>
 				<td class='tdbg{$set['bg']}' valign=top rowspan=2 style='text-align: center; background: $fcol3; font-size: 14px; color: $fcol1; font-family: Verdana, sans-serif; padding-top: .5em'>
 					{$set['userlink']}
@@ -174,7 +174,7 @@ function postcode($post,$set){
 		
 		return 
 		"<div style='position:relative'>
-			<table class='table tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+			<table class='table post tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
 					<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
 						{$noobspan}{$set['userlink']}</span>

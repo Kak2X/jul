@@ -14,7 +14,6 @@ $_GET['id'] = filter_int($_GET['id']);
 
 if ($_GET['id']) {
 	// Replying to a thread
-	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
 
 	load_pm_thread($_GET['id']);
@@ -232,7 +231,13 @@ else {
 	$_POST['subject']       = filter_string($_POST['subject']);
 	$_POST['description']   = filter_string($_POST['description']);
 	$_POST['message']       = filter_string($_POST['message']);
-	$_POST['users']         = filter_string($_POST['users']);
+	// Sendprivate link support, which I originally forgot to reimplement back (oops)
+	$_GET['userid']         = filter_int($_GET['userid']);
+	if ($_GET['userid']) {
+		$_POST['users']     = $sql->resultq("SELECT name FROM users WHERE id = {$_GET['userid']}");
+	} else {
+		$_POST['users']     = filter_string($_POST['users']);
+	}
 	$userlist  = array_filter(explode(';', $_POST['users']), 'trim');
 	$destcount = count($userlist);
 	
@@ -240,9 +245,9 @@ else {
 	$_POST['nosmilies']     = filter_int($_POST['nosmilies']);
 	$_POST['nohtml']        = filter_int($_POST['nohtml']);
 	$_POST['nolayout']      = filter_int($_POST['nolayout']);
-	$_POST['close']       = filter_int($_POST['close']);
+	$_POST['close']         = filter_int($_POST['close']);
 	$_POST['folder']        = isset($_GET['dir']) ? ((int) $_GET['dir']) : filter_int($_POST['folder']); // Convenience for links
-	
+		
 	// Attachment preview stuff
 	$input_tid   = "";
 	$attach_key  = "nk";

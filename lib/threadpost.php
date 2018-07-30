@@ -1,6 +1,6 @@
 <?php
 	
-	function threadpost($post,$bg,$forum = 0,$pthread='') {
+	function threadpost($post,$bg,$forum = 0,$pthread='',$multiforum=false) {
 		
 		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod;
 		
@@ -116,7 +116,7 @@
 		
 		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
 		
-		return dofilters(postcode($post,$set), $forum);
+		return dofilters(postcode($post,$set), $forum, $multiforum);
 	}
 
 	function preplayouts($posts, $oldrev = array()) {

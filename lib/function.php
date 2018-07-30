@@ -1993,25 +1993,35 @@ function xssfilters($data, $validate = false){
 	return $data;
 	
 }
-function dofilters($p, $f = 0){
+function dofilters($p, $f = 0, $multiforum = false){
 	global $sql, $hacks;
-	static $filters;
+	//static $filters;
 	
-	// Note: these queries are not merged due to showposts (by user) functionality
-	$filters = $sql->fetchq("
-		SELECT method, source, replacement
-		FROM filters
-		WHERE enabled = 1 AND forum = 0
-		ORDER BY id ASC
-	", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
-	
-	if ($f) {
-		$filters = array_merge($filters, $sql->fetchq("
-			SELECT method, source, replacement 
+	if (!$multiforum) { // Basically, everything except "Show posts" (of user)
+		$filters = $sql->fetchq("
+			SELECT method, source, replacement
 			FROM filters
-			WHERE enabled = 1 AND forum = {$f}
-		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE));
+			WHERE enabled = 1 AND forum ".($f ? "IN (0,{$f})" : "= 0")."
+			ORDER BY id ASC
+		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+	} else {
+		$filters = $sql->fetchq("
+			SELECT method, source, replacement
+			FROM filters
+			WHERE enabled = 1 AND forum = 0
+			ORDER BY id ASC
+		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+		
+		if ($f) {
+			$filters = array_merge($filters, $sql->fetchq("
+				SELECT method, source, replacement 
+				FROM filters
+				WHERE enabled = 1 AND forum = {$f}
+				ORDER BY id ASC
+			", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE));
+		}
 	}
+
 	
 	foreach($filters as $x) {
 		switch ($x['method']) {

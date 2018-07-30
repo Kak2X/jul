@@ -41,7 +41,6 @@
 	}
 
 	$ppp	= get_ppp();
-	
 
 	// Linking to a post ID
 	if ($_GET['pid']) {
@@ -56,6 +55,7 @@
 	}
 	$specialscheme = $specialtitle = $nolinkrefresh = NULL;
 	$forum_error   = "";
+	$multiforum    = false;
 	if ($_GET['id']) {
 		load_thread($_GET['id']);
 
@@ -123,6 +123,7 @@
 		$forum['id'] = 0;
 		$forum['title'] = "";
 		$tlinks = '';
+		$multiforum = true; // Don't use single cache forum filter mode
 	}
 	else {
 		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
@@ -334,9 +335,10 @@
 				$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
 				continue;
 			}
+			$forum['id'] = $pthread['forum'];
 		}
 		$post['act']     = filter_int($act[$post['user']]);		
-		$postlist .= threadpost($post, $bg, $forum['id'], $pthread);
+		$postlist .= threadpost($post, $bg, $forum['id'], $pthread, $multiforum);
 			
 	}
 

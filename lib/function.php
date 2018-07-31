@@ -1479,8 +1479,10 @@ function onlineusers($forum = NULL, $thread = NULL){
 	}
 	
 	
-	if ($loguser['id'] && !filter_bool($meta['notrack'])) {
-		$sql->query("UPDATE users  SET {$update} WHERE id = {$loguser['id']}");
+	if ($loguser['id']) {
+		if (!filter_bool($meta['notrack'])) {
+			$sql->query("UPDATE users  SET {$update} WHERE id = {$loguser['id']}");
+		}
 	} else {
 		$sql->query("UPDATE guests SET {$update} WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 	}

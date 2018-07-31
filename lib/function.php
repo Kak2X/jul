@@ -686,102 +686,11 @@ function doreplace($msg, $posts, $days, $userid, &$tags = null) {
 }
 
 function escape_codeblock($text) {
-	/* Old code formatting
 	$list  = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
 	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 
 	// @TODO why not just use htmlspecialchars() or htmlentities()
 	return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
-	*/
-	// Experimental (did you mean: insane) code block parser
-	$text[0] = substr($text[0] , 6, -6);
-	$len = strlen($text[0]);
-	$intext = $escape = $noprint = false;
-	$prev = $ret = '';
-	for ($i = 0; $i < $len; ++$i) {
-		
-		$next = isset($text[0][$i+1]) ? $text[0][$i+1] : NULL;
-		
-		switch ($text[0][$i]) {
-			case '(':
-			case ')':
-			case '[':
-			case ']':
-			case '{':
-			case '}':
-			case '=':
-			case '<':
-			case '>':
-			case ':':
-				if ($intext) break;
-				$ret .= "<span style='color: #007700'>".htmlentities($text[0][$i])."</span>";
-				$noprint = true;
-				break;	
-
-			case '+':
-			case '-':
-			case '&':
-			case '|':
-			case '!':
-				if ($intext) break;
-				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
-				$noprint = true;
-				break;	
-				
-			// Accounts for /* , */
-			case '*':
-				if ($intext || $prev == '/' || $next == '/') break;
-				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
-				$noprint = true;
-				break;
-				
-			// Accounts for /* , */ , //
-			case '/':
-				if ($intext || $prev == '/' || $next == '/' || $prev == '*' || $next == '*') break;
-				$ret .= "<span style='color: #C0C0FF'>".htmlentities($text[0][$i])."</span>";
-				$noprint = true;
-				break;
-				
-			case '"':
-			case '\'':
-				if ($escape || ($intext && $intext != $text[0][$i])) break;
-				
-				if (!$intext) {
-					$ret .= "<span style='color: #DD0000'>";
-					$intext = $text[0][$i];
-				}
-				else {
-					$ret .= htmlentities($text[0][$i])."</span>";
-					$intext = false;
-					$noprint = true;
-				}
-				break;
-				
-			case '\\':
-				if ($escape) break;
-				$escape = $i;
-				
-		}
-		
-		if (!$noprint) 	$ret .= htmlspecialchars($text[0][$i]);
-		else 			$noprint = false;
-		
-		$prev = $text[0][$i];
-		
-		// Escape effect lasts for only one character
-		if ($escape && $escape != $i)
-			$escape = false;
-	}
-	
-	
-	//	Comment lines
-	$ret = preg_replace("'\/\*(.*?)\*\/'si", "<span style='color: #FF8000'>/*$1*/</span>",$ret); /* */
-	$ret = preg_replace("'\/\/(.*?)\r?\n'i", "<span style='color: #FF8000'>//$1\r\n</span>",$ret); //
-	
-	//$ret = str_replace("\x09", "&nbsp;&nbsp;&nbsp;&nbsp;", $ret); // Tab
-	
-	//return "[quote]<code>$ret</code>[/quote]";
-	return "[quote]<code style='background: #000 !important; color: #fff'>$ret</code>[/quote]";
 }
 
 function doreplace2($msg, $options='0|0', $nosbr = false){

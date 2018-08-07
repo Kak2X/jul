@@ -69,17 +69,8 @@
 			errorpage("Invalid type selected.");
 		}
 		
-		// Are we updating or creating a filter
-		if  ($_GET['id'] <= -1) {
-			$q = "INSERT INTO filters SET ".mysql::setplaceholders('source','replacement','comment','method','forum','enabled','type');
-			//msg_holder::set_cookie("Added a filter to '{$filter_types[$type]}'.");
-		} else {
-			$q = "UPDATE filters SET ".mysql::setplaceholders('source','replacement','comment','method','forum','enabled','type')." WHERE id = {$_GET['id']}";
-			//msg_holder::set_cookie("Edited filter from '{$filter_types[$type]}'.");
-		}
 		
-		$sql->queryp($q, 
-		[
+		$values = array(
 			'source'      => $source,
 			'replacement' => filter_string($_POST['replacement']),
 			'comment'     => filter_string($_POST['comment']),
@@ -87,7 +78,19 @@
 			'forum'       => $forum,
 			'enabled'     => filter_int($_POST['enabled']),
 			'type'        => $type,
-		]);
+			'ord'         => filter_int($_POST['ord']),
+		);
+		// Are we updating or creating a filter
+		$phs = mysql::setplaceholders($values);
+		if  ($_GET['id'] <= -1) {
+			$q = "INSERT INTO filters SET {$phs}";
+			//msg_holder::set_cookie("Added a filter to '{$filter_types[$type]}'.");
+		} else {
+			$q = "UPDATE filters SET {$phs} WHERE id = {$_GET['id']}";
+			//msg_holder::set_cookie("Edited filter from '{$filter_types[$type]}'.");
+		}
+		
+		$sql->queryp($q, $values);
 		
 		return header("Location: {$redirurl}");
 	}
@@ -122,7 +125,7 @@
 		<td class="tdbgh center b" style="width: 120px">
 			Filter types
 		</td>
-		<td class="tdbgh center b" colspan=7>
+		<td class="tdbgh center b" colspan=8>
 			Filters<?= $l['filter-title'] ?>
 		</td>
 	</tr>
@@ -152,6 +155,7 @@
 						'replacement' => '',
 						'comment'     => '',
 						'forum'       => 0,
+						'ord'         => 0,
 					);
 				} else {
 					$editAction = "Editing filter";
@@ -162,12 +166,12 @@
 				}
 				
 ?>
-		<td class="tdbgc center b" colspan=7><?= $editAction ?></td>
+		<td class="tdbgc center b" colspan=8><?= $editAction ?></td>
 	</tr>
 	
 	<tr class="rh">
 		<td class="tdbgh center b" rowspan=3 colspan=2>Search for:</td>
-		<td class="tdbg2 vatop" rowspan=3 colspan=2>
+		<td class="tdbg2 vatop" rowspan=3 colspan=3>
 			<textarea wrap=virtual name="source" ROWS=3 maxlength=127 style="width: 100%; resize:vertical"><?= 
 				htmlspecialchars($x['source']) 
 			?></textarea>
@@ -176,7 +180,7 @@
 	</tr>
 	
 	<tr class="rh">
-		<td class="tdbg1" colspan=3>
+		<td class="tdbg1" colspan=4>
 			<input type="checkbox" id="enabled" name="enabled" value=1 <?= ($x['enabled'] ? "checked" : "") ?>>
 			<label for="enabled">Enabled</label>
 		<?php	if ($_GET['id'] > 0) {	?>	
@@ -192,7 +196,7 @@
 	
 	<tr class="rh">
 		<td class="tdbgh center b" rowspan=3 colspan=2>Replace with:</td>
-		<td class="tdbg2 vatop" rowspan=3 colspan=2>
+		<td class="tdbg2 vatop" rowspan=3 colspan=3>
 			<textarea wrap=virtual name="replacement" ROWS=3 maxlength=127 style="width: 100%; resize:vertical"><?= htmlspecialchars($x['replacement']) ?></textarea>
 		</td>
 		<td class="tdbgh center b">Method:</td>
@@ -215,21 +219,27 @@
 		</td>
 	</tr>
 	<tr class="rh">
-		<td class="tdbg2 right" style="vertical-align: bottom" colspan=3>
-			<input type="submit" class="submit" name="edit" value="Save Changes">
+		<td class="tdbgh center b">Priority:</td>
+		<td class="tdbg1" colspan=2>
+			<input type="text" name="ord" value="<?= $x['ord'] ?>" maxlength=4 size=4>
+			<input type="submit" style="float: right" class="submit" name="edit" value="Save Changes">
 		</td>
+	<!--
+		<td class="tdbg2 right" style="vertical-align: bottom" colspan=3>
+			
+		</td> -->
 	</tr>
 	<tr></tr>
-	<tr><td class="tdbg2" colspan=7></td></tr>
+	<tr><td class="tdbg2" colspan=8></td></tr>
 	
 	<tr class="rh">
 		<td class="tdbgh center b" colspan=2>Comment:</td>
-		<td class="tdbg2 vatop" colspan=5>
+		<td class="tdbg2 vatop" colspan=6>
 			<textarea wrap=virtual name="comment" ROWS=1 maxlength=255 style="width: 100%; resize:vertical"><?= htmlspecialchars($x['comment']) ?></textarea>
 		</td>
 	</tr>
 	
-	<tr><td class="tdbgh" colspan=7></td></tr>
+	<tr><td class="tdbgh" colspan=8></td></tr>
 	<tr class="rh">
 
 <?php 			//////////////////////////////////////
@@ -237,6 +247,7 @@
 
 		<td class="tdbgc center b" style="width: 60px">&nbsp;</td>
 		<td class="tdbgc center b" style="width: 40px">Set</td>
+		<td class="tdbgc center b" style="width: 50px">Priority</td>
 		<td class="tdbgc center b" style="width: 350px">Search</td>
 		<td class="tdbgc center b" style="width: 350px">Replacement</td>
 		<td class="tdbgc center b" style="width: 150px">Forum</td>
@@ -248,11 +259,11 @@
 
 		// Filter list
 		$filters = $sql->query("
-			SELECT f.id, f.method, f.enabled, f.source, f.replacement, f.comment, x.title ftitle, x.id fid
+			SELECT f.id, f.method, f.enabled, f.source, f.replacement, f.comment, f.ord, x.title ftitle, x.id fid
 			FROM filters f
 			LEFT JOIN forums x ON f.forum = x.id
 			WHERE f.type = {$_GET['type']}
-			ORDER BY f.source ASC
+			ORDER BY f.ord ASC, f.id ASC
 			".($_GET['fpp'] > 0 ? "LIMIT ".($_GET['page'] * $_GET['fpp']).",{$_GET['fpp']}" : "")."
 		");
 		$filtercount = $sql->resultq("SELECT COUNT(*) FROM filters WHERE type = {$_GET['type']}");
@@ -263,10 +274,12 @@
 		<td class="tdbg1 center fonts">
 			<input type="checkbox" name="del[]" value=<?= $x['id'] ?>> - <a href="<?= $redirurl ?>&id=<?= $x['id'] ?>">Edit</a>
 		</td>
-			<td class="tdbg1 center b"><span style=color:<?= ($x['enabled'] ? "#0F0>ON" : "#F00>OFF") ?></span>
+		<td class="tdbg1 center b">
+			<span style=color:<?= ($x['enabled'] ? "#0F0>ON" : "#F00>OFF") ?></span>
 		</td>
-		<td class="tdbg2"><textarea wrap=virtual ROWS=1 style="width: 100%; resize:none" readonly><?= htmlentities($x['source']) ?></textarea></td>
-		<td class="tdbg2"><textarea wrap=virtual ROWS=1 style="width: 100%; resize:none" readonly><?= htmlspecialchars($x['replacement']) ?></textarea></td>
+		<td class="tdbg1 center b"><?= $x['ord'] ?></td>
+		<td class="tdbg2"><textarea ROWS=1 style="width: 100%; resize:none" readonly><?= htmlentities($x['source']) ?></textarea></td>
+		<td class="tdbg2"><textarea ROWS=1 style="width: 100%; resize:none" readonly><?= htmlspecialchars($x['replacement']) ?></textarea></td>
 		<td class="tdbg1 center"><?= ($x['fid'] ? "<a href='forum.php?id={$x['fid']}'>".htmlspecialchars($x['ftitle'])."</a>" : "Global") ?></td>
 		<td class="tdbg1 center"><?= ($x['method'] == 2 ? "RegEx" : "Replace").($x['method'] == 1 ? "<div class='fonts'>Case Insensitive</div>" : "") ?></td>
 		<td class="tdbg2 center">

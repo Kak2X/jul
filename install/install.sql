@@ -578,13 +578,15 @@ CREATE TABLE `filters` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` tinyint(4) NOT NULL DEFAULT '1',
   `method` tinyint(4) NOT NULL,
+  `ord` tinyint(4) NOT NULL DEFAULT '0',
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
   `forum` int(11) NOT NULL DEFAULT '0',
   `source` varchar(127) NOT NULL,
   `replacement` varchar(127) NOT NULL,
   `comment` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `forum` (`forum`)
+  KEY `forum` (`forum`),
+  KEY `ord` (`ord`)
 ) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

@@ -1913,14 +1913,14 @@ function dofilters($p, $f = 0, $multiforum = false){
 			SELECT method, source, replacement
 			FROM filters
 			WHERE enabled = 1 AND forum ".($f ? "IN (0,{$f})" : "= 0")."
-			ORDER BY id ASC
+			ORDER BY ord ASC, id ASC
 		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
 	} else {
 		$filters = $sql->fetchq("
 			SELECT method, source, replacement
 			FROM filters
 			WHERE enabled = 1 AND forum = 0
-			ORDER BY id ASC
+			ORDER BY ord ASC, id ASC
 		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
 		
 		if ($f) {
@@ -1928,7 +1928,7 @@ function dofilters($p, $f = 0, $multiforum = false){
 				SELECT method, source, replacement 
 				FROM filters
 				WHERE enabled = 1 AND forum = {$f}
-				ORDER BY id ASC
+				ORDER BY ord ASC, id ASC
 			", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE));
 		}
 	}
@@ -2599,7 +2599,7 @@ function print_args($args) {
 			//$res .= ($res !== "" ? "," : "")."<span class='fonts'>[{$tmp}]</span>";
 			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[Array]</span>";
 		} else {
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>'{$val}'</span>";
+			$res .= ($res !== "" ? "," : "")."<span class='fonts'>'".htmlspecialchars($val)."'</span>";
 		}
 	}
 	return $res;

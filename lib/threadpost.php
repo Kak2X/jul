@@ -432,28 +432,32 @@ function load_syndromes() {
 	return $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
 }
 
-function syndrome($num, $double=false, $bar=true){
+function read_syndromes($all = false) {
 	static $syndromes;
-	$bar	= false;
-	$syn	= "";
-	
-	// Syndromes defined in their own file
+	// We only need to read the file once
 	// <post req>,<color>,<name>,[<disabled>]
 	if ($syndromes === NULL) {
 		// Load the syndromes on the first call (will place a dummy blank entry at the last position)
 		$syndromes = array();
 		$h = fopen('syndromes.dat', 'r');
-		for ($i=0; $syndromes[$i] = fgetcsv($h,100,','); ++$i) {
-			if (isset($syndromes[$i][3])) --$i; // Skip disabled
-		}
+		for ($i = 0; $row = fgetcsv($h, 100, ','); ++$i) 
+			if ($all || !isset($row[3])) $syndromes[] = $row;
 	}
+	return $syndromes;
+}
+
+function syndrome($num, $double=false, $bar=true) {
+	$bar	= false;
+	$syn	= "";
+	$syndromes = read_syndromes();
+	
 	// Find the first postcount < post req
-	for ($i = 0; $syndromes[$i] && $num >= $syndromes[$i][0]; ++$i);
+	for ($i = 0; isset($syndromes[$i]) && $num >= $syndromes[$i][0]; ++$i);
 	--$i;
 	
 	// If it exists, print out the syndrome text
 	if (isset($syndromes[$i])) {
-		if ($syndromes[$i+1]) {
+		if (isset($syndromes[$i+1])) {
 			$next = $syndromes[$i+1][0];
 			$last = $syndromes[$i+1][0] - $syndromes[$i][0];
 		} else {

@@ -611,7 +611,7 @@ piwikTracker.enableLinkTracking();
 <script type=\"text/javascript\" src=\"js/useful.js\"></script> -->
 	*/
 	
-	print "<br><br><center>";
+	print "<script type='text/javascript' src='js/jquery.min.js'></script><br><br><center>";
 	
 	if ($showfooter) {
 		?>

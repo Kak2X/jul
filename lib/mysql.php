@@ -508,7 +508,7 @@ class mysql {
 			$this->id, // Connection ID
 			$b['pfunc'], // Parent function
 			$b['file'] . ":" . $b['line'], // Line strike
-			htmlentities(str_replace("\t", "", trim($msg))), // Message contents (usually a query)
+			htmlentities(str_replace("\t", "", trim($msg)), ENT_QUOTES | ENT_SUBSTITUTE), // Message contents (usually a query)
 			sprintf("%01.6fs", $time), // Time taken
 			($msg_type & self::MSG_PREPARED || $msg_type & self::MSG_TRANSCHG || !$msg_type), // No increment flag
 			$msg_type, // Message type (including error type)

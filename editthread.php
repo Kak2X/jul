@@ -16,7 +16,7 @@
 
 	if (!$loguser['id'])
 		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
-	if ($loguser['editing_locked'] == 1) 
+	if ($loguser['editing_locked']) 
 		errorpage("You are not allowed to edit your threads.", 'index.php', 'return to the board');
 	if (!$ismod && ($loguser['id'] != $thread['user'] || $thread['closed']))
 		errorpage("You are not allowed to edit this thread.", 'thread.php?id='.$_GET['id'], 'return to the thread');

@@ -6,7 +6,7 @@
 	
 	if (!$loguser['id'])
 		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
-	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'] == 1)
+	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'])
 		errorpage("You are not allowed to edit your posts.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
 	if (!$_GET['id'])
 		errorpage("No post ID specified.",'index.php', 'return to the board');

@@ -12,7 +12,7 @@
 	if (!$loguser['id']) {
 		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
 	}
-	if ((!$isadmin && !$config['allow-pmthread-edit'] && $_GET['action'] != 'movethread') || $loguser['editing_locked'] == 1) {
+	if ((!$isadmin && !$config['allow-pmthread-edit'] && $_GET['action'] != 'movethread') || $loguser['editing_locked']) {
 		errorpage("You are not allowed to edit your threads.", "showprivate.php?id={$_GET['id']}", 'return to the conversation');
 	}
 	

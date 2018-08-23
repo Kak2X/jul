@@ -336,7 +336,7 @@
 				"Number of posts"			=> [0, "posts", "", 6, 10],
 				"Registration date"			=> [4, "regdate", ""],
 				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
-				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked"],
+				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked|Locked (but hidden)"],
 				"Restrict Avatar Uploads"	=> [2, "avatar_locked", "", "Unlocked|Locked"],
 				"Restrict File Uploads"     => [2, "uploads_locked", "", "Unlocked|Locked"],
 				"Restrict Post Rating"      => [2, "rating_locked", "", "Unlocked|Locked"],

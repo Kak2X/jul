@@ -33,6 +33,14 @@
 	if (!$ismod && ($loguser['id'] != $post['user'] || $thread['closed']))
 		errorpage("You are not allowed to edit this post.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
 	
+	// When post editing is silently disabled (opt 2)
+	if ($loguser['editing_locked']) {
+		// Disable attachments and only allow read access to 'edit' and 'delete' modes 
+		$config['allow-attachments'] = false;
+		if ($_GET['action'] && $_GET['action'] != 'delete')
+			errorpage("You are not allowed to edit your posts.", 'index.php', 'return to the board');
+	}
+	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
@@ -68,6 +76,13 @@
 			}
 			
 			if (isset($_POST['submit'])) {
+				
+				// :^)
+				if ($loguser['editing_locked']) {
+					xk_ircsend("1|'{$loguser['name']}' tried to edit post #{$_GET['id']}");
+					errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
+				}
+				
 				check_token($_POST['auth']);
 				
 				$numposts 	= $loguser['posts'];
@@ -280,7 +295,12 @@
 		);
 		
 		if (confirmpage($message, $form_link, $buttons)) {
-			$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			// :^)
+			if ($loguser['editing_locked']) {
+				xk_ircsend("1|'{$loguser['name']}' tried to ".($post['deleted'] ? "un" : "")."delete post #{$_GET['id']}");
+			} else {
+				$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			}
 			if ($post['deleted']) {
 				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			} else {

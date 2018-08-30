@@ -356,7 +356,7 @@
 	$total      = $sql->resultq("SELECT COUNT(id) FROM users_comments WHERE userto = {$_GET['id']}");
 	$pagelinks  = pagelist("usercomment.php?id={$_GET['id']}&ppp={$ppp}&to", $total, $ppp);
 	if ($pagelinks)
-		$pagelinks = "<tr><td class='tdbg2' colspan=3>{$pagelinks}</td></tr>";
+		$pagelinks = "<tr><td class='tdbg2' colspan=4>{$pagelinks}</td></tr>";
 	
 	// Comment list
 	
@@ -365,7 +365,7 @@
 	$i = 0;
 	
 	if (!$sql->num_rows($comments)) {
-		$comm_txt = "<tr><td class='tdbg1 center' colspan=3><i>There are no profile comments for this user.</i></td></tr>";
+		$comm_txt = "<tr><td class='tdbg1 center' colspan=4><i>There are no profile comments for this user.</i></td></tr>";
 	} else while ($x = $sql->fetch($comments)){
 		$dellink = $isadmin ? "<a href='usercomment.php?act=del&id={$x['cid']}&auth={$token}'>Remove</a>" : $x['cid'];
 		//--

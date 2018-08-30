@@ -107,7 +107,8 @@
 		}
 		$windowtitle = "{$forum['title']}: {$thread['title']}";
 		
-		$nolinkrefresh = true;
+		// Disabled for now
+		//$nolinkrefresh = true;
 	}
 	else if ($_GET['user']) {
 		// Posts by user

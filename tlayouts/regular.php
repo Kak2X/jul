@@ -12,7 +12,6 @@ function postcode($post,$set){
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
 	
-	// TODO: Introduce an extended layout with numgfx
 	if ($tlayout == 1 || $tlayout == 6) {
 		// Without numgfx (standard)
 		$level		= "Level: $lvl";
@@ -103,9 +102,8 @@ function postcode($post,$set){
 		$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
 		
 		// Extra row specific to the "Regular Extended" layout
-		// TODO: Add another extended thread layout for numgfx support, just like in old versions.
 		$icqicon = $imood = "";
-		if (($tlayout == 6) && $sidebartype != 1) {
+		if (($tlayout == 6 || $tlayout == 12) && $sidebartype != 1) {
 			//++$rowspan;
 			
 			//if ($post['icq']) $icqicon="<a href='http://wwp.icq.com/{$post['icq']}#pager'><img src='http://wwp.icq.com/scripts/online.dll?icq={$post['icq']}&img=5' border=0 width=13 height=13 align=absbottom></a>";

@@ -1,7 +1,7 @@
 <?php
 
 function userfields(){
-	return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire';
+	return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire,u.sidebartype,u.sidebar';
 }
 
 function postcode($post,$set){
@@ -12,7 +12,8 @@ function postcode($post,$set){
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
 	
-	if ($tlayout == 1) {
+	// TODO: Introduce an extended layout with numgfx
+	if ($tlayout == 1 || $tlayout == 6) {
 		// Without numgfx (standard)
 		$level		= "Level: $lvl";
 		$poststext	= "Posts: ";
@@ -21,20 +22,29 @@ function postcode($post,$set){
 		$experience	= "EXP: $exp<br>For next: $expleft";
 		$barwidth   = 96;
 	} else {
-		// With numgfx (old)
+		// With numgfx ("old")
 		if ($numdir === NULL) $numdir = get_complete_numdir();
+		
+		// Left "column" span
+		// Necessary after removing the padding from the generated numgfx itself (it wouldn't work well with custom sidebars)
+		$lcs = "<span style='width: 50px; display: inline-block'>";
+		$lcse = "</span>";
+		
 		//$numdir     = 'num1/';
-		$level		= "<img src='numgfx/{$numdir}level.png' width=36 height=8><img src='numgfx.php?n=$lvl&l=3&f=$numfil' height=8>";
-		$experience	= "<img src='numgfx/{$numdir}exp.png' width=20 height=8><img src='numgfx.php?n=$exp&l=5&f=$numfil' height=8><br><img src='numgfx/{$numdir}fornext.png' width=44 height=8><img src='numgfx.php?n=$expleft&l=2&f=$numfil' height=8>";
-		$poststext	= "<img src='images/_.gif' height=2><br><img src='numgfx/{$numdir}posts.png' width=28 height=8>";
-		$postnum	= $post['num'] ? "<img src='numgfx.php?n={$post['num']}/&l=5&f=$numfil' height=8>" : "";
+		$level		= "{$lcs}<img src='numgfx/{$numdir}level.png' width=36 height=8>{$lcse}<img src='numgfx.php?n=$lvl&f=$numfil' height=8>"; // &l=3
+		$experience	= "{$lcs}<img src='numgfx/{$numdir}exp.png' width=20 height=8>{$lcse}<img src='numgfx.php?n=$exp&f=$numfil' height=8><br>{$lcs}<img src='numgfx/{$numdir}fornext.png' width=44 height=8>{$lcse}<img src='numgfx.php?n=$expleft&f=$numfil' height=8>"; // &l=5 - &l=2
+		$poststext	= "<div style='height: 2px'></div>{$lcs}<img src='numgfx/{$numdir}posts.png' width=28 height=8>{$lcse}";
+		$postnum	= $post['num'] ? "<img src='numgfx.php?n={$post['num']}/&f=$numfil' height=8>" : ""; // &l=5
 		$posttotal	= "<img src='numgfx.php?n={$post['posts']}&f=$numfil'".($post['num']?'':'&l=4')." height=8>";
 		$barwidth   = 56;
+		
+		unset($lcs, $lcse);
 	}
-
+	
 	// RPG Level bar
 	$bar = "<br>".drawprogressbar($barwidth, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
 	
+	// Post syndrome text
 	$syndrome = syndrome($post['act']);
 	
 	// Other stats
@@ -43,11 +53,12 @@ function postcode($post,$set){
 	} else {
 		$sincelastpost = "";
 	}
-	
 	$lastactivity	= 'Last activity: '.timeunits(ctime()-$post['lastactivity']);
 	$since			= 'Since: '.printdate($post['regdate'], true);
 	$postdate		= printdate($post['date']);
 	
+	
+	// Thread link support in the top bar (for modes like "threads by user")
 	$threadlink		= "";
 	if (filter_string($set['threadlink'])) {
 		$threadlink	= ", in {$set['threadlink']}";
@@ -59,66 +70,44 @@ function postcode($post,$set){
 		// $post['text'] .= "<hr><font class='fonts'>{$post['edited']}";
 	//}
 	
+	
 	// Default layout
 	$csskey = getcsskey($post);
 	
+	// Sidebar options
+	$sidebaronecell = $post['sidebartype'] & 1;
+	$sidebartype    = $post['sidebartype'] >> 1;
+	if ($sidebartype == 2 && !file_exists("sidebars/{$post['uid']}.php"))
+		$sidebartype = 0;
+	
+	// Keep count of the cell size (for single column mode)
+	$rowspan   = 2;
+	
+	// Rating icons
 	$optionrow = "";
 	if ($set['rating']) {
+		if ($sidebaronecell) {
+			$ratingside = "";
+			++$rowspan;
+		} else {
+			$ratingside = "<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>";
+		}
 		$optionrow .= "<tr>
-			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
-			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>{$set['rating']}</td>
+			{$ratingside}
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='height: 1px; width: 80%'>{$set['rating']}</td>
 		</tr>"; // &nbsp;<b>Post ratings:</b>
 	}
 	
-	// Deleted user has its own layout
-	// RIP to all the others since we're not Jul
+//	if (true) {
 	
-	if ($post['uid'] == $config['deleted-user-id']) {
-		$fcol1			= "#bbbbbb";
-		$fcol2			= "#555555";
-		$fcol3			= "#181818";
-
-		return 
-		"<table class='table post tlayout-regular' id='{$post['id']}'>
-			<tr>
-				<td class='tdbg{$set['bg']}' valign=top rowspan=2 style='text-align: center; background: $fcol3; font-size: 14px; color: $fcol1; font-family: Verdana, sans-serif; padding-top: .5em'>
-					{$set['userlink']}
-					<br><span style='letter-spacing: 0px; color: $fcol2; font-size: 10px;'>Collection of nobodies</span>
-					<br><img src='images/_.gif' width=200 height=200>
-				</td>
-				<td class='tdbg{$set['bg']}' valign=top height=1 style='width: 100%; background: $fcol3; font-size: 12px; color: $fcol1; font-family: Verdana, sans-serif'>
-					<table cellspacing=0 cellpadding=2 width=100% class=fonts>
-						<tr>
-							<td>
-								Posted on $postdate$threadlink{$post['edited']}
-							</td>
-							<td style='width: 255px' class='nobr'>
-								{$controls['quote']}{$controls['edit']}{$controls['ip']}
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg{$set['bg']}' valign=top style='background: $fcol3; padding: 0;'>
-					{$post['headtext']}
-					{$post['text']}
-					{$set['attach']}
-					{$post['signtext']}
-				</td>
-			</tr>
-			{$optionrow}
-		</table>";
-
-		
-	} else { // else if (!(in_array($post['uid'], $sidebars) && !$x_hacks['host']) || $loguser['viewsig'] == 0)
-	
-
 		$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
 		
-		// EXTENDED LAYOUT OPTS
+		// Extra row specific to the "Regular Extended" layout
+		// TODO: Add another extended thread layout for numgfx support, just like in old versions.
 		$icqicon = $imood = "";
-		if ($tlayout == 6) {
+		if (($tlayout == 6) && $sidebartype != 1) {
+			//++$rowspan;
+			
 			//if ($post['icq']) $icqicon="<a href='http://wwp.icq.com/{$post['icq']}#pager'><img src='http://wwp.icq.com/scripts/online.dll?icq={$post['icq']}&img=5' border=0 width=13 height=13 align=absbottom></a>";
 			if ($post['imood']) {
 				$imood = "<img src='http://www.imood.com/query.cgi?email={$post['imood']}&type=1&fg={$textcolor}&trans=1' style='height: 15px' align=absbottom>";
@@ -131,6 +120,7 @@ function postcode($post,$set){
 				$status = htmlspecialchars($post['name'])." is <span class='b' style='color: #00FF00'>Online</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			
+			// Cache the auth key
 			static $tokenstr;
 			if (!isset($tokenstr)) $tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
@@ -147,15 +137,15 @@ function postcode($post,$set){
 			</tr>";
 		}
 		
-		$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
+		$noobspan = $post['noob'] ? "<span class='userlink' style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span class='userlink'>";
 		$height   = $post['deleted'] ? 0 : 220;
 		
 		if ($post['deleted']) {
-			$height  = 0;
+			// If a post is deleted, blank out the sidebar regardless of options.
 			$sidebar = "&nbsp;";
-		} else {
-			$height = 220;
-			$sidebar = "
+		} else if ($sidebartype != 2 && (!$post['sidebar'] || !$loguser['viewsig'])) {
+			// Default sidebar
+			$sidebar = "<span class='fonts'>
 				{$set['userrank']}
 				$syndrome<br>
 				$level$bar<br>
@@ -169,17 +159,116 @@ function postcode($post,$set){
 				$sincelastpost<br>
 				$lastactivity<br>
 				$icqicon$imood<br>
-			";
+			</span>";
+		} else if ($sidebartype == 2) {
+			// Custom sidebar using PHP code (a mistake)
+			include "sidebars/{$post['uid']}.php";
+		} else {
+			// Custom sidebar using the 'sidebar' field (an even bigger mistake)
+			$sidebar = $post['sidebar'];
+			
+			if (filter_bool($hacks['noposts'])) {
+				$post['num'] = $post['posts'] = $postnum = $posttotal = "";
+			}
+			
+			if (strpos($sidebar, '&') !== false) {
+				$replace = array(
+					// Username
+					'&user&'          => $post['name'],
+					'&namecolor&'     => $post['namecolor'],
+					'&userlink&'      => $set['userlink'],
+					
+					// Post counters
+					'&posts&'         => $post['posts'],
+					'&numpost&'       => $post['num'] ? $post['num'] : "",
+					'&comppost&'      => ($post['num'] ? "{$post['num']}/" : "").$post['posts'],
+					'&comppostprep&'  => $postnum.$posttotal,
+					
+					// Images and whatever
+					'&avatar&'        => $set['userpic'],
+					'&rank&'          => $set['userrank'],
+					'&syndrome&'      => $syndrome,
+					
+					// RPG
+					'&exp&'           => $exp,
+					'&levelexp&'      => calclvlexp($lvl),
+					'&totallevelexp&' => totallvlexp($lvl),
+
+					// Dates
+					'&lastactivity&'  => timeunits(ctime()-$post['lastactivity']),
+					'&since&'         => printdate($post['regdate'], true),
+					'&location&'      => $set['location'],
+					
+				);
+				$sidebar = strtr($sidebar, $replace);
+				
+				// Extra tags start here
+				
+				// Numgfx to any set
+				// Note that the first four only contain numbers and not any of the extra graphics
+				// A fix to this would be drawing those, but...
+				$allowed_numgfx = "jul|ccs|death|ymar|num(?:[1-9]|dani|dig|ff9)";
+				
+				static $numgfx_apply, $expbar_apply;
+				if ($numgfx_apply === NULL) 
+					$numgfx_apply = function ($m) use ($replace) {
+						// Replace the numdir with the one we need (and restore it after we're done)
+						global $numdir;
+						$olddir = $numdir;
+						$numdir = $m[2]."/";
+						//--
+						$size = isset($m[3]) ? $m[3] : 1;
+						$out = generatenumbergfx($replace["&{$m[1]}&"], 0, $size);
+						//--
+						$numdir = $olddir;
+						return $out;
+					};
+				$sidebar = preg_replace_callback("'&(posts)_($allowed_numgfx)(?:_(\d))?&'", $numgfx_apply, $sidebar);
+				$sidebar = preg_replace_callback("'&(numpost)_($allowed_numgfx)(?:_(\d))?&'", $numgfx_apply, $sidebar);
+				$sidebar = preg_replace_callback("'&(comppost)_($allowed_numgfx)(?:_(\d))?&'", $numgfx_apply, $sidebar);
+					
+				// EXP Bar generator
+				if ($expbar_apply === NULL)
+					$expbar_apply = function ($m) use ($replace, $barimg, $barwidth) {
+						$width = isset($m[2]) ? $m[2] : $barwidth;
+						return drawprogressbar($width, 8, $replace['&exp&'] - $replace['&levelexp&'], $replace['&totallevelexp&'], $barimg);
+					};
+				$sidebar = preg_replace_callback("'&(expbar)(?:_(\d*))?&'", $expbar_apply, $sidebar);
+				
+			}
+			$sidebar = xssfilters($sidebar);
 		}
+		
+		
+		if ($sidebaronecell) {
+			// Single cell sidebar
+			$topbar1 = "
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' rowspan={$rowspan} valign=top>
+				{$noobspan}{$set['userlink']}</span>
+				<br>{$sidebar}
+				<img src='images/_.gif' width=200 height=1>
+			</td>";
+			$sidebar = "";
+		} else {
+			// Normal
+			$topbar1 = "
+			<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
+				{$noobspan}{$set['userlink']}</span>
+			</td>";
+			$sidebar = "
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' valign=top>
+				{$sidebar}
+				<img src='images/_.gif' width=200 height=1>
+			</td>";
+		}
+		
 		
 		return 
 		"<div style='position:relative'>
 			<table class='table post tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
-					<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
-						{$noobspan}{$set['userlink']}</span>
-					</td>
-					<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2' valign=top height=1 width=100%>
+					{$topbar1}
+					<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2' valign=top height=1>
 						<table cellspacing=0 cellpadding=2 class='w fonts'>
 							<tr>
 								<td>
@@ -193,11 +282,8 @@ function postcode($post,$set){
 					</td>
 				</tr>
 				<tr>
-					<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} fonts' valign=top>
-						{$sidebar}
-						<img src='images/_.gif' width=200 height=1>
-					</td>
-					<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}' valign=top height={$height} id='post{$post['id']}'>
+					{$sidebar}
+					<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} w' valign=top height={$height} id='post{$post['id']}'>
 						{$post['headtext']}
 						{$post['text']}
 						{$set['attach']}
@@ -207,11 +293,9 @@ function postcode($post,$set){
 				{$optionrow}
 			</table>
 		</div>";
-	}
+//	}
 	
 }
-
-
 
 function kittynekomeowmeow($p) {
 	global $loguser;

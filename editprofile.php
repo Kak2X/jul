@@ -136,12 +136,20 @@
 				case 4: $namecolor = "rnbow";  break;
 				default: $namecolor = ""; break;
 			}
+			// Custom sidebar HTML
+			$_POST['sidebar'] = filter_string($_POST['sidebar']);
+			$_POST['sidebartype'] = numrange((filter_int($_POST['sidebartype']) << 1) + filter_int($_POST['sidebarcell']), 0, 5);
 		} else {
 			$namecolor = $namecolor_bak = $userdata['namecolor'];
+			$_POST['sidebar'] = $userdata['sidebar'];
+			$_POST['sidebartype'] = $userdata['sidebartype'];
 		}
 		
 		
 		$sql->beginTransaction();
+		
+		// TODO: xssfilters tends to be done twice (first in input, then output), which is not really necessary
+		// 	     considering the filters may need to be updated, it's better to only filter html during output.
 		
 		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
 		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
@@ -158,6 +166,8 @@
 			'css' 				=> xssfilters(filter_string($_POST['css'])), // NOT nl2br'd
 			'postheader' 		=> xssfilters($_POST['postheader']),
 			'signature' 		=> xssfilters($_POST['signature']),
+			'sidebar'			=> $_POST['sidebar'],
+			'sidebartype'		=> $_POST['sidebartype'],
 			// Personal information
 			'sex' 				=> numrange(filter_int($_POST['sex']), 0, 2),
 			'aka' 				=> filter_string($_POST['aka'], true),
@@ -211,10 +221,9 @@
 			
 			// Same for the avatar
 			$weblink = xssfilters(trim(filter_string($_POST['picture_weblink'])));
-			if (filter_int($_POST['del_picture'])){
+			if (filter_int($_POST['del_picture'])) {
 				delete_avatar($id, 0);
-			}
-			else if (filter_int($_FILES['picture']['size'])){
+			} else if (filter_int($_FILES['picture']['size'])) {
 				upload_avatar(
 					$_FILES['picture'], 
 					$config['max-avatar-size-bytes'], 
@@ -374,6 +383,12 @@
 			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
 			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
+		if ($issuper) {
+			table_format("Appareance", array(
+				"Sidebar"       => [1, "sidebar", "HTML added here will be used for the post sidebar in the regular or extended layout. Leave blank to use the default sidebar."],
+				"Sidebar type"  => [4, "sidebartype", "You can select a few different sidebar modes."],
+			));
+		}
 		
 		table_format("Personal information", array(
 			"Sex" 		    => [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
@@ -428,34 +443,49 @@
 		// Password field + confirmation (unless you're editing another user)
 		$password = "<input type='password' name='pass1'>";
 		if (!$edituser)	$password .= " Retype: <input type='password' name='pass2'>";
-	
-	
+		
+		
 		$birthday = datetofields($userdata['birthday'], 'birth');
 		
-		// The namecolor field is special
-		// Usually it contains an hexadecimal number, but it can take extra text values for special effects
-		// Because both the coloropt and namecolor are stored in the same field
-		// A second "backup" field is used to preserve the user's name color choice from the color picker
-		if ($userdata['namecolor'] && ctype_xdigit($userdata['namecolor'])) { // Color defined
-			$userdata['namecolor'] = '#'.$userdata['namecolor']; // Input type color compat
-			$sel_color[1] = 'checked=1';
-		} else {	// Special effect
-			switch ($userdata['namecolor']) {
-				case 'random': $coloropt = 2; break;
-				case 'time':   $coloropt = 3; break;
-				case 'rnbow':  $coloropt = 4; break;
-				default:       $coloropt = 0; break;	
+		
+		if ($issuper) {
+			// Sidebar options.
+			$sidecell = $userdata['sidebartype'] & 1;
+			$sidetype = $userdata['sidebartype'] >> 1;		
+			$sidebartype = "<span style='white-space: nowrap'>
+			<input name='sidebartype' type='radio' value=0".($sidetype == 0 ? " checked" : "").">Normal
+			<input name='sidebartype' type='radio' value=1".($sidetype == 1 ? " checked" : "").">Without options
+			".(file_exists("sidebars/{$id}.php") ? "<input name='sidebartype' type='radio' value=2".($sidetype == 2 ? " checked" : "").">PHP Code" : "")."
+			</span>&nbsp; - &nbsp; <span style='white-space: nowrap'>
+			<input name='sidebarcell' type='radio' value=0".($sidecell == 0 ? " checked" : "").">Two cell (default)
+			<input name='sidebarcell' type='radio' value=1".($sidecell == 1 ? " checked" : "").">Single cell
+			</span>";
+			
+			// The namecolor field is special
+			// Usually it contains an hexadecimal number, but it can take extra text values for special effects
+			// Because both the coloropt and namecolor are stored in the same field
+			// A second "backup" field is used to preserve the user's name color choice from the color picker
+			if ($userdata['namecolor'] && ctype_xdigit($userdata['namecolor'])) { // Color defined
+				$userdata['namecolor'] = '#'.$userdata['namecolor']; // Input type color compat
+				$sel_color[1] = 'checked=1';
+			} else {	// Special effect
+				switch ($userdata['namecolor']) {
+					case 'random': $coloropt = 2; break;
+					case 'time':   $coloropt = 3; break;
+					case 'rnbow':  $coloropt = 4; break;
+					default:       $coloropt = 0; break;	
+				}
+				$userdata['namecolor'] = '#'.$userdata['namecolor_bak'];
+				$sel_color[$coloropt] = 'checked=1';
 			}
-			$userdata['namecolor'] = '#'.$userdata['namecolor_bak'];
-			$sel_color[$coloropt] = 'checked=1';
-		}
 
-		$namecolor = " 
-		<input type=radio class='radio' name=colorspec value=0 ".filter_string($sel_color[0]).">None 
-		<input type=radio class='radio' name=colorspec value=1 ".filter_string($sel_color[1]).">Defined: <input type='color' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=7 MAXLENGTH=7> 
-		<input type=radio class='radio' name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
-		<input type=radio class='radio' name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
-		<input type=radio class='radio' name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
+			$namecolor = " 
+			<input type=radio class='radio' name=colorspec value=0 ".filter_string($sel_color[0]).">None 
+			<input type=radio class='radio' name=colorspec value=1 ".filter_string($sel_color[1]).">Defined: <input type='color' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=7 MAXLENGTH=7> 
+			<input type=radio class='radio' name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
+			<input type=radio class='radio' name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
+			<input type=radio class='radio' name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
+		}
 		
 		// Upload a new minipic / Remove the existing one
 		$minipic = "

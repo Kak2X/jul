@@ -210,9 +210,30 @@
 				
 				// If the next user is the deleted user ID, make sure to automatically register it
 				if ($makedeluser) {
+					$delcss = "
+.sidebar{$config['deleted-user-id']},.topbar{$config['deleted-user-id']}_2{
+	background: #181818;
+	font-family: Verdana, sans-serif;
+	color: #bbb;
+}
+.sidebar{$config['deleted-user-id']}{
+	text-align: center; 
+	font-size: 14px;
+	padding-top: .5em
+}
+.topbar{$config['deleted-user-id']}_2{
+	width: 100%;
+	font-size: 12px;
+}
+.mainbar{$config['deleted-user-id']}{
+	background: #181818;
+	padding: 0;
+}";
+					$delsidebar = '<span style="letter-spacing: 0px; color: #555; font-size: 10px">Collection of nobodies</span>';
+					
 					$sql->query("
-						INSERT INTO users (id, name, password, powerlevel, regdate) 
-						VALUES ({$config['deleted-user-id']}, 'Deleted user', 'X', -2, {$currenttime})
+						INSERT INTO users (id, name, password, powerlevel, regdate, sidebartype, sidebar, css) 
+						VALUES ({$config['deleted-user-id']}, 'Deleted user', 'X', -2, {$currenttime}, 3, '{$delsidebar}', '{$delcss}')
 					");
 					$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$config['deleted-user-id']}')");
 				}

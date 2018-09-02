@@ -192,6 +192,7 @@
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
 		$post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['headtext']);
+		$post['sidebar']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['sidebar']);
 		
 
 

@@ -1,0 +1,2 @@
+# Prevent direct access to sidebar files
+RedirectMatch 404 /

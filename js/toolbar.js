@@ -3,45 +3,46 @@
 */
 
 var hooked_once = false;
-var hooks = [];
+var hooks = []; // List of toolbar and textarea hooks
 var smilies = JSON.parse(document.getElementById('js_smilies').value); // Receives JSON of smilies from PHP
-var overMenu = false;
+var overMenu = false; // Determines if the opened menu is being mouse-hovered
 var popup = null; // Currently opened menu
 var stat = []; // Held button status
+//var preload_images = false;
 
 
 /* Menu / button definitions go here */
 
 // Text color submenu
 var textMenu = [
-	{title: "Red", 		img: "fred.gif", 		action: 'insertText', arguments: ['[red]', '[/color]']},
-	{title: "Yellow", 	img: "fyellow.gif", 	action: 'insertText', arguments: ['[yellow]', '[/color]']},
-	{title: "Orange", 	img: "forange.gif", 	action: 'insertText', arguments: ['[orange]', '[/color]']},
-	{title: "Green", 	img: "fgreen.gif", 		action: 'insertText', arguments: ['[green]', '[/color]']},
-	{title: "Blue", 	img: "fblue.gif", 		action: 'insertText', arguments: ['[blue]', '[/color]']},
-	{title: "Pink", 	img: "fpink.gif", 		action: 'insertText', arguments: ['[pink]', '[/color]']},
-	{title: "Black", 	img: "fblack.gif", 		action: 'insertText', arguments: ['[black]', '[/color]']},
-	{title: "White", 	img: "bgblack.gif", 	action: 'insertText', arguments: ['[white]', '[/color]']},
+	{title: "Red", 		img: "images/toolbar/fred.gif", 		action: 'insertText', arguments: ['[red]', '[/color]']},
+	{title: "Yellow", 	img: "images/toolbar/fyellow.gif", 		action: 'insertText', arguments: ['[yellow]', '[/color]']},
+	{title: "Orange", 	img: "images/toolbar/forange.gif", 		action: 'insertText', arguments: ['[orange]', '[/color]']},
+	{title: "Green", 	img: "images/toolbar/fgreen.gif", 		action: 'insertText', arguments: ['[green]', '[/color]']},
+	{title: "Blue", 	img: "images/toolbar/fblue.gif", 		action: 'insertText', arguments: ['[blue]', '[/color]']},
+	{title: "Pink", 	img: "images/toolbar/fpink.gif", 		action: 'insertText', arguments: ['[pink]', '[/color]']},
+	{title: "Black", 	img: "images/toolbar/fblack.gif", 		action: 'insertText', arguments: ['[black]', '[/color]']},
+	{title: "White", 	img: "images/toolbar/bgblack.gif", 		action: 'insertText', arguments: ['[white]', '[/color]']},
 ];
 
-// Smilies submenu
+// Smilies submenu, which receives data from the JSON data included in the hidden element
 var smilMenu = [];
 for (var i = 0; i < smilies.length; i++) 
-	if (smilies[i]) // the ../../ breaks smilies using external URLs
-		smilMenu.push({title: smilies[i][0], img: '../../'+smilies[i][1], action: 'insertText', arguments: [smilies[i][0]]});
+	if (smilies[i])
+		smilMenu.push({title: smilies[i][0], img: smilies[i][1], action: 'insertText', arguments: [smilies[i][0]]});
 
 // Main menu
 var buttons = [
-	{title: "Text Color", 		img: "fcolor.gif", 		action: 'createMenu', arguments: ['textMenu', 200, 4]},
+	{title: "Text Color", 		img: "images/toolbar/fcolor.gif", 		action: 'createMenu', arguments: ['textMenu', 200, 4]},
 	{title: null},
-	{title: "Bold", 			img: "bold.gif", 		action: 'insertText', arguments: ['[b]', '[/b]']},
-	{title: "Italic", 			img: "italic.gif", 		action: 'insertText', arguments: ['[i]', '[/i]']},
-	{title: "Underline", 		img: "underline.gif", 	action: 'insertText', arguments: ['[u]', '[/u]']},
-	{title: "Strikethrough",	img: "strike.gif", 		action: 'insertText', arguments: ['[s]', '[/s]']},
+	{title: "Bold", 			img: "images/toolbar/bold.gif", 		action: 'insertText', arguments: ['[b]', '[/b]']},
+	{title: "Italic", 			img: "images/toolbar/italic.gif", 		action: 'insertText', arguments: ['[i]', '[/i]']},
+	{title: "Underline", 		img: "images/toolbar/underline.gif", 	action: 'insertText', arguments: ['[u]', '[/u]']},
+	{title: "Strikethrough",	img: "images/toolbar/strike.gif", 		action: 'insertText', arguments: ['[s]', '[/s]']},
 	{title: null},
-	{title: "Link",				img: "link.gif",		action: 'insertText', arguments: ['[url]', '[/url]']},
-	{title: "Image", 			img: "image.gif", 		action: 'insertText', arguments: ['[img]', '[/img]']},
-	{title: "Smilies", 			img: "smiley.gif", 		action: 'createMenu', arguments: ['smilMenu', 100, 7]},
+	{title: "Link",				img: "images/toolbar/link.gif",			action: 'insertText', arguments: ['[url]', '[/url]']},
+	{title: "Image", 			img: "images/toolbar/image.gif", 		action: 'insertText', arguments: ['[img]', '[/img]']},
+	{title: "Smilies", 			img: "images/toolbar/smiley.gif", 		action: 'createMenu', arguments: ['smilMenu', 100, 7]},
 ];
 /* --- */
 
@@ -53,6 +54,24 @@ function toolbarHook(elem) {
 	
 	td.insertAdjacentHTML("afterbegin", toolbarHtml(hooks.length - 1));
 	
+	/*
+	if (!hooked_once && preload_images) {
+		// Preload smilies in hidden div
+		
+		var preloader = document.createElement('div');
+		preloader.setAttribute("id", "_toolbar_img_preload");
+		preloader.style.cssText = 'display: none';
+		
+
+		//var preloader = document.getElementById('_toolbar_img_preload');
+		for (var i = 0; i < smilMenu.length; i++)
+			preloader.innerHTML += "<img src='"+ smilMenu[i].img +"'>";
+		for (var i = 0; i < textMenu.length; i++)
+			preloader.innerHTML += "<img src='"+ textMenu[i].img +"'>";
+		
+		document.body.appendChild(preloader);
+	}
+	*/
 	hooked_once = true;
 }
 
@@ -72,10 +91,34 @@ function actionCaller(menu, id, i, e, offset = 0) {
 
 // Base functions
 function insertText(id, i, start, end = '') {
-	stat[id][i] = 1 - stat[id][i]; // Reverse status
-	var val = (end.length && stat[id][i] == 0) ? end : start;
-	hooks[id][1].insertAtCaret(val);
-	hooks[id][1].focus();
+
+	var txt			= hooks[id][1];
+	
+	/*
+		in short:
+		
+		NOTHING SELECTED
+		smil   -> print first             [1]
+		bbcode -> print first, then other [2]
+
+		SELECTED TEXT
+		smil   -> replace text with first [1]
+		bbcode -> wrap both around text   [3]
+	*/
+	
+	if (!end.length) { // Get rid of smiley-style inserts immediately
+		// Inserts text which can't wrap other selected text, so the selected thing gets replaced.
+		txt.replaceAtCaret(start);
+	} else if (txt.selectionStart !== txt.selectionEnd) {
+		// Wrap around text.
+		txt.wrapAtCaret(start, end);
+	} else {
+		// Reverse button held status and determine the correct text to insert based on this
+		stat[id][i] = 1 - stat[id][i];
+		var val = (end.length && stat[id][i] == 0) ? end : start;
+		txt.replaceAtCaret(val);
+	}
+	txt.focus();
 }
 
 function toolbarHtml(id) {
@@ -84,7 +127,7 @@ function toolbarHtml(id) {
 	for (var i = 0; i < buttons.length; i++) {
 		stat[id][i] = 0;
 		if (buttons[i].title !== null)
-			out += "<td class='toolbar-button font' onclick=\"actionCaller('buttons',"+id+","+i+",event)\" title='"+buttons[i].title+"'><img src='images/toolbar/"+buttons[i].img+"' alt='"+buttons[i].title+"'></td>";
+			out += "<td class='toolbar-button font' onclick=\"actionCaller('buttons',"+id+","+i+",event)\" title='"+buttons[i].title+"'><img src='"+buttons[i].img+"' alt='"+"[]"+"'></td>"; // buttons[i].title
 		else
 			out += "<td class='toolbar-sep'></td>"
 	}
@@ -107,7 +150,7 @@ function createMenu(id, i, menuName, offset, menuWidth, e) {
 		if (i && i % menuWidth == 0) out += '</tr><tr>';
 		out += ""
 		+ "<td class='font' onMouseOver='mouseOverMenu()' onclick=\"actionCaller('"+menuName+"',"+id+","+i+", event, "+offset+")\" title='"+btn[i].title+"'>"
-		+ "<img src='images/toolbar/"+btn[i].img+"' alt='"+btn[i].title+"'>"
+		+ "<img src='"+btn[i].img+"' alt='"+"-"+"'>" // btn[i].title
 		+ "</td>";
 	}
 	
@@ -149,23 +192,48 @@ function mouseOutMenu()  { overMenu = false;}
 
 // ------------------
 // https://stackoverflow.com/questions/11076975/insert-text-into-textarea-at-cursor-position-javascript
-HTMLTextAreaElement.prototype.insertAtCaret = function (text) {
-  text = text || '';
-  if (document.selection) {
-    // IE
-    this.focus();
-    var sel = document.selection.createRange();
-    sel.text = text;
-  } else if (this.selectionStart || this.selectionStart === 0) {
-    // Others
-    var startPos = this.selectionStart;
-    var endPos = this.selectionEnd;
-    this.value = this.value.substring(0, startPos) +
-      text +
-      this.value.substring(endPos, this.value.length);
-    this.selectionStart = startPos + text.length;
-    this.selectionEnd = startPos + text.length;
-  } else {
-    this.value += text;
-  }
+HTMLTextAreaElement.prototype.replaceAtCaret = function (text = '') {
+	if (document.selection) {
+	// IE
+		this.focus();
+		var sel = document.selection.createRange();
+		sel.text = text;
+	} else if (this.selectionStart || this.selectionStart === 0) {
+		// Others
+		var startPos = this.selectionStart;
+		var endPos = this.selectionEnd;
+		this.value = 
+			this.value.substring(0, startPos) +
+			text +
+			this.value.substring(endPos, this.value.length);
+		this.selectionStart = startPos + text.length;
+		this.selectionEnd = startPos + text.length;
+	} else {
+		this.value += text;
+	}
+};
+
+HTMLTextAreaElement.prototype.wrapAtCaret = function (text1 = '', text2 = '') {
+	if (document.selection) {
+	// IE
+		this.focus();
+		var sel = document.selection.createRange();
+		sel.text = text1 + sel.text + text2;
+	} else if (this.selectionStart || this.selectionStart === 0) {
+		// Others
+		var startPos	= this.selectionStart;
+		var endPos		= this.selectionEnd;
+		
+		this.value = 
+			this.value.substring(0, startPos) +
+			text1 +
+			this.value.substring(startPos, endPos) +
+			text2 +
+			this.value.substring(endPos, this.value.length);
+		
+		this.selectionStart = startPos + text1.length;
+		this.selectionEnd = endPos + text1.length;
+	} else {
+		this.value += text1 + text2;
+	}
 };

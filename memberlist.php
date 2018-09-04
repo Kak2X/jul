@@ -1,18 +1,23 @@
 <?php
 	require 'lib/function.php';
-
-	function sortbyexpdesc($a,$b) {
+	
+	function sortbyexp($a,$b) {
 		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
 		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
-		if ($cmpa == $cmpb) return $a['id']-$b['id'];
-		return $cmpb - $cmpa;
+		if (!$_GET['ord']) { // DESC
+			if ($cmpa == $cmpb) return $a['id']-$b['id'];
+			return $cmpb - $cmpa;
+		} else {  // ASC
+			if ($cmpa == $cmpb) return $b['id']-$a['id'];
+			return $cmpa - $cmpb;
+		}	
 	}
-	// horror dot png
-	function sortbyexpasc($a,$b) {
-		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
-		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
-		if ($cmpa == $cmpb) return $b['id']-$a['id'];
-		return $cmpa - $cmpb;
+	function sortbyrating($a, $b){
+		if (!$_GET['ord']) { // DESC
+			return ($b['rating'] - $a['rating']);
+		} else {
+			return ($a['rating'] - $b['rating']);
+		}
 	}
 	
 	// Variable filtering and query strings
@@ -33,6 +38,7 @@
 	$q = $qppp.$qrpg;
 
 	if(!$_GET['ppp']) $_GET['ppp']=50;
+	else $_GET['ppp'] = numrange($_GET['ppp'], 1, 500);
 	//if(!$_GET['page']) $_GET['page']=0;
 
 	
@@ -55,11 +61,12 @@
 
 		$qwhere[] = "powerlevel $sqlpower";
 	}
-	$where = 'WHERE '.((empty($qwhere)) ? '1' : implode(' AND ', $qwhere));
+	$where = (empty($qwhere) ? '' : "WHERE ".implode(' AND ', $qwhere));
 	
 	switch ($_GET['sort']) {
 		case 'name': 	$sorting = "ORDER BY u.name"; break;
 		case 'reg':  	$sorting = "ORDER BY u.regdate"; break;
+		case 'rating':
 		case 'exp':  	$sorting = ""; break;
 		case 'age':  	$sorting = "AND u.birthday ORDER BY u.birthday"; break; 
 		case '':
@@ -67,39 +74,102 @@
 		case 'act':		$sorting = "ORDER BY u.lastactivity"; break;
 		default: errorpage("No.");
 	}
-	if ($_GET['sort'] != 'exp')
-		$order = $_GET['ord'] ? "ASC" : "DESC";
-	else
-		$order = "";
 	
+	$order = $fields = $join = $limit = "";
+	$min = $_GET['ppp'] * $_GET['page'];
+	
+	if ($_GET['sort'] != 'exp' && $_GET['sort'] != 'rating') {
+		$order = ($_GET['ord'] ? "ASC" : "DESC");
+		$limit = " LIMIT {$min}, {$_GET['ppp']}";
+	}
+	if ($_GET['rpg']) {
+		$fields = ", r.*";
+		$join   = "LEFT JOIN users_rpg r ON u.id = r.uid";
+	}
+	
+	
+	
+	// Don't fetch every single user at once when possible.
+	// Unfortunately it has to be done when the sort option is not a real field (ie: ratings or exp)
 	$users1 = $sql->query("
-		SELECT $userfields, u.lastactivity, u.regdate, u.posts, r.* 
+		SELECT $userfields, u.lastactivity, u.regdate, u.posts{$fields}
 		FROM users u
-		LEFT JOIN users_rpg r ON u.id = r.uid 
+		$join
 		$where 
 		$sorting $order
+		$limit
 	");
-	
-	$numusers = $sql->num_rows($users1);
+	$numusers = $sql->resultq("SELECT COUNT(*) FROM users u	$where");
 
-	for($i = 0; $user = $sql->fetch($users1); ++$i){
+	$users = array();
+	$userids = array();
+	for ($i = 0; $user = $sql->fetch($users1); ++$i) {
 		$user['days'] = (ctime()-$user['regdate'])/86400;
 		$user['exp']  = calcexp($user['posts'],$user['days']);
 		$user['lvl']  = calclvl($user['exp']);
+		$user['rating'] = null;
 		$users[] = $user;
+		if (!$limit)
+			$userids[$user['id']] = $i;
 	}
-
+	
 	if ($_GET['sort'] == 'exp') {
-		usort($users,'sortbyexp'.($_GET['ord'] ? 'asc' : 'desc'));
-	}
+		usort($users,'sortbyexp');
+	} else if ($_GET['sort'] == 'rating') {
+	
+		// Alternative: one query per user (no thanks)
+		$allratings = $sql->fetchq("
+			SELECT ur.userrated, ur.rating, ur.userfrom, u1.posts, u1.regdate
+			FROM userratings ur
+			INNER JOIN (
+				SELECT u.id
+				FROM users u
+				$where 
+				$sorting $order
+				$limit
+			) u2 ON ur.userrated = u2.id
+			INNER JOIN users u1 ON ur.userfrom = u1.id
+		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+		
+		$tempdb = array();
+		foreach ($allratings as $userid => $userratings) {
+		// Uncomment for hilarity
+		//foreach ($users as $user) {
+			//$userid = $user['id'];
+			//$userratings=$sql->query("SELECT userfrom,userrated,rating FROM userratings WHERE userrated=$userid");
+			//--
+			
+			$ratescore = $ratetotal = 0;
+			foreach ($userratings as $x) {
+				// Cache previous calculations when possible
+				if (!isset($tempdb[$x['userfrom']]['lvl'])) {
+					$unlist[] = $x['userfrom'];
+					$tdays = (ctime() - $x['regdate']) / 86400;
+					$texp  = calcexp($x['posts'], $tdays);
+					$tempdb[$x['userfrom']]['lvl']  = calclvl($texp);
+				}
+				// The actual rating calculations, which depend on level
+				$level = max(1, $tempdb[$x['userfrom']]['lvl']);
+				$ratescore += $x['rating'] * $level;
+				$ratetotal += 10 * $level;
+			}
+			
+			$aid = $userids[$userid];
+			$users[$aid]['numvotes'] = count($userratings);
+			$users[$aid]['ratescore'] = $ratescore;
+			$users[$aid]['ratetotal'] = $ratetotal;
+			$users[$aid]['rating'] = $ratescore * 100000 / $ratetotal / 10000;
+		}
+		unset($tempdb, $aid, $userids);
+		usort($users, 'sortbyrating');
+  }
 	
 	$pagelinks = 
 	"<span class='fonts'>".
 		pagelist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp", $numusers, $_GET['ppp'], true).
 	"</span>";
 	
-	if ($numusers != 1) $s = "s";
-	
+	$s = ($numusers != 1 ? "s" : "");
 	pageheader();
 	
 print "
@@ -113,8 +183,8 @@ print "
 			<a href='memberlist.php?sort=name$q$qpow$qsex$qord'>User name</a> |
 			<a href='memberlist.php?sort=reg$q$qpow$qsex$qord'>Registration date</a> |
 			<a href='memberlist.php?sort=act$q$qpow$qsex$qord'>Last activity</a> | 
-			<a href='memberlist.php?sort=age$q$qpow$qsex$qord'>Age</a>
-
+			<a href='memberlist.php?sort=age$q$qpow$qsex$qord'>Age</a> |
+			<a href='memberlist.php?sort=rating$q$qpow$qsex$qord'>Rating</a>
 		</td>
 	</tr>
 	<tr>
@@ -159,8 +229,12 @@ print "
 			<td class='tdbgh center' width=200>Last activity</td>
 			<td class='tdbgh center' width=60>Posts</td>
 			<td class='tdbgh center' width=35>Level</td>
-			<td class='tdbgh center' width=100>EXP</td></tr>
+			<td class='tdbgh center' width=100>EXP</td>
 		";
+		if ($_GET['sort'] == 'rating')
+			print "
+			<td class='tdbgh center' colspan=3 width=90>Rating</td>";
+		print "</tr>";
 	} else {
 		$items   = $sql->getarraybykey("SELECT * FROM items", 'id');
         $classes = $sql->getarraybykey("SELECT * FROM rpg_classes", 'id');
@@ -173,30 +247,47 @@ print "
 		print "</tr>";
 	}
 
-	$s = $_GET['ppp']*$_GET['page'];
 	$ulist = "";
+	// Results already truncated by the query, so the correct indexes start at 0
+	if ($limit)
+		$min = 0;
+	
 	for ($u = 0; $u < $_GET['ppp']; ++$u) {
-		$i = $s + $u;
+		$i = $min + $u;
 		if (!isset($users[$i])) break;
-		$ulist .= "<tr style='height:24px'>";
 		$user = $users[$i];
+		
+		$ulist .= "<tr style='height:24px'>";
 		
 		$userpicture = get_minipic($user['id'], $user['minipic']);
 		$userlink = getuserlink($user);
-		$ulist.="
+		$ulist .= "
 			<td class='tdbg2 center'>".($i+1).".</td>
 			<td class='tdbg1 center'>{$userpicture}</td>
 			<td class='tdbg2'>{$userlink}</td>
 		";
 
-		if(!$_GET['rpg']){
-			$ulist.="
+		if (!$_GET['rpg']) {
+			$ulist .= "
 				<td class='tdbg2 center'>".printdate($user['regdate'])."</td>
 				<td class='tdbg2 center'>".printdate($user['lastactivity'])."</td>
 				<td class='tdbg1 center'>{$user['posts']}</td>
 				<td class='tdbg1 center'>{$user['lvl']}</td>
 				<td class='tdbg1 center'>{$user['exp']}</td>
 			";
+			if ($_GET['sort'] == 'rating') {
+				if ($user['rating'] === null) {
+					$ulist .= "
+						<td class='tdbg1 center'>None</td>
+						<td class='tdbg2 center'>&mdash;</td>
+						<td class='tdbg2 center'>0 votes</td>";
+				} else {
+					$ulist .= "
+						<td class='tdbg1 center'><center><b>".(sprintf('%01.2f', $user['rating']))."</b></td>
+						<td class='tdbg2 center'>{$user['ratescore']} / {$user['ratetotal']}</td>
+						<td class='tdbg2 center'>{$user['numvotes']} vote".($user['numvotes'] != 1 ? "s" : "")."</td>";
+				}
+			}
 		}
 		else {
 			if (!isset($classes[$user['class']]))
@@ -216,3 +307,4 @@ print "
 
 	print "$ulist</table>$pagelinks";
 	pagefooter();
+	

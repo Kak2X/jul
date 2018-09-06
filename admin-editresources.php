@@ -13,8 +13,14 @@ $resource_types = array(
 
 $_GET['id']   = isset($_GET['id']) ? (int)$_GET['id'] : NULL;
 $_GET['type'] = filter_int($_GET['type']);
+// For pagination (future use?)
+//$_GET['page']   = filter_int($_GET['page']);
+//$_GET['fpp']    = filter_int($_GET['fpp']);
+//if (!$_GET['fpp']) $_GET['fpp'] = 20;
+
 
 $redir_url = "?type={$_GET['type']}";
+$stc = new SidebarTable("Resources", "Resource types", $resource_types, 'type', $_GET['type']); 
 
 switch ($_GET['type']) {
 	case 1: // Smilies
@@ -53,69 +59,36 @@ switch ($_GET['type']) {
 			$editlink = isset($_POST['submit']) ? "&id={$newid}" : ""; // Save and continue?
 			return header("Location: {$redir_url}{$editlink}");
 		}
-		
-	
-		$editwnd = "";
-		if (isset($_GET['id'])) {
-			if (!isset($res[$_GET['id']])) {
-				$action_name = "Creating a new smiley";
-				$cursmil     = array('','');
-				$_GET['id']  = -1;
-			} else {
-				$action_name = "Editing smiley";
-				$cursmil     = $res[$_GET['id']];
-			}
-			$editwnd = "
-			<tr class='rh'><td class='tdbgh center b' colspan='4'>{$action_name}</td></tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Code:</td>
-				<td class='tdbg2' colspan='3'><input type='text' name='code' value=\"".htmlspecialchars($cursmil[0])."\" style='width: 150px'></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Image URL:</td>
-				<td class='tdbg2' colspan='3'><input type='text' name='url' value=\"".htmlspecialchars($cursmil[1])."\" style='width: 500px'></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>&nbsp;</td>
-				<td class='tdbg2' colspan='3'><input type='submit' name='submit' value='Save and continue'> - <input type='submit' name='submit2' value='Save and close'></td>
-			</tr>
-			<tr><td class='tdbg2' colspan='4'></td></tr>
-			";
-		}
-	
-		
-		
-		$smilies = "";
+				
+		$headers = array(
+			-1 => [
+				'label' => 'Preview',
+				'style' => 'width: 100px',
+			],
+			'code' => [
+				'label'     => 'Code',
+				'type'      => 'text',
+				'editstyle' => 'width: 150px',
+			],
+			'url' => [
+				'label'     => 'Image URL',
+				'type'      => 'text',
+				'editstyle' => 'width: 500px',
+			]
+		);
+		$values = array();
 		foreach ($res as $id => $x) {
-			if (!$x) continue;
-			$cell = ($id % 2) + 1;
-			$smilies .= "
-			<tr class='rh'>
-				<td class='tdbg{$cell} center b'>
-					<input type='checkbox' name='del[]' value='{$id}'> - <a href='{$redir_url}&id={$id}'>Edit</a>
-				</td>
-				<td class='tdbg{$cell} center'><img src=\"{$x[1]}\"></td>
-				<td class='tdbg{$cell} center'>".htmlspecialchars($x[0])."</td>
-				<td class='tdbg{$cell}'>".htmlspecialchars($x[1])."</td>
-			</tr>";
-		}			
-		$html = "
-		{$editwnd}
-		<tr class='rh'>
-			<td class='tdbgh center b' style='width: 100px'>#</td>
-			<td class='tdbgh center b' style='width: 100px'>Preview</td>
-			<td class='tdbgh center b'>Code</td>
-			<td class='tdbgh center b'>Image link</td>
-		</tr>
-		{$smilies}
-		<tr class='rh'>
-			<td class='tdbgc' style='border-right: 0'>
-				<input type='submit' style='height: 16px; font-size: 10px' name='setdel' value='Delete Selected'>
-			</td>
-			<td class='tdbgc center' colspan='3'>
-				<a href=\"{$redir_url}&id=-1\">&lt; Add a new smiley &gt;</a>
-			</td>
-		</tr>";
+			$values[$id] = array(
+				-1     => "<img src=\"{$x[1]}\">",
+				'code' => $x[0],
+				'url'  => $x[1],
+			);
+		}
+		$strings = array(
+			'element'  => "smiley",
+			'base-url' => $redir_url,
+		);
+		
 		break;
 	case 2: // Post icons
 		$res = array_map('trim', file('posticons.dat'));
@@ -153,62 +126,30 @@ switch ($_GET['type']) {
 			return header("Location: {$redir_url}{$editlink}");
 		}
 		
-	
-		$editwnd = "";
-		if (isset($_GET['id'])) {
-			if (!isset($res[$_GET['id']])) {
-				$action_name = "Creating a new post icon";
-				$curicon     = '';
-				$_GET['id']  = -1;
-			} else {
-				$action_name = "Editing post icon";
-				$curicon     = $res[$_GET['id']];
-			}
-			$editwnd = "
-			<tr class='rh'><td class='tdbgh center b' colspan='3'>{$action_name}</td></tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Image URL:</td>
-				<td class='tdbg2' colspan='2'><input type='text' name='url' value=\"".htmlspecialchars($curicon)."\" style='width: 500px'></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>&nbsp;</td>
-				<td class='tdbg2' colspan='2'><input type='submit' name='submit' value='Save and continue'> - <input type='submit' name='submit2' value='Save and close'></td>
-			</tr>
-			<tr><td class='tdbg2' colspan='3'></td></tr>
-			";
-		}
-	
 		
-		
-		$smilies = "";
+		$headers = array(
+			-1 => [
+				'label' => 'Preview',
+				'style' => 'width: 100px',
+			],
+			'url' => [
+				'label'     => 'Image URL',
+				'type'      => 'text',
+				'editstyle' => 'width: 500px',
+			]
+		);
+		$values = array();
 		foreach ($res as $id => $x) {
-			if (!$x) continue;
-			$cell = ($id % 2) + 1;
-			$smilies .= "
-			<tr class='rh'>
-				<td class='tdbg{$cell} center b'>
-					<input type='checkbox' name='del[]' value='{$id}'> - <a href='{$redir_url}&id={$id}'>Edit</a>
-				</td>
-				<td class='tdbg{$cell} center'><img src=\"{$x}\"></td>
-				<td class='tdbg{$cell}'>".htmlspecialchars($x)."</td>
-			</tr>";
-		}			
-		$html = "
-		{$editwnd}
-		<tr class='rh'>
-			<td class='tdbgh center b' style='width: 100px'>#</td>
-			<td class='tdbgh center b' style='width: 100px'>Preview</td>
-			<td class='tdbgh center b'>Image link</td>
-		</tr>
-		{$smilies}
-		<tr class='rh'>
-			<td class='tdbgc' style='border-right: 0'>
-				<input type='submit' style='height: 16px; font-size: 10px' name='setdel' value='Delete Selected'>
-			</td>
-			<td class='tdbgc center' colspan='2'>
-				<a href=\"{$redir_url}&id=-1\">&lt; Add a new post icon &gt;</a>
-			</td>
-		</tr>";
+			$values[$id] = array(
+				-1     => "<img src=\"{$x}\">",
+				'url'  => $x,
+			);
+		}
+		$strings = array(
+			'element'  => "post icon",
+			'base-url' => $redir_url,
+		);
+		
 		break;
 	case 3:
 		$res = read_syndromes(true); // Include disabled
@@ -234,9 +175,9 @@ switch ($_GET['type']) {
 			
 			if (!$_POST['color'] || !$_POST['text'])
 				errorpage("You didn't enter the required fields.");
-			// TODO: Broken 0 post count syndrome
+			
 			if (!in_array(find_syndrome($res, $_POST['postcount']), array(-1, $_GET['id'])))
-				errorpage("No post count duplicates allowed.".find_syndrome($res, $_POST['postcount']));
+				errorpage("No post count duplicates allowed.");
 			
 			// If the new option is specified, pick the first "free" ID
 			$newid = isset($res[$_GET['id']]) ? $_GET['id'] : count($res);
@@ -257,95 +198,71 @@ switch ($_GET['type']) {
 			return header("Location: {$redir_url}{$editlink}");
 		}
 		
-	
-		$editwnd = "";
-		if (isset($_GET['id'])) {
-			if (!isset($res[$_GET['id']])) {
-				$action_name = "Creating a new post syndrome";
-				$cursyn      = array('0','#FFFFFF',"'Default syndrome' +");
-				$_GET['id']  = -1;
-			} else {
-				$action_name = "Editing post syndrome";
-				$cursyn      = $res[$_GET['id']];
-			}
-			$editwnd = "
-			<tr class='rh'><td class='tdbgh center b' colspan='6'>{$action_name}</td></tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Post count:</td>
-				<td class='tdbg2' colspan='5'><input type='text' name='postcount' value=\"".htmlspecialchars($cursyn[0])."\" style='width: 150px'></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Color:</td>
-				<td class='tdbg2' colspan='5'><input type='color' name='color' value=\"".htmlspecialchars($cursyn[1])."\"></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Text:</td>
-				<td class='tdbg2' colspan='5'><input type='text' name='text' value=\"".htmlspecialchars($cursyn[2])."\" style='width: 500px'></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>Options:</td>
-				<td class='tdbg2' colspan='5'><label><input type='checkbox' name='enabled' value='1'".(filter_int($cursyn[3]) ? "" : " checked")."> Enabled</label></td>
-			</tr>
-			<tr class='rh'>
-				<td class='tdbg1 center b'>&nbsp;</td>
-				<td class='tdbg2' colspan='5'><input type='submit' name='submit' value='Save and continue'> - <input type='submit' name='submit2' value='Save and close'></td>
-			</tr>
-			<tr><td class='tdbg2' colspan='6'></td></tr>
-			";
-		}
-	
+		$headers = array(
+			-2 => [
+				'label' => 'Set',
+				'style' => 'width: 50px',
+			],
+			'postcount' => [
+				'label'     => 'Post count',
+				'type'      => 'text',
+				'editstyle' => 'width: 150px',
+				'default'   => 0,
+			],
+			'color' => [
+				'label'     => 'Color',
+				'type'      => 'color',
+				'default'   => '#FFFFFF',
+			],
+			'text' => [
+				'label'     => 'Text',
+				'type'      => 'text',
+				'editstyle' => 'width: 500px',
+				'default'   => "'Default syndrome' +",
+			],
+			'enabled' => [
+				'label'     => 'Options', // lazy; will not work for multiple options
+				'type'      => 'checkbox',
+				'editlabel' => 'Enabled',
+				'nodisplay' => true,
+			],
+			-1 => [
+				'label' => 'Preview'
+			],
+		);
+		$values = array();
 		
-		
-		$smilies = "";
 		foreach ($res as $id => $x) {
-			$cell = ($id % 2) + 1;
-			$smilies .= "
-			<tr class='rh'>
-				<td class='tdbg{$cell} center b'>
-					<input type='checkbox' name='del[]' value='{$id}'> - <a href='{$redir_url}&id={$id}'>Edit</a>
-				</td>
-				<td class='tdbg{$cell} center b'><span style='color:#".(!isset($x[3]) ? "0f0'>YES": "f00'>NO")."</span></td>
-				<td class='tdbg{$cell} center'>".htmlspecialchars($x[0])."</td>
-				<td class='tdbg{$cell} center'>".htmlspecialchars($x[1])."</td>
-				<td class='tdbg{$cell}'>".htmlspecialchars($x[2])."</td>
-				<td class='tdbg{$cell} fonts'>".str_replace("<br>", "", syndrome($x[0]))."</td>
-			</tr>";
-		}			
-		$html = "
-		{$editwnd}
-		<tr class='rh'>
-			<td class='tdbgh center b' style='width: 100px'>#</td>
-			<td class='tdbgh center b' style='width: 50px'>Set</td>
-			<td class='tdbgh center b'>Post count</td>
-			<td class='tdbgh center b'>Color</td>
-			<td class='tdbgh center b'>Text</td>
-			<td class='tdbgh center b'>Preview</td>
-		</tr>
-		{$smilies}
-		<tr class='rh'>
-			<td class='tdbgc' style='border-right: 0'>
-				<input type='submit' style='height: 16px; font-size: 10px' name='setdel' value='Delete Selected'>
-			</td>
-			<td class='tdbgc center' colspan='5'>
-				<a href=\"{$redir_url}&id=-1\">&lt; Add a new post syndrome &gt;</a>
-			</td>
-		</tr>";
+			$values[$id] = array(
+				-1          => "<span class='fonts'>".str_replace("<br>", "", syndrome($x[0]))."</span>",
+				-2          => "<span class='b' style='color:#".(!isset($x[3]) ? "0f0'>YES": "f00'>NO")."</span>",
+				'postcount' => $x[0],
+				'color'     => $x[1],
+				'text'      => $x[2],
+				'enabled'   => !isset($x[3]),
+			);
+		}
+		
+		$strings = array(
+			'element'  => "post syndrome",
+			'base-url' => $redir_url,
+		);
+
 		break;
 	default:
-		$html = "
-		<tr>
-			<td class='tdbg1 center rh'>Select a resource type from the sidebar.</td>
-		</tr>
-		<tr><td class='tdbg2 center'>&nbsp;</td></tr>";
+		$html = SidebarTable::Message("Select a resource type from the sidebar.");
 		break;
 }
 
 
+if (!isset($html)) {
+	$html = row_display($headers, $values, $strings, $_GET['id']); //, $_GET['page'], $_GET['fpp'], count($values));
+}
+
 pageheader("Edit resources");
 print adminlinkbar()
 . "<form method='POST' action='{$redir_url}".(isset($_GET['id']) ? "&id={$_GET['id']}" : "")."' enctype='multipart/form-data'>"
-. sidebar_table("Resources", $html, "Resource types", $resource_types, 'type', $_GET['type'])
-. auth_tag()
+. $stc->DisplayTop() . $html . $stc->DisplayBottom()
 . "</form>";
 pagefooter();
 
@@ -388,80 +305,256 @@ function find_syndrome($res, $find) {
 	return -1;
 }
 
-// TODO: Move this to function file when needed
-// TODO: Replace $html with $part (a number) to determine what part to display
-function sidebar_table($title, $html, $linktitle, $linkset, $linkvar = 'type', $sel = 0) {
-	static $printed;
-	
-	// Generate linksets to highlight selected option
-	$linkshtml = "";
-	$titlesel  = "";
-	foreach ($linkset as $catlabel => $linkscat) {
-		
-		if (!$catlabel) {
-			// Global
-			$prefix = "";
-		} else {
-			// Named category
-			$prefix = "&nbsp;&nbsp;";
-			$linkshtml .= "<span class='b i'>{$catlabel}</span><br>";
-		}
-		
-		foreach ($linkscat as $id => $linklabel) {
-			$w = 'a';
-			if ($sel == $id) { // Selected option is not a link and is also displayed in the title
-				$w = 'b';
-				$titlesel = " - {$linklabel}";
-			}
-			$linkshtml .= "{$prefix}<{$w} href='?{$linkvar}={$id}'>{$linklabel}</{$w}><br>";
-		}
-	}
 
-	//--
-	// Do not print the CSS definitions twice (in case of nested sidebar tables)
-	$css = "";
-	if ($printed === NULL) {
-		$css = "
-		<style type='text/css'>
-			.rh {height: 19px}
-			textarea {display: block}
-			.nestedtable-container {
-				padding: 0px;
-			}
-			.nestedtable {
-				border: 0px;
-				height: 100%;
-			}
-			.nestedtable tr td:last-child { border-right: 0px; }
-			.nestedtable tr:last-child td { border-bottom: 0px; }
-		</style>";
-		$printed = true;
+////------------------
+
+function row_display($headers, $values, $strings, $sel = NULL, $page = 0, $limit = -1, $rowcount = 0) {
+	static $setid = 0;
+	
+	$colspan  = count($headers) + 2; // + Edit selection
+	
+	//-- 
+	// Generate header text
+	// And fix the colspan to be correct (account for non-displayed fields in the row list)
+	$header_txt = "";
+	foreach ($headers as $key => $x) {
+		if (!isset($x['nodisplay'])) {
+			$header_txt .= "<td class='tdbgh center b'".(isset($x['style']) ? " style=\"{$x['style']}\"" : "").">{$x['label']}</td>";
+		} else {
+			--$colspan;
+		}
 	}
+	//--
+	// Main row display
+	$i = -1;
+	$row_txt = "";
+	foreach ($values as $id => $row) {
+		$cell = (++$i % 2) + 1;
+		$row_txt .= "
+		<tr class='th' id='row{$setid}_{$id}'>
+			<td class='tdbg{$cell} center b'>
+				<input type='checkbox' name='del[]' value='{$id}'>
+			</td>
+			<td class='tdbg{$cell} center fonts'>
+				<a href='{$strings['base-url']}&id={$id}' class='editCtrl_{$setid}' data-id='{$id}'>Edit</a>
+			</td>";
+		foreach ($headers as $key => $x) {
+			if (!isset($x['nodisplay'])) {
+				$row_txt .= "<td class='tdbg{$cell} center'>{$row[$key]}</td>";
+			}
+		}
+		$row_txt .= "
+		</tr>";
+	}
+	//--
+	$pagectrl = "";
+	if ($limit > 0 && $rowcount > $limit) {
+		$pagectrl = "
+		<tr class='rh'>
+			<td class='tdbg2 center fonts' colspan='{$colspan}'>
+				".pagelist("?type={$_GET['type']}&fpp={$_GET['fpp']}", $rowcount, $limit)."
+				 &mdash; <a href='?type={$_GET['type']}&fpp=-1'>Show all</a>
+			</td>
+		</tr>";
+	}
+	//--
+	// Edit window
+	$edit_txt   = "";
+	if ($sel !== NULL) {
+		
+		// Before doing the enchilada, check if the value exists to set the default.
+		if (!isset($values[$sel])) {
+			$sel = -1;
+			$action_name = "Creating a new {$strings['element']}";
+		} else {
+			$action_name = "Editing {$strings['element']} #{$sel}";
+		}
+		
+		foreach ($headers as $key => $x) {
+			if (isset($x['type'])) {
+				
+				$value = isset($values[$sel][$key]) ? $values[$sel][$key] : filter_string($x['default']);
+				
+				$editcss = isset($x['editstyle']) ? " style=\"{$x['editstyle']}\"" : "";
+				switch ($x['type']) {
+					case 'text':
+					case 'color':
+						$input = "<input type='{$x['type']}' name='{$key}' value=\"".htmlspecialchars($value)."\"{$editcss}>";
+						break;
+					case 'checkbox':
+						$input = "<label><input type='checkbox' name='{$key}' value='1'".($value ? " checked" : "")."{$editcss}> {$x['editlabel']}</label>";
+						break;
+					case 'radio':
+						$ch[$value] = "checked";
+						$input = "";
+						foreach ($x['choices'] as $xk => $xv)
+							$input .= "<label><input name='{$key}' type='radio' value=\"{$xk}\" ".filter_string($ch[$xv]).">&nbsp;{$xv}</label>&nbsp; &nbsp; ";
+						unset($ch);
+						break;
+					case 'select':
+						$ch[$value] = "selected";
+						$input = "";
+						foreach ($x['choices'] as $xk => $xv)
+							$input .= "<label><input name='{$key}' type='radio' value=\"{$xk}\" ".filter_string($ch[$xv]).">&nbsp;{$xv}</label>&nbsp; &nbsp; ";
+						unset($ch);
+						break;
+										
+				}
+				
+				$edit_txt .= "
+				<tr class='rh'>
+					<td class='tdbg1 center b'>{$x['label']}:</td>
+					<td class='tdbg2'>{$input}</td>
+				</tr>";
+			}
+		}
+	}
+	//--
+	// TODO: JS code for the alternate editor
+	$js = "";
+	/*
+	if (!$setid) {
+		$js = include_js("js/roweditor.js", true);
+	}
+	$headjson = json_encode($headers);
+	*/
+	
+	++$setid;
 	//--
 	
 	return "
-	{$css}
-	<table class='table'>
-		<tr>
-			<td class='tdbgh center b nobr' style='padding-right: 20px'>{$linktitle}</td>
-			<td class='tdbgh center b w nobr'>
-				{$title}{$titlesel}
-			</td>
-		</tr>
-		<tr class='rh'>
-			<td class='tdbg1 nobr vatop' style='padding-right: 20px'>{$linkshtml}</td>
-			<td class='tdbg2 center nestedtable-container'>
-				<table class='table nestedtable' style='border: 0px; height: 100%'>
-				{$html}
-				</table>
-			</td>
-		</tr>
-	</table>";
+	".($edit_txt ? "
+	<tr>
+		<td class='tdbg2 nestedtable-container' colspan='{$colspan}'>
+			<table class='table nestedtable'>
+				<tr class='rh'><td class='tdbgh center b' colspan='2'>{$action_name}</td></tr>
+				{$edit_txt}
+				<tr class='rh'>
+					<td class='tdbg1 center b' style='width: 150px'>&nbsp;</td>
+					<td class='tdbg2'>
+						<input type='submit' name='submit' value='Save and continue'> &nbsp; <input type='submit' name='submit2' value='Save and close'>
+					</td>
+				</tr>
+				<tr><td class='tdbg2' colspan='2'></td></tr>			
+			</table>
+		</td>
+	</tr>
+	" : "")."
+	
+	<tr class='rh'>
+		<td class='tdbgh center b' style='width: 30px'></td>
+		<td class='tdbgh center b' style='width: 50px'>#</td>
+		{$header_txt}
+	</tr>
+	{$row_txt}
+	{$pagectrl}
+	
+	<tr class='rh'>
+		<td class='tdbgc center' colspan='{$colspan}'>
+			<input type='submit' style='height: 16px; font-size: 10px; float: left' name='setdel' value='Delete selected'>
+			".auth_tag()."{$js}
+			<a href=\"{$strings['base-url']}&id=-1\">&lt; Add a new {$strings['element']} &gt;</a>
+		</td>
+	</tr>";
 }
 
-// TODO: functions to generate the pagination / display / edit dialog
-// This is currently repeated over and over and sigh
-// Ideally this should also have a JavaScript variant with inline editing
-function row_display($headers, $values, $labels, $page = 0, $limit = 20, $sel = 0) {
-	return "";
-}
+
+
+
+class SidebarTable {
+	private static $total = 0;
+	
+	public $title;
+	public $linkTitle;
+	public $linkSet;
+	public $linkVar;
+	public $sel;
+	
+	public function __construct($title, $linkTitle, $linkSet, $linkVar = 'type', $sel = 0) {
+		$this->title     = $title;
+		$this->linkTitle = $linkTitle;
+		$this->linkSet   = $linkSet;
+		$this->linkVar   = $linkVar;
+		$this->sel       = $sel;
+	}
+	
+	public function DisplayTop() {
+		$linksHtml = self::GenerateLinks($this->linkSet, $this->linkVar, $this->sel, $titleSel);
+		
+		// CSS Displayed the first time
+		$css = "";
+		if (!self::$total) {
+			$css = "
+			<style type='text/css'>
+				.rh {height: 19px}
+				.nestedtable-container {
+					padding: 0px;
+					border-bottom: 0px;
+					border-right: 0px;
+				}
+				.nestedtable-container > .sidebartable {
+					border-left: 0px;
+					border-top: 0px;
+				}
+				.nestedtable {
+					border: 0px;
+					height: 100%;
+				}
+			</style>";
+		}
+		++self::$total;
+		
+		return "{$css}
+		<table class='table sidebartable'>
+			<tr>
+				<td class='tdbgh center b nobr' style='padding-right: 20px'>".$this->linkTitle."</td>
+				<td class='tdbgh center b w nobr'>
+					".$this->title . $titleSel ."
+				</td>
+			</tr>
+			<tr class='rh'>
+				<td class='tdbg1 nobr vatop' style='padding-right: 20px'>{$linksHtml}</td>
+				<td class='tdbg2 center nestedtable-container'>
+					<table class='table nestedtable'>";
+	}
+	
+	public function DisplayBottom() {
+		return "
+					</table>
+				</td>
+			</tr>
+		</table>";
+	}
+	
+	public static function GenerateLinks($linkSet, $linkVar = 'type', $sel = 0, &$titleSel) {
+		// Generate linksets to highlight selected option
+		$out = "";
+		
+		foreach ($linkSet as $catLabel => $linksCat) {
+			if (!$catLabel) {
+				// Global
+				$prefix = "";
+			} else {
+				// Named category
+				$prefix = "&nbsp;&nbsp;";
+				$out .= "<span class='b i'>{$catLabel}</span><br>";
+			}
+			
+			foreach ($linksCat as $id => $linkLabel) {
+				$w = 'a';
+				if ($sel == $id) { // Selected option is not a link and is also displayed in the title
+					$w = 'b';
+					$titleSel = " - {$linkLabel}";
+				}
+				$out .= "{$prefix}<{$w} href='?{$linkVar}={$id}'>{$linkLabel}</{$w}><br>";
+			}
+		}
+		return $out;
+	}
+	
+	public static function Message($text) {
+		return "
+		<tr><td class='tdbg1 center rh'>{$text}</td></tr>
+		<tr><td class='tdbg2 center'>&nbsp;</td></tr>";
+	}
+}	

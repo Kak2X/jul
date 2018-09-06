@@ -296,9 +296,9 @@
 			*/
 	}
 	
+
 	
 	$ipbanned = $torbanned = $isbot = 0;
-	
 	$bpt_flags = 0;
 	
 	// These extra variables are in control of the user. Nuke them if they're not valid IPs
@@ -312,10 +312,11 @@
 
 	$baninfo = $sql->fetchq("SELECT ip, expire FROM ipbans WHERE $checkips");
 	if($baninfo) $ipbanned = 1;
+	
 	if($sql->resultq("SELECT COUNT(*) FROM tor WHERE `ip` = '{$_SERVER['REMOTE_ADDR']}' AND `allowed` = '0'")) $torbanned = 1;
 					
 	if ($_SERVER['HTTP_REFERER']) {
-		$botinfo = $sql->fetchq("SELECT signature, malicious FROM bots WHERE INSTR('".addslashes(strtolower($_SERVER['HTTP_USER_AGENT']))."', signature) > 0");
+		$botinfo = $sql->fetchq("SELECT signature, malicious FROM bots WHERE INSTR('".addslashes(strtolower($_SERVER['HTTP_USER_AGENT']))."', signature) > 0 ORDER BY malicious DESC");
 		if ($botinfo) {
 			$isbot = 1;
 			if ($botinfo['malicious']) {
@@ -595,6 +596,7 @@ function readsmilies($path = 'smilies.dat') {
 		$fpnt = fopen($path,'r');
 	}
 	for ($i = 0; $smil[$i] = fgetcsv($fpnt, 300, ','); ++$i);
+	unset($smil[$i]);
 	$r = fclose($fpnt);
 	return $smil;
 }
@@ -715,7 +717,7 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 	if (!$smiliesoff) {
 		global $smilies;
 		if (!$smilies) $smilies = readsmilies();
-		for($s = 0; $smilies[$s][0]; ++$s){
+		for($s = 0; isset($smilies[$s]); ++$s){
 			$smilie = $smilies[$s];
 			if ($htmloff) $smilie[0] = htmlspecialchars($smilie[0]);
 			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);

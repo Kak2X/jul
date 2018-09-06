@@ -25,6 +25,14 @@
 	require 'lib/rpg.php';
 	require 'lib/datetime.php';	
 	
+	// Determine if to show conditionally the MySQL query list.
+	if ($config['enable-sql-debugger'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
+		// TODO: possibly use cookies or something instead.
+		if ($config['always-show-debug'] || isset($_GET['debugsql']))
+			mysql::$debug_on = true; // applies for all connections using the mysql class
+	}
+	
+	
 	$sql	= new mysql;
 
 

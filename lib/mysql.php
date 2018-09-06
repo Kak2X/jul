@@ -56,11 +56,6 @@ class mysql {
 		$t 			= microtime(true) - $start;
 		$this->id 	= ++self::$connection_count;
 		
-					
-		if ($config['enable-sql-debugger']) {
-			self::$debug_on = true;
-		}
-		
 		// Need to distinguish between the two because of the error text
 		$this->server_name = (
 			strpos($this->connection->getAttribute(PDO::ATTR_SERVER_VERSION), "MariaDB")

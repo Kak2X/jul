@@ -18,6 +18,7 @@ install/lulzratings.sql
 lib/config.php
 backups/*.zip
 develop.sql
+test/
 
 # Attachments
 attachments/*
@@ -28,6 +29,12 @@ attachments/*
 #Userpics
 userpic/*
 !userpic/note.txt
+
+# Custom sidebars
+sidebars/*
+!sidebars/index.html
+!sidebars/.htaccess
+
 
 # Never cache the temp folder
 temp/*

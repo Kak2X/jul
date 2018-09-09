@@ -938,6 +938,183 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 	return $posticonlist;
 }
 
+function row_display($headers, $values, $strings, $sel = NULL, $page = 0, $limit = -1, $rowcount = 0) {
+	static $setid = 0;
+	
+	$colspan  = count($headers) + 2; // + Edit selection
+	
+	//-- 
+	// Generate header text
+	// And fix the colspan to be correct (account for non-displayed fields in the row list)
+	$header_txt = "";
+	foreach ($headers as $key => $x) {
+		if (!isset($x['nodisplay'])) {
+			$header_txt .= "<td class='tdbgh center b'".(isset($x['style']) ? " style=\"{$x['style']}\"" : "").">{$x['label']}</td>";
+		} else {
+			--$colspan;
+		}
+	}
+	//--
+	// Main row display
+	$i = -1;
+	$row_txt = "";
+	foreach ($values as $id => $row) {
+		$cell = (++$i % 2) + 1;
+		$row_txt .= "
+		<tr class='th' id='row{$setid}_{$id}'>
+			<td class='tdbg{$cell} center b'>
+				<input type='checkbox' name='del[]' value='{$id}'>
+			</td>
+			<td class='tdbg{$cell} center fonts'>
+				<a href='{$strings['base-url']}&id={$id}' class='editCtrl_{$setid}' data-id='{$id}'>Edit</a>
+			</td>";
+		foreach ($headers as $key => $x) {
+			if (!isset($x['nodisplay'])) {
+				$row_txt .= "<td class='tdbg{$cell} center'>{$row[$key]}</td>";
+			}
+		}
+		$row_txt .= "
+		</tr>";
+	}
+	//--
+	$pagectrl = "";
+	if ($limit > 0 && $rowcount > $limit) {
+		$pagectrl = "
+		<tr class='rh'>
+			<td class='tdbg2 center fonts' colspan='{$colspan}'>
+				".pagelist("?type={$_GET['type']}&fpp={$_GET['fpp']}", $rowcount, $limit)."
+				 &mdash; <a href='?type={$_GET['type']}&fpp=-1'>Show all</a>
+			</td>
+		</tr>";
+	}
+	//--
+	// Edit window
+	$edit_txt   = "";
+	if ($sel !== NULL) {
+		
+		// Before doing the enchilada, check if the value exists to set the default.
+		if (!isset($values[$sel])) {
+			$sel = -1;
+			$action_name = "Creating a new {$strings['element']}";
+		} else {
+			$action_name = "Editing {$strings['element']} #{$sel}";
+		}
+		
+		foreach ($headers as $key => $x) {
+			if (isset($x['type'])) {
+				
+				$value = isset($values[$sel][$key]) ? $values[$sel][$key] : filter_string($x['default']);
+				
+				$editcss = isset($x['editstyle']) ? " style=\"{$x['editstyle']}\"" : "";
+				switch ($x['type']) {
+					case 'text':
+					case 'color':
+						$input = "<input type='{$x['type']}' name='{$key}' value=\"".htmlspecialchars($value)."\"{$editcss}>";
+						break;
+					case 'checkbox':
+						$input = "<label><input type='checkbox' name='{$key}' value='1'".($value ? " checked" : "")."{$editcss}> {$x['editlabel']}</label>";
+						break;
+					case 'radio':
+						$ch[$value] = "checked";
+						$input = "";
+						foreach ($x['choices'] as $xk => $xv)
+							$input .= "<label><input name='{$key}' type='radio' value=\"{$xk}\" ".filter_string($ch[$xv]).">&nbsp;{$xv}</label>&nbsp; &nbsp; ";
+						unset($ch);
+						break;
+					case 'select':
+						$ch[$value] = "selected";
+						$input = "";
+						foreach ($x['choices'] as $xk => $xv)
+							$input .= "<label><input name='{$key}' type='radio' value=\"{$xk}\" ".filter_string($ch[$xv]).">&nbsp;{$xv}</label>&nbsp; &nbsp; ";
+						unset($ch);
+						break;
+										
+				}
+				
+				$edit_txt .= "
+				<tr class='rh'>
+					<td class='tdbg1 center b'>{$x['label']}:</td>
+					<td class='tdbg2'>{$input}</td>
+				</tr>";
+			}
+		}
+	}
+	
+	//--
+	$css = "";
+	if (!$setid) {
+		$css = "
+		<style type='text/css'>
+			.rh {height: 19px}
+			.nestedtable-container {
+				padding: 0px;
+				border-bottom: 0px;
+				border-right: 0px;
+			}
+			.nestedtable-container > .sidebartable {
+				border-left: 0px;
+				border-top: 0px;
+				height: 100%;
+			}
+			.nestedtable {
+				border: 0px;
+				height: 100%;
+			}
+		</style>";
+	}
+	
+	//--
+	// TODO: JS code for the alternate editor
+	$js = "";
+	/*
+	if (!$setid) {
+		$js = include_js("js/roweditor.js", true);
+	}
+	$headjson = json_encode($headers);
+	*/
+	
+	++$setid;
+	//--
+	
+	return "{$css}
+	<table class='table'>
+	<!-- <tr><td class='tdbgh center b' colspan='{$colspan}'>xxx - yyy</td></tr> -->
+	".($edit_txt ? "
+	<tr>
+		<td class='tdbg2 nestedtable-container' colspan='{$colspan}'>
+			<table class='table nestedtable'>
+				<tr class='rh'><td class='tdbgh center b' colspan='2'>{$action_name}</td></tr>
+				{$edit_txt}
+				<tr class='rh'>
+					<td class='tdbg1 center b' style='width: 150px'>&nbsp;</td>
+					<td class='tdbg2'>
+						<input type='submit' name='submit' value='Save and continue'> &nbsp; <input type='submit' name='submit2' value='Save and close'>
+					</td>
+				</tr>
+				<tr><td class='tdbg2' colspan='2'></td></tr>			
+			</table>
+		</td>
+	</tr>
+	" : "")."
+	
+	<tr class='rh'>
+		<td class='tdbgh center b' style='width: 30px'></td>
+		<td class='tdbgh center b' style='width: 50px'>#</td>
+		{$header_txt}
+	</tr>
+	{$row_txt}
+	{$pagectrl}
+	
+	<tr class='rh'>
+		<td class='tdbgc center' colspan='{$colspan}'>
+			<input type='submit' style='height: 16px; font-size: 10px; float: left' name='setdel' value='Delete selected'>
+			".auth_tag()."{$js}
+			<a href=\"{$strings['base-url']}&id=-1\">&lt; Add a new {$strings['element']} &gt;</a>
+		</td>
+	</tr>
+	</table>";
+}
+
 function ctime(){global $config; return time() + $config['server-time-offset'];}
 function cmicrotime(){global $config; return microtime(true) + $config['server-time-offset'];}
 
@@ -1766,24 +1943,25 @@ function admincheck() {
 	}
 }
 
-function adminlinkbar($sel = NULL) {
+function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 	global $isadmin;
-
 	if (!$isadmin) return;
-
+	require_once "lib/classes/TreeView.php";
+	
 	if (!$sel) {
 		// If no selection is passed, default to the current script
 		global $scriptname;
 		$sel = $scriptname;
 	}
-
-	$links	= array(
+	$links = array(
 		array(
-			'admin.php'	=> "Admin Control Panel",
-		),
-		array(
+			'admin.php'	              => "Admin Control Panel",
 //			'admin-todo.php'          => "To-do list",
+		),
+		'Quick jump' => array(
 			'announcement.php'        => "Go to Announcements",
+		),
+		'Configuration' => array(
 			'admin-editresources.php' => "Edit Resources",
 			'admin-editfilters.php'   => "Edit Filters",
 			'admin-editratings.php'   => "Edit Post Ratings",
@@ -1793,50 +1971,70 @@ function adminlinkbar($sel = NULL) {
 			'admin-editmods.php'      => "Edit Forum Moderators",
 			'admin-forumbans.php'     => "Edit Forum Bans",
 			'admin-attachments.php'   => "Edit Attachments",
-			
 		),
-		array(
+		'ThreadFix' => array(
 			'admin-threads.php'       => "ThreadFix",
 			'admin-threads2.php'      => "ThreadFix 2",
-			'admin-backup.php'        => "Board Backups",		
 		),
-		array(
+		'Security' => array(
+			'admin-backup.php'        => "Board Backups",
+//			'admin-downloader.php'    => "?",	
+//			'admin-showlogs.php'      => "Log Viewer",	
+//			'shitbugs.php'            => "?"
+		),
+		'IP management' => array(
 			'admin-ipsearch.php'      => "IP Search",
 			'admin-ipbans.php'        => "IP Bans",
+		),
+		'User management' => array(
 			'admin-pendingusers.php'  => "Pending Users",
-//			'admin-slammer.php'       => "EZ Ban Button",
+			'admin-slammer.php'       => "EZ Ban Button",
 			'admin-deluser.php'       => "Delete User",
 		)
 	);
 
-	$r = "<div style='padding:0px;margins:0px;'>
-			<table class='table'>
-				<tr>
-					<td class='tdbgh center b' style='border-bottom: 0'>
-						Admin Functions
-					</td>
-				</tr>
-			</table>";
+	if (!isset($_GET['oldbar'])) {
+		global $_adminsidebar;
+		$_adminsidebar = new TreeView("Admin Functions", $links); 
+		return $_adminsidebar->DisplaySidebar($sel, $subsel, $extraopt);
+	} else {
+		// ...
+		$links['Quick jump'] = array_merge($links['Quick jump'], $links['Configuration']);
+		$links['ThreadFix'] = array_merge($links['ThreadFix'], $links['Security']);
+		$links['IP management'] = array_merge($links['IP management'], $links['User management']);
+		unset($links['Configuration'], $links['Security'], $links['User management']);
+		
+		
+		$r = "<div style='padding:0px;margins:0px;'>
+				<table class='table'>
+					<tr>
+						<td class='tdbgh center b' style='border-bottom: 0'>
+							Admin Functions
+						</td>
+					</tr>
+				</table>";
 
-	$total = count($links) - 1;
-    foreach ($links as $rownum => $linkrow) {
-		$c	= count($linkrow);
-		$w	= floor(1 / $c * 100);
+		$total = count($links) - 1;
+		foreach ($links as $rownum => $linkrow) {
+			$c	= count($linkrow);
+			$w	= floor(1 / $c * 100);
 
-		$r .= "<table class='table'><tr>";
-		$nb = ($rownum != $total) ? ";border-bottom: 0" : "";
+			$r .= "<table class='table'><tr>";
+			$nb = ($rownum != $total) ? ";border-bottom: 0" : "";
 
-		foreach($linkrow as $link => $name) {
-			$cell = '1';
-			if ($link == $sel) $cell = 'c';
-			$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px{$nb}' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+			foreach($linkrow as $link => $name) {
+				$cell = '1';
+				if ($link == $sel) $cell = 'c';
+				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px{$nb}' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+			}
+
+			$r .= "</tr></table>";
 		}
+		$r .= "</div><br>";
 
-		$r .= "</tr></table>";
+		return $r;
 	}
-	$r .= "</div><br>";
-
-	return $r;
+	
 }
 
 function nuke_js($before, $after) {

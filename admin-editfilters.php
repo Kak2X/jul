@@ -1,6 +1,7 @@
 <?php
 
 require "lib/function.php";
+require "lib/classes/TreeView.php";
 
 admincheck();	
 
@@ -20,7 +21,7 @@ $_GET['id']     = filter_int($_GET['id']);
 $_GET['page']   = filter_int($_GET['page']);
 $_GET['type']   = numrange(filter_int($_GET['type']), 0, $max_filters);
 $_GET['fpp']    = filter_int($_GET['fpp']);
-if (!$_GET['fpp']) $_GET['fpp'] = 6;
+if (!$_GET['fpp']) $_GET['fpp'] = 15;
 
 $redirurl = "?type={$_GET['type']}&fpp={$_GET['fpp']}&page={$_GET['page']}";
 if (isset($_POST['setdel']) && isset($_POST['del'])) {
@@ -97,22 +98,15 @@ if (isset($_POST['setdel']) && isset($_POST['del'])) {
 
 
 
-pageheader("Board Filters");
 
-print adminlinkbar();
 //print msg_holder::get_message();
-
 
 // Tried to make the nifty sidebar layout less confusing as possible
 // Previously it was just terrible
 $html = "";
 if (!$_GET['type']) {
 	// Nothing!
-	$html = "
-	<tr>
-		<td class='tdbg1 center rh'>Select a filter type from the sidebar.</td>
-	</tr>
-	<tr><td class='tdbg2 center'>&nbsp;</td></tr>";
+	$html = "<div class='font center'>Select a filter type from the sidebar.</div>";
 } else {
 	if ($_GET['id']) {
 		
@@ -139,7 +133,7 @@ if (!$_GET['type']) {
 		
 		
 		$typeopt = "";
-		for ($i = 1, $m = count($filter_types); $i <= $m; ++$i) {
+		for ($i = 1; $i <= $max_filters; ++$i) {
 			$typeopt .= "<option value='{$i}'".filter_string($sel_type[$i]).">{$filter_types[$i]}</option>";
 		}
 		
@@ -282,51 +276,15 @@ if (!$_GET['type']) {
 	</tr>";
 }
 
+$extramenu = TreeView::ParseSubmenu($filter_types, 'admin-editfilters.php?type=');
+
+pageheader("Board Filters");
+print adminlinkbar($scriptname, "?type={$_GET['type']}", $extramenu);
+
 print "
 <form method='POST' action=\"{$redirurl}&id={$_GET['id']}\">
 	".auth_tag()."
-	".sidebar_table("Filters", $html, "Filter types", $filter_types, $_GET['type'])."
+	<table class='table'>". $html ."</table>
 </form>";
 
 pagefooter();	
-
-function sidebar_table($title, $html, $linktitle, $linkset, $sel = 0) {
-
-	// Generate linksets to highlight selected option
-	$linkshtml = "";
-	foreach ($linkset as $id => $linklabel) {
-		$w = ($sel == $id ? "b" : "a");
-		$linkshtml .= "<{$w} href='?type={$id}'>{$linklabel}</{$w}><br>";
-	}
-
-	return "
-	<style type='text/css'>
-		.rh {height: 19px}
-		textarea {display: block}
-		.nestedtable-container {
-			padding: 0px;
-		}
-		.nestedtable {
-			border: 0px;
-			height: 100%;
-		}
-		.nestedtable tr td:last-child { border-right: 0px; }
-		.nestedtable tr:last-child td { border-bottom: 0px; }
-	</style>
-	<table class='table'>
-		<tr>
-			<td class='tdbgh center b'>{$linktitle}</td>
-			<td class='tdbgh center b w'>
-				{$title}".($sel ? " - {$linkset[$sel]}" : "")."
-			</td>
-		</tr>
-		<tr class='rh'>
-			<td class='tdbg1 nobr vatop' style='padding-right: 20px'>{$linkshtml}</td>
-			<td class='tdbg2 center nestedtable-container'>
-				<table class='table nestedtable' style='border: 0px; height: 100%'>
-				{$html}
-				</table>
-			</td>
-		</tr>
-	</table>";
-}

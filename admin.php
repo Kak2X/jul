@@ -70,7 +70,7 @@
 		<tr><td class='tdbgh center'><b>Panel de Admin<br></td></tr>
 		<tr><td class='tdbg1 center'>
 			&nbsp;<br>
-			There are a few features you can use. Select one from above.<br>
+			There are a few features you can use. Select one from the panel on the left.<br>
 			Alternatively you can change some general board options in the panel below.
 			<?= (false && $sysadmin ? "<br><br>To change the hard configuration, click <a href='install/?chconfig'>here</a>." : "") ?>
 			<br>&nbsp;

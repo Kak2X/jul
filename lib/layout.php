@@ -580,7 +580,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 
 function pagefooter($showfooter = true) {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime;
+	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar;
+	
+	if ($_adminsidebar !== null)
+		print $_adminsidebar->DisplayBottom();
 	
 	if (!$config['affiliate-links']) {
 		$affiliatelinks = "";

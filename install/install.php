@@ -41,7 +41,7 @@ if (INSTALLED) {
 } else {
 	$config['enable-sql-debugger'] = true;
 }
-require "lib/mysql.php";
+require "lib/classes/mysql.php";
 require "install/mysql_plus.php";
 
 if (!isset($_POST['sqlhost'])) 	$_POST['sqlhost'] 	= filter_string($sqlhost);

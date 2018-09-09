@@ -93,7 +93,7 @@
 	
 	// We don't need everything
 	require_once "lib/config.php";
-	require_once "lib/mysql.php";
+	require_once "lib/classes/mysql.php";
 	
 	echo "Connecting to database...";
 	$sql 			= new mysql;

@@ -20,7 +20,7 @@
 		die("Configuration file missing. Please run the <a href='install'>installer</a>.");
 	}
 	require 'lib/config.php';
-	require 'lib/mysql.php';
+	require 'lib/classes/mysql.php';
 	require 'lib/layout.php';
 	require 'lib/rpg.php';
 	require 'lib/datetime.php';	

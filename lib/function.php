@@ -1256,7 +1256,7 @@ function create_verification_hash($n,$pw) {
 
 function generate_token($div = TOKEN_MAIN, $extra = "") {
 	global $config, $loguser;
-	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $div . $loguser['password']);
+	return hash('sha256', $loguser['name'] . $config['salt-string'] . $div . $loguser['password']);
 }
 
 function check_token(&$var, $div = TOKEN_MAIN, $extra = "") {

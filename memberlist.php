@@ -1,4 +1,6 @@
 <?php
+	const LT_NONALPHA = '%';
+	
 	require 'lib/function.php';
 	
 	function sortbyexp($a,$b) {
@@ -29,12 +31,19 @@
 	$_GET['ppp'] 	= filter_int($_GET['ppp']);
 	$_GET['rpg'] 	= filter_int($_GET['rpg']);
 	$_GET['page'] 	= filter_int($_GET['page']);
+	$_GET['lt']     = filter_string($_GET['lt']);
 	
 	if($_GET['sex']) $qsex = "&sex={$_GET['sex']}"; else $qsex = "";
 	if($_GET['pow']) $qpow = "&pow={$_GET['pow']}"; else $qpow = "";
 	if($_GET['ppp']) $qppp = "&ppp={$_GET['ppp']}"; else $qppp = "";
 	if($_GET['ord']) $qord = "&ord=1"; else $qord = "";
 	if($_GET['rpg']) $qrpg = "&rpg=1"; else $qrpg = "";
+	if ($_GET['lt']) {
+		$_GET['lt'] = ucfirst(substr($_GET['lt'], 0, 1));
+		$qlt = "&lt={$_GET['lt']}";
+	} else {
+		$qlt = "";
+	}
 	$q = $qppp.$qrpg;
 
 	if(!$_GET['ppp']) $_GET['ppp']=50;
@@ -43,7 +52,7 @@
 
 	
 	// WHERE clause of query
-	$qwhere = array();
+	$qwhere = array();	
 	switch ($_GET['sex']) {
 		case 'm': $qwhere[] = '(sex=0)'; break;
 		case 'f': $qwhere[] = '(sex=1)'; break;
@@ -61,7 +70,19 @@
 
 		$qwhere[] = "powerlevel $sqlpower";
 	}
-	$where = (empty($qwhere) ? '' : "WHERE ".implode(' AND ', $qwhere));
+	if ($_GET['lt']) {
+		if ($_GET['lt'] == LT_NONALPHA) { // Non alphabetic
+			$qwhere[] = "u.name NOT REGEXP '^[a-z]'";
+		} else {
+			// Alphabetic chars only
+			$ltnum = ord($_GET['lt']);
+			if ($ltnum < 65 || $ltnum > 90)
+				$_GET['lt'] = 'A';
+			$qwhere[] = "u.name LIKE '{$_GET['lt']}%'";
+		}
+	}
+	
+	$where = (empty($qwhere) ? '' : "WHERE ".implode(' AND ', $qwhere));	
 	
 	switch ($_GET['sort']) {
 		case 'name': 	$sorting = "ORDER BY u.name"; break;
@@ -75,6 +96,8 @@
 		default: errorpage("No.");
 	}
 	
+
+	// Ordering / limit and special modes
 	$order = $fields = $join = $limit = "";
 	$min = $_GET['ppp'] * $_GET['page'];
 	
@@ -85,9 +108,7 @@
 	if ($_GET['rpg']) {
 		$fields = ", r.*";
 		$join   = "LEFT JOIN users_rpg r ON u.id = r.uid";
-	}
-	
-	
+	}	
 	
 	// Don't fetch every single user at once when possible.
 	// Unfortunately it has to be done when the sort option is not a real field (ie: ratings or exp)
@@ -166,8 +187,23 @@
 	
 	$pagelinks = 
 	"<span class='fonts'>".
-		pagelist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp", $numusers, $_GET['ppp'], true).
+		pagelist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp$qlt", $numusers, $_GET['ppp'], true).
 	"</span>";
+	
+
+	// Menu declarations
+	// TODO: *Eventually* convert the rest of them to use this menu format (to allow highlighting the selected option)
+	
+	// First letter
+	for ($i = 0; $i < 26; ++$i) {
+		$c = chr(65 + $i);
+		$alphaelem[$c] = $c;
+	}
+	$alphaelem[LT_NONALPHA] = '#';
+	$alphaelem[""] = 'All';
+	
+	
+	
 	
 	$s = ($numusers != 1 ? "s" : "");
 	pageheader();
@@ -178,40 +214,46 @@ print "
 	<tr>
 		<td class='tdbg1 fonts center'>	Sort by:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort=posts$q$qpow$qsex$qord'>Total posts</a> |
-			<a href='memberlist.php?sort=exp$q$qpow$qsex$qord'>EXP</a> |
-			<a href='memberlist.php?sort=name$q$qpow$qsex$qord'>User name</a> |
-			<a href='memberlist.php?sort=reg$q$qpow$qsex$qord'>Registration date</a> |
-			<a href='memberlist.php?sort=act$q$qpow$qsex$qord'>Last activity</a> | 
-			<a href='memberlist.php?sort=age$q$qpow$qsex$qord'>Age</a> |
-			<a href='memberlist.php?sort=rating$q$qpow$qsex$qord'>Rating</a>
+			<a href='memberlist.php?sort=posts$q$qpow$qsex$qord$qlt'>Total posts</a> |
+			<a href='memberlist.php?sort=exp$q$qpow$qsex$qord$qlt'>EXP</a> |
+			<a href='memberlist.php?sort=name$q$qpow$qsex$qord$qlt'>User name</a> |
+			<a href='memberlist.php?sort=reg$q$qpow$qsex$qord$qlt'>Registration date</a> |
+			<a href='memberlist.php?sort=act$q$qpow$qsex$qord$qlt'>Last activity</a> | 
+			<a href='memberlist.php?sort=age$q$qpow$qsex$qord$qlt'>Age</a> |
+			<a href='memberlist.php?sort=rating$q$qpow$qsex$qord$qlt'>Rating</a>
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 fonts center'>	Sex:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord&sex=m'>Male</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord&sex=f'>Female</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord&sex=n'>N/A</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord'>All</a><tr>
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=m'>Male</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=f'>Female</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=n'>N/A</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt'>All</a><tr>
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 fonts center'>	Powerlevel:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=-1'>Banned</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=0'>Normal</a> |
-			". ($loguser['powerlevel'] >= 3 ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=1'>Normal +</a> | " : "") ."
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=2'>Moderator</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord&pow=3'>Administrator</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord'>All</a>
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=-1'>{$pwlnames[-1]}</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=0'>{$pwlnames[0]}</a> |
+			". ($loguser['powerlevel'] >= 3 ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=1'>{$pwlnames[1]}</a> | " : "") ."
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=2'>{$pwlnames[2]}</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=3'>{$pwlnames[3]}</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt'>All</a>
 		</td>
 	</tr>
 	<tr>
+		<td class='tdbg1 fonts center'>	First letter:</td>
+		<td class='tdbg2 fonts center'>
+			".elemlist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp&lt=", $alphaelem, $_GET['lt'], " | ")."
+		</td>
+	</tr>	
+	<tr>
 		<td class='tdbg1 fonts center'>	Sort order:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow'>Descending</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow&ord=1'>Ascending</a>
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow$qlt'>Descending</a> |
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow$qlt&ord=1'>Ascending</a>
 		</td>
 	</tr>
 </table>

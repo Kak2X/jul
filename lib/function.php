@@ -2448,6 +2448,19 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 	return $pagelinks;
 }
 
+function elemlist($url, $pagelist, $sel, $sep = " "){
+	$keys      = array_keys($pagelist);
+	$pages     = count($pagelist);
+	$pagelinks = "";
+	if ($pages > 1) {
+		for ($i = 0; $i < $pages; ++$i) {
+			$w = ($keys[$i] == $sel) ? "b" : "a";
+			$pagelinks .= ($i ? $sep : "")."<{$w} href=\"{$url}{$keys[$i]}\">{$pagelist[$keys[$i]]}</{$w}>";
+		}
+	}
+	return $pagelinks;
+}
+
 function page_select($total, $ppp) {
 	$page     = filter_int($_POST['page']);
 	$pages    = max(1, ceil($total / $ppp));

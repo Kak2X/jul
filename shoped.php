@@ -210,7 +210,7 @@
 	
 	?>
 	<table class='table'>
-		<tr><td class='tdbgc center' colspan="16">&lt; <a href="?cat=$cat&id=-1">New Item</a> &gt;</td></tr>
+		<tr><td class='tdbgc center' colspan="16">&lt; <a href="?cat=<?= $cat ?>&id=-1">New Item</a> &gt;</td></tr>
 		<tr>
 			<td class='tdbgh center'>&nbsp;</td>
 			<td class='tdbgh center' colspan='2'>Name</td>

@@ -53,7 +53,7 @@ class mysql_plus extends mysql{
 	// If a line ends with ; process the buffer		
 	public function import($file){
 		//$errors = 0;
-		$fail   = array();
+		//$fail   = array();
 		
 		$h = fopen($file, 'r');
 		$b = "";
@@ -70,7 +70,7 @@ class mysql_plus extends mysql{
 				$res = $this->query($b);
 				if (!$res) {
 					++$this->errors;
-					$this->fail[] = $b;
+					$this->q_errors[] = htmlspecialchars($b);
 				}
 				$b = "";
 			}

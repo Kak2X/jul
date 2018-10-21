@@ -11,7 +11,7 @@ class TreeView {
 		$this->links  = $links;
 	}
 		
-	public function DisplaySidebar($sel, $subSel, $extraOpt) {
+	public function DisplaySidebar($sel, $subSel = "", $extraOpt = null) {
 		$linksHtml = self::Generate($this->links, $sel, $subSel, $extraOpt);
 		
 		$css = "";

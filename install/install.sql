@@ -144,7 +144,7 @@ CREATE TABLE `archive_items` (
   `title` varchar(63) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `features` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `date` int(10) unsigned NOT NULL,
+  `date` int(10) unsigned DEFAULT NULL,
   `links` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `cat` tinyint(3) unsigned NOT NULL,
   `minpower` tinyint(4) NOT NULL DEFAULT '0',

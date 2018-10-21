@@ -12,6 +12,9 @@
 	}
 	
 	require "lib/function.php";
+	require "lib/classes/TreeView.php";
+	
+	$windowtitle = "Version history";
 	
 	$_GET['action'] = filter_string($_GET['action']);
 	$_GET['cat']    = filter_int($_GET['cat']);
@@ -28,7 +31,7 @@
 	
 	// Do not pageheader() when submitting forms
 	if (!$_GET['action'] || (!isset($_POST['submit']) && !isset($_POST['submit2']))) { 
-		pageheader("Version history");
+		pageheader($windowtitle);
 	}
 	
 	if ($_GET['action'] == 'catdelete') {	
@@ -215,10 +218,10 @@
 				'description' => '',
 				'features'    => '',
 				'links'       => '',
-				'date'        => ctime(),
+				'date'        => null,
 				'minpower'    => 0,
 				'cat'         => $_GET['cat'],
-				'ord'         => 0,
+				'ord'         => $sql->resultq("SELECT COUNT(ord) FROM archive_items WHERE cat = {$_GET['cat']}") + 1,
 			);
 			$what = "a new item";
 		} else {
@@ -292,52 +295,23 @@
 		replytoolbar('feat', readsmilies());
 	}
 	
+
 	
-	$cats = $sql->query("
-		SELECT id, title, description, count 
-		FROM archive_cat 
-		WHERE !minpower OR minpower <= {$loguser['powerlevel']}
-		ORDER BY ord ASC, id ASC
-	");
-	$i    = 0;
-	$txt  = "";
-	while ($x = $sql->fetch($cats)) {
-		if ($_GET['cat'] == $x['id']) {
-			$cell = 'c';
-			$viewcat = true;
-		} else {
-			$cell = (++$i%2)+1;
-		}
-		$editlink = ($isadmin ? "<div class='fonts'><a href='?cat={$x['id']}&action=catedit'>Edit</a> - <a href='?cat={$x['id']}&action=catdelete'>Delete</a></div>" : "");
+	if ($_GET['cat'] && $_GET['action'] != 'catedit') { //{ > 0 && isset($viewcat)) {
 		
-		$txt .= "
-		<tr>
-			<td class='tdbg{$cell} center'><a href='?cat={$x['id']}'>View</a>{$editlink}</td>
-			<td class='tdbg{$cell}'>
-				<b>{$x['title']}</b>
-				<div class='fonts'>{$x['description']}</div>
-			</td>
-			<td class='tdbg{$cell} center'>{$x['count']}</td>
-		</tr>";
-	}
-	
-	if ($isadmin) {
-		$txt .= "<tr><td class='tdbgc center b' colspan='3'><a href='?cat=-1&action=catedit'>&lt; Add a new category &gt;</a></td></tr>";
-	}
-	
-?>
-	<table class="table">
-		<tr><td class="tdbgh center b" colspan="3">Categories</td></tr>
-		<tr>
-			<td class="tdbgh center" style="width: 150px">#</td>
-			<td class="tdbgh center">Category</td>
-			<td class="tdbgh center" style="width: 75px">Items</td>
-		</tr>
-		<?= $txt ?>
-	</table>
-<?php
-	
-	if ($_GET['cat'] > 0 && isset($viewcat)) {
+		$catlist = $sql->getresultsbykey("
+			SELECT id, title 
+			FROM archive_cat 
+			WHERE !minpower OR minpower <= {$loguser['powerlevel']}
+			ORDER BY ord ASC, id ASC
+		");
+		
+		
+		if (!isset($catlist[$_GET['cat']])) {
+			errorpage("Sorry, but you can't access this category. Either it doesn't exist or you don't have access to it.", 'versions.php', 'the versions page');
+		}
+		$cattitle = $catlist[$_GET['cat']];
+		
 		$items = $sql->query("
 			SELECT id, title, date, description, features, links
 			FROM archive_items
@@ -346,23 +320,22 @@
 		");
 
 		
-		$i    = 0;
 		$txt  = "";
-		$nest = 0;
-		while ($x = $sql->fetch($items)) {
+		for ($i = 0; $x = $sql->fetch($items); ++$i) {
+			$nest = 0;
 			if ($_GET['id'] == $x['id'])
 				$cell = 'c';
 			else
-				$cell = (++$i%2)+1;
+				$cell = ($i%2)+1;
 			
-			$editlink = "<a href='?cat={$_GET['cat']}&id={$x['id']}'>View</a>".($isadmin ? " - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=edit'>Edit</a> - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=delete'>Delete</a>" : "");
+			$editlink = ($isadmin ? "<span class='fonts'><a href='?cat={$_GET['cat']}&id={$x['id']}&action=edit'>Edit</a> - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=delete'>Delete</a></span>" : "");
 			
 			$txt .= "
-			<tr>
+			<tr id='i{$x['id']}'>
 				<td class='tdbg{$cell} center vatop'>
-					<div class='b'>{$x['title']}</div>
-					<br>{$editlink}<br>
-					<div>(".printdate($x['date'], true).")</div>
+					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>{$x['title']}</a>
+					<br>{$editlink}
+					".($x['date'] ? "<div class='fonts'>(".printdate($x['date'], true).")</div>" : "")."
 				</td>
 				<td class='tdbg{$cell} vatop'>
 					<div>".nl2br($x['description'])."</div>
@@ -371,7 +344,7 @@
 					<div>".
 						preg_replace_callback(
 							"'(^|<br>)( +)?-'si",
-							function ($x) {
+							function ($x) use ($nest) {
 								// Automatically generate <ul> and <li> based on indentation
 								global $nest;
 								$cnest = strlen(filter_string($x[2]));
@@ -390,7 +363,7 @@
 					" : "")."
 				</td>
 				<td class='tdbg{$cell} center vatop'>
-					".str_replace("\n", "<br><br>", $x['links'])."
+					".nl2br($x['links'])."
 				</td>
 			</tr>";
 		}
@@ -399,7 +372,7 @@
 			$txt = "<tr><td class='tdbgc center b' colspan='3'><a href='?cat={$_GET['cat']}&id=-1&action=edit'>&lt; Add a new item &gt;</a></td></tr>{$txt}";
 		}
 		
-		if ($txt) {
+		//if ($txt) {
 			
 			// The selected link becomes bolded to highlight the choice
 			if ($_COOKIE['verAll']) {
@@ -410,21 +383,87 @@
 				$wo = "b";
 			}
 			
-			print "<br><div class='fonts right'>Show description: <{$wa} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=1'>All</{$wa}> - <{$wo} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=0'>Only selected</{$wo}></div>";
-?>
+			// Now uses a breadcrumbs bar to save on space
+			$links = array(
+				[$windowtitle, "?"],
+				[$cattitle, "?cat={$_GET['cat']}"],
+			);
+			$right = "Show description: <{$wa} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=1'>All</{$wa}> - <{$wo} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=0'>Only selected</{$wo}>";
+			$barlinks = dobreadcrumbs($links, $right); 
 			
-			<table class="table" style="border-top: none">
-				<tr><td class="tdbgh center b" colspan="3">Items</td></tr>
+			// Sidebar selection code (to save vertical space when a category is selected)
+			$urlformat = "?cat=";
+			$sidebar = new TreeView("Categories", TreeView::ParseSubmenu($catlist, $urlformat)); 
+			
+?>
+			<style>ul {padding-left: 20px} </style>
+			<?= $barlinks . $sidebar->DisplaySidebar($urlformat.$_GET['cat']) ?>
+			<table class="table">
+				<tr><td class="tdbgh center b" colspan="3"><?= $cattitle ?> | Viewable items: <?= $i ?></td></tr>
 				<tr>
-					<td class="tdbgh center b" style="width: 150px"></td>
+					<td class="tdbgh center b nobr"></td>
 					<td class="tdbgh center b"></td>
-					<td class="tdbgh center b" style="width: 150px"></td>
+					<td class="tdbgh center b nobr" style="width: 150px"></td>
 				</tr>
 				
 				<?= $txt ?>
 			</table>
+			<?= $sidebar->DisplayBottom() . $barlinks ?>
 <?php
+		//}
+	} else {
+		
+		$cats = $sql->query("
+			SELECT id, title, description, count 
+			FROM archive_cat 
+			WHERE !minpower OR minpower <= {$loguser['powerlevel']}
+			ORDER BY ord ASC, id ASC
+		");
+		$i    = 0;
+		$txt  = "";
+		while ($x = $sql->fetch($cats)) {
+			if ($_GET['cat'] == $x['id']) {
+				$cell = 'c';
+				$viewcat = true;
+			} else {
+				$cell = (++$i%2)+1;
+			}
+			$editlink = ($isadmin ? "<div class='fonts'><a href='?cat={$x['id']}&action=catedit'>Edit</a> - <a href='?cat={$x['id']}&action=catdelete'>Delete</a></div>" : "");
+			
+			$txt .= "
+			<tr>
+				<td class='tdbg{$cell} center'><a href='?cat={$x['id']}'>View</a>{$editlink}</td>
+				<td class='tdbg{$cell}'>
+					<b>{$x['title']}</b>
+					<div class='fonts'>{$x['description']}</div>
+				</td>
+				<td class='tdbg{$cell} center'>{$x['count']}</td>
+			</tr>";
 		}
+		
+		if ($isadmin) {
+			$txt .= "<tr><td class='tdbgc center b' colspan='3'><a href='?cat=-1&action=catedit'>&lt; Add a new category &gt;</a></td></tr>";
+		}
+		
+		$links = array(
+			[$windowtitle, null],
+		);
+		$barlinks = dobreadcrumbs($links); 
+		
+?>
+		<?= $barlinks ?>
+		<table class="table">
+			<tr><td class="tdbgh center b" colspan="3">Categories</td></tr>
+			<tr>
+				<td class="tdbgh center" style="width: 150px">#</td>
+				<td class="tdbgh center">Category</td>
+				<td class="tdbgh center" style="width: 75px">Items</td>
+			</tr>
+			<?= $txt ?>
+		</table>
+		<?= $barlinks ?>
+<?php
+	
 	}
 	
 	pagefooter();

@@ -158,10 +158,10 @@ input[type=radio] {
 }*/
 .toolbar {
 	z-index: 1;
-	background: rgba(50,50,100);
+	background: rgba(200, 200, 128, 0.75);
 }
 .toolbar-sep {
-	border-right: 1px solid rgba(255,255,255,0.25);
+	border-right: 1px solid rgba(255,255,255,0.50);
 }
 .toolbar-button {
 	height: 15px;

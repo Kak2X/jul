@@ -4,7 +4,7 @@
 	$newthreadpic    = '<img class="post" src="schemes/mariomovie/status/newthread.png" alt="New thread" title="New thread">';
 	$newreplypic     = '<img class="post" src="schemes/mariomovie/status/newreply.png" alt="New reply" title="New reply">';
 	$newpollpic      = '<img class="post" src="schemes/mariomovie/status/newpoll.png" alt="New poll" title="New poll">';
-	$threadclosedpic = '<img class="post" src="schemes/mariomovie/threadclosed.png" alt="Thread closed" title="Thread closed">';
+	$threadclosedpic = '<img class="post" src="schemes/mariomovie/status/threadclosed.png" alt="Thread closed" title="Thread closed">';
 	$bgimage         = 'schemes/mariomovie/zeroesbg3.png';
 	$bgcolor         = '101010';
 

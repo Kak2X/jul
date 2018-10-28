@@ -17,7 +17,8 @@
 	$newreplypic  = "<img src='schemes/purple/status/newreplypurple.png' align='absmiddle'>";   
 	$newpollpic   = "<img src='schemes/purple/status/newpollpurple.png' align='absmiddle'>";
 	$closedpic    = "<img src='schemes/purple/status/threadclosedpurple.png' align='absmiddle'>";
-
+	$poweredbypic = "<img src='schemes/dani/poweredbydani.gif'>";
+	
 	$textcolor  = 'EEE0F8';
 	$linkcolor  = 'FEB7CE';
 	$linkcolor2 = 'CE778E';

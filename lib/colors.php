@@ -5,7 +5,7 @@
 	*/
 	
 	global 	$pwlnames, $nmcol, $statusicons,
-			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $numdir, $numfil;
+			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $poweredbypic, $numdir, $numfil;
 			
 	$nmcol = array(
 		0 	 => array('-2'=>     '6a6a6a', '-1'=>'888888', '97ACEF',   'D8E8FE',   'AFFABE',        'FFEA95'),
@@ -33,6 +33,7 @@
 	$newthreadpic	= '<img src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
 	$closedpic		= '<img src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
 	$nopollpic      = '<img src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
+	$poweredbypic   = '<img src="images/poweredbyacmlm.gif">';
 	$numdir			= 'jul/';
 
 	$statusicons = array(

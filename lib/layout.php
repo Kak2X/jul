@@ -516,6 +516,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<?=$css?>
 	</head>
 	<body>
+		<?= (isset($body_extra) ? $body_extra : "") ?>
 	<?php
 
 	if (!$mini) {
@@ -580,7 +581,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 
 function pagefooter($showfooter = true) {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar;
+	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar, $poweredbypic;
 	
 	if ($_adminsidebar !== null)
 		print $_adminsidebar->DisplayBottom();
@@ -635,9 +636,7 @@ piwikTracker.enableLinkTracking();
 		
 		<table cellpadding=0 border=0 cellspacing=2>
 			<tr>
-				<td>
-					<img src='images/poweredbyacmlm.gif'>
-				</td>
+				<td><?= $poweredbypic ?></td>
 				<td>
 					<span class='fonts'>
 						Acmlmboard - <?= file_get_contents('version.txt') ?><br>

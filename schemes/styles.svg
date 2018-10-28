@@ -1,0 +1,9 @@
+<svg style="position: absolute; top: -99999px" xmlns="http://www.w3.org/2000/svg">
+  <filter id="amber">
+    <feComponentTransfer>
+      <feFuncR type="linear" slope="4"/>
+      <feFuncG type="linear" slope="0.5"/>
+      <feFuncB type="linear" slope="0"/>
+    </feComponentTransfer>
+  </filter>
+</svg>

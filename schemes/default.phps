@@ -63,6 +63,9 @@
 	$closedpic		= '<img src="schemes/ccs/status/threadclosed.png" align="absmiddle">';
 */
 
+	# 'Powered by' image, if one is provided
+//	$poweredby      = '<img src="images/poweredby.gif">';
+
 	# Number graphics (leave these alone unless you know what you're doing)
 /*
 	$numdir			= 'ccs/';																# /numgfx/<dir>/ for number images

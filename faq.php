@@ -271,6 +271,10 @@
 		    <td class='tdbg1'>[spoiler]Spoiler text.[/spoiler]</td>
 		  </tr>
 		  <tr>
+		    <td class='tdbg2'>[spoileri<z>]Inline spoiler text.[/spoileri<z>]</td>
+		    <td class='tdbg1'>[spoileri]Inline spoiler text.[/spoileri]</td>
+		  </tr>
+		  <tr>
 		    <td class='tdbg2'>[youtube<z>]BrQn-O_zFRc[/youtube<z>] (video ID)</td>
 		    <td class='tdbg1'>A YouTube embed.</td>
 		  </tr>

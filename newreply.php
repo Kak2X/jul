@@ -56,7 +56,7 @@
 			if ($userid == -1) {
 				$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
 			} else {
-				$user 	= load_user($userid);
+				$user 	= load_user($userid, true);
 			}
 		}
 		

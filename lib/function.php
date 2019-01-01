@@ -879,26 +879,65 @@ function doforumlist($id, $name = '', $shownone = ''){
 }
 
 // Note: -1 becomes NULL
-function doschemeList($all = false, $sel = 0, $name = 'scheme'){
+const SL_SHOWSPECIAL = 0b1;
+const SL_SHOWNONE    = 0b10;
+const SL_SHOWUSAGE   = 0b100;
+function doschemelist($sel = 0, $name = 'scheme', $flags = 0){
 	global $sql, $loguser;
-	
+
 	$sortmode = $loguser['schemesort'] ? "name" : "ord";
-	$schemes = $sql->query("SELECT * FROM schemes ".($all ? "ORDER BY special," : "WHERE special = 0 ORDER BY")." {$sortmode}, id");
+	$showcats = true; //$loguser['showschemecats'];
+	
+	// With scheme categories introduced...
+	// TODO: Should the special flag just be removed entirely?
+	$schemeq = "
+		SELECT s.id, s.name, s.special, s.cat, c.title cat_title {usgFields}
+		FROM schemes s
+		LEFT JOIN schemes_cat c ON s.cat = c.id
+		{usgJoin}
+		WHERE s.id = '{$sel}' OR (".($flags & SL_SHOWSPECIAL ? "" : "s.special = 0 AND")." 
+		      (!s.minpower OR s.minpower <= {$loguser['powerlevel']})
+		  AND (!c.minpower OR c.minpower <= {$loguser['powerlevel']}))
+		{usgGroup}
+		ORDER BY ".($showcats ? "c.ord, " : "")."s.{$sortmode}, s.id
+	";
+	
+	// Scheme usage stats, now part of the function
+	if ($flags & SL_SHOWUSAGE) {
+		$schemeq = strtr($schemeq, [
+			"{usgFields}" => ", COUNT(u.scheme) used",
+			"{usgJoin}"   => "LEFT JOIN users u ON s.id = u.scheme",
+			"{usgGroup}"  => "GROUP BY s.id",
+		]);
+	} else {
+		$schemeq = strtr($schemeq, [
+			"{usgFields}" => "",
+			"{usgJoin}"   => "",
+			"{usgGroup}"  => "",
+		]);
+	}
 	
 	if ($sel === NULL) $sel = '-1';
 	$scheme[$sel] = "selected";
 	
-	$input 	= "";
-	$prev	= 1; // Previous special value
+	$input 	  = "";
+	if (!$showcats)
+		$input = "<optgroup label=\"Schemes\">";
+	
+	
+	$last_cat = 0;
+	$schemes = $sql->query($schemeq);
 	while($x = $sql->fetch($schemes)){
-		// If we only fetch normal schemes don't bother separating between them.
-		if ($all && $prev != $x['special']){
-			$prev 	= $x['special'];
-			$input .= "</optgroup><optgroup label='".($prev ? "Special" : "Normal")." schemes'>";
+		if ($showcats && $last_cat != $x['cat']) {
+			$last_cat = $x['cat'];
+			$input .= "</optgroup><optgroup label=\"{$x['cat_title']}\">";
 		}
-		$input	.= "<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">{$x['name']}</option>";
+		$input	.= ""
+			."<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">"
+			.($x['special'] ? "*" : "")."{$x['name']}".($flags & SL_SHOWUSAGE ? " ({$x['used']})" : "")
+			."</option>";
 	}
-	return "<select name='$name'>".($all ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
+	return "<select name='$name'>".($flags & SL_SHOWNONE ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
 }
 
 // When it comes to this kind of code being repeated across files...
@@ -1930,6 +1969,19 @@ function can_view_forum_query($f = 'f') {
 	global $loguser;
 	if ($f) $f .= "."; // Table alias
 	return "((!{$f}minpower OR {$f}minpower <= '{$loguser['powerlevel']}') AND ('{$loguser['id']}' OR !{$f}login))";
+}
+
+function can_select_scheme($id) {
+	global $sql, $loguser;
+	return $sql->resultq("
+		SELECT COUNT(*) 
+		FROM schemes s 
+		LEFT JOIN schemes_cat c ON s.cat = c.id
+		WHERE '{$id}' = '{$loguser['scheme']}' OR (
+				(!s.minpower OR s.minpower <= {$loguser['powerlevel']})
+			AND (!c.minpower OR c.minpower <= {$loguser['powerlevel']})
+			AND s.id = '{$id}'
+		)");
 }
 
 function admincheck() {

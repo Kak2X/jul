@@ -145,6 +145,9 @@
 			$_POST['sidebartype'] = $userdata['sidebartype'];
 		}
 		
+		$scheme = filter_int($_POST['scheme']);
+		if (!can_select_scheme($scheme))
+			errorpage("'Inspect element' doesn't cut it here. Thanks for trying though.");
 		
 		$sql->beginTransaction();
 		
@@ -195,7 +198,7 @@
 			'pollstyle' 		=> numrange(filter_int($_POST['pollstyle']), 0, 1),
 			'layout' 			=> $tlayout,
 			'signsep' 			=> numrange(filter_int($_POST['signsep']), 0, 3),
-			'scheme' 			=> filter_int($_POST['scheme']),
+			'scheme' 			=> $scheme,
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			'splitcat' 			=> filter_int($_POST['splitcat']),
 			'schemesort' 		=> filter_int($_POST['schemesort']),
@@ -519,16 +522,10 @@
 			// Hours left before the user is unbanned
 			$ban_hours = ban_hours('ban_hours', $userdata['ban_expire'], ($userdata['powerlevel'] == -1))." (has effect only for Banned users)";
 		}
-
 		
+		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;
+		$scheme = doschemelist($userdata['scheme'], 'scheme', $schflags);
 		// listbox with <name> <used>
-		if (!$edituser && !$isadmin) {
-			// herp derp
-			$sortmode = $userdata['schemesort'] ? "name" : "ord";
-			$scheme   = queryselectbox('scheme',   "SELECT s.id as id, s.name, COUNT(u.scheme) as used FROM schemes s LEFT JOIN users u ON (u.scheme = s.id) WHERE s.ord > 0 AND (!s.special OR s.id = {$userdata['scheme']}) GROUP BY s.id ORDER BY s.{$sortmode}");
-		} else {
-			$scheme = doschemelist(true, $userdata['scheme'], 'scheme');
-		}
 		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
 		

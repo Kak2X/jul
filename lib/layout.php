@@ -271,23 +271,28 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	// Just skip all of this if we've forced a scheme
 	if (!$forcescheme) {
 	
-		//	Previewing a scheme?
-		if (isset($_GET['scheme'])) {
-			$loguser['scheme'] = (int) $_GET['scheme'];
-			$schemepre	= true;
-		} 
-
 		// Force Xmas scheme (cue whining, as always)
 		if (false && $isChristmas && !$x_hacks['host']) {
 			$scheme = 3;
 			$x_hacks['rainbownames'] = true;
 		}
+		//	Previewing a scheme?
+		else if (isset($_GET['scheme'])) {
+			$scheme = (int)$_GET['scheme'];
+			if (!can_select_scheme($scheme))
+				$scheme = 0;
+			else
+				$schemepre	= true;
+		}
+		else {
+			$scheme = $loguser['scheme'];
+		}
 		
 	} else {
-		$loguser['scheme'] = $forcescheme;
+		$scheme = $forcescheme;
 	}
 
-	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = {$loguser['scheme']}");
+	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = '{$scheme}'");
 
 	$filename	= "";
 	if ($schemerow) {

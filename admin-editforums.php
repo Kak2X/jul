@@ -273,7 +273,7 @@ else if ($_GET['id']) {
 			<td class='tdbgh center' >Number of Posts</td>
 			<td class='tdbg1'><input type="text" name="numposts" maxlength="8" size="10" value="<?=($forum['numposts'] ? $forum['numposts'] : "0")?>" class="right"></td>
 			<td class='tdbgh center' >Special Scheme</td>
-			<td class='tdbg1'><?=doschemeList(true, $forum['specialscheme'], 'specialscheme')?></td>
+			<td class='tdbg1'><?=doschemeList($forum['specialscheme'], 'specialscheme', SL_SHOWSPECIAL | SL_SHOWNONE)?></td>
 			<td class='tdbgh center' >Category</td>
 			<td class='tdbg1'><?=dropdownList($categories, $forum['catid'], "catid")?></td>
 		</tr>

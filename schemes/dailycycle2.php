@@ -126,11 +126,11 @@
 	
 	// Well, this didn't originally show...
 //	$config['board-title']   = '<font class=fonts><font style=font-size:30px>The "Just-Us" League</font></font>';
-	$config['board-title']  .= "
+	/*$config['board-title']  .= "
 	<br><span class='fonts' style='font-size: 10px'>
 		Time: {$min} ({$cyclenum}). ". floor($cyclepct * 100) ."% done ({$cycletime2}/{$cycletime}).
 		".($rainy ? " It is currently raining." : "")."
-	</span>";
+	</span>";*/
 	
 	
 	// Extra effects

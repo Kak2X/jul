@@ -16,10 +16,10 @@ function timeunits($sec) {
 	if ($sec<86400)		return floor($sec/3600).' hours';
 	if ($sec<172800)	return '1 day';
 	if ($sec<31556926)	return floor($sec/86400).' days';
-	return sprintf("%.1f years", floor($sec/31556926));
+	return sprintf("%.1f years", $sec/31556926);
 }
 
-function timeunits2($sec) {
+function timeunits2($sec, $no_blank = false) {
 	$y = floor($sec / 31556926);
 	$sec -= $y * 31556926;
 	$d = floor($sec / 86400);
@@ -32,7 +32,8 @@ function timeunits2($sec) {
 	$hs = ($h != 1 ? 's' : '');
 	
 	$str = ($y?"$y year$ys ":'').($d?"$d day$ds ":'').($h?"$h hour$hs ":'').($m?"$m min. ":'').($s?"$s sec.":'');
-	if(substr($str,-1)==' ') $str=substr_replace($str,'',-1);
+	if (!$str && $no_blank) $str = "0 sec.";
+	if (substr($str,-1)==' ') $str = substr_replace($str,'',-1);
 	return $str;
 }
 

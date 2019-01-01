@@ -257,7 +257,7 @@
 	
 	$controls['ip'] = "";
 	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
-		$postlist	.= '<tr>';
+		//$postlist	.= '<tr>';
 		$bg = $i % 2 + 1;
 		
 		// link & quote

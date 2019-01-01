@@ -514,7 +514,7 @@
 	$specialscheme = "";
 	
 	// "Mobile" layout
-	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE", "BlackBerry", "Mobile");
+	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE", "BlackBerry", "iPhone", "Mobile");
 	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
 		$loguser['layout']		= 2;
 		$loguser['viewsig']		= 0;
@@ -700,7 +700,8 @@ function escape_codeblock($text) {
 	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 
 	// @TODO why not just use htmlspecialchars() or htmlentities()
-	return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
+	//return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
+	return "<blockquote class='code'><hr><pre><code>". str_replace($list, $list2, $text[0]) ."</code></pre><hr></blockquote>";
 }
 
 function doreplace2($msg, $options='0|0', $nosbr = false){
@@ -759,7 +760,7 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 	
 		$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
 		$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
-		$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img src=\\1>', $msg);
+		$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img class="imgtag" src=\\1>', $msg);
 		$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 		$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 	}

@@ -59,7 +59,7 @@
 		case 'n': $qwhere[] = '(sex=2)'; break;
 	}
 	if ($_GET['pow']) {
-		if (($_GET['pow'] == 1 || $_GET['pow'] == 0) && $loguser['powerlevel'] < 3)
+		if (($_GET['pow'] == 1 || $_GET['pow'] == 0) && $loguser['powerlevel'] < $config['view-super-minpower'])
 			$sqlpower = "IN (0, 1)";
 		elseif ($_GET['pow'] == 3 || $_GET['pow'] == 4) // merge admin + sysadmin (they appear the same)
 			$sqlpower = "IN (3, 4)";
@@ -237,7 +237,7 @@ print "
 		<td class='tdbg2 fonts center'>
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=-1'>{$pwlnames[-1]}</a> |
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=0'>{$pwlnames[0]}</a> |
-			". ($loguser['powerlevel'] >= 3 ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=1'>{$pwlnames[1]}</a> | " : "") ."
+			". ($loguser['powerlevel'] >= $config['view-super-minpower'] ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=1'>{$pwlnames[1]}</a> | " : "") ."
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=2'>{$pwlnames[2]}</a> |
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=3'>{$pwlnames[3]}</a> |
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt'>All</a>
@@ -311,8 +311,8 @@ print "
 
 		if (!$_GET['rpg']) {
 			$ulist .= "
-				<td class='tdbg2 center'>".printdate($user['regdate'])."</td>
-				<td class='tdbg2 center'>".printdate($user['lastactivity'])."</td>
+				<td class='tdbg2 center'><span title='". timeunits2(ctime() - $user['regdate'], true) ." ago'>".printdate($user['regdate'])."</span></td>
+				<td class='tdbg2 center'><span title='". timeunits2(ctime() - $user['lastactivity'], true) ." ago'>".printdate($user['lastactivity'])."</span></td>
 				<td class='tdbg1 center'>{$user['posts']}</td>
 				<td class='tdbg1 center'>{$user['lvl']}</td>
 				<td class='tdbg1 center'>{$user['exp']}</td>

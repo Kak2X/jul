@@ -275,6 +275,7 @@ if (!$error) {
 				".set_radio(2,'allow-pmthread-edit'   , 'Allow PM editing'       , 'No|Yes'      , 0)."
 				".set_input(0,'pmthread-dest-limit'   , 'Max partecipants/conv.' , 50, 4)."
 				".set_input(0,'pmthread-folder-limit' , 'Max PM folders/user'    , 50, 4)."
+				".set_powl( 0,'view-super-minpower'   , 'Powerlevel required to view Normal+ users', 1)."
 				
 				".set_heading("File uploads")."	
 				".set_radio(2,'allow-attachments'     , 'Enable attachments' , 'Disable|Enable', 0)."

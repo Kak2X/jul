@@ -67,7 +67,7 @@
 
 
 	// Hide Normal+ to non-admins
-	if ($loguser['powerlevel'] < 3) {
+	if ($loguser['powerlevel'] < $config['view-super-minpower']) {
 		$nmcol[0][1]	= $nmcol[0][0];
 		$nmcol[1][1]	= $nmcol[1][0];
 		$nmcol[2][1]	= $nmcol[2][0];

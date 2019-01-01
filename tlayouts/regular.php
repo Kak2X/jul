@@ -260,9 +260,10 @@ function postcode($post,$set){
 			</td>";
 		}
 		
-		
+		// Position relative div moved to the CSS defn for the .post
+		// Incidentally, this fixes an issue with DCII as browsers would close the body container defining the padding.
 		return 
-		"<div style='position:relative'>
+		"
 			<table class='table post tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
 					{$topbar1}
@@ -290,7 +291,7 @@ function postcode($post,$set){
 				</tr>
 				{$optionrow}
 			</table>
-		</div>";
+		";
 //	}
 	
 }

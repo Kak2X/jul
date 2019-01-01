@@ -359,13 +359,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			a:active,.buttonlink:active     { color: #$linkcolor3; }
 			a:hover,.buttonlink:hover 	    { color: #$linkcolor4; }
 			body {
-				scrollbar-face-color:		#$scr3;
-				scrollbar-track-color:		#$scr7;
-				scrollbar-arrow-color:		#$scr6;
-				scrollbar-highlight-color:	#$scr2;
-				scrollbar-3dlight-color:	#$scr1;
-				scrollbar-shadow-color:	#$scr4;
-				scrollbar-darkshadow-color:	#$scr5;
 				color: #$textcolor;
 				font:13px $font;
 				background: #$bgcolor$bgimage;
@@ -395,6 +388,65 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			.attachment-box:hover,.attachment-box-addnew:hover {
 				background: #$categorybg !important;
 			}
+		";
+	}
+	
+	if (
+		   isset($scr1)
+		&& isset($scr2)
+		&& isset($scr3)
+		&& isset($scr4)
+		&& isset($scr5)
+		&& isset($scr6)
+		&& isset($scr7)
+	) {
+		$css	.= "
+		/* IE/Webkit/Chrome/etc. custom scrollbars. Remember these? */
+		body {
+			scrollbar-face-color:		#$scr3;
+			scrollbar-track-color:		#$scr7;
+			scrollbar-arrow-color:		#$scr6;
+			scrollbar-highlight-color:	#$scr2;
+			scrollbar-3dlight-color:	#$scr1;
+			scrollbar-shadow-color:		#$scr4;
+			scrollbar-darkshadow-color:	#$scr5;
+		}
+		::-webkit-scrollbar, ::-webkit-scrollbar-button {
+			width:	1.25em;
+			height:	1.25em;
+		}
+		::-webkit-scrollbar-track	{
+			background-color: #$scr7;
+		}
+		::-webkit-scrollbar-track-piece	{}
+		::-webkit-scrollbar-thumb, ::-webkit-scrollbar-button	{
+			background-color:		#$scr3;
+			background-size:		contain;
+			background-repeat:		no-repeat;
+			background-position:	center;
+			border:					2px solid;
+			color:					#$scr6;
+			border-color: 			#$scr1 #$scr4 #$scr5 #$scr2;
+		}
+		::-webkit-scrollbar-thumb:active, ::-webkit-scrollbar-button:active	{
+			background-color:	#$scr4;
+			border-color: 		#$scr5 #$scr2 #$scr1 #$scr5;
+		}
+		::-webkit-scrollbar-button:vertical:decrement {
+			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='12 75, 50 25, 88 75'/></svg>\");
+		}
+		::-webkit-scrollbar-button:vertical:increment {
+			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='12 25, 50 75, 88 25'/></svg>\");
+		}
+		::-webkit-scrollbar-button:horizontal:decrement {
+			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='75 12, 25 50, 75 88'/></svg>\");
+		}
+		::-webkit-scrollbar-button:horizontal:increment {
+			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='25 12, 75 50, 25 88'/></svg>\");
+		}
+		::-webkit-scrollbar-corner	{
+			background:	#$scr7;
+		}
 		";
 	}
 	
@@ -552,7 +604,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 				// Mobile header
 ?>
 							<br>
-							<?=$dispviews?> views, <?=printdate()?>
+							<?=$dispviews?> views, <?=printdate()?><br>
+							(mobile view enabled)
 						</span>
 					</td>
 				</tr>

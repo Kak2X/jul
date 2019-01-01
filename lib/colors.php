@@ -23,10 +23,6 @@
 	$font	= 'Verdana, Geneva, sans-serif';
 	$font2	= 'Verdana, Geneva, sans-serif';
 	$font3	= 'Tahoma, Verdana, Geneva, sans-serif';
-	
-	for ($i = 1; $i < 8; ++$i) {
-		${'scr'.$i} = 'auto';
-	}
 
 	$newpollpic		= '<img src="schemes/default/status/newpoll.png" alt="New poll" align="absmiddle">';
 	$newreplypic	= '<img src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';

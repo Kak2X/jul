@@ -344,13 +344,16 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$bgimage = " url('$bgimage')";
 	else 
 		$bgimage = '';
-
+	
 	if ($nullscheme) {
 		// special "null" scheme.
-		$css = "";
+		$css = "<style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'><link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>";
+		$css = "
+		<link rel='stylesheet' href='schemes/base.css' type='text/css'>
+		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
+		<style type='text/css'>";
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
@@ -508,14 +511,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	
 	// 10/18/08 - hydrapheetz: added a small hack for "extra" css goodies.
-	if (!$nullscheme && !$schemetype) {
-		if (isset($css_extra)) {
-			$css .= $css_extra . "\n";
-		}
-		$css .= '</style>';
-	} else if (isset($css_extra)) {
-		$css .= "<style type='text/css'>{$css_extra}</style>\n";
+	if (isset($css_extra)) {
+		$css .= $css_extra . "\n";
 	}
+	$css .= '</style>';
 
 	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
 	

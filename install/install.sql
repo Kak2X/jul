@@ -426,7 +426,8 @@ CREATE TABLE `delusers` (
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `comments` tinyint(1) unsigned NOT NULL DEFAULT '1'
+  `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `extrafields` TEXT NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2341,6 +2342,7 @@ CREATE TABLE `users` (
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `extrafields` TEXT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `posts` (`posts`),
   KEY `name` (`name`),

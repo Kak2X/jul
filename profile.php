@@ -225,6 +225,15 @@
 	];
 	
 	/*
+		Custom profile fields
+	*/
+	if ($user['extrafields'] && ($custom = json_decode($user['extrafields'], true))) {
+		foreach ($custom as $ctitle => $cvar) {
+			$profile['Extra'][xssfilters($ctitle)] = nl2br(xssfilters($cvar));
+		}
+	}
+	
+	/*
 		Equipped items
 	*/
 	$shops 	= $sql->getresultsbykey("SELECT id, name FROM itemcateg");
@@ -418,6 +427,8 @@
 		<?= profile_table($profile, 'User settings') ?>
 		<br>
 		<?= profile_table($profile, 'Personal information') ?>	
+		<br>
+		<?= isset($profile['Extra']) ? profile_table($profile, 'Extra') : "" ?>	
 	</td>
 	<td>&nbsp;&nbsp;&nbsp;</td>
 	<td valign=top>

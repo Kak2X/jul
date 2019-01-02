@@ -434,7 +434,11 @@
 			table_format("Options", array(
 				"Green coins" 	=> [0, "gcoins", "", 10, 10],
 			));
-		}		
+		}
+		
+		table_format("Miscellaneous", array(
+			"Extra profile fields"		 	=> [4, "extrafields", ""],
+		));
 		
 		/*
 			Custom values (used when first value in array is set to 4)
@@ -537,6 +541,9 @@
 				$signsep .= "<option value={$i}{$sel}>{$sepn[$i]} (".filter_int($used[$i]).")";
 		}
 		$signsep="<select name='signsep'>$signsep</select>";
+		
+		// Misc opts
+		$extrafields = "<a href='editprofilex.php?id={$id}' target='_blank'>Extended profile editor</a>";
 		
 		/*
 			Table field generator

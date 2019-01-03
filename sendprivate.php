@@ -1,4 +1,7 @@
 <?php
+
+// TODO: Something similar to the error handling in newthread / newreply?
+$meta['cache'] = true;
 	
 require 'lib/function.php';
 

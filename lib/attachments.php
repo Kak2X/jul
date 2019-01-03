@@ -11,7 +11,7 @@
 function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) {
 	global $config, $numdir, $sql;
 	
-	if (!$config['allow-attachments'] || !$user) {
+	if (!$config['allow-attachments'] || $user < 1) {
 		return "";
 	}
 	

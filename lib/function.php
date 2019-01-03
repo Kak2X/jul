@@ -7,9 +7,11 @@
 	// UTF-8 time?
 	header("Content-type: text/html; charset=utf-8'");
 
-	// cache bad
-	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-	header('Pragma: no-cache');
+	// cache bad (well, most of the time)
+	if (!isset($meta['cache'])) {
+		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+		header('Pragma: no-cache');
+	}
 	
 	$errors = array();
 	set_error_handler('error_reporter');
@@ -1735,13 +1737,12 @@ function jspageexpand($start, $end) {
 }
 */
 
-function redirect($url, $msg, $delay){
+function redirect($url, $msg, $delay = 1){
 	global $config;
-	if ($config['no-redirects']) {
-		return "Click <a href=\"{$url}\">here</a> to be continue to {$msg}.";
+	if ($config['no-redirects'] || $delay < 0) {
+		return "Go back to <a href=$url>$msg</a>."; //"Click <a href=\"{$url}\">here</a> to be continue to {$msg}.";
 	} else {
-		if ($delay < 1) $delay = 1;
-		return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=$delay;URL=$url>";
+		return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=".max(1,$delay).";URL=$url>";
 	}
 }
 
@@ -1887,6 +1888,16 @@ function errorpage($text, $redirurl = '', $redir = '', $redirtimer = 4) {
 	print "</table>";
 
 	pagefooter();
+}
+
+function boardmessage($text, $title = "Message", $layout = true) {
+	if ($layout && !defined('HEADER_PRINTED')) pageheader();
+	print "
+	<table class='table'>
+		<tr><td class='tdbgh center b'>$title</td></tr>
+		<tr><td class='tdbg1 center' style='padding: 1em 0;'>$text</td></tr>
+	</table>";
+	if ($layout) pagefooter();
 }
 
 function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN) {

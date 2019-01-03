@@ -1,14 +1,26 @@
 <?php
 	// die("Disabled.");
 	
+	// Just in case, allow caching to return safely without losing anything.
+	$meta['cache'] = true;
+	
 	require 'lib/function.php';
 	
 	// Stop this insanity.  Never index newreply.
 	$meta['noindex'] = true;
 	
-	if ($banned) {
-		errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id={$_GET['id']}",$thread['title'],0);
+	// Give failed replies a last-chance to copy and save their work,
+	// as way too often you'll miss and then it's just gone forever
+	$lastchance		= null;
+	if (filter_string($_POST['message'])) {
+		$config['no-redirects'] = true;
+		$lastchance		= "<br><br>You can copy and save what you were <em>going</em> to post, if you want:
+		<br><textarea class='newposttextbox' style='margin: 1em auto;'>". htmlspecialchars($_POST['message'], ENT_QUOTES) ."</textarea>";
 	}
+	
+	//if ($banned) {
+	//	errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id={$_GET['id']}",$thread['title'],0);
+	//}
 	
 	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
@@ -19,9 +31,9 @@
 	
 	// load_thread takes care of view permissions, but the reply permissions still need to be checked
 	if (!$ismod && $thread['closed']) {
-		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.","thread.php?id={$_GET['id']}",$thread['title'],0);
-	} else if ($loguser['powerlevel'] < $forum['minpowerreply']) {
-		errorpage("You are not allowed to post in this thread.","thread.php?id={$_GET['id']}",$thread['title'],0);
+		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.{$lastchance}","thread.php?id={$_GET['id']}",$thread['title'],0);
+	} else if ($loguser['powerlevel'] < $forum['minpowerreply'] || $banned) {
+		errorpage("You are not allowed to reply to this thread.{$lastchance}","thread.php?id={$_GET['id']}",$thread['title'],0);
 	}
 	
 	if ($forum_error) {
@@ -43,85 +55,117 @@
 	$_POST['tannc'] = filter_int($_POST['tannc']);
 	$_POST['tfeat'] = filter_int($_POST['tfeat']);
 	
-	
+	$error       = false;
+	$login_error = "";
+	$reply_error = "";
+	$postpreview = "";
 	$attach_key = $_GET['id'];
 	$userid     = $loguser['id'];
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
-		$error = '';
+
 		// Trying to post as someone else?
 		if ($loguser['id'] && !$_POST['password']) {
 			$user   = $loguser;
 		} else {
 			$userid = checkuser($_POST['username'], $_POST['password']);
 			if ($userid == -1) {
-				$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
+				$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
 			} else {
 				$user 	= load_user($userid, true);
 			}
 		}
 		
-		if (!$error) {
+		if (!$login_error) {
 			if ($userid != $loguser['id']) {
 				check_forumban($forum['id'], $userid);
 				$ismod = ismod($forum['id'], $user);
 				if ($thread['closed'] && !$ismod)
-					$error	= 'The thread is closed and no more replies can be posted.';
-				else if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
-					$error	= 'Replying in this forum is restricted, and you are not allowed to post in this forum.';
-			} else {
-				if (!$_POST['message'])
-					$error	= "You didn't enter anything in the post.";
-				else if ($user['lastposttime'] > (ctime()-4))
-					$error	= "You are posting too fast.";
+					$reply_error .= 'The thread is closed and no more replies can be posted.<br>';
+				if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
+					$reply_error .= 'Replying in this forum is restricted, and you are not allowed to post in this forum.<br>';
 			}
+			if (!trim($_POST['message']))
+				$reply_error .= "You didn't enter anything in the post.<br>";
+			if ($user['lastposttime'] > (ctime()-4))
+				$reply_error .= "You are posting too fast.<br>";
 		}
 		
-		if ($error) {
-			errorpage("Couldn't enter the post. $error", "thread.php?id={$_GET['id']}", htmlspecialchars($thread['title']), 0);
-		}
+		$error = ($reply_error || $login_error);
 		
-		// Process attachments removal
-		if ($config['allow-attachments'] && !$user['uploads_locked']) {
-			process_attachments($attach_key, $userid);
-		}
-		
-		// All OK
-		if (isset($_POST['submit'])) {
-			check_token($_POST['auth']);
-			$sql->beginTransaction();
-			
-			if ($ismod) {
-				$modq = array(
-					'closed'       => $_POST['close'],
-					'sticky'       => $_POST['stick'],
-					'announcement' => $_POST['tannc'],
-				);
-				if ($_POST['tfeat'] != $thread['featured']) { // Save a query if it wasn't changed, as it would call (un)feature_thread()
-					$modq['featured'] = $_POST['tfeat'];
-				}
-			} else {
-				$modq = array();
-			}
-			//$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
-			$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
+		if (!$error) {
+			// Process attachments removal
 			if ($config['allow-attachments'] && !$user['uploads_locked']) {
-				confirm_attachments($attach_key, $userid, $pid);
+				process_attachments($attach_key, $userid);
 			}
-			$sql->commit();
 			
-			xk_ircout("reply", $user['name'], array(
-				'forum'		=> $forum['title'],
-				'fid'		=> $forum['id'],
-				'thread'	=> str_replace("&lt;", "<", $thread['title']),
-				'pid'		=> $pid,
-				'pow'		=> $forum['minpower'],
-			));
-			
-			return header("Location: thread.php?pid={$pid}#{$pid}");
+			// All OK
+			if (isset($_POST['submit'])) {
+				check_token($_POST['auth']);
+				$sql->beginTransaction();
+				
+				if ($ismod) {
+					$modq = array(
+						'closed'       => $_POST['close'],
+						'sticky'       => $_POST['stick'],
+						'announcement' => $_POST['tannc'],
+					);
+					if ($_POST['tfeat'] != $thread['featured']) { // Save a query if it wasn't changed, as it would call (un)feature_thread()
+						$modq['featured'] = $_POST['tfeat'];
+					}
+				} else {
+					$modq = array();
+				}
+				//$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
+				$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
+				if ($config['allow-attachments'] && !$user['uploads_locked']) {
+					confirm_attachments($attach_key, $userid, $pid);
+				}
+				$sql->commit();
+				
+				xk_ircout("reply", $user['name'], array(
+					'forum'		=> $forum['title'],
+					'fid'		=> $forum['id'],
+					'thread'	=> str_replace("&lt;", "<", $thread['title']),
+					'pid'		=> $pid,
+					'pow'		=> $forum['minpower'],
+				));
+				
+				return header("Location: thread.php?pid={$pid}#{$pid}");
 
+			} else if (isset($_POST['preview'])) {
+				$data = array(
+					// Text
+					'message' => $_POST['message'],	
+					#'head'    => "",
+					#'sign'    => "",
+					// Post metadata
+					#'id'      => 0,
+					'forum'   => $thread['forum'],
+					#'ip'      => "",
+					#'num'     => "",
+					#'date'    => "",
+					// (mod) Options
+					'nosmilies' => $_POST['nosmilies'],
+					'nohtml'    => $_POST['nohtml'],
+					'nolayout'  => $_POST['nolayout'],
+					'moodid'    => $_POST['moodid'],
+					'noob'      => 0,
+					// Attachments
+					'attach_key' => $_GET['id'],
+					#'attach_sel' => "",
+				);
+				$postpreview = preview_post($user, $data);
+			}
 		}
 		
+	} else {
+		// Use existing thread options
+		$_POST['stick'] = $thread['sticky'];
+		$_POST['close'] = $thread['closed'];
+		$_POST['tannc'] = $thread['announcement'];
+		$_POST['tfeat'] = $thread['featured'];
 	}
+	
 	/*
 		Main page
 	*/
@@ -134,14 +178,13 @@
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	
-	
+	// Login text stuff
 	if ($loguser['id']) {
 		$_POST['username'] = $loguser['name'];
 		$passhint = 'Alternate Login:';
-		$altloginjs = "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
-			<span id=\"altlogin\" style=\"display:none\">";
+		$altloginjs = !$login_error ? "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
+			<span id=\"altlogin\" style=\"display:none\">" : "<span>"; // Always show in case of error
 	} else {
-		$_POST['username'] = '';
 		$passhint = 'Login Info:';
 		$altloginjs = "<span>";
 	}
@@ -170,37 +213,6 @@
 	);
 	$barlinks = dobreadcrumbs($links); 
 	
-	if (isset($_POST['preview'])) {
-		$data = array(
-			// Text
-			'message' => $_POST['message'],	
-			#'head'    => "",
-			#'sign'    => "",
-			// Post metadata
-			#'id'      => 0,
-			'forum'   => $thread['forum'],
-			#'ip'      => "",
-			#'num'     => "",
-			#'date'    => "",
-			// (mod) Options
-			'nosmilies' => $_POST['nosmilies'],
-			'nohtml'    => $_POST['nohtml'],
-			'nolayout'  => $_POST['nolayout'],
-			'moodid'    => $_POST['moodid'],
-			'noob'      => 0,
-			// Attachments
-			'attach_key' => $_GET['id'],
-			#'attach_sel' => "",
-		);
-		print preview_post($user, $data);
-	} else {
-		// Use existing thread options
-		$_POST['stick'] = $thread['sticky'];
-		$_POST['close'] = $thread['closed'];
-		$_POST['tannc'] = $thread['announcement'];
-		$_POST['tfeat'] = $thread['featured'];
-	}
-	
 	$modoptions	= "";
 	if ($ismod) {
 		$selsticky = $_POST['stick'] ? "checked" : "";
@@ -226,9 +238,16 @@
 	$nolayoutchk    = $_POST['nolayout']  ? "checked" : "";
 	$nohtmlchk      = $_POST['nohtml']    ? "checked" : "";
 	
+	print $barlinks . $forum_error;
+	// In case something happened, show a message *over the reply box*, to allow fixing anything important.
+	if ($reply_error) {
+		boardmessage("Couldn't preview or submit the reply. One or more errors occurred:<br><br>".$reply_error, "Error", false);
+	}
+	print "<br>".$postpreview;
+	
+	// TODO: Change this to the updated layout as seen in the actual Jul code.
+	//       The avatar preview gets in the way, but I don't want to (re)move it...
 	?>
-	<?=$barlinks?>
-	<?=$forum_error?>
 	<form method="POST" action="newreply.php?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 		<tr>
@@ -244,7 +263,8 @@
 					<input style="display:none;" type="text"     name="__f__usernm__">
 					<input style="display:none;" type="password" name="__f__passwd__">
 					<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($_POST['username'])?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
-					<b>Password:</b> <input type='password' name=password SIZE=13 MAXLENGTH=64 autocomplete=off>
+					<b>Password:</b> <input type='password' name=password VALUE="<?=htmlspecialchars($_POST['password'])?>" SIZE=13 MAXLENGTH=64 autocomplete=off>
+					<?= $login_error ?>
 				</span>
 			</td>
 		</tr>
@@ -252,7 +272,7 @@
 		<tr>
 			<td class='tdbg1 center b'>Reply:</td>
 			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
-				<textarea wrap=virtual id="msgtxt" name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
+				<textarea wrap=virtual id="msgtxt" name=message class='newposttextbox' ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
 			</td>
 			<td class='tdbg2' width=*>
 				<?=mood_layout(0, $userid, $_POST['moodid'])?>

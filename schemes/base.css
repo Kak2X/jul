@@ -222,6 +222,19 @@ input[type=radio] {
 .imgtag { max-width: 100%; }
 .post { position: relative; }
 
+/* Mostly for use within the newreply / newthread form */
+textarea.newposttextbox {
+	 max-width: 100%;
+	 width: 800px;
+	 height: 20em;
+	 resize: both;
+}
+table.table-fixed {
+	table-layout: fixed;
+}
+input, select { vertical-align: middle; }
+img[src^="images/smilies/"] { vertical-align: middle; }
+
 /* Ikachan cursor (disabled) */
 /*			
 body {

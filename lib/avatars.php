@@ -71,16 +71,19 @@ function get_avatars($user, $flags = 0) {
 		", PDO::FETCH_UNIQUE, mysql::FETCH_ALL);
 	} else {
 		// Source defines
-		$moods = array("None", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
-		if ($flags & AVATAR_ALL == 0) {
+		$moods = array("(default)", "neutral", "angry", "tired/upset", "playful", "doom", "delight", "guru", "hope", "puzzled", "whatever", "hyperactive", "sadness", "bleh", "embarrassed", "amused", "afraid");
+		if (!($flags & AVATARS_ALL)) {
 			unset($moods[0]);
+			$i = 1;
+		} else {
+			$i = 0;
 		}
 		if ($user == 1) {
 			$moods[99] = "special";
 		}
 		// dual compatibility
 		$out = array();
-		for ($i = 1; $i < 17; ++$i) {
+		for (; $i < 17; ++$i) {
 			$out[$i] = ['title' => $moods[$i], 'hidden' => 0, 'weblink' => ''];
 		}
 		return $out;
@@ -101,18 +104,25 @@ function mood_layout($mode, $user, $sel = 0) {
 		<table style='border-spacing: 0px'>
 			<tr>
 				<td class='font nobr' style='max-width: 150px'>
-					".($config['allow-avatar-storage'] ? "" : mood_list($user, $sel))."
 				</td>
 				<td>
 					<img src='images/_.gif' id='prev'>
 				</td>
 			</tr>
 		</table>";
-	} else if ($config['allow-avatar-storage']) {
-		return mood_list($user, $sel); // Select box on self-storage only
+	} else {
+		return mood_list($user, $sel);
 	}
 	return "";
 }
+
+/*function mood_layout_fixed($mode, $user, $sel = 0) {
+	if (!$mode) {
+		return "<img src='images/_.gif' id='prev'>";
+	} else {
+		return mood_list($user, $sel);
+	}
+}*/
 
 function mood_list($user, $sel = 0, $return = false) {
 	global $config, $loguser;
@@ -164,22 +174,14 @@ function mood_list($user, $sel = 0, $return = false) {
 			$moodurl = $sql->resultq("SELECT moodurl FROM users WHERE id = {$user}");
 		}
 		$moodurl    = escape_attribute($moodurl);
-
 		
-		// Choices display
 		foreach ($moods as $num => $data) {
 			$jsclick = ($user && $moodurl) ? "onclick='avatarpreview({$user},{$num})'" : "";
-			$txt .= 
-				"<input type='radio' name='moodid' value='{$num}'". filter_string($c[$num]) ." id='mood{$num}' tabindex='". (9000 + $num) ."' style='height: 12px' {$jsclick}>
-				 <label for='mood{$num}'". filter_string($c[$num]) ." style='font-size: 12px'>&nbsp;{$num}:&nbsp;{$data['title']}</label><br>\r\n";
+			$txt .= "<option value='{$num}'". filter_string($c[$num]) ."{$jsclick}>{$data['title']}</option>\r\n";
 		}
-		// Set the default image to start with
-		if (!$sel || !$moodurl) {
-			$startimg = 'images/_.gif';
-		} else {
-			$startimg = str_replace('$', $sel, $moodurl);
-		}
-		$ret = "<div class='b'>Mood avatar list:</div>".$txt.set_mood_url_js($moodurl);
+		$ret = "Avatar: <select name='moodid'>
+			{$txt}
+		</select>".set_mood_url_js($moodurl);
 	}
 	
 	return include_js('avatars.js').$ret;

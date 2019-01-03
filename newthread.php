@@ -1,4 +1,8 @@
 <?php
+
+	// Just in case, allow caching to return safely without losing anything.
+	$meta['cache'] = true;
+	
 	require 'lib/function.php';
 	
 	
@@ -32,6 +36,9 @@
 	/*
 		Variable initialization
 	*/
+	$_POST['username'] 	= filter_string($_POST['username']);
+	$_POST['password'] 	= filter_string($_POST['password']);
+	
 	if ($_GET['poll']) {
 		$_POST['chtext']     = filter_array($_POST['chtext']);   // Text for the choices
 		$_POST['chcolor']    = filter_array($_POST['chcolor']);  // Choice color
@@ -60,6 +67,10 @@
 	$_POST['tannc'] = (int) (filter_int($_POST['tannc']) || isset($_GET['a']));
 	$_POST['tfeat'] = filter_int($_POST['tfeat']);
 	
+	$error       = false;
+	$login_error = "";
+	$reply_error = "";
+	$postpreview = "";
 	
 	$userid = $loguser['id'];	
 	// Attachment preview stuff
@@ -78,7 +89,7 @@
 		} else {
 			$userid = checkuser($_POST['username'], $_POST['password']);
 			if ($userid == -1) {
-				$error	= "Either you didn't enter an existing username, or you haven't entered the right password for the username.";
+				$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
 			} else {
 				$user 	= load_user($userid, true);
 			}
@@ -90,14 +101,15 @@
 				check_forumban($forum['id'], $userid);
 				$ismod = ismod($forum['id'], $user);
 				if ($user['powerlevel'] < $forum['minpowerreply']) // or banned
-					$error	= "You aren't allowed to post in this forum.";
-			} else {
+					$reply_error .= "You aren't allowed to post in this forum.<br>";
+			} 
+			if (!$reply_error) {
 				if (!$_POST['message'])   
-					$error = "You haven't entered a message.";
-				else if (!$_POST['subject'])    
-					$error = "You haven't entered a subject.";
-				else if ($user['lastposttime'] > (ctime()-30))
-					$error	= "You are trying to post too rapidly.";	
+					$reply_error .= "You haven't entered a message.<br>";
+				if (!$_POST['subject'])    
+					$reply_error .= "You haven't entered a subject.<br>";
+				if ($user['lastposttime'] > (ctime()-30))
+					$reply_error .= "You are trying to post too rapidly.<br>";	
 			}
 		}
 		
@@ -112,59 +124,62 @@
 		}
 		// ---*/
 		
-		if ($error) {
-			errorpage("Couldn't post the thread. $error", "forum.php?id={$_GET['id']}", $forum['title'], 2);
-		}
+		$error = ($reply_error || $login_error);
+		//if ($error) {
+		//	errorpage("Couldn't post the thread. $error", "forum.php?id={$_GET['id']}", $forum['title'], 2);
+		//}
 		
-		// All OK!
-		if ($config['allow-attachments'] && !$user['uploads_locked']) {
-			$attach_key = "n{$_GET['id']}";
-			$input_tid = process_attachments($attach_key, $userid, 0, ATTACH_INCKEY);
-		}
-		
-		// Needed for thread preview
-		if ($_POST['iconid'] != '-1' && isset($posticons[$_POST['iconid']])) {
-			$posticon = $posticons[$_POST['iconid']];
-		} else {
-			$posticon = $_POST['custposticon'];
-		}
-
-		if (isset($_POST['submit'])) {
-			check_token($_POST['auth']);
-			
-			$sql->beginTransaction();
-			if ($_GET['poll']) {
-				$pollid = create_poll($_POST['question'], $_POST['briefing'], $_POST['chtext'], $_POST['chcolor'], $_POST['doublevote']);
-			} else {
-				$pollid = 0;
-			}
-			
-			if (!$ismod) {
-				$_POST['close'] = 0;
-				$_POST['stick'] = 0;
-				$_POST['tannc'] = 0;
-				$_POST['tfeat'] = 0;
-			}
-			$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc'], $_POST['tfeat']);
-			$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
-			
+		if (!$error) {
+			// All OK!
 			if ($config['allow-attachments'] && !$user['uploads_locked']) {
-				confirm_attachments($attach_key, $userid, $pid);
-			}		
+				$attach_key = "n{$_GET['id']}";
+				$input_tid = process_attachments($attach_key, $userid, 0, ATTACH_INCKEY);
+			}
 			
-			$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
-			
-			$sql->commit();
-			xk_ircout(strtolower($whatisthis), $user['name'], array(
-				'forum'		=> $forum['title'],
-				'fid'		=> $forum['id'],
-				'thread'	=> str_replace("&lt;", "<", $_POST['subject']),
-				'pid'		=> $pid,
-				'pow'		=> $forum['minpower'],
-			));
-			
-			errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $_POST['subject'], 0);
-			
+			// Needed for thread preview
+			if ($_POST['iconid'] != '-1' && isset($posticons[$_POST['iconid']])) {
+				$posticon = $posticons[$_POST['iconid']];
+			} else {
+				$posticon = $_POST['custposticon'];
+			}
+
+			if (isset($_POST['submit'])) {
+				check_token($_POST['auth']);
+				
+				$sql->beginTransaction();
+				if ($_GET['poll']) {
+					$pollid = create_poll($_POST['question'], $_POST['briefing'], $_POST['chtext'], $_POST['chcolor'], $_POST['doublevote']);
+				} else {
+					$pollid = 0;
+				}
+				
+				if (!$ismod) {
+					$_POST['close'] = 0;
+					$_POST['stick'] = 0;
+					$_POST['tannc'] = 0;
+					$_POST['tfeat'] = 0;
+				}
+				$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc'], $_POST['tfeat']);
+				$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
+				
+				if ($config['allow-attachments'] && !$user['uploads_locked']) {
+					confirm_attachments($attach_key, $userid, $pid);
+				}		
+				
+				$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
+				
+				$sql->commit();
+				xk_ircout(strtolower($whatisthis), $user['name'], array(
+					'forum'		=> $forum['title'],
+					'fid'		=> $forum['id'],
+					'thread'	=> str_replace("&lt;", "<", $_POST['subject']),
+					'pid'		=> $pid,
+					'pow'		=> $forum['minpower'],
+				));
+				
+				errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $_POST['subject'], 0);
+				
+			}
 		}
 		
 	}
@@ -221,10 +236,10 @@
 	if ($loguser['id']) {
 		$_POST['username'] = $loguser['name'];
 		$passhint = 'Alternate Login:';
-		$altloginjs = "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
-			<span id=\"altlogin\" style=\"display:none\">";
+		$altloginjs = !$login_error ? "<a href=\"#\" onclick=\"document.getElementById('altlogin').style.cssText=''; this.style.cssText='display:none'\">Use an alternate login</a>
+			<span id=\"altlogin\" style=\"display:none\">" : "<span>"; // Always show in case of error
 	} else {
-		$_POST['username'] = '';
+		//$_POST['username'] = '';
 		$passhint = 'Login Info:';
 		$altloginjs = "<span>";
 	}
@@ -239,7 +254,7 @@
 		$threadtype = "Thread";
 	}
 
-	if (isset($_POST['preview'])) {
+	if (isset($_POST['preview']) && !$error) {
 		
 		if ($posticon)
 			$iconpreview = "<img src=\"".htmlspecialchars($posticon)."\" height=15 align=absmiddle>";
@@ -297,10 +312,15 @@
 			$autofocus[0] = 'autofocus'; // for 'subject'
 		}
 
+		
+	print $barlinks . $forum_error;
+	// In case something happened, show a message *over the reply box*, to allow fixing anything important.
+	if ($reply_error) {
+		boardmessage("Couldn't preview or submit the thread. One or more errors occurred:<br><br>".$reply_error, "Error", false);
+	}
+	print "<br>";
 ?>
 
-	<?= $barlinks ?>
-	<?= $forum_error ?>
 	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
 			<tr>
@@ -313,13 +333,12 @@
 				</td>
 				<td class='tdbg2' colspan=2>
 					<?=$altloginjs?>
-						<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($_POST['username'])?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
-
 						<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
 						<input style="display:none;" type="text"     name="__f__usernm__">
 						<input style="display:none;" type="password" name="__f__passwd__">
-
-						<b>Password:</b> <input type='password' name=password SIZE=13 MAXLENGTH=64 autocomplete=off>
+						<b>Username:</b> <input type='text' name=username VALUE="<?=htmlspecialchars($_POST['username'])?>" SIZE=25 MAXLENGTH=25 autocomplete=off>
+						<b>Password:</b> <input type='password' VALUE="<?=htmlspecialchars($_POST['password'])?>" name=password SIZE=13 MAXLENGTH=64 autocomplete=off>
+						<?= $login_error ?>
 					</span>
 				</td>
 			</tr>

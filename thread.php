@@ -95,7 +95,7 @@
 		$tlinks = implode(' | ', $tlinks);
 
 		// Description for bots
-		$text = $sql->resultq("SELECT text FROM posts WHERE thread = {$_GET['id']}");
+		$text = $sql->resultq("SELECT text FROM posts WHERE ".($_GET['pid'] ? "id = {$_GET['pid']}" : "thread = {$_GET['id']}"));
 		$text = strip_tags(str_replace(array("[", "]", "\r\n"), array("<", ">", " "), $text));
 		$text = ((strlen($text) > 160) ? substr($text, 0, 157) . "..." : $text);
 		$text = str_replace("\"", "&quot;", $text);

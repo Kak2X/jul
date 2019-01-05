@@ -1,6 +1,11 @@
 <?php
 	$startingtime = microtime(true);
 	
+	// button page handler
+	if (isset($_POST['pageb'])) {
+		return header("Location: {$_SERVER['REQUEST_URI']}&page=".($_POST['pageb']-1));
+	}
+	
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
 	
@@ -2517,6 +2522,45 @@ function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midran
 	}
 	
 	return $pagelinks;
+}
+function pagelistbtn($url, $elements, $ppp) {
+	// Indexes start from 1 here, unlike other page lists.
+	$page    = filter_int($_GET['page']) + 1;
+	$pages   = ceil($elements / $ppp);
+	$pagelinks = "";
+	
+	//$startrange = 3;
+	//$endrange   = 3;
+	//$midrange   = 3;
+	
+	$disabledbtn = " disabled style='background: #333; color: #CCC'";
+		$pagelinks .= "
+	<button type='submit' name='pageb'".($page == 1 ? $disabledbtn : "")." value='1'>&lt;&lt; First</button> ";
+	//for ($i = 2; $i < $pages; ++$i) {
+	//	if ($i > $startrange && $i < $pages - $endrange) {
+			$pagelinks .= "
+			<button type='submit' name='pageb'".($page < 3 ? $disabledbtn : "")." value='".($page-2)."'>&lt; x2</button>
+			<button type='submit' name='pageb'".($page == 1 ? $disabledbtn : "")." value='".($page-1)."'>&lt; Back</button>
+			<span class='b nobr'>&mdash; {$page} of {$pages} &mdash;</span>
+			<button type='submit' name='pageb'".($page == $pages ? $disabledbtn : "")." value='".($page+1)."'>Next &gt;</button>
+			<button type='submit' name='pageb'".($page > $pages - 2 ? $disabledbtn : "")." value='".($page+2)."'>x2 &gt;</button>";
+	//		$i = $pages - $endrange;
+	//	}
+	//	$pagelinks .= "<button type='submit'".($page == $i ? $disabledbtn : "")." name='pageb' value='{$i}'>{$i}</button> ";
+	//}
+	$pagelinks .= "
+	<button type='submit' name='pageb'".($page == $pages ? $disabledbtn : "")." value='{$pages}'>Last &gt;&gt;</button>
+	";
+	
+	
+	return "<div>
+	<form method='POST' action='{$url}' style='display: inline; white-space: nowrap; float: left'>
+		Page: {$pagelinks}
+	</form>
+	<form method='POST' action='{$url}' style='display: inline; white-space: nowrap; float: right'>
+		Jump to page: <input type='text' name='pageb' value='{$page}' class='right' style='width: 55px'> <input type='submit' value='Go'>
+	</form>
+	</div>";
 }
 
 function elemlist($url, $pagelist, $sel, $sep = " "){

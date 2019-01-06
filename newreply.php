@@ -132,29 +132,6 @@
 				
 				return header("Location: thread.php?pid={$pid}#{$pid}");
 
-			} else if (isset($_POST['preview'])) {
-				$data = array(
-					// Text
-					'message' => $_POST['message'],	
-					#'head'    => "",
-					#'sign'    => "",
-					// Post metadata
-					#'id'      => 0,
-					'forum'   => $thread['forum'],
-					#'ip'      => "",
-					#'num'     => "",
-					#'date'    => "",
-					// (mod) Options
-					'nosmilies' => $_POST['nosmilies'],
-					'nohtml'    => $_POST['nohtml'],
-					'nolayout'  => $_POST['nolayout'],
-					'moodid'    => $_POST['moodid'],
-					'noob'      => 0,
-					// Attachments
-					'attach_key' => $_GET['id'],
-					#'attach_sel' => "",
-				);
-				$postpreview = preview_post($user, $data);
 			}
 		}
 		
@@ -177,6 +154,31 @@
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
+	// Post preview (it must be after the page header, otherwise bar images aren't initialized)
+	if (!$error && isset($_POST['preview'])) {
+		$data = array(
+			// Text
+			'message' => $_POST['message'],	
+			#'head'    => "",
+			#'sign'    => "",
+			// Post metadata
+			#'id'      => 0,
+			'forum'   => $thread['forum'],
+			#'ip'      => "",
+			#'num'     => "",
+			#'date'    => "",
+			// (mod) Options
+			'nosmilies' => $_POST['nosmilies'],
+			'nohtml'    => $_POST['nohtml'],
+			'nolayout'  => $_POST['nolayout'],
+			'moodid'    => $_POST['moodid'],
+			'noob'      => 0,
+			// Attachments
+			'attach_key' => $_GET['id'],
+			#'attach_sel' => "",
+		);
+		$postpreview = preview_post($user, $data);
+	}
 	
 	// Login text stuff
 	if ($loguser['id']) {

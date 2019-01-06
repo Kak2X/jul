@@ -176,12 +176,13 @@ function mood_list($user, $sel = 0, $return = false) {
 		$moodurl    = escape_attribute($moodurl);
 		
 		foreach ($moods as $num => $data) {
-			$jsclick = ($user && $moodurl) ? "onclick='avatarpreview({$user},{$num})'" : "";
+			$jsclick = ($user && $moodurl) ? " onclick='avatarpreview({$user},{$num})'" : "";
 			$txt .= "<option value='{$num}'". filter_string($c[$num]) ."{$jsclick}>{$data['title']}</option>\r\n";
 		}
 		$ret = "Avatar: <select name='moodid'>
 			{$txt}
-		</select>".set_mood_url_js($moodurl);
+		</select>".set_mood_url_js($moodurl).
+		"<script>avatarpreview({$user},{$sel})</script>";
 	}
 	
 	return include_js('avatars.js').$ret;

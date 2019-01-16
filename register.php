@@ -201,6 +201,7 @@
 					'regdate'           => $currenttime,
 					'threadsperpage'    => $config['default-tpp'],
 					'postsperpage'      => $config['default-ppp'],
+					'scheme'            => $miscdata['defaultscheme'],
 				);
 				$sql->queryp("INSERT INTO users SET ".mysql::setplaceholders($data), $data);
 				

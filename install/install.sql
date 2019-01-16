@@ -1001,6 +1001,7 @@ CREATE TABLE `misc` (
   `donations` float NOT NULL DEFAULT '0',
   `ads` float NOT NULL DEFAULT '0',
   `valkyrie` float NOT NULL DEFAULT '0',
+  `defaultscheme` smallint(5) NOT NULL DEFAULT '0',
   `scheme` smallint(5) DEFAULT NULL,
   `specialtitle` tinytext COLLATE utf8mb4_unicode_ci,
   `regmode` tinyint(2) NOT NULL DEFAULT '0',
@@ -1017,7 +1018,7 @@ CREATE TABLE `misc` (
 
 LOCK TABLES `misc` WRITE;
 /*!40000 ALTER TABLE `misc` DISABLE KEYS */;
-INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,NULL,NULL,0,NULL,0,0,0);
+INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,0,NULL,NULL,0,NULL,0,0,0);
 /*!40000 ALTER TABLE `misc` ENABLE KEYS */;
 UNLOCK TABLES;
 

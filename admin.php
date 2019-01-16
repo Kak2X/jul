@@ -44,6 +44,7 @@
 			'ads' 				=> filter_float($_POST['ads']),
 			'valkyrie' 			=> filter_float($_POST['valkyrie']),
 			'scheme' 			=> $scheme,
+			'defaultscheme' 	=> filter_int($_POST['defaultscheme']),
 			'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 			'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
 			'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
@@ -115,6 +116,10 @@
 		</tr>
 		
 		<tr><td class='tdbgc center' colspan=2>Appareance</td></tr>
+		<tr>
+			<td class='tdbg1 center' width='200'><b>Default scheme</b></td>
+			<td class='tdbg2'><?=doschemeList($misc['defaultscheme'], 'defaultscheme', SL_SHOWSPECIAL)?></td>
+		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Force scheme</b></td>
 			<td class='tdbg2'><?=doschemeList($misc['scheme'], 'scheme', SL_SHOWSPECIAL | SL_SHOWNONE)?></td>

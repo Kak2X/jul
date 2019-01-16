@@ -58,7 +58,7 @@
 	//$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
 
 	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup FROM misc");
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup, defaultscheme FROM misc");
 	
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int) date("Gi") < 1) {
@@ -232,7 +232,7 @@
 			'dateshort'		=> $config['default-dateshort'],
 			'timezone'      => 0,
 			'tzoff'			=> 0,
-			'scheme'		=> 0,
+			'scheme'		=> $miscdata['defaultscheme'],
 			'title'			=> '',
 			'hideactivity'	=> 0,
 			'uploads_locked'=> 0,

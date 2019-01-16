@@ -2161,7 +2161,7 @@ function xssfilters($data, $validate = false){
 	#$data = preg_replace('#(<[^>]+?[\x00-\x20"\'])(?:on|xmlns)[^>]*+>#iu', '$1>', $data);
 	do {
 		$old_data	= $data;
-		$data		= preg_replace('#(<[A-Za-z][^>]*?[\x00-\x20"\'])(on|xmlns)([^>]*+)>#iu', '$1DISABLED_$2$3>', $data);
+		$data		= preg_replace('#(<[A-Za-z][^>]*?[\x00-\x20\x2F"\'])(on|xmlns)[A-Za-z]*=([^>]*+)>#iu', '$1DISABLED_$2$3>', $data);
 	} while ($old_data !== $data);
 	
 	// Remove javascript: and vbscript: protocols

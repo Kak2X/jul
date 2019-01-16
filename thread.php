@@ -95,11 +95,20 @@
 		$tlinks = implode(' | ', $tlinks);
 
 		// Description for bots
+		if (isset($_GET['pid'])) {
+			$text = $sql->resultq("SELECT text FROM posts WHERE id = {$_GET['pid']}");
+			$text = strip_tags(str_replace(array("[", "]", "\r\n"), array("<", ">", " "), $text));
+			$text = ((strlen($text) > 160) ? substr($text, 0, 157) . "..." : $text);
+			$text = str_replace("\"", "&quot;", $text);
+			$meta['description'] = $text;
+		}
+		else {
 		$text = $sql->resultq("SELECT text FROM posts WHERE thread = {$_GET['id']}");
 		$text = strip_tags(str_replace(array("[", "]", "\r\n"), array("<", ">", " "), $text));
 		$text = ((strlen($text) > 160) ? substr($text, 0, 157) . "..." : $text);
 		$text = str_replace("\"", "&quot;", $text);
 		$meta['description'] = $text;
+		};
 
 		// don't count bot views
 		if (!$isbot) {

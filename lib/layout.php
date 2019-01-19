@@ -178,7 +178,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href='activeusers.php'>Active users</a>
 		- <a href='calendar.php'>Calendar</a>
 		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
-		- <a href='irc.php'>IRC Chat</a>
+		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
 		- <a href='online.php'>Online users</a>
 		- <a href='forum.php?feat=1'>Featured threads archive</a>
 		".($config['enable-news'] ? " - <a href='news.php'>News</a>" : "")."

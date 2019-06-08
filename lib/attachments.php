@@ -335,6 +335,8 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	
 	// Generate a thumbnail
 	if ($is_image) {
+		save_thumbnail($path, "{$path}_t", 80, 80);
+		/*
 		$src_image = imagecreatefromstring(file_get_contents($path));
 		if ($src_image) {
 			$dst_image = resize_image($src_image, 80, 80);
@@ -345,7 +347,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 		}
 		imagedestroy($src_image);
 		imagepng($dst_image, "{$path}_t");
-		imagedestroy($dst_image);
+		imagedestroy($dst_image);*/
 	}
 	
 	return $res;
@@ -468,6 +470,17 @@ function sizeunits($bytes) {
 			return $qseconds = str_replace('.00', '', sprintf("%04.2f", $bytes / $sbar)).' '.$sizes[$i-1];
 		}
 	}
+}
+
+function save_thumbnail($src_path, $dst_path, $w = 150, $h = 150) {
+	$src_image = imagecreatefromstring(file_get_contents($src_path));
+	if ($src_image) 
+		$dst_image = resize_image($src_image, $w, $h);
+	if (!$src_image || !$dst_image) // source image not found or resize error
+		$dst_image = imagecreatefrompng("images/thumbnailbug.png");
+	imagedestroy($src_image);
+	imagepng($dst_image, $dst_path);
+	imagedestroy($dst_image);
 }
 
 function resize_image($image, $max_width, $max_height) {

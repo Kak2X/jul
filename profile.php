@@ -306,6 +306,7 @@
 			"Show posts"                 => ["thread.php?user={$_GET['id']}"],
 			"View threads by this user"  => ["forum.php?user={$_GET['id']}"],
 			"View comments by this user" => ["usercomment.php?id={$_GET['id']}"],
+			"View personal folders"      => ["uploader.php?mode=u&user={$_GET['id']}"],
 			"View layout code"           => ["postlayouts.php?id={$_GET['id']}"],
 		],
 		1 => [

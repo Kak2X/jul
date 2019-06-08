@@ -277,11 +277,17 @@ if (!$error) {
 				".set_input(0,'pmthread-folder-limit' , 'Max PM folders/user'    , 50, 4)."
 				".set_powl( 0,'view-super-minpower'   , 'Powerlevel required to view Normal+ users', 1)."
 				
-				".set_heading("File uploads")."	
+				".set_heading("Attachments")."	
 				".set_radio(2,'allow-attachments'     , 'Enable attachments' , 'Disable|Enable', 0)."
 				".set_radio(2,'attachments-all-origin', 'Bypass origin check', 'No|Yes', 0)."
 				".set_radio(2,'hide-attachments'      , 'Hide attachments'   , 'No|Yes', 0)."
 				".set_input(0,'attach-max-size'       , 'Max attachment size', 100, 2 * 1048576, 'bytes')."
+				
+				".set_heading("File uploader")."	
+				".set_radio(2,'allow-uploader'          , 'Enable file uploader' , 'Disable|Enable', 0)."
+				".set_radio(2,'uploader-all-origin'     , 'Bypass origin check'  , 'No|Yes', 0)."
+				".set_input(0,'uploader-max-file-size'  , 'Max upload size'      , 100, 10 * 1048576, 'bytes')."
+				".set_radio(2,'uploader-allow-file-edit', 'Allow normal users to edit uploads', 'Disable|Enable', 0)."
 				
 				".set_heading("Avatars")."	
 				".set_radio(2,'allow-avatar-storage'  , 'Enable avatar upload' , 'Disable|Enable', 0)."

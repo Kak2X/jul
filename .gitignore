@@ -26,6 +26,12 @@ attachments/*
 !attachments/t/index.html
 !attachments/f/.htaccess
 
+# Uploads
+uploads/*
+!uploads/index.html
+!uploads/t/index.html
+!uploads/f/.htaccess
+
 #Userpics
 userpic/*
 !userpic/note.txt

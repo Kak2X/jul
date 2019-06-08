@@ -529,6 +529,10 @@ class mysql {
 		
 		return $out;
 	}
+	
+	public static function filter_like_wildcards($text) {
+		return strtr($text, array('%' => '\\%', '_' => '\\_'));
+	}
 
 	private static function getbacktrace() {
 		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

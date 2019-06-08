@@ -81,6 +81,8 @@
 		'tlayouts',
 		'tournamentplayers',
 		'tournaments',
+		'uploader_cat',
+		'uploader_files',
 		//'userpic',
 		//'userpiccateg',
 		'userratings',

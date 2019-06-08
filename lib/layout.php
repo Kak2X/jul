@@ -182,6 +182,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href='online.php'>Online users</a>
 		- <a href='forum.php?feat=1'>Featured threads archive</a>
 		".($config['enable-news'] ? " - <a href='news.php'>News</a>" : "")."
+		".($config['allow-uploader'] ? " - <a href='uploader.php'>Uploader</a>".($loguser['id'] ? " (<a href='uploader.php?mode=u&user={$loguser['id']}'>My folders</a>)" : "") : "")."
 		<br>
 		<a href='ranks.php'>Ranks</a>
 		- <a href='faq.php'>Rules/FAQ</a>

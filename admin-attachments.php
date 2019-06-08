@@ -349,15 +349,3 @@
 	}
 	
 	pagefooter();
-	
-function mime_select($name, $sel = "") {
-	$datalist = "";
-	$h = fopen('mime.types', 'r');
-	while (($line = fgets($h)) !== false) {
-		if ($line[0] != '#' && preg_match("/(.*?)\s/", $line, $match)) {
-			$datalist .= "<option value=\"{$match[1]}\">\n";
-		}
-	}	
-	return "<input type='text' name='{$name}' list='{$name}list' style='width: 300px' value=\"". htmlspecialchars($sel) ."\">\n".
-	"<datalist id='{$name}list'>{$datalist}</datalist>";
-}

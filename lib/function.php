@@ -235,7 +235,8 @@
 			'scheme'		=> $miscdata['defaultscheme'],
 			'title'			=> '',
 			'hideactivity'	=> 0,
-			'uploads_locked'=> 0,
+			'uploads_locked'  => 0,
+			'uploader_locked' => 0,
 			'pagestyle'     => 0,
 			'splitcat'      => 0,
 			'posttool'      => 0,
@@ -1829,6 +1830,10 @@ function get_tpp($low = 1, $high = 500) {
 	return max(min($tpp, $high), $low);
 }
 
+function get_ipp(&$ipp, $default, $min = 1, $max = 500) {
+	return ($ipp ? numrange((int)$ipp, 1, 500) : $default);
+}
+
 function squot($t, &$src){
 	switch($t){
 		case 0: $src=htmlspecialchars($src); break;
@@ -2051,6 +2056,10 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 		'ThreadFix' => array(
 			'admin-threads.php'       => "ThreadFix",
 			'admin-threads2.php'      => "ThreadFix 2",
+		),
+		'File uploader' => array(
+			'uploader-countfix.php'   => "File Count Fix",
+			'uploader-catman.php'     => "Folder Manager",
 		),
 		'Security' => array(
 			'admin-backup.php'        => "Board Backups",
@@ -2436,6 +2445,30 @@ function opt_param($list) {
 	return $idparam;
 }
 
+// Collect all _POST variables and print them here at the top (later values will overwrite them)
+// Note that some values sent are arrays, so this has to be nested
+function save_vars($arr, $nested = "") {
+	$out = "";
+	foreach ($arr as $key => $val) {
+		// Generate the associative key if needed (nests to config[something][dfgdsg]
+		$name = ($nested) ? "{$nested}[{$key}]" : $key;
+		if (is_array($val)) {
+			$out .= save_post_vars($val, $name);
+		} else {
+			$out .= "<input type='hidden' name='{$name}' value=\"".htmlspecialchars($val)."\">";
+		}
+	}
+	return $out;
+}
+
+/*
+	TODO:
+	array_column_by_key -> replace with get_userfields2; nuke the original
+	set_userfields 		-> replace with set_userfields2; nuke the original
+	set_userfields2 	-> rename to set_userfields
+	get_userfields2 	-> rename to get_userfields
+*/ 
+
 // extract values from queries using PDO::FETCH_NAMED
 function array_column_by_key($array, $index){
 	if (is_array($array)) {
@@ -2473,6 +2506,59 @@ function set_userfields($alias, $prealias = NULL) {
 		$txt = str_replace("u.", "{$alias}.", $userfields);
 	}
 	return $txt;
+}
+
+/*
+	New versions of set_userfields and array_column_by_key.
+	
+	This uses a precalculated userfields array to directly iterate on the fields and add the necessary strings 
+	to both the left (table alias) and the right (generated field alias)
+	
+	ie:
+	displayname with alias -> u1
+	
+	becomes in the query:
+	u1.displayname u1_displayname
+	
+	the name alias is always set to <table alias>_<field>, so there is a consistent format 
+	which can be used by get_userfields2 
+	
+	---
+	
+	an extra feature is to pass over "fixed data" in an array with keys using the same generated FIELD alias format
+	this will insert the respective PDO named placeholders in the query
+*/
+function set_userfields2($alias, $fixed_data = NULL) {
+	global $userfields_array;
+	$txt = "";
+	$c   = false;
+	
+	// Do we have hardcoded data to use for this?
+	// If so, set it up (and use PDO named placeholders)
+	if ($fixed_data !== NULL) {
+		foreach ($userfields_array as $field) {
+			$tag = "{$alias}{$field}";
+			if (isset($fixed_data[$tag])) {
+				$txt .= ($c ? ", " : "").":{$tag} {$alias}_{$field}";
+				$c = true;
+			}
+		}
+	} else {
+		// For each field of the userfields
+		foreach ($userfields_array as $field) {
+			$txt .= ($c ? ", " : "")."{$alias}.{$field} {$alias}_{$field}";
+			$c = true;
+		}
+	}
+	return $txt;
+}
+
+function get_userfields2($set, $alias) {
+	global $userfields_array;
+	foreach ($userfields_array as $field) {
+		$u[$field] = $set["{$alias}_{$field}"];
+	}
+	return $u;
 }
 
 function preg_loop($before, $regex){
@@ -2617,7 +2703,7 @@ function ban_hours($name, $time = 0, $condition = true) {
 		return "<select name='{$name}'>{$out}</select>";
 }
 
-function user_select($name, $sel = 0, $condition = '') {
+function user_select($name, $sel = 0, $condition = NULL, $zlabel = NULL, $flags = 0) {
 	global $sql;
 	$userlist = "";
 	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` ".($condition ? "WHERE {$condition} " : "")."ORDER BY `name`");
@@ -2625,20 +2711,50 @@ function user_select($name, $sel = 0, $condition = '') {
 		$selected = ($x['id'] == $sel) ? " selected" : "";
 		$userlist .= "<option value='{$x['id']}'{$selected}>{$x['name']} -- [{$x['powerlevel']}]</option>\r\n";
 	}
+	if (!$zlabel)
+		$zlabel = "Select a user...";
 	return "
 	<select name='{$name}' size='1'>
-		<option value='0'>Select a user...</option>
+		<option value='0'>{$zlabel}</option>
 		{$userlist}
 	</select>";
 }
 
-function power_select($name, $sel = 0, $limit = 100) {
+function power_select($name, $sel = 0, $lowlimit = PWL_MIN, $highlimit = PWL_MAX, $flags = 0) {
 	global $pwlnames;
+	
+	// Disabled inputs don't count in a form, hence the hidden field
+	if ($flags & SEL_DISABLED) {
+		$sel = numrange($sel, PWL_MIN, PWL_MAX);
+		return "<select style='min-width: 150px' disabled><option>{$pwlnames[$sel]}</option></select>
+		<input type='hidden' name='{$name}' value='{$sel}'>";
+	}
+	
 	$txt = "";
 	foreach ($pwlnames as $pwl => $pwlname)
-		if ($pwl <= $limit)
+		if ($pwl >= $lowlimit && $pwl <= $highlimit)
 			$txt .= "<option value='{$pwl}' ".($sel == $pwl ? " selected" : "").">{$pwlname}</option>";
-	return "<select name='{$name}'>{$txt}</select>";
+		
+	return "<select style='min-width: 150px' name='{$name}'>{$txt}</select>";
+}
+
+function mime_select($name, $sel = "") {
+	static $mime_out = false;
+	
+	$out = "<input type='text' name='{$name}' list='__zmtl' style='width: 300px' value=\"". htmlspecialchars($sel) ."\">";
+	// Print the mime type list only once
+	if (!$mime_out) {
+		$out .= "<datalist id='__zmtl'>";
+		$h = fopen('mime.types', 'r');
+		while (($line = fgets($h)) !== false) {
+			if ($line[0] != '#' && preg_match("/(.*?)\s/", $line, $match)) {
+				$out .= "<option value=\"{$match[1]}\">\n";
+			}
+		}
+		$out .= "</datalist>";
+		$mime_out = true;
+	}
+	return $out;
 }
 
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
@@ -2942,3 +3058,8 @@ function print_args($args) {
 	return $res;
 }
 
+function d($var) {
+	print "<pre>";
+	print_r($var);
+	die;
+}	

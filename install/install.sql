@@ -415,6 +415,7 @@ CREATE TABLE `delusers` (
   `profile_locked` tinyint(1) NOT NULL DEFAULT '0',
   `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `uploads_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `uploader_locked` tinyint(1) NOT NULL DEFAULT '0',
   `avatar_locked` tinyint(1) NOT NULL DEFAULT '0',
   `rating_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) unsigned NOT NULL DEFAULT '1',
@@ -2195,6 +2196,87 @@ LOCK TABLES `tournaments` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `uploader_cat`
+--
+
+DROP TABLE IF EXISTS `uploader_cat`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `uploader_cat` (
+  `id` mediumint(10) unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(50) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `files` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `downloads` int(10) unsigned NOT NULL DEFAULT '0',
+  `lastfile` varchar(255) DEFAULT NULL,
+  `lastfiledate` int(10) unsigned NOT NULL DEFAULT '0',
+  `lastfileuser` int(10) unsigned NOT NULL DEFAULT '0',
+  `minpowerread` tinyint(4) NOT NULL DEFAULT '0',
+  `minpowerupload` tinyint(4) NOT NULL DEFAULT '0',
+  `minpowermanage` tinyint(4) NOT NULL DEFAULT '0',
+  `user` int(10) unsigned NOT NULL DEFAULT '0',
+  `ord` smallint(5) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `private` (`minpowerread`),
+  KEY `user` (`user`),
+  KEY `ord` (`ord`),
+  KEY `minpowerupload` (`minpowerupload`),
+  KEY `minpowermanage` (`minpowermanage`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `uploader_cat`
+--
+
+LOCK TABLES `uploader_cat` WRITE;
+/*!40000 ALTER TABLE `uploader_cat` DISABLE KEYS */;
+INSERT INTO `uploader_cat` VALUES (1,'Generic file storage','Everything and anything',0,0,NULL,0,0,-2,0,2,0,0);
+/*!40000 ALTER TABLE `uploader_cat` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `uploader_files`
+--
+
+DROP TABLE IF EXISTS `uploader_files`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `uploader_files` (
+  `id` mediumint(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user` smallint(5) unsigned NOT NULL,
+  `cat` int(10) unsigned NOT NULL,
+  `filename` varchar(255) NOT NULL,
+  `description` text,
+  `hash` varchar(120) NOT NULL,
+  `private` tinyint(1) NOT NULL DEFAULT '0',
+  `date` int(10) unsigned NOT NULL,
+  `lastedituser` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `lasteditdate` int(10) unsigned NOT NULL DEFAULT '0',
+  `mime` varchar(50) NOT NULL,
+  `size` int(10) unsigned NOT NULL,
+  `downloads` int(10) unsigned NOT NULL DEFAULT '0',
+  `width` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `height` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `is_image` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `cat` (`cat`),
+  KEY `private` (`private`),
+  KEY `user` (`user`),
+  KEY `filename` (`filename`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `uploader_files`
+--
+
+LOCK TABLES `uploader_files` WRITE;
+/*!40000 ALTER TABLE `uploader_files` DISABLE KEYS */;
+/*!40000 ALTER TABLE `uploader_files` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `userpic`
 --
 
@@ -2331,6 +2413,7 @@ CREATE TABLE `users` (
   `profile_locked` tinyint(1) NOT NULL DEFAULT '0',
   `editing_locked` tinyint(1) NOT NULL DEFAULT '0',
   `uploads_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `uploader_locked` tinyint(1) NOT NULL DEFAULT '0',
   `avatar_locked` tinyint(1) NOT NULL DEFAULT '0',
   `rating_locked` tinyint(1) NOT NULL DEFAULT '0',
   `influence` int(10) unsigned NOT NULL DEFAULT '1',

@@ -284,6 +284,7 @@
 				'editing_locked'	=> filter_int($_POST['editing_locked']),
 				'avatar_locked'     => filter_int($_POST['avatar_locked']),
 				'uploads_locked'	=> filter_int($_POST['uploads_locked']),
+				'uploader_locked'	=> filter_int($_POST['uploader_locked']),
 				'rating_locked'		=> filter_int($_POST['rating_locked']),
 				'titleoption'		=> filter_int($_POST['titleoption']),
 				'ban_expire'		=> ($_POST['powerlevel'] == -1 && filter_int($_POST['ban_hours']) > 0) ? (ctime() + filter_int($_POST['ban_hours']) * 3600) : 0,
@@ -350,7 +351,8 @@
 				"Lock Profile"				=> [2, "profile_locked", "", "Unlocked|Locked"],
 				"Restrict Editing"			=> [2, "editing_locked", "", "Unlocked|Locked|Locked (but hidden)"],
 				"Restrict Avatar Uploads"	=> [2, "avatar_locked", "", "Unlocked|Locked"],
-				"Restrict File Uploads"     => [2, "uploads_locked", "", "Unlocked|Locked"],
+				"Restrict Attachments"      => [2, "uploads_locked", "", "Unlocked|Locked"],
+				"Restrict Uploader"         => [2, "uploader_locked", "", "Unlocked|Locked"],
 				"Restrict Post Rating"      => [2, "rating_locked", "", "Unlocked|Locked"],
 				"Custom Title Privileges" 	=> [2, "titleoption", "", "Revoked|Determine by rank/posts|Enabled"],
 			));
@@ -518,7 +520,7 @@
 		
 		if ($edituser) {
 			// Powerlevel selection
-			$powerlevel = power_select('powerlevel', $userdata['powerlevel'], $loguser['powerlevel']);
+			$powerlevel = power_select('powerlevel', $userdata['powerlevel'], PWL_MIN, $loguser['powerlevel']);
 			
 			// Registration time
 			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);

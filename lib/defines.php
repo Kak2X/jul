@@ -2,6 +2,7 @@
 
 	// Fields necessary to generate userlinks
 	$userfields = "u.name, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
+	$userfields_array = ['name', 'aka', 'sex', 'powerlevel', 'birthday', 'namecolor', 'minipic', 'id'];
 	
 	// Line separators
 	$sepn 	= array('Dashes','Line','Full horizontal line','None');
@@ -19,6 +20,9 @@
 	const BPT_PROXY 	= 2;
 	const BPT_TOR 		= 4;
 	const BPT_BOT 		= 8;
+	
+	// Common select list generator flags
+	const SEL_DISABLED = 0b1;
 	
 	// Token list
 	const TOKEN_MAIN         = 20;
@@ -53,6 +57,17 @@
 	const MODE_POST = 0;
 	const MODE_PM   = 1;
 	const MODE_ANNOUNCEMENT = 2;
+	
+	const PWL_MIN = -2;
+	const PWL_MAX = 4;
+	
+	const PWL_PERMABANNED = -2;
+	const PWL_BANNED = -1;
+	const PWL_NORMAL = 0;
+	const PWL_SUPER = 1;
+	const PWL_MOD = 2;
+	const PWL_ADMIN = 3;
+	const PWL_SYSADMIN = 4;
 	
 	$pwlnames = array(
 		'-2'=>'Permabanned',

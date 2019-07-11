@@ -137,7 +137,7 @@
 		$user = uploader_load_user($_GET['user']);
 		$links = uploader_breadcrumbs_links($cat, $user);
 		$barright = _barright();
-		if (can_manage_category($cat)) {
+		if (can_manage_category($cat) && !$loguser['uploader_locked']) {
 			$barright .= " - <a href=\"uploader-catman.php{$baseparams}&cat={$_GET['cat']}&action=edit\">Edit this folder</a>";
 		}
 		$breadcrumbs = dobreadcrumbs($links, $barright); 
@@ -222,7 +222,7 @@
 			<tr>
 				<td class='tdbg{$c} center fonts nobr'>
 					".(
-					$canmanage || (!$banned && $x['user'] == $loguser['id'])
+					!$loguser['uploader_locked'] && ($canmanage || (!$banned && $x['user'] == $loguser['id']))
 					? (($isadmin || $config['uploader-allow-file-edit']) ? "<a href='uploader-editfile.php?action=edit&f={$x['hash']}'>Edit</a> - " : "")."<a href='uploader-editfile.php?action=delete&f={$x['hash']}'>Delete</a>"
 					: "")."
 				</td>
@@ -252,7 +252,7 @@
 	function _barright() {
 		global $loguser, $isadmin, $baseparams, $user;
 		$barright = "<a href='uploader-catbyuser.php'>Folders by user</a>";
-		if ($loguser['id']) {
+		if ($loguser['id'] && !$loguser['uploader_locked']) {
 			if ($isadmin)
 				$barright .= " - <a href='uploader-catman.php'>Manage shared folders</a>";
 			if (($isadmin && $_GET['user']) || $_GET['user'] == $loguser['id'])

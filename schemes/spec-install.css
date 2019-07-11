@@ -67,3 +67,11 @@ textarea, input, select, button{
 	border-spacing: 0px;
 	border: 		0px;
 }
+
+/* special table used by the upgrader */
+.update-table  ul {
+	margin: 0;
+}
+.update-table  .tdbg1 , .update-table  .tdbg2 {
+	border-top: 1px solid #111;
+}

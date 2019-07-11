@@ -16,6 +16,7 @@ install/lulzratings.sql
 
 # No testboard stuff
 lib/config.php
+lib/dbsver.dat
 backups/*.zip
 develop.sql
 test/

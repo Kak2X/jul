@@ -1,4 +1,10 @@
 <?php
+/*
+	An installer...
+	...with the layout based from the installer in AB 1.92.08
+		
+	as usual, this file trusts you to not be an idiot (ie: filling in invalid board options)
+*/
 
 // 'The required libraries have not been defined'
 if (!defined('OK_INSTALL')) {
@@ -7,18 +13,14 @@ if (!defined('OK_INSTALL')) {
 
 chdir("..");
 require "install/function.php";
+require "install/layout.php";
 require "lib/defines.php";
 
-/*
-	An installer...
-	...with the layout based from the installer in AB 1.92.08
-		
-	as usual, this file trusts you to not be an idiot (ie: filling in invalid board options)
-*/
+const PAGE_HEADER = "Acmlmboard Installer";
+const PAGE_FOOTER = "Acmlmboard Installer v1.7 (??-07-19)";
 
-const LAST_PAGE     = 7;
-const CONFIG_LENGTH = 25; // Pad with spaces until char 29. Increase it when values aren't aligned anymore.
 const RECONFIG      = true;
+const VERSION_LOCK  = true;
 
 const STEP_INTRO    = 0;
 const STEP_SQLAUTH  = 1;
@@ -28,16 +30,16 @@ const STEP_CONFIG   = 4;
 const STEP_REVIEW   = 5;
 const STEP_INSTALL  = 6;
 
-const BTN_PREV = 0b1;
-const BTN_NEXT = 0b10;
-
 define('PRIVATE_BUILD', file_exists("lib/firewall.php"));
-define('INSTALLED',     file_exists("lib/config.php"));
+define('INSTALLED',     file_exists(CONFIG_PATH));
+
 $error = false;
 
 // Grab defaults if they exist
 if (INSTALLED) {
-	require_once "lib/config.php";
+	require_once CONFIG_PATH;
+	// to save the custom config options
+	$_POST['inptconf'] = config_from_update()[1];
 } else {
 	$config['enable-sql-debugger'] = true;
 }
@@ -50,45 +52,26 @@ if (!isset($_POST['sqluser'])) 	$_POST['sqluser'] 	= filter_string($sqluser);
 if (!isset($_POST['dbname'])) 	$_POST['dbname'] 	= filter_string($dbname);
 
 $_POST['dropdb'] = filter_int($_POST['dropdb']);
-
-// Page handler
-$_POST['step']       = filter_int($_POST['step']);
-$_POST['stepcmd']    = filter_string($_POST['stepcmd']);
 $_POST['__chconfig'] = filter_bool($_POST['__chconfig']);
-if ($_POST['stepcmd'] == 'Next')
-	$_POST['step']++;
-else
-	$_POST['step']--;
 
+// Reconfig. option
 $firststep = $_POST['__chconfig'] ? STEP_CONFIG : STEP_INTRO;
+setupheader(PAGE_HEADER, "./", $firststep);
 
-	
-// Every page but the first one has a back button
-if ($_POST['step'] <= $firststep)  {
-	$_POST['step'] = $firststep;
-	$buttons = BTN_NEXT;
-} else {
-	$buttons = BTN_NEXT | BTN_PREV;
-}
-
-?><!doctype html>
-<html>
-	<head>
-		<title>Acmlmboard Installer</title>
-		<link rel='stylesheet' href='../schemes/base.css' type='text/css'>
-		<link rel='stylesheet' href='../schemes/spec-install.css' type='text/css'>
-	</head>
-	<body>
-	<form method='POST' action='./'>
-	<center>
-		<table class='container'>
-			<tr><td class='tdbgh b'>Acmlmboard Installer</td></tr>
-			<tr>
-				<td class='table'>
+// When the board is already installed and versions don't match, warn the user
+if (INSTALLED && VERSION_LOCK && get_available_db_version() > get_current_db_version()) {
+	$error = true;
+	$buttons = 0;
+	?>
+	<span class="highlight">Updates are available</span>
+	<br>
+	<br>There are pending updates to the database version.
+	<br>You cannot use the installer until the database version is updated to the newest one.
+	<br>
+	<br>Click <a href="update.php">here</a> to run upgrade tool, then return to the installer.
+	<br>
 	<?php
-	
-
-print savevars($_POST);
+}
 
 // DB Connection starts from certain steps (auto-handles errors)
 if ($_POST['step'] > STEP_SQLAUTH) {
@@ -245,13 +228,25 @@ if (!$error) {
 		case STEP_CONFIG:		
 			?>
 			Board Options
-			<br>Fill in the table. These options will be written in <span class='highlight'>'lib/config.php'</span>
+			<br>Fill in the table. These options will be written in <span class='highlight'>'<?= CONFIG_PATH ?>'</span>
 			<br>Please <i>be careful</i> and check the options before continuing.
 			<br>
 			<center>
 			<table style='padding: 20px'>
 				<tr><td style="width: 400px; display:block"></td><td></td></tr>
 			<?php
+				
+				// too long to fit it in
+				$defaultaffiliates = 
+'<optgroup label="Forum affiliates">
+	<option value="about:blank" selected="">something</option>
+</optgroup>
+<optgroup label="Other Acmlmboards">
+	<option value="about:blank">just so you know</option>
+	<option value="about:blank">usually there are</option>
+	<option value="about:blank">no affiliates</option>
+	<option value="about:blank">so you can remove this</option>
+</optgroup>';
 				
 				$configvar = "config";
 				print "
@@ -264,7 +259,8 @@ if (!$error) {
 				".set_input(1,"footer-url"      , "Footer Link"     , 350, "http://localhost/")."
 				".set_input(1,"admin-name"      , "Admin name"      , 250, "(admin name)")."
 				".set_input(1,"admin-email"     , "Support email"   , 250, "herp@derp.welp")."
-				".set_radio(1,'show-ikachan'    , 'Show Ikachan'    , 'No|Yes', 0)."
+				".set_radio(2,'show-ikachan'    , 'Show Ikachan'    , 'No|Yes', 0)."
+				".set_textarea(1,'affiliate-links' , 'Affiliates (HTML)' , STA_RESIZE, $defaultaffiliates)."
 			
 				".set_heading("Board options")."			
 				".set_radio(2,'allow-thread-deletion' , 'Allow thread deletion'  , 'No|Yes'      , 0)."
@@ -354,7 +350,7 @@ if (!$error) {
 				".set_heading("Extra set #2")."
 				".set_radio(2,'host'        , 'Alternate board mode'        , 'No|Yes', 0)."
 				".set_input(1,'adminip'     , 'Sysadmin IP'                 ,      150, '127.0.0.1')."
-				".set_input(1,'mmdeath'      , 'Doom timer (disabled)'       ,      150, '-1')."
+				".set_input(1,'mmdeath'     , 'Doom timer (disabled)'       ,      150, '-1')."
 				".set_radio(2,'rainbownames', 'Always use rainbow usernames', 'No|Yes', 0)."
 				".set_radio(2,'superadmin'  , 'Admin board'                 , 'No|Yes', 0)."
 				".set_radio(2,'smallbrowse' , 'Force mobile mode'           , 'No|Yes', 0)."
@@ -397,44 +393,17 @@ if (!$error) {
 			
 			print "<span style='text-align: left'><pre>";
 			print "Attempting to install...";
+			
+			// Save the current db version on clean install
+			// (after this, only update.php should touch the file)
+			if (!INSTALLED) {
+				file_put_contents(DBVER_PATH, get_available_db_version());
+			}
+			
+			$configfile = generate_config(config_from_install());
 
-			// Write configuration file		
-			$configfile = "<?php
-".			"	// Sql database options
-".			"	\$sqlhost = '".addslashes($_POST['sqlhost'])."';
-".			"	\$sqluser = '".addslashes($_POST['sqluser'])."';
-".			"	\$sqlpass = '".addslashes($_POST['sqlpass'])."';
-".			"	\$dbname  = '".addslashes($_POST['dbname'])."';
-".			"	
-".			"	\$sqldebuggers = array('{$_POST['inptconf']['x_hacks']['adminip'][0]}');
-".			"	
-";
-			// Config/hacks/x_hacks writer
-			foreach ($_POST['inptconf'] as $configarr => $arr) {
-				$configfile .= "	\${$configarr} = array(
-";				foreach ($arr as $key => $val) {
-					switch ($val[1]) {
-						case 0: $configfile .= config_int($key, $val[0]); break;
-						case 1: $configfile .= config_string($key, $val[0]); break;
-						case 2: $configfile .= config_bool($key, $val[0]); break;
-						case 3: $configfile .= config_array($key, $val[0]); break;
-						default: die("INVALID TYPE ERROR");
-					}
-				}
-				$configfile .= "	);
-";			}
-
-			// Auto HTTP->HTTPS for origin check
-			$configfile .= "
-".			"	\$config['affiliate-links'] = \"\";
-".			"	
-".			"	// Are we using SSL?
-".			"	if (isset(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] != 'off')
-".			"		\$config['board-url'] = str_replace(\"http://\", \"https://\", \$config['board-url']);
-";
-
-			print "\nWriting settings to lib/config.php...";
-			$res = file_put_contents("lib/config.php", $configfile);
+			print "\nWriting settings to ".CONFIG_PATH."...";
+			$res = file_put_contents(CONFIG_PATH, $configfile);
 			print checkres($res);
 			
 			if ($_POST['__chconfig']) { // we are done here
@@ -506,25 +475,5 @@ if (!$error) {
 		
 	}
 }
-	
-// Displayed buttons
-$btnl = array();
-if ($buttons & BTN_NEXT) $btnl[] = "<input type='submit' class='submit' name='stepcmd' value='Next'>";
-if ($buttons & BTN_PREV) $btnl[] = "<input type='submit' class='submit' name='stepcmd' value='Back'>";
 
-print "<br>".implode('&nbsp;-&nbsp;', $btnl);
-	
-					?>
-					<input type='hidden' name='step' value="<?= $_POST['step'] ?>">
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbgh'>
-					Acmlmboard Installer v1.6b (17-05-18)
-				</td>
-			</tr>
-		</table>
-	</center>
-	</form>
-	</body>
-</html><?php	
+setupfooter(PAGE_FOOTER, $buttons);

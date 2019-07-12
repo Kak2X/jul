@@ -128,7 +128,7 @@ function attachfield($list, $extra = "") {
 		$out .= "
 		<table class='attachment-box'>
 			<tr>
-				<td class='attachment-box-thumb'>
+				<td class='attachment-box-thumb' rowspan='2'>
 					<$w href='download.php?id={$x['id']}{$extra}'><img src='{$thumb}'></$w>
 				</td>
 				<td class='attachment-box-text fonts'>
@@ -136,11 +136,14 @@ function attachfield($list, $extra = "") {
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>
+			</tr>
+			<tr>
+				<td class='attachment-box-controls fonts right'>
 				".($isadmin ? "
-				<td class='attachment-box-controls fonts'>
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=edit'>Edit</a> - 
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a>
-				</td>" : "")."
+				" : "")."
+				</td>
 			</tr>
 		</table>";
 	}

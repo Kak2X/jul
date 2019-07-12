@@ -31,7 +31,7 @@
 			WHERE p.id = {$attachment['post']}
 		");
 		if (!$ismod && $post && $post['fid']) {
-			$ismod = $sql->resultq("SELECT COUNT(*) FROM forummods WHERE forum = {$post['forum']} AND user = {$loguser['id']}");
+			$ismod = $sql->resultq("SELECT COUNT(*) FROM forummods WHERE forum = {$post['fid']} AND user = {$loguser['id']}");
 		}
 		
 		if (
@@ -40,7 +40,7 @@
 			|| (!$ismod && !$post['tid']) // Post in invalid thread 
 			|| (!$ismod && !$post['fid']) // Thread in invalid forum
 			|| $loguser['powerlevel'] < $post['minpower'] // Can't view forum
-			|| !file_exists(attachment_name($id)) // File missing
+			|| !file_exists(attachment_name($_GET['id'])) // File missing
 		) {
 			errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 		}
@@ -57,7 +57,7 @@
 			|| (!$isadmin && $post['deleted']) // Post deleted
 			|| (!$isadmin && !$post['tid']) // Post in invalid thread 
 			|| (!$isadmin && !$sql->resultq("SELECT COUNT(*) FROM pm_access WHERE user = {$loguser['id']} AND thread = {$post['tid']}")) // Can't view forum
-			|| !file_exists(attachment_name($id)) // File missing
+			|| !file_exists(attachment_name($_GET['id'])) // File missing
 		) {
 			errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 		}

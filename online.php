@@ -55,9 +55,9 @@
 		<a href="online.php<?=$lnk?>time=900">15 minutes</a> |
 		<a href="online.php<?=$lnk?>time=3600">hour</a> |
 		<a href="online.php<?=$lnk?>time=86400">day</a>
-	<?php
-	if($isadmin)
-		?><br>Admin cruft: <a href="online.php?<?=(isset($ipsort) ? '':'sort=IP&')?>time=<?=$time?>">Sort by <?=(isset($ipsort) ? 'date' : 'IP')?></a><?php
+<?php if ($isadmin) { ?>
+		<br>Admin cruft: <a href="online.php?<?=(isset($ipsort) ? '':'sort=IP&')?>time=<?=$time?>">Sort by <?=(isset($ipsort) ? 'date' : 'IP')?></a>		
+<?php } 
 	
 	// Logged in users
 	$posters = $sql->query("

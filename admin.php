@@ -1,12 +1,21 @@
 <?php
 
 	require 'lib/function.php';
+	
 	$windowtitle	= "Admin Cruft";
-	pageheader($windowtitle);
 	
 	if (!$isadmin) {
 		errorpage("Uh oh, you are not the admin go away.");
 	}
+	
+	$oldbar = filter_bool($_COOKIE['linkbar']);
+	if (isset($_GET['togglebar'])) {
+		$oldbar = !$oldbar;
+		setcookie('linkbar', $oldbar, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+		return header("Location: admin.php");
+	}
+		
+	pageheader($windowtitle);
 	
 	$misc	= $sql -> fetchq("SELECT * FROM `misc`");
 	
@@ -71,8 +80,11 @@
 		<tr><td class='tdbgh center'><b>Panel de Admin<br></td></tr>
 		<tr><td class='tdbg1 center'>
 			&nbsp;<br>
-			There are a few features you can use. Select one from the panel on the left.<br>
-			Alternatively you can change some general board options in the panel below.
+			There are a few features you can use. Select one from the panel on the <?= $oldbar ? "top" : "left" ?>.<br>
+			Alternatively you can change some general board options in the section below.
+			<br>
+			<br>
+			<small>(Click <a href="?togglebar">here</a> to use the <?= $oldbar ? "new" : "old" ?> style panel)</small>
 			<?= (false && $sysadmin ? "<br><br>To change the hard configuration, click <a href='install/?chconfig'>here</a>." : "") ?>
 			<br>&nbsp;
 		</td></tr>

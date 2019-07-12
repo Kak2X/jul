@@ -2077,8 +2077,9 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			'admin-deluser.php'       => "Delete User",
 		)
 	);
-
-	if (!isset($_GET['oldbar'])) {
+	
+	$oldbar = filter_int($_COOKIE['linkbar']);	
+	if (!$oldbar) {
 		global $_adminsidebar;
 		$_adminsidebar = new TreeView("Admin Functions", $links); 
 		return $_adminsidebar->DisplaySidebar($sel, $subsel, $extraopt);
@@ -2093,30 +2094,53 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 		$r = "<div style='padding:0px;margins:0px;'>
 				<table class='table'>
 					<tr>
-						<td class='tdbgh center b' style='border-bottom: 0'>
+						<td class='tdbgh center b'>
 							Admin Functions
 						</td>
 					</tr>
 				</table>";
-
-		$total = count($links) - 1;
 		foreach ($links as $rownum => $linkrow) {
 			$c	= count($linkrow);
 			$w	= floor(1 / $c * 100);
 
-			$r .= "<table class='table'><tr>";
-			$nb = ($rownum != $total) ? ";border-bottom: 0" : "";
+			$r .= "<table class='table' style='border-top: 0'><tr>";
 
 			foreach($linkrow as $link => $name) {
 				$cell = '1';
 				if ($link == $sel) $cell = 'c';
-				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px{$nb}' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
 			}
 
 			$r .= "</tr></table>";
 		}
+		
+		//--
+		// Do the same (more or less) for the page-specific link bar
+		if ($extraopt) {
+			$c	= count($extraopt);
+			$w	= floor(1 / $c * 100);
+			
+			$r .= "
+				<table class='table' style='border-top: 0'>
+					<tr>
+						<td class='tdbgh center b' colspan='{$c}'>
+							Page Selection
+						</td>
+					</tr>
+					<tr>";
+					
+			$sel .= $subsel;
+			foreach($extraopt as $link => $name) {
+				$cell = '1';
+				if ($link == $sel) $cell = 'c';
+				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+			}
+			$r.= "</tr></table>";
+		}
+		//--
+		
 		$r .= "</div><br>";
-
+		
 		return $r;
 	}
 	

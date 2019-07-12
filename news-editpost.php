@@ -146,9 +146,12 @@
 			
 			if (!$_POST['title'] || !$_POST['text'])
 				news_errorpage("You have left one of the required fields blank!");
-			$valid = (int)$sql->resultq("SELECT COUNT(*) FROM news_tags WHERE id IN (".implode(',', $_POST['tags']).")");
-			if ($valid != count($_POST['tags']))
-				news_errorpage("At least one invalid tag was selected.");
+			// You don't always select an already existing tag
+			if (count($_POST['tags']) > 0) {
+				$valid = (int)$sql->resultq("SELECT COUNT(*) FROM news_tags WHERE id IN (".implode(',', $_POST['tags']).")");
+				if ($valid != count($_POST['tags']))
+					news_errorpage("At least one invalid tag was selected.");
+			}
 			
 			$sql->beginTransaction();
 			

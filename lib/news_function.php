@@ -1,6 +1,6 @@
 <?php
 	
-	const NEWS_VERSION = "v0.4a -- 23/05/18";
+	const NEWS_VERSION = "v0.4b -- 12/07/19";
 	const SHOW_SPECIAL_HEADER = true;
 	
 	if (!$config['enable-news']){

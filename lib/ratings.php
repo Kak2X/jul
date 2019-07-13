@@ -11,9 +11,10 @@ function get_ratings($all = false) {
 // Post rating HTML (rating list & post selection)
 function ratings_html($post, $ratedata = array(), $mode = MODE_POST) {
 	global $ismod, $loguser;
+	static $modes = [MODE_POST => "post", MODE_PM => "pm", MODE_ANNOUNCEMENT => "annc"];
 	$list = $vote = $sneak = "";
 	$tokenstr = "&auth=".generate_token(TOKEN_VOTE);
-	$typestr  = "&type=".($mode == MODE_POST ? "post" : "pm");
+	$typestr  = "&type=".$modes[$mode];
 	$canrate  = ($loguser['id'] && !$loguser['rating_locked']);
 	
 	// Enumerate ratings and display the list
@@ -41,24 +42,44 @@ function rating_colors($val, $pts) {
 	if ($pts < 0)  return "<span style='color: #f00'>{$val}</span>";
 }
 
-function load_ratings($searchon, $min, $ppp, $mode = MODE_POST) {
+function load_ratings($searchon, $range, $mode = MODE_POST) {
 	global $sql, $loguser;
-	if ($mode == MODE_PM) {
-		$prefix = "pm_";
-		$joinpf = "pm";
+	
+	if ($mode == MODE_ANNOUNCEMENT) {
+		// In announcement mode, $range is an array of post ids rather than the min and max post id
+		// ...to simplify the query, that is
+		// deja wu, anyone?
+		
+		if (!count($range))
+			return array();
+		
+		$ratings = $sql->query("
+			SELECT a.post, a.rating, a.user
+			FROM posts p
+			INNER JOIN posts_ratings a ON p.id = a.post
+			WHERE a.post IN (".implode(",", $range).")
+			ORDER BY p.id
+		");
 	} else {
-		$prefix = "";
-		$joinpf = "posts";
+		if ($mode == MODE_PM) {
+			$prefix = "pm_";
+			$joinpf = "pm";
+		} else {
+			$prefix = "";
+			$joinpf = "posts";
+		}
+		
+		$ratings = $sql->query("
+			SELECT a.post, a.rating, a.user
+			FROM {$prefix}posts p
+			INNER JOIN {$joinpf}_ratings a ON p.id = a.post
+			WHERE {$searchon} 
+			  AND a.post BETWEEN '{$range[0]}' AND '{$range[1]}'
+			ORDER BY p.id
+		");
 	}
-	//--
-	$ratings = $sql->query("
-		SELECT a.post, a.rating, a.user
-		FROM {$prefix}posts p
-		INNER JOIN {$joinpf}_ratings a ON p.id = a.post
-		WHERE {$searchon}
-		ORDER BY p.id
-		LIMIT $min,$ppp
-	");
+	
+
 	$out = array();
 	while ($x = $sql->fetch($ratings)) {
 		// Keep a count of total ratings

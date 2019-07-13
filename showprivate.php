@@ -207,7 +207,7 @@
 		$attachments = load_attachments($searchon, $postrange, MODE_PM);
 	}
 	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $min, $ppp, MODE_PM);
+		$ratings = load_ratings($searchon, $postrange, MODE_PM);
 	}
 	//--
 	
@@ -262,11 +262,11 @@
 			$post['showratings'] = true;
 			if (isset($ratings[$post['id']])) {
 				$post['rating'] = $ratings[$post['id']];
-			}
+			}	
 		}
 		
 		$post['act']     = filter_int($act[$post['user']]);	
-		$postlist .= "<tr>".threadpost($post, $bg, -1)."</tr>";
+		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";
 	}
 
 	// Strip _GET variables that can set the page number

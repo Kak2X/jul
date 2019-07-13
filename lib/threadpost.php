@@ -1,6 +1,6 @@
 <?php
 	
-	function threadpost($post,$bg,$forum = 0,$pthread='',$multiforum=false) {
+	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0,$pthread = '', $multiforum = false) {
 		
 		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod;
 		
@@ -75,7 +75,7 @@
 			}
 			
 			if (filter_bool($post['showratings'])) { // Ratings are opt-in
-				$set['rating'] = ratings_html($post['id'], filter_array($post['rating']), ($forum < 0 ? MODE_PM : MODE_POST));
+				$set['rating'] = ratings_html($post['id'], filter_array($post['rating']), $mode);
 			} else {
 				$set['rating'] = "";
 			}
@@ -326,7 +326,7 @@
 			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$data['ip']}'>{$data['ip']}</a>";
 		}
 		
-		
+	// TODO: The hardcoded MODE_POST may need to be replaced if extra modes are added
 	return ($title ? "
 	<table class='table'>
 		<tr>
@@ -335,7 +335,7 @@
 			</td>
 		</tr>
 	</table>" : "")."
-	".threadpost($ppost, 1, $data['forum'])."
+	".threadpost($ppost, 1, MODE_POST, $data['forum'])."
 	<br>";
 	}
 	

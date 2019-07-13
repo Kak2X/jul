@@ -255,7 +255,7 @@
 		$attachments = load_attachments($searchon, $postrange);
 	}
 	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $min, $ppp);
+		$ratings = load_ratings($searchon, $postrange);
 	}
 	
 	$controls['ip'] = "";
@@ -343,7 +343,7 @@
 			$forum['id'] = $pthread['forum'];
 		}
 		$post['act']     = filter_int($act[$post['user']]);		
-		$postlist .= threadpost($post, $bg, $forum['id'], $pthread, $multiforum);
+		$postlist .= threadpost($post, $bg, MODE_POST, $forum['id'], $pthread, $multiforum);
 			
 	}
 

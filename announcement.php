@@ -99,6 +99,9 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postids, MODE_ANNOUNCEMENT);
 	}
+	if ($config['enable-post-ratings']) {
+		$ratings = load_ratings($searchon, $postids, MODE_ANNOUNCEMENT);
+	}
 	//--
 	
 	$pagelinks = pagelist("?".($forumannc ? "f={$_GET['f']}&" : "")."ppp={$ppp}", $annctotal, $ppp);
@@ -126,10 +129,16 @@
 			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
 			if ($isadmin) $controls['ip'] = " | IP: {$annc['ip']}";
 		}
+		if ($config['enable-post-ratings']) {
+			$annc['showratings'] = true;
+			if (isset($ratings[$annc['id']])) {
+				$annc['rating'] = $ratings[$annc['id']];
+			}
+		}
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		$annclist .= threadpost($annc,$bg,$_GET['id']);
+		$annclist .= threadpost($annc, $bg, MODE_ANNOUNCEMENT, $_GET['id']);
 	}
 	
 	echo "$pagelinks<table class='table'>$annclist</table>$pagelinks";

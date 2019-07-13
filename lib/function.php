@@ -1834,6 +1834,12 @@ function get_ipp(&$ipp, $default, $min = 1, $max = 500) {
 	return ($ipp ? numrange((int)$ipp, 1, 500) : $default);
 }
 
+// get the lowest and highest values of a single key
+function get_id_range($data, $key = null) {
+	$single = $key !== null ? array_column($data, $key) : $data;
+	return [min($single), max($single)];
+}
+
 function squot($t, &$src){
 	switch($t){
 		case 0: $src=htmlspecialchars($src); break;

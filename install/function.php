@@ -145,6 +145,12 @@
 	
 	// Query successful or not
 	function checkres($r){return $r ? "<span class='ok'>OK!</span>\n" : "<span class='warn'>ERROR!</span>\n";}
+	function checkresmulti($r) {
+		foreach ($r as $x) {
+			if (!$x) return checkres(false);
+		}
+		return checkres(true);
+	}
 	
 	function filter_int(&$v) 		{ return (int) $v; }
 	function filter_float(&$v)		{ return (float) $v; }

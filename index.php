@@ -332,7 +332,7 @@
 			<tr>
 				<td class="tdbg1 center thread-icon-td">
 					<div class="thread-icon">
-						<img src="<?= htmlspecialchars($fthread['icon']) ?>" alt="->">
+						<?= ($fthread['icon'] ? "<img src=\"".htmlspecialchars($fthread['icon'])."\" alt='->'>" : "->") ?>
 					</div>
 				</td>
 				<td class="tdbg1">

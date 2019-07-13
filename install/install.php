@@ -17,7 +17,7 @@ require "install/layout.php";
 require "lib/defines.php";
 
 const PAGE_HEADER = "Acmlmboard Installer";
-const PAGE_FOOTER = "Acmlmboard Installer v1.7 (??-07-19)";
+const PAGE_FOOTER = "Acmlmboard Installer v1.7 (13-07-19)";
 
 const RECONFIG      = true;
 const VERSION_LOCK  = true;

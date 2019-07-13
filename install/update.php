@@ -1,7 +1,7 @@
 <?php
 
 const PAGE_HEADER = "Upgrade Utility";
-const PAGE_FOOTER = "Upgrade Utility v1.0 (??-07-19)";
+const PAGE_FOOTER = "Upgrade Utility v1.0 (13-07-19)";
 
 const STEP_INTRO = 0;
 const STEP_PASSWORD = 1;

@@ -551,20 +551,22 @@ function upload_error($file, $allowblank = false) {
 	}
 }
 
-function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
+function load_attachments($searchon, $range, $mode = MODE_POST) {
 	global $sql;
-	if ($mode == MODE_ANNOUNCEMENT) { // heh welp
-		return array();
-		// TODO: Fix this
+	if ($mode == MODE_ANNOUNCEMENT) {
+		// In announcement mode, $range is an array of post ids rather than the min and max post id
+		// ...to simplify the query, that is
+		
+		if (!count($range))
+			return array();
+		
 		return $sql->fetchq("
-			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, MIN(p.id) pid
-			FROM threads t
-			LEFT JOIN posts       p ON p.thread = t.id
-			LEFT JOIN attachments a ON p.id     = a.post
-			WHERE {$searchon} AND a.id IS NOT NULL
-			GROUP BY t.id
+			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, p.id pid
+			FROM posts p
+			INNER JOIN attachments a ON p.id = a.post
+			WHERE a.id IS NOT NULL
+			  AND p.id IN (".implode(",", $range).")
 			ORDER BY p.date DESC
-			LIMIT {$min},{$ppp}
 		", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 	}
 	
@@ -575,14 +577,14 @@ function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
 		$prefix = "";
 		$match  = "post";
 	}
-	// TODO: This is bugged as it limits the attachments as if it were a post list
-	//       The same bug is also in the ratings, and probably elsewhere
+	
 	return $sql->fetchq("
 		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
 		FROM {$prefix}posts p
 		LEFT JOIN attachments a ON p.id = a.{$match}
-		WHERE {$searchon} AND a.id IS NOT NULL
+		WHERE {$searchon} 
+		  AND a.id IS NOT NULL
+		  AND p.id BETWEEN '{$range[0]}' AND '{$range[1]}'
 		ORDER BY p.id ASC
-		LIMIT {$min},{$ppp}
 	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
 }

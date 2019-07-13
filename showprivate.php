@@ -180,20 +180,9 @@
 	$min      = $ppp * $_GET['page'];
 	$searchon = "p.thread = {$_GET['id']}";
 	
-	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM pm_posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
-	preplayouts($layouts);
-	
-	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
-	if ($showattachments) {
-		$attachments = load_attachments($searchon, $min, $ppp, MODE_PM);
-	}
-	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $min, $ppp, MODE_PM);
-	}
-	
+
 	// heh
-	$posts = $sql->query(set_avatars_sql("
+	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, 0 revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
@@ -206,11 +195,28 @@
 		LIMIT $min,$ppp
 	"));
 	
+	//--
+	$postrange = get_id_range($posts, 'id');
+	
+	// Workaround for the lack of scrollable cursors
+	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM pm_posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
+	preplayouts($layouts);
+	
+	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
+	if ($showattachments) {
+		$attachments = load_attachments($searchon, $postrange, MODE_PM);
+	}
+	if ($config['enable-post-ratings']) {
+		$ratings = load_ratings($searchon, $min, $ppp, MODE_PM);
+	}
+	//--
+	
 	$controls['ip'] = "";
 	$tokenstr       = "&auth=".generate_token(TOKEN_MGET);
-	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
-		$bg = $i % 2 + 1;
-
+	$bg = 0;
+	foreach ($posts as $post) {
+		$bg = $bg % 2 + 1;
+		
 		// "?pid={$post['id']}"
 		$controls['quote'] = "<a href=\"#{$post['id']}\">Link</a>";
 		if (!$post['deleted'] && !$thread['closed']) {

@@ -77,13 +77,8 @@
 	");
 	preplayouts($layouts);
 	
-	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
-	if ($showattachments) {
-		$attachments = load_attachments($searchon, $min, $ppp, MODE_ANNOUNCEMENT);
-	}
-	
 	// Get every first post for every (announcement) thread in the forum
-	$anncs = $sql->query(set_avatars_sql("
+	$anncs = $sql->getarray(set_avatars_sql("
 		SELECT t.title atitle, t.description adesc, MIN(p.id) pid, p.*,
 		       COUNT(p.id)-1 replies, u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM threads t
@@ -97,6 +92,14 @@
 	"));
 	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = {$_GET['f']} ".($forumannc ? "AND announcement = 1" : ""));
 	
+	//--
+	$postids = array_column($anncs, 'id');
+	
+	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
+	if ($showattachments) {
+		$attachments = load_attachments($searchon, $postids, MODE_ANNOUNCEMENT);
+	}
+	//--
 	
 	$pagelinks = pagelist("?".($forumannc ? "f={$_GET['f']}&" : "")."ppp={$ppp}", $annctotal, $ppp);
 	$controls['quote'] = $controls['ip'] = $controls['edit'] = "";
@@ -109,9 +112,10 @@
 			<td class='tdbgh center' colspan=2>Announcement</td>
 		</tr>";
 		
-	for ($i = 0; $annc = $sql->fetch($anncs); ++$i) {
+	$bg = 0;
+	foreach ($anncs as $annc) {
 		$annclist .= '<tr>';
-		$bg = $i % 2 + 1;
+		$bg = $bg % 2 + 1;
 		
 		if ($showattachments && isset($attachments[$annc['id']])) {
 			$annc['attach'] = $attachments[$annc['id']];
@@ -119,8 +123,8 @@
 		
 		$controls['edit'] = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
 		if ($canthread) {
-		  $controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
-		  if ($isadmin) $controls['ip'] = " | IP: {$annc['ip']}";
+			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+			if ($isadmin) $controls['ip'] = " | IP: {$annc['ip']}";
 		}
 		
 		$annc['act'] = filter_int($act[$annc['user']]);

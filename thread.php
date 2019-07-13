@@ -222,26 +222,9 @@
 	
 	if ($_GET['user']) $searchon = "p.user={$_GET['user']}";
 	else               $searchon = "p.thread={$_GET['id']}";
-
-	// Workaround for the lack of scrollable cursors
-	if ($_GET['pin'] && $_GET['rev']) {
-		$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
-	} else {
-		$oldrev = array();
-	}
-	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
-	preplayouts($layouts, $oldrev);
-	
-	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
-	if ($showattachments) {
-		$attachments = load_attachments($searchon, $min, $ppp);
-	}
-	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $min, $ppp);
-	}
 	
 	// heh
-	$posts = $sql->query(set_avatars_sql("
+	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
@@ -255,10 +238,31 @@
 		LIMIT $min,$ppp
 	"));
 	
+	//--
+	$postrange = get_id_range($posts, 'id');
+	
+	// Workaround for the lack of scrollable cursors
+	if ($_GET['pin'] && $_GET['rev']) {
+		$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+	} else {
+		$oldrev = array();
+	}
+	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
+	preplayouts($layouts, $oldrev);
+	
+	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
+	if ($showattachments) {
+		$attachments = load_attachments($searchon, $postrange);
+	}
+	if ($config['enable-post-ratings']) {
+		$ratings = load_ratings($searchon, $min, $ppp);
+	}
+	
 	$controls['ip'] = "";
-	for ($i = 0; $post = $sql->fetch($posts); ++$i) {
+	$bg = 0;
+	foreach ($posts as $post) {
 		//$postlist	.= '<tr>';
-		$bg = $i % 2 + 1;
+		$bg = $bg % 2 + 1;
 		
 		// link & quote
 		$controls['quote'] = "<a href=\"".($nolinkrefresh ? "" : "?pid={$post['id']}")."#{$post['id']}\">Link</a>";

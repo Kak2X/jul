@@ -122,12 +122,14 @@
 	// Thread owner / admin actions
 	if ($isadmin || ($loguser['id'] == $thread['user'] && $config['allow-pmthread-edit'])) {
 		$link = "<a href='editpmthread.php?id={$_GET['id']}&auth=".generate_token(TOKEN_MGET)."&action";
-		if (isset($thread['error'])) {
-			$linklist .= "<s>Close</s>";
-		} else if (!$thread['closed']) {
-			$linklist .= "$link=qclose'>Close</a>";
-		} else {
-			$linklist .= "$link=qunclose'>Open</a>";
+		if ($isadmin) {
+			if (isset($thread['error'])) {
+				$linklist .= "<s>Close</s>";
+			} else if (!$thread['closed']) {
+				$linklist .= "$link=qclose'>Close</a>";
+			} else {
+				$linklist .= "$link=qunclose'>Open</a>";
+			}
 		}
 		$fulledit = " -- <a href='editpmthread.php?id={$_GET['id']}'>Edit thread<a>";
 	}

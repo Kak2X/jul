@@ -91,7 +91,7 @@ function pm_folder_select($name, $user, $sel = 0, $flags = 0) {
 		}
 		$groups .= "</optgroup>";
 	}
-	$folders = $sql->query("SELECT folder, title FROM pm_folders {$nosel} ORDER BY ord ASC, id ASC");
+	$folders = $sql->query("SELECT folder, title FROM pm_folders {$nosel} WHERE user = {$user} ORDER BY ord ASC, id ASC");
 	$custom = "";
 	while ($x = $sql->fetch($folders)) {
 		if ($flags & PMSELECT_SHOWCNT) {

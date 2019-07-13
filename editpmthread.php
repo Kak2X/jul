@@ -12,7 +12,7 @@
 	if (!$loguser['id']) {
 		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
 	}
-	if ((!$isadmin && !$config['allow-pmthread-edit'] && $_GET['action'] != 'movethread') || $loguser['editing_locked']) {
+	if ((!$isadmin && !$config['allow-pmthread-edit'] && $_GET['action'] != 'movethread' && $_GET['action'] != 'trashthread') || $loguser['editing_locked']) {
 		errorpage("You are not allowed to edit your threads.", "showprivate.php?id={$_GET['id']}", 'return to the conversation');
 	}
 	
@@ -33,8 +33,6 @@
 		if (confirmpage($message, $form_link, $buttons)) {
 			$_POST['deletethread'] = true;
 		}
-	} else if (!$isadmin && $thread['user'] != $loguser['id']) {
-		errorpage("You are not allowed to do this for this conversation.", "private.php", 'your private message box');
 	}
 	
 	if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
@@ -100,19 +98,7 @@
 			errorpage("Thank you, {$loguser['name']}, for moving the thread.", "private.php", "your private message box");
 		}
 	}
-	else if ($isadmin && substr($_GET['action'], 0, 1) == 'q') { // Quickmod
-		check_token($_GET['auth'], TOKEN_MGET);
-		switch ($_GET['action']) {
-			//case 'qstick':   $update = 'sticky=1'; break;
-			//case 'qunstick': $update = 'sticky=0'; break;
-			case 'qclose':   $update = 'closed=1'; break;
-			case 'qunclose': $update = 'closed=0'; break;
-			default: return header("Location: showprivate.php?id={$_GET['id']}");
-		}
-		$sql->query("UPDATE pm_threads SET {$update} WHERE id={$_GET['id']}");
-		return header("Location: showprivate.php?id={$_GET['id']}");
-	}
-	else if ($isadmin && $_GET['action'] == 'trashthread') {
+	else if ($_GET['action'] == 'trashthread') {
 		if (!$access) {
 			errorpage("You don't have access to the thread, so you can't move it to the trash folder.", "showprivate.php?id={$_GET['id']}", 'the thread');
 		}
@@ -128,8 +114,25 @@
 			errorpage("Thread successfully trashed.","showprivate.php?id={$_GET['id']}",'return to the thread');
 		}
 	}
-	else {
-		
+	//
+	// THE FOLLOWING ACTIONS CAN ONLY BE DONE BY AN ADMIN (and the thread owner, sometimes)
+	//
+	else if (!$isadmin && $thread['user'] != $loguser['id']) {
+		errorpage("You are not allowed to do this for this conversation.", "showprivate.php?id={$_GET['id']}", 'the thread');
+	}
+	else if ($isadmin && substr($_GET['action'], 0, 1) == 'q') { // Quickmod
+		check_token($_GET['auth'], TOKEN_MGET);
+		switch ($_GET['action']) {
+			//case 'qstick':   $update = 'sticky=1'; break;
+			//case 'qunstick': $update = 'sticky=0'; break;
+			case 'qclose':   $update = 'closed=1'; break;
+			case 'qunclose': $update = 'closed=0'; break;
+			default: return header("Location: showprivate.php?id={$_GET['id']}");
+		}
+		$sql->query("UPDATE pm_threads SET {$update} WHERE id={$_GET['id']}");
+		return header("Location: showprivate.php?id={$_GET['id']}");
+	}
+	else {	
 		// We are increasing the limit since admins can edit the ACL
 		// This is because the thread owner (which usually is $loguser['id'] if we're not admins) is normally omitted from the list
 		// If we're admins (which can peek on otherwise restricted threads) this can be no longer true, so admins get the full list without omissions.

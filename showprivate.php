@@ -134,9 +134,9 @@
 	// Moving a thread on a different folder should be always possible
 	if ($access) { 
 		if ($access['folder'] != PMFOLDER_TRASH) {
-			$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
+			$linklist .= ($linklist ? " - " : "")."<a href='editpmthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
 		}
-		$linklist .= " - <a href='editpmthread.php?id={$_GET['id']}&action=movethread'>Move</a>";
+		$linklist .= ($linklist ? " - " : "")."<a href='editpmthread.php?id={$_GET['id']}&action=movethread'>Move</a>";
 		$head = "Thread options";
 	} else {
 		$head = "Sneak mode";

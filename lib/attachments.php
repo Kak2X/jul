@@ -4,14 +4,16 @@
 	Attachment field HTML
 	$thread   - Thread ID
 	$user     - User ID (used for attachment key)
+	$loguser  - Currently logged in user ID (to determine if we're allowed to post / edit attachments)
+	$powlreq  - Powerlevel requirement to post attachments (-1 and -2 have special meaning) 
 	$showpost - Post ID (to show uploaded attachments in the list)
 	$sel      - Array with attachment IDs marked for deletion
 	$pm       - If true, attachment keys are handled in PM mode
 */ 
-function quikattach($thread, $user, $showpost = NULL, $sel = NULL, $pm = false) {
+function quikattach($thread, $user, $loguser, $powlreq = ATTACH_REQ_DEFAULT, $showpost = NULL, $sel = NULL, $pm = false) {
 	global $config, $numdir, $sql;
 	
-	if (!$config['allow-attachments'] || $user < 1) {
+	if (!can_use_attachments($loguser, $powlreq) || $user < 1) {
 		return "";
 	}
 	
@@ -148,6 +150,18 @@ function attachfield($list, $extra = "") {
 		</table>";
 	}
 	return "<br/><br/><fieldset><legend>Attachments</legend>{$out}</fieldset>";
+}
+
+// Determines if we're allowed to do anything with attachments (outside of downloading them)
+// this MUST be checked before calling process_attachments
+function can_use_attachments($user, $powlreq = ATTACH_REQ_DEFAULT) {
+	global $config;
+	return !(
+		   !$config['allow-attachments']   // Config disable
+		|| $user['uploads_locked']         // Per-user config
+		|| $user['powerlevel'] < $powlreq  // Not enough for forum
+		|| $powlreq == ATTACH_REQ_DISABLED // Disabled for forum
+	);
 }
 
 // After post previews
@@ -561,6 +575,8 @@ function load_attachments($searchon, $min, $ppp, $mode = MODE_POST) {
 		$prefix = "";
 		$match  = "post";
 	}
+	// TODO: This is bugged as it limits the attachments as if it were a post list
+	//       The same bug is also in the ratings, and probably elsewhere
 	return $sql->fetchq("
 		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
 		FROM {$prefix}posts p

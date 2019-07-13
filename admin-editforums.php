@@ -40,7 +40,8 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 		'hidden' 			=> filter_int($_POST['hideforum']),
 		'pollstyle' 		=> filter_int($_POST['pollstyle']),
-		'login' 			=> filter_int($_POST['login'])
+		'login' 			=> filter_int($_POST['login']),
+		'attachmentmode'    => filter_int($_POST['attachmentmode']),
 	);
 	$qadd = mysql::setplaceholders($values);
 	if ($_GET['id'] <= -1) {
@@ -145,9 +146,14 @@ pageheader($windowtitle);
 
 print adminlinkbar('admin-editforums.php');
 
+
+$attachmodes = array(-2 => 'Disallowed',
+                     -1 => 'Normal');
+
 foreach($pwlnames as $pwl => $pwlname) {
 	if ($pwl < 0) continue;
 	$powers[] = $pwlname;
+	$attachmodes[] = "Require ".$pwlname;
 }
 $powers[] = '[no access]';
 
@@ -214,6 +220,7 @@ else if ($_GET['id']) {
 			'hidden'         =>  0,
 			'pollstyle'      => -1,
 			'login'          =>  0,
+			'attachmentmode' => -1,
 		);
 	} else {
 		if (!isset($categories[$forum['catid']]))
@@ -240,8 +247,8 @@ else if ($_GET['id']) {
 		</tr>
 
 		<tr>
-			<td class='tdbgh center' rowspan=4>Description</td>
-			<td class='tdbg1' rowspan=4 colspan=3><textarea wrap=virtual name=description ROWS=4 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
+			<td class='tdbgh center' rowspan=5>Description</td>
+			<td class='tdbg1' rowspan=5 colspan=3><textarea wrap=virtual name=description ROWS=7 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
 			<td class='tdbgh center' colspan=2>Minimum power needed...</td>
 		</tr>
 
@@ -259,7 +266,11 @@ else if ($_GET['id']) {
 			<td class='tdbgh center'>...to reply</td>
 			<td class='tdbg1'><?=dropdownList($powers, $forum['minpowerreply'], "minpowerreply")?></td>
 		</tr>
-
+		<tr>
+			<td class='tdbgh center'>...to post attachments</td>
+			<td class='tdbg1'><?=dropdownList($attachmodes, $forum['attachmentmode'], "attachmentmode")?></td>
+		</tr>
+		
 		<tr>
 			<td class='tdbgh center'  width='10%'>Number of Threads</td>
 			<td class='tdbg1' width='24%'><input type="text" name="numthreads" maxlength="8" size="10" value="<?=($forum['numthreads'] ? $forum['numthreads'] : "0")?>" class="right"></td>

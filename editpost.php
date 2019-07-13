@@ -62,6 +62,8 @@
 	
 		if (isset($_POST['submit']) || isset($_POST['preview'])) {
 			
+			$can_attach = can_use_attachments($loguser, $forum['attachmentmode']);
+			
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
@@ -71,7 +73,7 @@
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
 
-			if ($config['allow-attachments']) {
+			if ($can_attach) {
 				$attachsel = process_attachments($attach_key, $loguser['id'], $_GET['id']); // Returns attachments marked for removal
 			}
 			
@@ -147,7 +149,7 @@
 				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
 				$sql->commit();
 				
-				if ($config['allow-attachments']) {
+				if ($can_attach) {
 					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], 0, $attachsel);
 				}
 				
@@ -264,7 +266,7 @@
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
 					<?=mood_layout(1, $post['user'], $moodid)?>
 				</td>
-				<?=quikattach($attach_key, $post['user'], $post['id'], $attachsel)?>
+				<?=quikattach($attach_key, $post['user'], $loguser, ATTACH_REQ_DEFAULT, $post['id'], $attachsel)?>
 			</tr>
 		</table>
 		</form>

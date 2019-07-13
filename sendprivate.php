@@ -62,8 +62,11 @@ if ($_GET['id']) {
 			errorpage("Couldn't enter the post. $error<br/>You can return to the previous page, or refresh to try again."); //  "thread.php?id={$_GET['id']}", htmlspecialchars($thread['title']), 0
 		}
 		
+		//--
+		$can_attach = can_use_attachments($loguser);
+		
 		// Process attachments removal
-		if ($config['allow-attachments']) {
+		if ($can_attach) {
 			process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM);
 		}
 				
@@ -78,7 +81,7 @@ if ($_GET['id']) {
 			}
 			//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
 			$pid = create_pm_post($loguser, $_GET['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
-			if ($config['allow-attachments']) {
+			if ($can_attach) {
 				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
 			}
 			$sql->commit();
@@ -208,7 +211,7 @@ if ($_GET['id']) {
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<?=quikattach($_GET['id'], $loguser['id'])?>
+		<?=quikattach($_GET['id'], $loguser['id'], $loguser, ATTACH_REQ_DEFAULT)?>
 	</table>
 	<br>
 	<?=$postlist?>
@@ -278,7 +281,9 @@ else {
 		}
 		
 		// All OK!
-		if ($config['allow-attachments']) {
+		$can_attach = can_use_attachments($loguser);
+				
+		if ($can_attach) {
 			$attach_key = "npmx";
 			$input_tid = process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM | ATTACH_INCKEY);
 		}
@@ -302,7 +307,7 @@ else {
 			$pid = create_pm_post($loguser, $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 			set_pm_acl($destid, $tid); // and add yourself automatically
 			
-			if ($config['allow-attachments']) {
+			if ($can_attach) {
 				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
 			}
 			$sql->commit();
@@ -451,7 +456,7 @@ else {
 				<?= pm_folder_select('folder', $loguser['id'], $_POST['folder']) ?>
 			</td>
 		</tr>
-		<?=quikattach($attach_key, $loguser['id'])?>
+		<?=quikattach($attach_key, $loguser['id'], $loguser, ATTACH_REQ_DEFAULT)?>
 		</table>
 		</form>
 		<?=$barlinks?>

@@ -60,13 +60,14 @@
 	$reply_error = "";
 	$postpreview = "";
 	$attach_key = $_GET['id'];
+	
 	$userid     = $loguser['id'];
+	$user       = $loguser;
+	
 	if (isset($_POST['submit']) || isset($_POST['preview'])) {
 
 		// Trying to post as someone else?
-		if ($loguser['id'] && !$_POST['password']) {
-			$user   = $loguser;
-		} else {
+		if (!$loguser['id'] || $_POST['password']) {
 			$userid = checkuser($_POST['username'], $_POST['password']);
 			if ($userid == -1) {
 				$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
@@ -93,8 +94,10 @@
 		$error = ($reply_error || $login_error);
 		
 		if (!$error) {
+			$can_attach = can_use_attachments($user, $forum['attachmentmode']);
+			
 			// Process attachments removal
-			if ($config['allow-attachments'] && !$user['uploads_locked']) {
+			if ($can_attach) {
 				process_attachments($attach_key, $userid);
 			}
 			
@@ -115,9 +118,9 @@
 				} else {
 					$modq = array();
 				}
-				//$modq = $ismod ? "`closed` = {$_POST['close']}, `sticky` = {$_POST['stick']}, announcement = {$_POST['tannc']}," : "";
+				
 				$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
-				if ($config['allow-attachments'] && !$user['uploads_locked']) {
+				if ($can_attach) {
 					confirm_attachments($attach_key, $userid, $pid);
 				}
 				$sql->commit();
@@ -300,7 +303,7 @@
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<?=quikattach($_GET['id'], $userid)?>
+		<?=quikattach($_GET['id'], $userid, $user, $forum['attachmentmode'])?>
 	</table>
 	<br>
 	<?=$postlist?>

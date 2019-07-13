@@ -36,6 +36,8 @@
 		
 		if (isset($_POST['submit']) || isset($_POST['preview'])) {
 			
+			$can_attach = can_use_attachments($loguser);
+			
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
@@ -44,7 +46,7 @@
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
 			
-			if ($config['allow-attachments']) {
+			if ($can_attach) {
 				$attachsel = process_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
 			}
 			
@@ -80,7 +82,7 @@
 				$sql->beginTransaction();
 				$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 				$sql->commit();
-				if ($config['allow-attachments']) {
+				if ($can_attach) {
 					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM, $attachsel);
 				}
 				errorpage("Post edited successfully.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
@@ -203,7 +205,7 @@
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
 					<?=mood_layout(1, $post['user'], $moodid)?>
 				</td>
-				<?=quikattach($attach_key, $post['user'], $post['id'], $attachsel, 'pm')?>
+				<?=quikattach($attach_key, $post['user'], $loguser, ATTACH_REQ_DEFAULT, $post['id'], $attachsel, 'pm')?>
 			</tr>
 		</table>
 		</form>

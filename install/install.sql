@@ -708,6 +708,7 @@ CREATE TABLE `forums` (
   `specialtitle` tinytext COLLATE utf8mb4_unicode_ci,
   `pollstyle` tinyint(2) NOT NULL DEFAULT '0',
   `login` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `attachmentmode` tinyint(4) NOT NULL DEFAULT '-1',
   PRIMARY KEY (`id`),
   KEY `catid` (`catid`),
   KEY `minpower` (`minpower`),

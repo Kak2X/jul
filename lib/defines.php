@@ -58,6 +58,9 @@
 	const MODE_PM   = 1;
 	const MODE_ANNOUNCEMENT = 2;
 	
+	const ATTACH_REQ_DEFAULT = -1;
+	const ATTACH_REQ_DISABLED = -2;
+	
 	const PWL_MIN = -2;
 	const PWL_MAX = 4;
 	

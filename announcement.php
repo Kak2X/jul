@@ -66,16 +66,6 @@
 	$searchon = "t.forum = {$_GET['f']} ".($forumannc ? "AND t.announcement = 1" : "");
 	
 	$ufields = userfields();
-	$layouts = $sql->query("
-		SELECT p.headid, p.signid, p.cssid, MIN(p.id) pid 
-		FROM threads t
-		LEFT JOIN posts p ON p.thread = t.id
-		WHERE {$searchon}
-		GROUP BY t.id
-		ORDER BY p.date DESC
-		LIMIT $min,$ppp
-	");
-	preplayouts($layouts);
 	
 	// Get every first post for every (announcement) thread in the forum
 	$anncs = $sql->getarray(set_avatars_sql("
@@ -91,6 +81,8 @@
 		LIMIT $min,$ppp
 	"));
 	$annctotal = $sql->resultq("SELECT COUNT(*) FROM threads WHERE forum = {$_GET['f']} ".($forumannc ? "AND announcement = 1" : ""));
+	
+	preplayouts($anncs);
 	
 	//--
 	$postids = array_column($anncs, 'id');

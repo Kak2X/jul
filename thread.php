@@ -235,17 +235,16 @@
 		LIMIT $min,$ppp
 	"));
 	
-	//--
-	$postrange = get_id_range($posts, 'id');
-	
-	// Workaround for the lack of scrollable cursors
 	if ($_GET['pin'] && $_GET['rev']) {
 		$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
 	} else {
-		$oldrev = array();
+		$oldrev = null;
 	}
-	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
-	preplayouts($layouts, $oldrev);
+	
+	preplayouts($posts, $oldrev);
+	
+	//--
+	$postrange = get_id_range($posts, 'id');
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {

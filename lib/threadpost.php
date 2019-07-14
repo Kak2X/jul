@@ -119,13 +119,13 @@
 		return dofilters(postcode($post,$set), $forum, $multiforum);
 	}
 
-	function preplayouts($posts, $oldrev = array()) {
+	function preplayouts($posts, $oldrev = null) {
 		global $sql, $postl;
 
 		$ids = array();
 
 		// Just fetch everything now instead of hitting the DB for each new header/signature encountered
-		while ($ps = $sql->fetch($posts)) {
+		foreach ($posts as $ps) {
 			if ($ps['headid']) $ids[] = $ps['headid'];
 			if ($ps['signid']) $ids[] = $ps['signid'];
 			if ($ps['cssid'])  $ids[] = $ps['cssid'];

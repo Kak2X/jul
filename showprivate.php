@@ -195,12 +195,10 @@
 		LIMIT $min,$ppp
 	"));
 	
+	preplayouts($posts);
+		
 	//--
 	$postrange = get_id_range($posts, 'id');
-	
-	// Workaround for the lack of scrollable cursors
-	$layouts = $sql->query("SELECT p.headid, p.signid, p.cssid FROM pm_posts p WHERE {$searchon} ORDER BY p.id ASC LIMIT $min, $ppp");
-	preplayouts($layouts);
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {

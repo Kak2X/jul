@@ -487,7 +487,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  background:none;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		input[type=submit],button{
+		input[type=submit],input[type=button],button{
 		  border:	#$inputborder solid 2px;
 		  font:	10pt $font;}
 		";

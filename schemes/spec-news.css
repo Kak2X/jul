@@ -128,7 +128,7 @@ textarea, input, select, button{
 	border-radius:	3px;
 	background: 	#0C0C0C;/*rgba(0,0,0, 0.6);*/
 }
-input[type=submit] {
+input[type=submit], input[type=button], button {
 	border: 		2px solid #60C060;
 }
 /*

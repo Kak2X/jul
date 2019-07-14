@@ -29,7 +29,7 @@ textarea,input,select,button {
 	font: 10pt monospace;
 }
 
-input[type=submit],button {
+input[type=submit], input[type=button], button{
 	border: #000 solid 2px;
 	font: 10pt 'verdana', sans-serif;
 }

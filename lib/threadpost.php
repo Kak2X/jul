@@ -352,16 +352,14 @@ function thread_history($thread, $num, $pm = false) {
 		$nf    = "p.";
 	}
 	
-	++$num; // No LIMIT expressions
 	$posts = $sql->query("
 		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, {$nf}num
 		FROM {$table} p
 		LEFT JOIN users u ON p.user = u.id
 		WHERE p.thread = $thread
 		ORDER BY p.id DESC
-		LIMIT {$num}
+		LIMIT ".($num + 1)."
 	");
-	--$num;
 	
 	$i = 0;
 	

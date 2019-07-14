@@ -740,11 +740,9 @@ piwikTracker.enableLinkTracking();
 	print error_printer(true, ($loguser['powerlevel'] == 4 || $config['always-show-debug']), $GLOBALS['errors']);
 
 	// Print mysql queries
-	if (mysql::$debug_on && in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $loguser['id'] == 1 || $config['always-show-debug']) {
-		if (!isset($_GET['debugsql']) && !$config['always-show-debug']) {
-			// Link to enable debugging
-			print "<br><a href='".$_SERVER['REQUEST_URI'].(($_SERVER['QUERY_STRING']) ? "&" : "?")."debugsql=1'>Useless mySQL query debugging shit</a>";
-		} else {
+	if (in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $config['always-show-debug']) {
+		print "<br><a href='{$scriptname}?{$_SERVER['QUERY_STRING']}".($_SERVER['QUERY_STRING'] ? "&" : "")."debugsql=".(mysql::$debug_on ? "0'>Disable" : "1'>Enable")." useless mySQL query debugging shit</a><br>";
+		if (mysql::$debug_on) {
 		
 ?>
 	<br>

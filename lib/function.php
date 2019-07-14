@@ -33,9 +33,21 @@
 	require 'lib/datetime.php';	
 	
 	// Determine if to show conditionally the MySQL query list.
-	if ($config['enable-sql-debugger'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
-		// TODO: possibly use cookies or something instead.
-		if ($config['always-show-debug'] || isset($_GET['debugsql']))
+	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
+		if (isset($_GET['debugsql'])) {
+			// Don't redirect loop
+			if (!is_numeric($_GET['debugsql']))
+				die(header("Location: ?sec=1"));
+			
+			$debugopt = filter_bool($_GET['debugsql']);
+			setcookie('debugsql', $debugopt, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+			
+			// Remove debugsql parameter and redirect back
+			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
+			die(header("Location: ".get_current_script()."?{$params}"));
+		}
+		
+		if (filter_int($_COOKIE['debugsql']))
 			mysql::$debug_on = true; // applies for all connections using the mysql class
 	}
 	
@@ -81,9 +93,7 @@
 	}
 	
 	// Get the running script's filename
-	$path = explode("/", $_SERVER['SCRIPT_NAME']);
-	$scriptname = end($path);
-	unset($path);
+	$scriptname = get_current_script();
 	
 	// determine if the current request is an ajax request, currently only a handful of libraries
 	// set the x-http-requested-with header, with the value "XMLHttpRequest"
@@ -2623,6 +2633,12 @@ function deletefolder($directory) {
 
 function escape_attribute($attr) {
 	return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
+}
+
+function get_current_script() {
+	$path = explode("/", $_SERVER['SCRIPT_NAME']);
+	$scriptname = end($path);
+	return $scriptname;
 }
 
 // $startrange === true -> print all pages

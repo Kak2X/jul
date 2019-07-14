@@ -53,7 +53,7 @@
 	} else {
 		$_GET['page']		= filter_int($_GET['page']);
 	}
-	$specialscheme = $specialtitle = $nolinkrefresh = NULL;
+	$specialscheme = $specialtitle = NULL;
 	$forum_error   = "";
 	$multiforum    = false;
 	if ($_GET['id']) {
@@ -106,9 +106,6 @@
 			$sql->query("UPDATE threads SET views = views + 1 WHERE id = {$_GET['id']}");
 		}
 		$windowtitle = "{$forum['title']}: {$thread['title']}";
-		
-		// Disabled for now
-		//$nolinkrefresh = true;
 	}
 	else if ($_GET['user']) {
 		// Posts by user
@@ -265,7 +262,7 @@
 		$bg = $bg % 2 + 1;
 		
 		// link & quote
-		$controls['quote'] = "<a href=\"".($nolinkrefresh ? "" : "?pid={$post['id']}")."#{$post['id']}\">Link</a>";
+		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
 		if (!$post['deleted']) {
 			if ($_GET['id'] && ! $thread['closed']) {
 				$controls['quote'] .= " | <a href='newreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";

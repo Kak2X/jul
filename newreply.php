@@ -150,12 +150,12 @@
 		Main page
 	*/
 	
-	$ppp	  = get_ppp();	
-	$smilies  = readsmilies();
-	$postlist = thread_history($_GET['id'], $ppp + 1);
-	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	
+	$ppp      = get_ppp();	
+	$smilies  = readsmilies();
+	$postlist = thread_history($_GET['id'], $ppp + 1);
 	
 	// Post preview (it must be after the page header, otherwise bar images aren't initialized)
 	if (!$error && isset($_POST['preview'])) {

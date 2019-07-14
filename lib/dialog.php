@@ -14,7 +14,7 @@ if ($pagetitle === NULL) $pagetitle = $title;
 			body {
 				color: #DDDDDD;
 				font:13px verdana;
-				background: #000F1F url('images/starsbg.png');
+				background: #000F1F url('schemes/night/starsbg.png');
 			}
 			.font 	{font:13px verdana}
 			.fonth	{font:13px verdana;color:FFEEFF}
@@ -58,7 +58,7 @@ if ($pagetitle === NULL) $pagetitle = $title;
 				position: fixed !important;
 			}
 			#w {
-				background: #000F1F url('images/starsbg.png');
+				background: #000F1F url('schemes/night/starsbg.png');
 				left: 0px !important;
 				top: 0px !important;
 				width: 100%;

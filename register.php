@@ -240,10 +240,6 @@
 				}
 				
 				$sql->commit();
-				mkdir("userpic/$newuserid");
-				if ($makedeluser) {
-					mkdir("userpic/{$config['deleted-user-id']}");
-				}
 				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
 			}
 			

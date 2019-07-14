@@ -44,12 +44,28 @@ function delete_avatar($user, $file) {
 	global $sql;
 	$sql->query("DELETE from users_avatars WHERE user = {$user} AND file = {$file}");
 	if ($file && $file != 'm') {
-		$sql->query("UPDATE pm_posts SET moodid = 0 WHERE user = {$user}");
-		$sql->query("UPDATE posts    SET moodid = 0 WHERE user = {$user}");
+		$sql->query("UPDATE pm_posts SET moodid = 0 WHERE user = {$user} AND moodid = {$file}");
+		$sql->query("UPDATE posts    SET moodid = 0 WHERE user = {$user} AND moodid = {$file}");
 	}
 	$path = avatar_path($user, $file);
 	if (file_exists($path)) {
 		unlink($path);
+	}
+}
+
+const DAA_MINIPIC     = 0b1;
+const DAA_SKIPSETMOOD = 0b10;
+function delete_all_avatars($user, $flags = DAA_MINIPIC) {
+	global $sql;
+	$sql->query("DELETE from users_avatars WHERE user = {$user}");
+	if ($flags & DAA_SKIPSETMOOD) {
+		$sql->query("UPDATE pm_posts SET moodid = 0 WHERE user = {$user}");
+		$sql->query("UPDATE posts    SET moodid = 0 WHERE user = {$user}");
+	}
+	
+	$files    = glob(avatar_path($user, "*"), GLOB_NOSORT);
+	foreach ($files as $pic) {
+		unlink($pic);
 	}
 }
 
@@ -90,7 +106,7 @@ function get_avatars($user, $flags = 0) {
 	}
 }
 
-function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}/{$file_id}";}
+function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}_{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
 

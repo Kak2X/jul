@@ -91,10 +91,10 @@
 		}
 		$sql->commit();
 		
-		// Since we're sure the queries have succeeded, now delete the userpic folders
+		// Since we're sure the queries have succeeded, now delete the avatars in the userpic folder
 		// Not done on post-delete refresh
 		foreach ($dellist as $id) {
-			deletefolder("userpic/{$id}");
+			delete_all_avatars($id, DAA_MINIPIC | DAA_SKIPSETMOOD);
 		}
 
 		?>
@@ -154,7 +154,7 @@
 	<tr><td class="tdbg1 center b">Show users with less than:</td>
 		<td class="tdbg2"><input type='text' name="maxposts"   size=15 maxlength=9  value="<?=htmlspecialchars($_POST['maxposts'])?>"> posts</td></tr>
 	<tr><td class="tdbg1 center b">Powerlevel:</td>
-		<td class="tdbg2"><?= power_select('sortpower', $_POST['sortpower']) ?></td>
+		<td class="tdbg2"><?= power_select('sortpower', $_POST['sortpower'], -10000) ?></td>
 	</tr>
 	<tr><td class="tdbg1 center b">Sort by:</td>
 		<td class="tdbg2">

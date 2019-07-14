@@ -1,6 +1,6 @@
 function newavatarpreview(uid,pic,nostorage=false) {
 	if (!nostorage) {
-		document.getElementById('prev').src="userpic/"+uid+"/"+pic;
+		document.getElementById('prev').src="userpic/"+uid+"_"+pic;
 	} else if (nostorage !== true) {
 		document.getElementById('prev').src=nostorage;
 	} else { // magic value for blank userpic

@@ -32,7 +32,6 @@ if (isset($_POST['act'])){
 		$sql->query("INSERT INTO users_rpg (uid) VALUES ({$newuserid})");
 		$sql->commit();
 		
-		mkdir("userpic/{$newuserid}");
 		xk_ircsend(IRC_STAFF."|". xk(8) . $loguser['name'] . xk(7) ." APPROVED pending user ". xk(8) . $data['name'] . xk(7) ." with IP ". xk(8) . $data['ip'] . xk() ." | {$config['board-url']}/?u=". $newuserid  . xk(7).".");
 		
 		$ircout = array (

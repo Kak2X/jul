@@ -1,4 +1,5 @@
 <ul>
 	<li>Add per-forum attachment permissions.</li>
 	<li>Remove useless '<span class="highlight">enable-sql-debugger</span>' config key</li>
+	<li>Pathing of avatars changed</li>
 </ul>

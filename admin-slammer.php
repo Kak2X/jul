@@ -65,7 +65,7 @@ else if ($_POST['knockout']) {
 	
 	$sql->commit();
 	echo "Success! Finishing job.\n";
-	deletefolder("userpic/{$target_id}");
+	delete_all_avatars($target_id, DAA_MINIPIC | DAA_SKIPSETMOOD);
 	echo "Deleted userpics.\n";
 	
 	$attachids = $sql->getresults("SELECT id FROM attachments WHERE user = '{$target_id}'");

@@ -126,7 +126,7 @@
 		$qtotal = "SELECT COUNT(*) FROM uploader_files f WHERE {$condition}";
 		
 		if ($_GET['search']) { // shrug
-			$qargs = [$wild[0].($_GET['search']).$wild[1]];
+			$qargs = [$wild[0].str_replace('*', '%', mysql::filter_like_wildcards($_GET['search'])).$wild[1]];
 			$files = $sql->queryp($qfiles, $qargs);
 			$total = $sql->resultp($qtotal, $qargs);
 		} else {
@@ -163,7 +163,7 @@
 			<tr>
 				<td class="tdbg1 center b">
 					Search file name:
-					<div class="fonts">You can use % as a wildcard.</div>
+					<div class="fonts">You can use * as a wildcard.</div>
 				</td>
 				<td class="tdbg2">
 					<input type="text" name="search" style="width: 100%; max-width: 500px" value="<?= htmlspecialchars($_GET['search']) ?>">

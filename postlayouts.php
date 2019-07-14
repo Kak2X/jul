@@ -138,7 +138,7 @@
 		<td class="tdbg1" colspan=2>
 			<span id="jsbtn">
 				<label><input type="checkbox" id="autoupdate" value="1"<?= $_COOKIE['plp_aupd'] ? " checked" : ""?>> Auto update CSS</label> | 
-				<button type="button" onclick="quickpreview(true)">Preview CSS</button> 
+				<input type="button" onclick="quickpreview(true)" value="Preview CSS"> 
 			</span>
 			<input type="submit" name="submit" value="Preview All"> | 
 			Thread layout: <select name="tlayout">

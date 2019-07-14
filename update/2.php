@@ -14,3 +14,8 @@ if ($custom) {
 	$res  = $sql->query("ALTER TABLE `forums` ADD `attachmentmode` TINYINT NOT NULL DEFAULT '-1' AFTER `login`;");
 	print checkres($res);
 }
+
+// This key doesn't serve any purpose anymore now that the SQL debug trigger is cookie-based
+print "<br>Removing 'enable-sql-debugger'...";
+unset($config['enable-sql-debugger']);
+print checkres(true);

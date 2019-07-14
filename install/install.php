@@ -330,8 +330,7 @@ if (!$error) {
 				".set_input(0,'backup-threshold'  , 'Backup "New" threshold', 50, 15, 'days')."
 				
 				".set_heading("Development Options")."
-				".set_radio(2,'enable-sql-debugger', 'Enable SQL debugger'       ,'No|Yes',1)."
-				".set_radio(2,'always-show-debug'  , 'Always show debugger'      ,'No|Yes',1)."
+				".set_radio(2,'always-show-debug'  , 'Always enable debuggers'   ,'No|Yes',1)."
 				".set_radio(2,'allow-debug-dump'   , 'Allow mysqldump'           ,'No|Yes',1)."
 				".set_input(0,'force-user-id'      , 'Force user ID'             , 60, 0)."					
 				".set_radio(2,'allow-rereggie'     , 'Allow re-registrations'    ,'No|Yes',1)."

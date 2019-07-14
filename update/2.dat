@@ -1,3 +1,4 @@
 <ul>
 	<li>Add per-forum attachment permissions.</li>
+	<li>Remove useless '<span class="highlight">enable-sql-debugger</span>' config key</li>
 </ul>

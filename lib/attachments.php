@@ -353,18 +353,6 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	// Generate a thumbnail
 	if ($is_image) {
 		save_thumbnail($path, "{$path}_t", 80, 80);
-		/*
-		$src_image = imagecreatefromstring(file_get_contents($path));
-		if ($src_image) {
-			$dst_image = resize_image($src_image, 80, 80);
-		}
-		if (!$src_image || !$dst_image) {
-			// source image not found or resize error
-			$dst_image = imagecreatefrompng("images/thumbnailbug.png");
-		}
-		imagedestroy($src_image);
-		imagepng($dst_image, "{$path}_t");
-		imagedestroy($dst_image);*/
 	}
 	
 	return $res;
@@ -493,28 +481,30 @@ function save_thumbnail($src_path, $dst_path, $w = 150, $h = 150) {
 	$src_image = imagecreatefromstring(file_get_contents($src_path));
 	if ($src_image) 
 		$dst_image = resize_image($src_image, $w, $h);
-	if (!$src_image || !$dst_image) // source image not found or resize error
-		$dst_image = imagecreatefrompng("images/thumbnailbug.png");
-	imagedestroy($src_image);
-	imagepng($dst_image, $dst_path);
-	imagedestroy($dst_image);
+	if ($dst_image === true) { // image is below the limits; use the original
+		imagepng($src_image, $dst_path);
+		imagedestroy($src_image);
+	} else {
+		if (!$src_image || !$dst_image) // source image not found or resize error
+			$dst_image = imagecreatefrompng("images/thumbnailbug.png");
+		imagedestroy($src_image);
+		imagepng($dst_image, $dst_path);
+		imagedestroy($dst_image);
+	}
 }
 
 function resize_image($image, $max_width, $max_height) {
-	// Set immediately transparency mode on the source image
-	imagealphablending($image, true);
-	
 	// Determine thumbnail size based on the aspect ratio
 	$width     = imagesx($image);
 	$height    = imagesy($image);
 	
-	// Don't bother if the image is already under the limits
 	if ($width <= $max_width && $height <= $max_height) {
-		$dst_image = imagecreatetruecolor($width, $height);
-		imagealphablending($dst_image, false);
-		imagesavealpha($dst_image, true);
-		imagecopy($dst_image, $image, 0, 0, 0, 0, $width, $height);
+		// Don't bother if the image is already under the limits
+		return true;
 	} else {
+		// Set immediately transparency mode on the source image
+		imagealphablending($image, true);
+	
 		$ratio     = $width / $height;
 		if ($ratio > 1) { // width > height
 			$n_width    = $max_width;

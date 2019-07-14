@@ -129,7 +129,7 @@
 						'text'     => $post['text'],
 						'headtext' => $post['headtext'],
 						'signtext' => $post['signtext'],
-						'signtext' => $post['csstext'],
+						'csstext'  => $post['csstext'],
 						'headid'   => $post['headid'],
 						'signid'   => $post['signid'],
 						'cssid'    => $post['cssid'],

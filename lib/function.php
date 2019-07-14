@@ -1411,7 +1411,21 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 
 function getnamecolor($sex, $powl, $namecolor = ''){
 	global $nmcol, $x_hacks;
-
+	
+	//--
+	// stop the page execution (in debug mode, at least) as soon as this shit happens
+	static $lolwtf = false;
+	if ($nmcol === null && !$lolwtf) {
+		global $config;
+		$lolwtf = true;
+		$errormsg = "Attempted to use an uninitialized name colors array. This probably happened because this function was called before pageheader().";
+		if ($config['always-show-debug'])
+			throw new Exception($errormsg);
+		else
+			trigger_error($errormsg, E_USER_WARNING);
+	}
+	//--
+	
 	// don't let powerlevels above admin have a blank color
 	$powl = min(3, $powl);
 	

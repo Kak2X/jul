@@ -50,9 +50,11 @@
 		PMFOLDER_TRASH => "The Trash&trade;"
 	);
 	
-	const NO_THREAD =  0;
+	const THREAD_OK = 1;
+	const NO_THREAD = 0;
 	const INVALID_THREAD = -1;
 	const INVALID_FORUM  = -2;
+	const NOT_AUTHORIZED = -3;
 	
 	const MODE_POST = 0;
 	const MODE_PM   = 1;

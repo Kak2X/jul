@@ -19,6 +19,11 @@
 	$forumlist   = "";
 	$fonline     = "";
 	$forum_error = "";
+	$extracols   = 0;
+	
+	// extra columns
+	$favremhead  = "";
+	$favrem      = "";
 
 	// Add/remove favorites
 	if ($_GET['act'] == 'add' || $_GET['act'] == 'rem') {
@@ -26,21 +31,31 @@
 			$meta['noindex'] = true; // prevent search engines from indexing
 			errorpage("You need to be logged in to edit your favorites!", "forum.php?id={$t['forum']}", 'return to the forum');
 		}
-		$_GET['thread'] = filter_int($_GET['thread']);
-		load_thread($_GET['thread']);
+		$_GET['thread'] = filter_int($_GET['thread']);		
+		$res = load_thread($_GET['thread'], true, true);
+		
+		if ($_GET['fav']) {
+			$returl = "forum.php?fav=1";
+			$rettxt = 'return to the favorites';
+		} else {
+			$returl = "forum.php?id={$thread['forum']}";
+			$rettxt = 'return to the forum';
+		}
 		
 		$favorited = $sql->resultq("SELECT COUNT(*) FROM favorites WHERE thread = {$_GET['thread']} AND user = {$loguser['id']}");
 		if ($_GET['act'] == 'add' && !$favorited) {
+			check_thread_error($res);
 			$sql->query("INSERT INTO favorites (user, thread) VALUES ({$loguser['id']},{$_GET['thread']})");
 			$tx = "\"{$thread['title']}\" has been added to your favorites.";
 		} else if ($_GET['act'] == 'rem' && $favorited) {
+			$threadtitle = ($res == THREAD_OK) ? "\"{$thread['title']}\"" : "The restricted thread";
 			$sql->query("DELETE FROM favorites WHERE user = {$loguser['id']} AND thread = {$_GET['thread']}");
-			$tx = "\"{$thread['title']}\" has been removed from your favorites.";
+			$tx = "{$threadtitle} has been removed from your favorites.";
 		} else {
-			die(header("Location: forum.php?id={$thread['forum']}"));
+			die(header("Location: {$returl}"));
 		}
 		
-		errorpage($tx, "forum.php?id={$thread['forum']}", 'return to the forum');
+		errorpage($tx, $returl, $rettxt);
 	}
 	
 	// Favorites view
@@ -59,6 +74,11 @@
 		
 		$threadcount = $sql->resultq("SELECT COUNT(*) FROM favorites where user = {$_GET['user']}");
 		$pageurl = "fav=1";
+		
+		if ($_GET['user'] == $loguser['id']) {
+			$favremhead = "<td class='tdbgh center fonts' style='width: 30px' title='Remove favorite'>Rem.</td>";
+			$extracols++;
+		}
 	}
 	// Featured threads display
 	else if ($_GET['feat']) {
@@ -187,7 +207,7 @@
 			if ($annc) {
 				$threadlist .= 
 					"<tr>
-						<td colspan=7 class='tdbgh center fonts'>
+						<td colspan=".(7 + $extracols)." class='tdbgh center fonts'>
 							{$al[$i]}nnouncements
 						</td>
 					</tr>
@@ -195,7 +215,7 @@
 						<td class='tdbg2 center'>
 							". ($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;") ."
 						</td>
-						<td class='tdbg1' colspan=6>
+						<td class='tdbg1' colspan=".(6 + $extracols).">
 							<a href=announcement.php".($i ? "?f={$annc['forum']}" : "").">{$annc['atitle']}</a> -- Posted by ".getuserlink($annc)." on ".printdate($annc['date'])."
 						</td>
 					</tr>";
@@ -298,6 +318,7 @@
 		");
 	}
     $threadlist .= "<tr>
+		{$favremhead}
 		<td class='tdbgh center' width=30></td>
 		<td class='tdbgh center' colspan=2 width=*> Thread</td>
 		<td class='tdbgh center' width=14%>Started by</td>
@@ -315,7 +336,7 @@
 	if ($sql->num_rows($threads) <= 0) {
 		$threadlist .= 
 			"<tr>
-				<td class='tdbg1 center' style='font-style:italic;' colspan=7>
+				<td class='tdbg1 center' style='font-style:italic;' colspan=".(7 + $extracols).">
 					There are no threads to display.
 				</td>
 			</tr>";
@@ -324,12 +345,16 @@
 		// Sticky (or featured) separator
 		$marker = ($_GET['feat'] ? $thread['featured'] : $thread['sticky']);
 		if ($sticklast && !$marker)
-			$threadlist .= "<tr><td class='tdbgh center' colspan=7><img src='images/_.gif' height=6 width=6>";
+			$threadlist .= "<tr><td class='tdbgh center' colspan=".(7 + $extracols)."><img src='images/_.gif' height=6 width=6>";
 		$sticklast = $marker;
+		
+		// Remove link for favourites (why? visible ability to remove "restricted" threads from the list) 
+		if ($_GET['fav'] && $_GET['user'] == $loguser['id'])
+			$favrem = "<td class='tdbg2 center' style='line-height: 50%'><a href='?act=rem&thread={$thread['id']}&fav=1' title='Remove'>&mdash;</a></td>";
 		
 		// Always check the powerlevel if we're not showing a forum id
 		if (!$_GET['id'] && !can_view_forum($thread)) {
-			$threadlist .= "<tr><td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
+			$threadlist .= "<tr>$favrem<td class='tdbg2 fonts center' colspan=7>(restricted)</td></tr>";
 			continue;
 		}
 
@@ -433,6 +458,7 @@
 		
 		$threadlist .= 
 			"<tr>
+				$favrem
 				<td class='tdbg1 center'>$new</td>
 				<td class='tdbg2 center thread-icon-td'>
 					<div class='thread-icon'>$posticon</div>
@@ -467,4 +493,3 @@
 	";
 	
 	pagefooter();
-	

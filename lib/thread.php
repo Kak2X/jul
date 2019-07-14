@@ -1,5 +1,28 @@
 <?php
 	
+	function check_thread_error($error, $whitelist = null) {
+		// Exit if no error occurred or if it's ignored
+		if ($error == THREAD_OK || ($whitelist !== null && in_array($error, $whitelist)))
+			return;
+		
+		// If you aren't an admin you get a generic message
+		global $isadmin;
+		if (!$isadmin)
+			notAuthorizedError();
+
+		$left = "Could not complete the requested action:<br/>";
+		switch ($error) {
+			case NO_THREAD:
+				errorpage("{$left}The thread does not exist.");
+			case INVALID_THREAD:
+				errorpage("{$left}This is a broken thread.");
+			case INVALID_FORUM:
+				errorpage("{$left}The thread is in a broken forum.");
+			case NOT_AUTHORIZED:
+				errorpage("{$left}You are not authorized to do this.");
+		}
+	}
+	
 	function get_thread_from_post($pid, $prefix = '') {
 		global $sql, $meta;
 		
@@ -131,7 +154,10 @@
 					'error'          => true,
 				);
 				if ($ignore_errors) return $error;
-			} else if (!can_view_forum($forum) && !$ignore_errors) {
+			} else if (!can_view_forum($forum)) {
+				if ($ignore_errors)
+					return NOT_AUTHORIZED;
+				
 				if ($forum['login'] && !$loguser['id']) {
 					trigger_error("Attempted to access login restricted forum {$id} (guest's IP: {$_SERVER['REMOTE_ADDR']})", E_USER_NOTICE);
 				} else {
@@ -149,7 +175,7 @@
 			}
 			$forum_error = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>{$errortext}</td></tr>";
 		}
-		return 1;
+		return THREAD_OK;
 	}
 	
 	function load_poll($id, $pollstyle = -1) {

@@ -184,6 +184,7 @@ if (!$error) {
 				<?php
 					for ($i = CURRENT_VERSION + 1; $i <= AVAILABLE_VERSION; ++$i) {
 						print "<br><b>Revision {$i}</b>";
+						reset_update_step();
 						require "update/{$i}.php";
 					}
 				?>	

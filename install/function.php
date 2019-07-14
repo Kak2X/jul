@@ -285,3 +285,12 @@
 	function get_current_db_version() {
 		return (file_exists(DBVER_PATH) ? (int) file_get_contents(DBVER_PATH) : 0);
 	}
+	
+	function update_step() {
+		global $_updstp;
+		print "<div class='center b'>[ Step ".(++$_updstp)." ]</div>";
+	}
+	function reset_update_step() {
+		global $_updstp;
+		$_updstp = 0;
+	}

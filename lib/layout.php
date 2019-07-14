@@ -716,20 +716,25 @@ piwikTracker.enableLinkTracking();
 	$qseconds = sprintf("%01.6f", mysql::$time);
 	$sseconds = sprintf("%01.6f", $exectime - mysql::$time);
 	$tseconds = sprintf("%01.6f", $exectime);
-
+	
+	$curmem   = sizeunits(memory_get_usage());
+	$maxmem   = sizeunits(memory_get_peak_usage()); 
+	
 	$queries = mysql::$queries;
 	$cache   = mysql::$cachehits;
 
-	// Old text
-	//print "<br>{<font class="fonts">} Page rendered in {$tseconds} seconds.</font><br>";
-
-	print "<br>
-		<span class='fonts'>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
-		<table class='fonts' style='border-spacing: 0px'>
-			<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
-			<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
-			<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
-		</table>";
+	if (isset($_GET['oldfooter'])) {
+		print "<br><font class='fonts'>Page rendered in {$tseconds} seconds; used {$curmem} (max {$maxmem})</font><br>";
+	} else {
+		print "<br>
+			<span class='fonts'>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
+			<table class='fonts' style='border-spacing: 0px'>
+				<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
+				<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
+				<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
+				<tr><td align=right>Memory used:&nbsp;</td><td>{$curmem} (max {$maxmem})</td></tr>
+			</table>";
+	}
 		
 	// Print errors locally
 	print error_printer(true, ($loguser['powerlevel'] == 4 || $config['always-show-debug']), $GLOBALS['errors']);

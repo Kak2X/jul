@@ -39,7 +39,9 @@ $error = false;
 if (INSTALLED) {
 	require_once CONFIG_PATH;
 	// to save the custom config options
-	$_POST['inptconf'] = config_from_update()[1];
+	if (!isset($_POST['inptconf'])) {
+		$_POST['inptconf'] = config_from_update()[1];
+	}
 } else {
 	$config['enable-sql-debugger'] = true;
 }

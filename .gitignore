@@ -30,7 +30,7 @@ attachments/*
 # Uploads
 uploads/*
 !uploads/index.html
-!uploads/t/index.html
+!uploads/t/.htaccess
 !uploads/f/.htaccess
 
 #Userpics

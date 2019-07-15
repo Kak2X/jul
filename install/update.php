@@ -13,7 +13,6 @@ const STEP_UPGRADE = 3;
 chdir("..");
 
 require "lib/defines.php";
-require "lib/config.php";
 require "lib/classes/mysql.php";
 require "install/function.php";
 require "install/layout.php";
@@ -21,6 +20,8 @@ require "install/mysql_plus.php";
 
 if (!file_exists(CONFIG_PATH))
 	die("You can't execute the db structure update tool if the board isn't installed.");
+
+require "lib/config.php";
 
 //-----------------
 $error = false;

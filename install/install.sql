@@ -722,7 +722,7 @@ CREATE TABLE `forums` (
 
 LOCK TABLES `forums` WRITE;
 /*!40000 ALTER TABLE `forums` DISABLE KEYS */;
-INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0,0),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0,0),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0,0),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0,0);
+INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0,0,-1),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0,0,-1),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0,0,-1),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0,0,-1);
 /*!40000 ALTER TABLE `forums` ENABLE KEYS */;
 UNLOCK TABLES;
 

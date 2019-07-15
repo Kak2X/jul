@@ -263,14 +263,16 @@ function uploader_filter_cat($sel = -1, $flags = UCS_DEFAULT) {
 function upload_file($file, $user, $opt) {
 	global $sql, $config;
 	
+	// Check for the default PHP error indicator in $file['error']
+	upload_error($file);
+	
 	//--
-	// Validation
+	// Just-in-case validation (probably can be removed)
 	if (!$file['size']) 
 		errorpage("This is a 0kb file");
 	if ($file['size'] > $config['uploader-max-file-size'])
 		errorpage("The file you're trying to upload is over the file size limit.");	
-	// Check for the default PHP error indicator in $file['error']
-	upload_error($file);
+	
 	//--
 	
 	// Image detection

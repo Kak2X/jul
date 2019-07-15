@@ -91,7 +91,7 @@ if ($_GET['action'] == 'edit') {
 		<td class="tdbg2">
 			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $config['uploader-max-file-size'] ?>">
 			<input name="up" type="file"> <span class="fonts">
-				Select a new file if you want to replace the old one.
+				Select a new file if you want to replace the old one.  Max size: <?= sizeunits($config['uploader-max-file-size']) ?>.
 <?php if ($isadmin) { ?>
 				<br/>Doing this will override the "Mime type" and "Image file" options (recommended).
 				<br/>If you want to change those options while reuploading the file, mark this checkbox ->

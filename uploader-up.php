@@ -53,7 +53,7 @@
 		<td class="tdbg1 center b">File:</td>
 		<td class="tdbg2">
 			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $config['uploader-max-file-size'] ?>">
-			<input name="up" type="file">
+			<input name="up" type="file"> <span class="fonts">Max size: <?= sizeunits($config['uploader-max-file-size']) ?></span>
 		</td>
 	</tr>
 	<tr>

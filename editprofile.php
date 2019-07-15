@@ -26,7 +26,7 @@
 		
 		// Custom title requirements
 		if		($loguser['titleoption']==0) $titleopt=0;
-		else if ($loguser['titleoption']==1) $titleopt=($loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
+		else if ($loguser['titleoption']==1) $titleopt=($issuper || $loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
 		else if ($loguser['titleoption']==2) $titleopt=1;
 		else 								 $titleopt=0;
 		

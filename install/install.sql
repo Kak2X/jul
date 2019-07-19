@@ -1960,7 +1960,7 @@ CREATE TABLE `schemes_cat` (
   PRIMARY KEY (`id`),
   KEY `ord` (`ord`),
   KEY `minpower` (`minpower`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2223,7 +2223,7 @@ CREATE TABLE `uploader_cat` (
   KEY `ord` (`ord`),
   KEY `minpowerupload` (`minpowerupload`),
   KEY `minpowermanage` (`minpowermanage`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2265,7 +2265,7 @@ CREATE TABLE `uploader_files` (
   KEY `private` (`private`),
   KEY `user` (`user`),
   KEY `filename` (`filename`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

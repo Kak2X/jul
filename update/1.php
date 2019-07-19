@@ -29,7 +29,7 @@ $res2 = $sql->query("CREATE TABLE `uploader_cat` (
   KEY `ord` (`ord`),
   KEY `minpowerupload` (`minpowerupload`),
   KEY `minpowermanage` (`minpowermanage`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 print checkres($res && $res2);
 
 // ====================================================
@@ -58,7 +58,7 @@ $res2 = $sql->query("CREATE TABLE `uploader_files` (
   KEY `private` (`private`),
   KEY `user` (`user`),
   KEY `filename` (`filename`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 print checkres($res && $res2);
 
 // ====================================================

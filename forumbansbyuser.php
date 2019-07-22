@@ -19,6 +19,8 @@
 	");
 	$modsets = $sql->getresults("SELECT forum FROM forummods WHERE user = {$loguser['id']}");
 	
+	pageheader("Forum bans to ".htmlspecialchars($user['name']));
+		
 	$txt     = "";
 	for ($i = 0; $x = $sql->fetch($forumbans);) {
 		
@@ -47,7 +49,6 @@
 		</tr>";
 	}
 	
-	pageheader("Forum bans to ".htmlspecialchars($user['name']));
 ?>
 	<table class="table">
 		<tr><td class="tdbgh center b" colspan=6>Forum bans for <?= getuserlink($user) ?> (Total: <?= $i ?>)</td></tr>

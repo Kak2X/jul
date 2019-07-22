@@ -114,7 +114,14 @@
 				
 		LIMIT $min,$tpp			
 	");
-	$pmcount   = $sql->num_rows($threads);
+	
+	$pmcount = $sql->resultq("
+		SELECT COUNT(*) 
+		FROM pm_access a 
+		LEFT JOIN pm_threads      t ON a.thread     = t.id		
+		WHERE a.user = {$u}{$qwhere}		
+	");	
+	
 	
 	/*
 		Forum page list at the top & bottom

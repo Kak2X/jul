@@ -1,5 +1,6 @@
 <?php
 	const LT_NONALPHA = '%';
+	const _POWL_ALL = 42;
 	
 	require 'lib/function.php';
 	
@@ -27,14 +28,14 @@
 	$_GET['sort'] 	= filter_string($_GET['sort']);
 	$_GET['ord'] 	= filter_int($_GET['ord']);
 	
-	$_GET['pow'] 	= filter_int($_GET['pow']);
+	$_GET['pow'] 	= isset($_GET['pow']) && $_GET['pow'] != _POWL_ALL ? (int)$_GET['pow'] : _POWL_ALL;
 	$_GET['ppp'] 	= filter_int($_GET['ppp']);
 	$_GET['rpg'] 	= filter_int($_GET['rpg']);
 	$_GET['page'] 	= filter_int($_GET['page']);
 	$_GET['lt']     = filter_string($_GET['lt']);
 	
 	if($_GET['sex']) $qsex = "&sex={$_GET['sex']}"; else $qsex = "";
-	if($_GET['pow']) $qpow = "&pow={$_GET['pow']}"; else $qpow = "";
+	$qpow = "&pow={$_GET['pow']}";
 	if($_GET['ppp']) $qppp = "&ppp={$_GET['ppp']}"; else $qppp = "";
 	if($_GET['ord']) $qord = "&ord=1"; else $qord = "";
 	if($_GET['rpg']) $qrpg = "&rpg=1"; else $qrpg = "";
@@ -58,7 +59,7 @@
 		case 'f': $qwhere[] = '(sex=1)'; break;
 		case 'n': $qwhere[] = '(sex=2)'; break;
 	}
-	if ($_GET['pow']) {
+	if ($_GET['pow'] != _POWL_ALL) {
 		if (($_GET['pow'] == 1 || $_GET['pow'] == 0) && $loguser['powerlevel'] < $config['view-super-minpower'])
 			$sqlpower = "IN (0, 1)";
 		elseif ($_GET['pow'] == 3 || $_GET['pow'] == 4) // merge admin + sysadmin (they appear the same)
@@ -240,7 +241,7 @@ print "
 			". ($loguser['powerlevel'] >= $config['view-super-minpower'] ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=1'>{$pwlnames[1]}</a> | " : "") ."
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=2'>{$pwlnames[2]}</a> |
 			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=3'>{$pwlnames[3]}</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt'>All</a>
+			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow="._POWL_ALL."'>All</a>
 		</td>
 	</tr>
 	<tr>

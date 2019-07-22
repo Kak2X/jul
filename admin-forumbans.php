@@ -159,7 +159,7 @@ if (!$_GET['forum']) {
 	$_POST['page'] = numrange($_POST['page'], 0, ceil($total / $ppp) - 1); // Restrict to real values
 	
 	$forumbans = $sql->queryp("
-		SELECT f.*, ".set_userfields('u1')." uid, ".set_userfields('u2')." uid
+		SELECT f.*, ".set_userfields('u1').", ".set_userfields('u2')."
 		FROM forumbans f
 		LEFT JOIN users u1 ON f.user   = u1.id
 		LEFT JOIN users u2 ON f.banner = u2.id
@@ -170,7 +170,7 @@ if (!$_GET['forum']) {
 	
 	$txt     = "";
 	$ban     = array();
-	for ($i = 0; $x = $sql->fetch($forumbans, PDO::FETCH_NAMED); ++$i) {
+	for ($i = 0; $x = $sql->fetch($forumbans); ++$i) {
 		$bg = ($i % 2) + 1;
 		
 		// Confirm the ban we're viewing
@@ -188,9 +188,9 @@ if (!$_GET['forum']) {
 		$txt .= "
 		<tr>
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
-			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($x, 0), $x['user'])."</td>
+			<td class='tdbg{$bg} center'>".getuserlink(get_userfields($x, 'u1'), $x['user'])."</td>
 			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
-			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(array_column_by_key($x, 1), $x['banner']) : "Autoban")."</td>
+			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(get_userfields($x, 'u2'), $x['banner']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
 			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
 		</tr>";

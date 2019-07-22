@@ -77,8 +77,8 @@
 // AND u2.id=t.lastposter 
 	$milestones = $sql->query("
 		SELECT t.*, f.minpower as minpower, f.title as forumtitle, 
-		       ".set_userfields('u1')." uid, 
-		       ".set_userfields('u2')." uid
+		       ".set_userfields('u1').", 
+		       ".set_userfields('u2')."
 		FROM threads t
 		LEFT JOIN forums  f ON f.id         = t.forum
 		LEFT JOIN users  u1 ON t.user       = u1.id
@@ -96,7 +96,7 @@
 			<td class='tdbgh center' width=60> Views</td>
 			<td class='tdbgh center' width=180> Last post</td>
 		</tr>";
-	while ($ms = $sql->fetch($milestones, PDO::FETCH_NAMED)) {
+	while ($ms = $sql->fetch($milestones)) {
 		$tmp2 = $ms['id'];
 		while (($tmp2 -= $threads) > $tmp1) {
 				$threadstable .= "<tr>
@@ -124,8 +124,8 @@
 				$threadlink .= '<br><span class="fonts" style="position: relative; top: -1px;">&nbsp;&nbsp;&nbsp;'
 							. "In <a href='forum.php?id=$ms[forum]'>".$ms['forumtitle']."</a>"
 							. '</span>';
-				$threadauthor 	= getuserlink(array_column_by_key($ms, 0), $ms['user']);
-				$lastposter 	= getuserlink(array_column_by_key($ms, 1), $ms['lastposter']);
+				$threadauthor 	= getuserlink(get_userfields($ms, 'u1'), $ms['user']);
+				$lastposter 	= getuserlink(get_userfields($ms, 'u2'), $ms['lastposter']);
 
 				$lastpost = printdate($ms['lastpostdate'])."
 				<span class='fonts'><br>by {$lastposter}

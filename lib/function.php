@@ -2516,54 +2516,7 @@ function save_vars($arr, $nested = "") {
 }
 
 /*
-	TODO:
-	array_column_by_key -> replace with get_userfields2; nuke the original
-	set_userfields 		-> replace with set_userfields2; nuke the original
-	set_userfields2 	-> rename to set_userfields
-	get_userfields2 	-> rename to get_userfields
-*/ 
-
-// extract values from queries using PDO::FETCH_NAMED
-function array_column_by_key($array, $index){
-	if (is_array($array)) {
-		$output = array();
-		foreach ($array as $key => $val) {
-			if (is_array($array[$key])) {
-				$output[$key] = __($array[$key][$index]);
-			}
-		}
-		return $output;
-	} else {
-		return NULL;
-	}
-}
-// Modify userfields for PDO::FETCH_NAMED queries
-function set_userfields($alias, $prealias = NULL) {
-	global $userfields;
-	if ($prealias) {
-		// Get an array of fields
-		$txt = str_replace("u.", "", $userfields);
-		$set = array_map('trim', explode(',', $txt));
-		$max = count($set);
-		
-		
-		// Only insert placeholder'd elements
-		$txt = "";
-		for ($i = $j = 0; $i < $max; ++$i) {
-			$tag = "{$alias}{$set[$i]}";
-			if (isset($prealias[$tag])) {
-				$txt .= ($j ? ", " : "") . ":{$tag} {$set[$i]}";
-				++$j;
-			}
-		}
-	} else {
-		$txt = str_replace("u.", "{$alias}.", $userfields);
-	}
-	return $txt;
-}
-
-/*
-	New versions of set_userfields and array_column_by_key.
+	About set_userfields and get_userfields...
 	
 	This uses a precalculated userfields array to directly iterate on the fields and add the necessary strings 
 	to both the left (table alias) and the right (generated field alias)
@@ -2582,7 +2535,7 @@ function set_userfields($alias, $prealias = NULL) {
 	an extra feature is to pass over "fixed data" in an array with keys using the same generated FIELD alias format
 	this will insert the respective PDO named placeholders in the query
 */
-function set_userfields2($alias, $fixed_data = NULL) {
+function set_userfields($alias, $fixed_data = NULL) {
 	global $userfields_array;
 	$txt = "";
 	$c   = false;
@@ -2607,7 +2560,7 @@ function set_userfields2($alias, $fixed_data = NULL) {
 	return $txt;
 }
 
-function get_userfields2($set, $alias) {
+function get_userfields($set, $alias) {
 	global $userfields_array;
 	foreach ($userfields_array as $field) {
 		$u[$field] = $set["{$alias}_{$field}"];

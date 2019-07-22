@@ -166,7 +166,7 @@
 		$token = generate_token(TOKEN_MGET);
 		
 		$comments = $sql->query("
-			SELECT c.*, ".set_userfields('u1')." uid, ".set_userfields('u2')." uid
+			SELECT c.*, ".set_userfields('u1').", ".set_userfields('u2')."
 			FROM news_comments c
 			LEFT JOIN users u1 ON c.user         = u1.id
 			LEFT JOIN users u2 ON c.lastedituser = u2.id
@@ -175,7 +175,7 @@
 		");
 		
 		$txt = "";
-		while ($x = $sql->fetch($comments, PDO::FETCH_NAMED)){
+		while ($x = $sql->fetch($comments)){
 			// Check if we are editing this comment (and if we can do so)
 			$editlink = $lastedit = $editcomment = "";
 			if ($ismod || $loguser['id'] == $x['user']) {
@@ -187,11 +187,11 @@
 			if ($sysadmin) 
 				$editlink .= " - <a class='danger' href='news-editcomment.php?act=erase&id={$x['id']}'>Erase</a>";
 			
-			$author = getuserlink(array_column_by_key($x, 0), $x['user']);
+			$author = getuserlink(get_userfields($x, 'u1'), $x['user']);
 			if ($x['deleted'])
 				$author = "<s>{$author}</s>";
 			if ($x['lastedituser'])
-				$lastedit = "<br>(Last edited by ".getuserlink(array_column_by_key($x, 1), $x['lastedituser'])." at ".printdate($x['lasteditdate']).")";
+				$lastedit = "<br>(Last edited by ".getuserlink(get_userfields($x, 'u2'), $x['lastedituser'])." at ".printdate($x['lasteditdate']).")";
 			
 			// Display comment info (comments by the post author marked with [S])
 			$txt .= "

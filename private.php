@@ -99,8 +99,8 @@
 	// Get threads
 	$threads = $sql->query("
 		SELECT t.*, a.folder,
-		       ".set_userfields('u1')." uid, 
-		       ".set_userfields('u2')." uid, 
+		       ".set_userfields('u1').", 
+		       ".set_userfields('u2').", 
 		       r.read tread, r.time treadtime 
 		
 		FROM pm_access a 
@@ -141,7 +141,7 @@
 					There are no conversations in this folder.
 				</td>
 			</tr>";
-	} else for ($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
+	} else for ($i = 1; $thread = $sql->fetch($threads); ++$i) {
 
 		// Thread status
 		$threadstatus = "";
@@ -179,8 +179,8 @@
 			$users .= ($users ? ", " : "").getuserlink($user);
 		}
 		
-		$threadauthor 	= getuserlink(array_column_by_key($thread, 0), $thread['user']);
-		$lastposter 	= getuserlink(array_column_by_key($thread, 1), $thread['lastposter']);
+		$threadauthor 	= getuserlink(get_userfields($thread, 'u1'), $thread['user']);
+		$lastposter 	= getuserlink(get_userfields($thread, 'u2'), $thread['lastposter']);
 		
 
 		$threadlist .= 

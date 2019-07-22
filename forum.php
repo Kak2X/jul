@@ -239,8 +239,8 @@
 	if ($_GET['fav']) {
 		$threads = $sql->query("
 			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
-			        ".set_userfields('u1')." uid, 
-			        ".set_userfields('u2')." uid
+			        ".set_userfields('u1').", 
+			        ".set_userfields('u2')."
 					$q_trval
 			
 			FROM threads t
@@ -259,8 +259,8 @@
 	} else if ($_GET['feat']) {
 		$threads = $sql->query("
 			SELECT 	t.*, f.id forumid, f.minpower, f.login,
-			        ".set_userfields('u1')." uid, 
-			        ".set_userfields('u2')." uid
+			        ".set_userfields('u1').", 
+			        ".set_userfields('u2')."
 			        $q_trval
 			
 			FROM threads t
@@ -277,17 +277,17 @@
 		"); //  OR t.featured = 1
 	} else if ($_GET['user']) {
 		$vals = [
-			'u1name'		=> $userdata['name'],		
-			'u1sex'			=> $userdata['sex'],
-			'u1powerlevel'	=> $userdata['powerlevel'],
-			'u1aka'			=> $userdata['aka'],
-			'u1birthday'	=> $userdata['birthday'],
-			'u1namecolor'	=> $userdata['namecolor']
+			'u1_name'       => $userdata['name'],		
+			'u1_sex'        => $userdata['sex'],
+			'u1_powerlevel' => $userdata['powerlevel'],
+			'u1_aka'        => $userdata['aka'],
+			'u1_birthday'   => $userdata['birthday'],
+			'u1_namecolor'  => $userdata['namecolor']
 		];
 		$threads = $sql->queryp("
 			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
 			        ".set_userfields('u1', $vals).", 
-			        ".set_userfields('u')." uid
+			        ".set_userfields('u')."
 					$q_trval
 			
 			FROM threads t
@@ -302,8 +302,8 @@
 	} else {
 		$threads = $sql->query("
 			SELECT 	t.*,
-			        ".set_userfields('u1')." uid, 
-			        ".set_userfields('u2')." uid
+			        ".set_userfields('u1').", 
+			        ".set_userfields('u2')."
 			        $q_trval
 			
 			FROM threads t
@@ -453,8 +453,8 @@
 
 		if(!$thread['icon']) $posticon='&nbsp;';
 		
-		$threadauthor 	= getuserlink(array_column_by_key($thread, 0), $thread['user']);
-		$lastposter 	= getuserlink(array_column_by_key($thread, 1), $thread['lastposter']);
+		$threadauthor 	= getuserlink(get_userfields($thread, 'u1'), $thread['user']);
+		$lastposter 	= getuserlink(get_userfields($thread, 'u2'), $thread['lastposter']);
 		
 		$threadlist .= 
 			"<tr>

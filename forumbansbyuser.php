@@ -41,7 +41,7 @@
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
 			<td class='tdbg{$bg} center'><a href='forum.php?id={$x['forum']}'>{$x['forumname']}</a></td>
 			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
-			<td class='tdbg{$bg} center'>".getuserlink(array_column_by_key($x, 1), $x['banner'])."</td>
+			<td class='tdbg{$bg} center'>".getuserlink($x, $x['banner'])."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
 			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
 		</tr>";

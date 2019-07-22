@@ -73,7 +73,7 @@
 	// Get the posts we need
 	$news = $sql->queryp("
 		SELECT 	n.id, n.user, n.date, n.title, n.text, n.lastedituser, n.lasteditdate, n.deleted, n.nosmilies, n.nohtml,
-				".set_userfields('u1')." uid, ".set_userfields('u2')." uid, COUNT(c.id) comments
+				".set_userfields('u1').", ".set_userfields('u2').", COUNT(c.id) comments
 		FROM news n
 		LEFT JOIN users           u1 ON n.user         = u1.id
 		LEFT JOIN users           u2 ON n.lastedituser = u2.id
@@ -124,10 +124,10 @@
 						<tr><td class="tdbg2 center">It looks like nothing was found. Do you want to try again?</td></tr>
 					</table>
 					<?php
-				} else while ($post = $sql->fetch($news, PDO::FETCH_NAMED)) {
+				} else while ($post = $sql->fetch($news)) {
 					$post['tags'] = $tags[$post['id']];
-					$post['userdata']     = array_column_by_key($post, 0);
-					$post['edituserdata'] = array_column_by_key($post, 1);
+					$post['userdata']     = get_userfields($post, 'u1');
+					$post['edituserdata'] = get_userfields($post, 'u2');
 					print news_format($post, !$_GET['id'], $_GET['pin'])."<br>";
 					if ($_GET['id'])
 						print news_comments($_GET['id'], $post['user'], $_GET['edit']);

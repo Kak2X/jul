@@ -40,7 +40,7 @@
 				die(header("Location: ?sec=1"));
 			
 			$debugopt = filter_bool($_GET['debugsql']);
-			setcookie('debugsql', $debugopt, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+			set_board_cookie('debugsql', $debugopt);
 			
 			// Remove debugsql parameter and redirect back
 			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
@@ -425,8 +425,8 @@
 				
 				// optionally force log out
 				if ($config['force-lastip-match']) {
-					setcookie('loguserid','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
-					setcookie('logverify','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+					remove_board_cookie('loguserid');
+					remove_board_cookie('logverify');
 					// Attempt to preserve current page
 					die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
 				}
@@ -2594,6 +2594,16 @@ function get_current_script() {
 	return $scriptname;
 }
 
+function get_board_root() {
+	static $root;
+	if ($root === null) {
+		// 16 is for removing "lib\function.php"
+		// if you move this function elsewhere update the number
+		$root = strip_doc_root(substr(__FILE__, 0, -16));
+	}
+	return $root;
+}
+
 // $startrange === true -> print all pages
 function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midrange = 4){
 	$page    = filter_int($_GET['page']);
@@ -2898,6 +2908,13 @@ function gethttpheaders() {
 	}
 
 	return $ret;
+}
+
+function set_board_cookie($name, $value, $expire = 2147483647) {
+	setcookie($name, $value, $expire, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+}
+function remove_board_cookie($name) {
+	setcookie($name, '', time() - 3600, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
 }
 
 function error_reporter($type, $msg, $file, $line) {

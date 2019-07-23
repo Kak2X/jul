@@ -110,7 +110,7 @@
 			if ($loguser['id'] == $id) {
 				$verifyid = intval(substr($_COOKIE['logverify'], 0, 1));
 				$verify = create_verification_hash($verifyid, $hash);
-				setcookie('logverify',$verify,2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+				set_board_cookie('logverify', $verify);
 			}
 		} else { // Sneaky!  But no.
 			$passwordenc = $userdata['password'];

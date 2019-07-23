@@ -8,10 +8,12 @@
 		errorpage("Uh oh, you are not the admin go away.");
 	}
 	
+	
 	$oldbar = filter_bool($_COOKIE['linkbar']);
+	// Admin bar type toogle code
 	if (isset($_GET['togglebar'])) {
 		$oldbar = !$oldbar;
-		setcookie('linkbar', $oldbar, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+		set_board_cookie('linkbar', $oldbar);
 		return header("Location: admin.php");
 	}
 		

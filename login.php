@@ -38,8 +38,8 @@
 				$pwhash = $sql->resultq("SELECT `password` FROM `users` WHERE `id` = '$userid'");
 				$verify = create_verification_hash($verifyid, $pwhash);
 
-				setcookie('loguserid', $userid, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
-				setcookie('logverify', $verify, 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+				set_board_cookie('loguserid', $userid);
+				set_board_cookie('logverify', $verify);
 
 				$msg = "You are now logged in as $username.";
 			//} else if (/*$username == "Blaster" || */$username === "tictOrnaria") {
@@ -74,11 +74,11 @@
 		$txt .= "<tr><td class='tdbg1 center'>$msg<br>".redirect('index.php','the board',0)."</td></tr>";
 	}
 	elseif ($action == 'logout') {
-		setcookie('loguserid','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
-		setcookie('logverify','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+		remove_board_cookie('loguserid');
+		remove_board_cookie('logverify');
 
 		// May as well unset this as well
-		setcookie('logpassword','', time()-3600, "/", $_SERVER['SERVER_NAME'], false, true);
+		remove_board_cookie('logpassword');
 		$txt .= "<tr><td class='tdbg1 center'> You are now logged out.<br>".redirect('index.php','the board',0)."</td></tr>";
 	}
 	elseif (!$action) {

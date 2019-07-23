@@ -1,8 +1,10 @@
 <?php
 	
+	require "lib/function.php";
+	
 	// Change how descriptions are shown
 	if (isset($_GET['all'])) {
-		setcookie('verAll', (int)($_GET['all'] > 0));		
+		set_board_cookie('verAll', (int)($_GET['all'] > 0));		
 		$redirStr = "";
 		if (isset($_GET['cat']))    $redirStr .= "&cat={$_GET['cat']}";
 		if (isset($_GET['id']))     $redirStr .= "&id={$_GET['id']}";
@@ -11,7 +13,6 @@
 		return header("Location: ?{$redirStr}");
 	}
 	
-	require "lib/function.php";
 	require "lib/classes/TreeView.php";
 	
 	$windowtitle = "Version history";

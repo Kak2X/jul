@@ -76,7 +76,7 @@
 	// Collapsable categories support
 	$_GET['cat']	= filter_int($_GET['cat']);
 	if (isset($_GET['toggle'])) {
-		setcookie("hcat[{$_GET['cat']}]", (1 - filter_int($_COOKIE['hcat'][$_GET['cat']])), 2147483647, "/", $_SERVER['SERVER_NAME'], false, true);
+		set_board_cookie("hcat[{$_GET['cat']}]", 1 - filter_int($_COOKIE['hcat'][$_GET['cat']]));
 		header("Location: index.php");
 		die;
 	}

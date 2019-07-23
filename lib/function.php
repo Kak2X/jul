@@ -2662,7 +2662,7 @@ function pagelistbtn($url, $elements, $ppp) {
 	</div>";
 }
 
-function elemlist($url, $pagelist, $sel, $sep = " "){
+function linkset_list($url, $pagelist, $sel, $sep = " "){
 	$keys      = array_keys($pagelist);
 	$pages     = count($pagelist);
 	$pagelinks = "";

@@ -1,6 +1,7 @@
 <?php
 	const LT_NONALPHA = '%';
 	const _POWL_ALL = 42;
+	const _LINK_SEPARATOR = ' | ';
 	
 	require 'lib/function.php';
 	
@@ -58,6 +59,12 @@
 		case 'm': $qwhere[] = '(sex=0)'; break;
 		case 'f': $qwhere[] = '(sex=1)'; break;
 		case 'n': $qwhere[] = '(sex=2)'; break;
+		case 'x': 
+			if ($isadmin) 
+				$qwhere[] = 'NOT (sex BETWEEN 0 AND 2)';
+			else
+				$_GET['sex'] = '';
+			break;
 	}
 	if ($_GET['pow'] != _POWL_ALL) {
 		if (($_GET['pow'] == 1 || $_GET['pow'] == 0) && $loguser['powerlevel'] < $config['view-super-minpower'])
@@ -193,9 +200,49 @@
 	
 
 	// Menu declarations
-	// TODO: *Eventually* convert the rest of them to use this menu format (to allow highlighting the selected option)
 	
+	// Sort by
+	$sortelem = array(
+		'posts'  => "Total posts",
+		'exp'    => "EXP",
+		'name'   => "User name",
+		'reg'    => "Registration date",
+		'act'    => "Last activity",
+		'age'    => "Age",
+		'rating' => "Rating",
+	);
+	
+	//--
+	// Sex	
+	$sexelem = array(
+		'm' => "Male",
+		'f' => "Female",
+		'n' => "N/A",
+		''  => "All",
+	);
+	if ($isadmin)
+		$sexelem['x'] = "Broken";
+	
+	//--
+	// Powerlevel
+	
+	$powlelem = array(
+		-1 => $pwlnames[-1],
+		0  => $pwlnames[0],
+		1  => $pwlnames[1],
+		2  => $pwlnames[2],
+		3  => $pwlnames[3],
+		_POWL_ALL => "All",
+	);
+	
+	if ($loguser['powerlevel'] < $config['view-super-minpower']) {
+		unset($powlelem[1]);
+	}			
+	
+	//--
 	// First letter
+	
+	// Generate each individual letter from A to Z
 	for ($i = 0; $i < 26; ++$i) {
 		$c = chr(65 + $i);
 		$alphaelem[$c] = $c;
@@ -203,8 +250,14 @@
 	$alphaelem[LT_NONALPHA] = '#';
 	$alphaelem[""] = 'All';
 	
+	//--
+	// Sort order
 	
-	
+	$orderelem = array(
+		0 => 'Descending',
+		1 => 'Ascending',
+	);
+	//--
 	
 	$s = ($numusers != 1 ? "s" : "");
 	pageheader();
@@ -215,46 +268,31 @@ print "
 	<tr>
 		<td class='tdbg1 fonts center'>	Sort by:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort=posts$q$qpow$qsex$qord$qlt'>Total posts</a> |
-			<a href='memberlist.php?sort=exp$q$qpow$qsex$qord$qlt'>EXP</a> |
-			<a href='memberlist.php?sort=name$q$qpow$qsex$qord$qlt'>User name</a> |
-			<a href='memberlist.php?sort=reg$q$qpow$qsex$qord$qlt'>Registration date</a> |
-			<a href='memberlist.php?sort=act$q$qpow$qsex$qord$qlt'>Last activity</a> | 
-			<a href='memberlist.php?sort=age$q$qpow$qsex$qord$qlt'>Age</a> |
-			<a href='memberlist.php?sort=rating$q$qpow$qsex$qord$qlt'>Rating</a>
+			".linkset_list("memberlist.php?$q$qpow$qsex$qord$qlt&sort=", $sortelem, $_GET['sort'], _LINK_SEPARATOR)."
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 fonts center'>	Sex:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=m'>Male</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=f'>Female</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=n'>N/A</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt'>All</a><tr>
+			".linkset_list("memberlist.php?sort={$_GET['sort']}$q$qpow$qord$qlt&sex=", $sexelem, $_GET['sex'], _LINK_SEPARATOR)."
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 fonts center'>	Powerlevel:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=-1'>{$pwlnames[-1]}</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=0'>{$pwlnames[0]}</a> |
-			". ($loguser['powerlevel'] >= $config['view-super-minpower'] ? "<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=1'>{$pwlnames[1]}</a> | " : "") ."
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=2'>{$pwlnames[2]}</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=3'>{$pwlnames[3]}</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow="._POWL_ALL."'>All</a>
+			".linkset_list("memberlist.php?sort={$_GET['sort']}$q$qsex$qord$qlt&pow=", $powlelem, $_GET['pow'], _LINK_SEPARATOR)."
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 fonts center'>	First letter:</td>
 		<td class='tdbg2 fonts center'>
-			".elemlist("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp&lt=", $alphaelem, $_GET['lt'], " | ")."
+			".linkset_list("memberlist.php?sort={$_GET['sort']}$qsex$qpow$qrpg$qppp&lt=", $alphaelem, $_GET['lt'], _LINK_SEPARATOR)."
 		</td>
 	</tr>	
 	<tr>
 		<td class='tdbg1 fonts center'>	Sort order:</td>
 		<td class='tdbg2 fonts center'>
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow$qlt'>Descending</a> |
-			<a href='memberlist.php?sort={$_GET['sort']}$q$qsex$qpow$qlt&ord=1'>Ascending</a>
+			".linkset_list("memberlist.php?sort={$_GET['sort']}$q$qsex$qpow$qlt&ord=", $orderelem, $_GET['ord'], _LINK_SEPARATOR)."
 		</td>
 	</tr>
 </table>

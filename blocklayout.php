@@ -1,5 +1,12 @@
 <?php
-
+	const _NUKE_DEFAULT_TITLE         = "Layout removed";
+	const _NUKE_DEFAULT_MESSAGE       = "Sorry, but your layout has been removed for being egregiously bad or unreadable.";
+	const _NUKE_DEFAULT_TITLE_COLOR   = "#FF0000";
+	// uncomment for original text from 1.92.999... not like there's any reason to
+	//const _NUKE_DEFAULT_TITLE         = "ATTENTION IDIOT";
+	//const _NUKE_DEFAULT_MESSAGE       = "YOUR LAYOUT HAS BEEN NUKED FOR BEING <font color=ff8080>EXTREMELY BAD</font>. PLEASE READ THE <a href='announcement.php'>ANNOUNCEMENTS</a> BEFORE CREATING ANOTHER ATROCITY, OR YOU <i><font color=ff8080>WILL BE BANNED</font></i>.";
+	
+	
 	require 'lib/function.php';
 
 	if (!$loguser['id']) {
@@ -9,7 +16,7 @@
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['action'] = filter_string($_GET['action']);
 
-	if ($_GET['action'] && (!$_GET['id'] || !valid_user($_GET['id']))) {
+	if ($_GET['action'] && (!$_GET['id'] || !($user = load_user($_GET['id'])))) {
 		errorpage("This user doesn't exist!");
 	}
 
@@ -28,16 +35,39 @@
 		
 		errorpage("Thank you, {$loguser['name']}, for {$verb} a post layout.", filter_string($_SERVER['HTTP_REFERER']), 'the previous page', 0);
 	} else if ($_GET['action'] == 'nuke' && $isadmin) {
-		$message = "Are you sure you want to nuke this layout?";
+		$message = "
+		This will replace ".getuserlink($user)."'s signature and bio fields with the text customizable below.<br/>
+		The CSS and post header fields will also be erased.<br/>
+		You should only be doing this when dealing with particularly <i>bad layouts</i> by bad users.<br/>
+		<br/>
+		You can customize the message options, or leave the defaults in.<br/>
+		<table class='table'>
+			<tr>
+				<td class='tdbg1 center b'>Title</td>
+				<td class='tdbg2'><input type='text' name='title' style='width: 250px' value=\""._NUKE_DEFAULT_TITLE."\"> <input type='color' name='color' value=\""._NUKE_DEFAULT_TITLE_COLOR."\"></td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center b vatop'>Message</td>
+				<td class='tdbg2'><textarea name='message' class='w' style='resize: vertical'>"._NUKE_DEFAULT_MESSAGE."</textarea></td>
+			</tr>
+		</table>
+		<br/>
+		If you are sure you want to continue, press 'NUKE IT'
+		";
 		$form_link = "?action=nuke&id={$_GET['id']}";
 		$buttons   = array(
 			0 => ["NUKE IT"],
 			1 => ["Cancel", "profile.php?id={$_GET['id']}"]
 		);
 		if (confirmpage($message, $form_link, $buttons)) {
-			$text = addslashes("<hr>[<span class='font b' style='font-size: 10pt; color: f00'>ATTENTION</span>: Your layout has been removed for being terrible.]");
-			//$text = addslashes("<hr><font face=\"Verdana\" style=font-size:10pt color=ff0000><b>[ATTENTION IDIOT: YOUR LAYOUT HAS BEEN NUKED FOR BEING <font color=ff8080>EXTREMELY BAD</font>. PLEASE READ THE <a href='announcement.php'>ANNOUNCEMENTS</a> BEFORE CREATING ANOTHER ATROCITY, OR YOU <i><font color=ff8080>WILL BE BANNED</font></i>.]</b></font>");
-			$sql->query("UPDATE `users` SET `signature` = '{$text}', `bio` = '{$text}', `postheader` = '', `css` = '' WHERE `id` = '{$_GET['id']}'");
+			$_POST['title']   = filter_string($_POST['title']);
+			$_POST['message'] = filter_string($_POST['message']);
+			$_POST['color']   = filter_string($_POST['color']);
+			
+			$text = "<hr>"
+					.($_POST['title'] ? "[<span class='font b' style='font-size: 10pt; color: {$_POST['color']}'>{$_POST['title']}</span>]<br/>" : "")
+					.($_POST['message'] ? $_POST['message'] : _NUKE_DEFAULT_MESSAGE);
+			$sql->queryp("UPDATE `users` SET `signature` = ?, `bio` = ?, `postheader` = '', `css` = '' WHERE `id` = '{$_GET['id']}'", [$text, $text]);
 			errorpage("Bio, header, and signature fields nuked!", "profile.php?id={$_GET['id']}", 'the user\'s profile page', 0);
 		}
 	} else if ($_GET['action'] == 'view' && $isadmin) {

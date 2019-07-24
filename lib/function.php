@@ -2528,7 +2528,7 @@ function save_vars($arr, $nested = "") {
 	u1.displayname u1_displayname
 	
 	the name alias is always set to <table alias>_<field>, so there is a consistent format 
-	which can be used by get_userfields2 
+	which can be used by get_userfields
 	
 	---
 	

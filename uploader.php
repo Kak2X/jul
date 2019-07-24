@@ -115,7 +115,7 @@
 					 
 		$qfiles = "
 			SELECT f.id, f.hash, f.filename, f.description, f.user, f.private, f.date, f.lasteditdate, f.size, f.downloads,
-				".set_userfields2('u1').", ".set_userfields2('u2')."
+				".set_userfields('u1').", ".set_userfields('u2')."
 			FROM uploader_files f
 			LEFT JOIN users u1 ON f.user         = u1.id
 			LEFT JOIN users u2 ON f.lastedituser = u2.id
@@ -228,11 +228,11 @@
 				</td>
 				<td class='tdbg{$c}".($x['private'] ? " i" : "")."'><a href='uploader-get.php?f={$x['hash']}'>".htmlspecialchars($x['filename'])."</a></td>
 				<td class='tdbg{$c} fonts'>".xssfilters($x['description'])."</td>
-				<td class='tdbg{$c} center'>".getuserlink(get_userfields2($x, 'u1'))."</td>
+				<td class='tdbg{$c} center'>".getuserlink(get_userfields($x, 'u1'))."</td>
 				<td class='tdbg{$c} center fonts'>".printdate($x['date'])."</td>
 				<td class='tdbg{$c} center fonts'>
 					".($x['lasteditdate'] ? "
-						".printdate($x['lasteditdate'])." by ".getuserlink(get_userfields2($x, 'u2'))."
+						".printdate($x['lasteditdate'])." by ".getuserlink(get_userfields($x, 'u2'))."
 					" : "&mdash;")."
 				</td>
 				<td class='tdbg{$c} center nobr'>".sizeunits($x['size'])."</td>

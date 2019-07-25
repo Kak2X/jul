@@ -309,6 +309,12 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	
 	require "schemes/$filename";
+	// Some of the original jul schemes do not define the "permabanned" color
+	if (!isset($nmcol[0][-2])) {
+		$nmcol[0][-2] = $nmcol[0][-1]; 
+		$nmcol[1][-2] = $nmcol[1][-1]; 
+		$nmcol[2][-2] = $nmcol[2][-1]; 
+	}
 	
 	// Overriding the default title?
 	// Moved here to allow overriding themes defining custom headers (and fixing the bug which renders the custom header non-clickable)

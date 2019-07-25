@@ -294,3 +294,12 @@
 		global $_updstp;
 		$_updstp = 0;
 	}
+	
+	function add_scheme($theme) {
+		global $sql;
+		$used = $sql->resultq("SELECT COUNT(*) FROM `schemes` WHERE id = '{$theme['id']}'");
+		if ($used) {
+			unset($theme['id']);
+		}
+		return $sql->queryp("INSERT INTO `schemes` SET ".mysql::setplaceholders($theme), $theme);
+	}

@@ -1,0 +1,93 @@
+/* Default body */
+body { 
+	background: AppWorkspace;
+	color: ThreeDHighlight;
+	font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif !important;
+	font-size: 12px; 
+}
+
+/* Remove font weight / color from links */
+a { 
+	text-decoration: underline !important;
+	font-weight: normal !important;
+	color: unset !important;
+}
+
+
+/* font declarations*/
+.font { font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif; }
+.fonts { font: 10px 'Microsoft Sans Serif', 'Verdana', sans-serif !important;}
+.fontt { font: 12px 'Tahoma', serif; }
+
+.tdbg1,.tdbg2,.tdbgc,.tdbgh	{ 
+	font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif;
+}
+.font, .fonts, .fontt {
+	color: WindowText;
+}
+
+ /* differentiate these cells */
+.tdbgc, .tdbgh, .tdbgc a, .tdbgh a{ 
+	font-weight: bold !important;
+}
+
+/* "3D" effects for the main table */
+.table { 
+	background: ThreeDFace;
+	color: WindowText;
+	outline: 1px solid WindowFrame;
+	border-top: 3px solid ThreeDHighlight;
+	border-right: 3px solid ThreeDShadow; 
+	border-bottom: 3px solid ThreeDShadow;
+	border-left: 3px solid ThreeDHighlight;
+}
+.table > tbody {
+	outline: 2px solid ThreeDFace;
+}
+
+/* display grid in td, except for the first row and rightmost column */
+.tdbg1:not(:last-child),
+.tdbg2:not(:last-child),
+.tdbgc:not(:last-child),
+.tdbgh:not(:last-child)	{ 
+	border-right: 1px solid ThreeDShadow; 
+}
+.table :not(:first-child) .tdbg1,
+.table :not(:first-child) .tdbg2,
+.table :not(:first-child) .tdbgc,
+.table :not(:first-child) .tdbgh	{ 
+	border-top: 1px solid ThreeDShadow; 
+}
+ 
+.tdbgh { 
+	background: ActiveCaption;
+	color: CaptionText;
+} 
+
+/* "3D" effects for elements */
+textarea,input,select {
+	border-top: 1px solid WindowFrame;
+	border-right: 1px solid ThreeDHighlight; 
+	border-bottom: 1px solid ThreeDHighlight;
+	border-left: 1px solid WindowFrame;
+	background: Window;
+	color: WindowText;
+}
+
+input[type=submit], input[type=button],input[type=color], button, .attachment-box, .attachment-box-addnew {
+	outline: 1px solid WindowFrame;
+	border-top: 1px solid ThreeDHighlight;
+	border-right: 1px solid ThreeDShadow; 
+	border-bottom: 1px solid ThreeDShadow;
+	border-left: 1px solid ThreeDHighlight;
+	background: ButtonFace;
+	color: WindowText;
+}
+input[type=submit]:active, input[type=button]:active, input[type=color]:active, button:active{
+	border-top: 1px solid ThreeDShadow;
+	border-right: 1px solid ButtonFace; 
+	border-bottom: 1px solid ButtonFace;
+	border-left: 1px solid ThreeDShadow;
+	background: ButtonFace;
+	color: WindowText;
+}

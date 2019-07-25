@@ -308,7 +308,7 @@
 	function news_tag_format($tags){
 		$text = array();
 		foreach($tags as $id => $data)
-			$text[] = "<a href='news.php?cat={$id}'>".htmlspecialchars($data['title'])."</a>";
+			$text[] = "<a href='news.php?tag={$id}'>".htmlspecialchars($data['title'])."</a>";
 		return implode(", ", $text);
 	}
 	
@@ -321,7 +321,7 @@
 		$txt 	= "";
 		foreach($tags as $id => $data){
 			$px = 10 + round(pow($data['cnt'] / $total * 100, 0.7)); // Gradually decreate font size
-			$txt .= "<a class='nobr tag-links' href='news.php?cat={$id}' style='font-size: {$px}px'>{$data['title']}</a> ";
+			$txt .= "<a class='nobr tag-links' href='news.php?tag={$id}' style='font-size: {$px}px'>{$data['title']}</a> ";
 		}
 		return $txt;
 	}

@@ -103,13 +103,12 @@
 					$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."'");
 					errorpage("NO BONUS");
 				}
-				*/
-				
+				*/				
 				// Check if we have already stored this layout, so we won't have to duplicate it
 				if ($headid = getpostlayoutid($head, false)) $head = "";
 				if ($signid = getpostlayoutid($sign, false)) $sign = "";
-				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";				
-				
+				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
+					
 				$sql->beginTransaction();
 				
 				// Post update data which does not trigger a new revision
@@ -120,7 +119,13 @@
 					'moodid'	=> $moodid,
 				);
 				
-				if ($post['text'] != $message || $post['headtext'] != $head || $post['signtext'] != $sign || $post['csstext'] != $css) {
+				if (
+					   $post['text']     != $message 
+					|| $post['headtext'] != $head || $post['headid'] != $headid 
+					|| $post['signtext'] != $sign || $post['signid'] != $signid  
+					|| $post['csstext']  != $css  || $post['cssid']  != $cssid
+				) {
+					
 					// Old revisions are stored in their own containment area, and not in the same table
 					$save = array(
 						'pid'      => $_GET['id'],
@@ -146,6 +151,7 @@
 					$pdata['cssid']    = $cssid;
 					$pdata['revision'] = $post['revision'] + 1;
 				}
+				
 				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
 				$sql->commit();
 				

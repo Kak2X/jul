@@ -52,6 +52,26 @@ img { border:none; }
 	cursor: pointer;
 }
 
+/* Common code for displaying a link as a button */
+.button {
+	padding: 1px 9px;
+	display: inline-block;
+	text-decoration: none;
+	font-weight: normal !important;
+	cursor: default;
+	vertical-align: top;
+	-webkit-user-select: none;
+	-moz-user-select: none;    
+	-ms-user-select: none;     
+	user-select: none;          
+}
+.button:active {
+	padding: 1px 8px 1px 10px;
+}
+input[type=submit], input[type=button],input[type=color], button, .button {
+	line-height: 16px;	
+}
+
 /* ? */
 .sparkline { display: none; }
 

@@ -22,14 +22,14 @@ a:hover { color: #CECAFE; }
 .fonts { font: 10px 'verdana', sans-serif !important;}
 .fontt { font: 10px 'tahoma', serif; }
 
-textarea,input,select,button {
+textarea, input, select, button, .button {
 	border: 1px solid #000;
 	background: #000;
 	color: #EEE;
 	font: 10pt monospace;
 }
 
-input[type=submit], input[type=button], button{
+input[type=submit], input[type=button], button, .button {
 	border: #000 solid 2px;
 	font: 10pt 'verdana', sans-serif;
 }

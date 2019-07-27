@@ -7,7 +7,7 @@ body {
 }
 
 /* Remove font weight / color from links */
-a { 
+a:not(.button) { 
 	text-decoration: underline !important;
 	font-weight: normal !important;
 	color: unset !important;
@@ -74,7 +74,7 @@ textarea,input,select {
 	color: WindowText;
 }
 
-input[type=submit], input[type=button],input[type=color], button, .attachment-box, .attachment-box-addnew {
+input[type=submit], input[type=button],input[type=color], button, .button, .attachment-box, .attachment-box-addnew {
 	outline: 1px solid WindowFrame;
 	border-top: 1px solid ThreeDHighlight;
 	border-right: 1px solid ThreeDShadow; 
@@ -83,7 +83,7 @@ input[type=submit], input[type=button],input[type=color], button, .attachment-bo
 	background: ButtonFace;
 	color: WindowText;
 }
-input[type=submit]:active, input[type=button]:active, input[type=color]:active, button:active{
+input[type=submit]:active, input[type=button]:active, input[type=color]:active, button:active, .button:active {
 	border-top: 1px solid ThreeDShadow;
 	border-right: 1px solid ButtonFace; 
 	border-bottom: 1px solid ButtonFace;

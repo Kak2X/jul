@@ -122,13 +122,13 @@ a:visited	{color: #99c090}
 a:active	{color: #CFFFBE}
 a:hover		{color: #CEFECA}
 
-textarea, input, select, button{
+textarea, input, select, button, .button {
 	color:			#DDDDDD;
 	border: 		1px solid #50B050;
 	border-radius:	3px;
 	background: 	#0C0C0C;/*rgba(0,0,0, 0.6);*/
 }
-input[type=submit], input[type=button], button {
+input[type=submit], input[type=button], button, .button {
 	border: 		2px solid #60C060;
 }
 /*

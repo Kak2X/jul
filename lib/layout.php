@@ -478,7 +478,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			$inputborder   = $tableborder;
 		}
 		$css.="
-		textarea,input,select,button{
+		textarea,input,select,button,.button{
 		  border:	#$inputborder solid 1px;
 		  background:#000000;
 		  color:	#$formtextcolor;
@@ -493,9 +493,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  background:none;
 		  color:	#$formtextcolor;
 		  font:	10pt $font;}
-		input[type=submit],input[type=button],button{
+		input[type=submit],input[type=button],button,.button{
 		  border:	#$inputborder solid 2px;
 		  font:	10pt $font;}
+		.button{color: #$formtextcolor !important;}
 		";
 	}
 

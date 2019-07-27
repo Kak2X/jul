@@ -52,7 +52,7 @@ a:link,a:visited,a:active,a:hover{
 	color:			#80FF80;
 	font-weight: 	normal;
 }
-textarea, input, select, button{
+textarea, input, select, button, .button {
 	border: 			1px solid #ffdd33;
 	background-color: 	#000000;
 	color: 				#DDDDDD;

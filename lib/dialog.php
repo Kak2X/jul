@@ -8,6 +8,7 @@ if ($pagetitle === NULL) $pagetitle = $title;
 		<link rel="shortcut icon" href="images/favicon/favicon.ico" type="image/x-icon">
 		<link rel='stylesheet' href='schemes/base.css' type='text/css'>
 		<style type='text/css'>
+			a,.buttonlink                   { color: #BEBAFE; }
 			a:visited,.buttonlink:visited   { color: #9990c0; }
 			a:active,.buttonlink:active     { color: #CFBEFF; }
 			a:hover,.buttonlink:hover 	    { color: #CECAFE; }

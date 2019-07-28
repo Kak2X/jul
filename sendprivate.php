@@ -305,7 +305,7 @@ else {
 			$sql->beginTransaction();
 			$tid = create_pm_thread($loguser, $_POST['subject'], $_POST['description'], $posticon, $_POST['close']);
 			$pid = create_pm_post($loguser, $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
-			set_pm_acl($destid, $tid); // and add yourself automatically
+			set_pm_acl($destid, $tid, false, $_POST['folder']); // and add yourself automatically
 			
 			if ($can_attach) {
 				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);

@@ -20,7 +20,9 @@
 		$_POST['newip'] = filter_string($_POST['newip']);
 		if (!$_POST['newip']) {
 			errorpage("You forgot to enter an IP!");
-		} else if ($_POST['newip'] == $_SERVER['REMOTE_ADDR']) {
+		} else if (strpos($_POST['newip'], "*") !== false) {
+			errorpage("Do not use wildcards to specify IP ranges."); // this isn't the system from AB2
+		} else if (stripos($_SERVER['REMOTE_ADDR'], $_POST['newip']) === 0) {
 			errorpage("Bad idea.");
 		}
 		
@@ -170,19 +172,24 @@
 		<tr><td class='tdbgh center b' colspan='2'>Add IP ban</td></tr>
 		
 		<tr>
-			<td class='tdbg1 center b' style='width: 120px'>IP Address</td>
-			<td class='tdbg2'><input type='text' name='newip' value="<?=htmlspecialchars($_GET['newip'])?>"></td>
+			<td class='tdbg1 center b' style='width: 250px'>
+				IP Address
+			</td>
+			<td class='tdbg2'>
+				<input type='text' name='newip' value="<?=htmlspecialchars($_GET['newip'])?>">
+				<span class='fonts'>To specify an IP range use incomplete masks, not wildcards. ie: use '192.168.' instead of '192.168.*.*'</span>
+			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Ban reason</td>
-			<td class='tdbg2'><input type='text' name='reason' style='width: 500px'></td>
+			<td class='tdbg2'><input type='text' name='reason' style='width: 100%; max-width: 500px'></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>
 				Message to send on IRC
 				<div class='fonts'>If not specified, the <i>Ban reason</i> will be used.</div>
 			</td>
-			<td class='tdbg2'><input type='text' name='ircreason' style='width: 500px'></td>
+			<td class='tdbg2'><input type='text' name='ircreason' style='width: 100%; max-width: 500px'></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Duration</td>

@@ -6,7 +6,7 @@
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['action'] = filter_string($_GET['action']);
 	$_POST['page']  = filter_int($_POST['page']);
-	$_GET['r']     = filter_int($_GET['r']);
+	$_GET['r']      = filter_int($_GET['r']);
 	
 	
 	if ($_GET['action'] == 'edit') {
@@ -179,7 +179,14 @@
 <?php
 		
 	} else if ($_GET['action'] == 'delete') {
-		$data = $sql->fetchq("SELECT pm, post FROM attachments WHERE id = {$_GET['id']}");
+		
+		$data = $sql->fetchq("SELECT filename, pm, post FROM attachments WHERE id = {$_GET['id']}");
+		if (!$data) {
+			errorpage("This attachment does not exist. It may have already been deleted.");
+		}
+		
+		// Redirect selection 
+		// Are we coming from the attachment editor or a thread / PM?
 		if ($_GET['r']) {
 			$redirurl  = ($data['pm'] ? "showprivate.php?pid={$data['pm']}#{$data['pm']}" : "thread.php?pid={$data['post']}#{$data['post']}");
 			$redirpage = ($data['pm'] ? "the private message" : "the post");
@@ -188,17 +195,20 @@
 			$redirpage = "the attachments page";
 		}
 		
-		$message   = "Are you sure you want to permanently <b>DELETE</b> this attachment?";
-		$form_link = "?action=delete&id={$_GET['id']}&r={$_GET['r']}";
-		$buttons   = array(
-			0 => ["Yes"],
-			1 => ["No", $redirurl]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
+		if (confirmed($msgkey = 'del-atc')) {
 			remove_attachments(array($_GET['id']));
 			errorpage("The attachment has been deleted!", $redirurl, $redirpage);
 		}
+		
+		$title     = "Delete Attachment";
+		$message   = "Are you sure you want to permanently <b>DELETE</b> the attachment \"".htmlspecialchars($data['filename'])."\"?";
+		$form_link = "?action=delete&id={$_GET['id']}&r={$_GET['r']}";
+		$buttons   = array(
+			[BTN_SUBMIT, "Yes"],
+			[BTN_URL   , "No", $redirurl]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	} else {
 		pageheader("Attachments");
 		print adminlinkbar();

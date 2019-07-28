@@ -80,6 +80,10 @@
 	}
 	
 	else if ($_GET['act'] == 'del' && ($ismod || $c['user'] == $loguser['id'])) {
+		if (confirmed($msgkey = 'del-cm')) {
+			$sql->query("UPDATE news_comments SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			return header("Location: news.php?id={$c['pid']}#{$_GET['id']}");
+		}
 		if ($c['deleted']) {
 			$message = "Do you want to undelete this comment?";
 			$btntext = "Yes";
@@ -87,29 +91,28 @@
 			$message = "Are you sure you want to <b>DELETE</b> this comment?";
 			$btntext = "Delete comment";
 		}
+		$title     = "Warning";
 		$form_link = "news-editcomment.php?act=del&id={$_GET['id']}";
 		$buttons   = array(
-			0 => [$btntext],
-			1 => ["Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
+			[BTN_SUBMIT, $btntext],
+			[BTN_URL   , "Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
 		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
-			$sql->query("UPDATE news_comments SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
-			return header("Location: news.php?id={$c['pid']}#{$_GET['id']}");
-		}
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
-
 	else if ($_GET['act'] == 'erase' && $sysadmin) {
-		$message   = "Are you sure you want to <b>permanently DELETE</b> this comment from the database?";
-		$form_link = "news-editcomment.php?act=erase&id={$_GET['id']}";
-		$buttons   = array(
-			0 => ["Delete comment"],
-			1 => ["Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+		if (confirmed($msgkey = 'erase-cm', TOKEN_SLAMMER)) {
 			$sql->query("DELETE FROM news_comments WHERE id = {$_GET['id']}");
 			return header("Location: news.php?id={$c['pid']}");
 		}
+		
+		$title     = "Permanent Deletion";
+		$message   = "Are you sure you want to <b>permanently DELETE</b> this comment from the database?";
+		$form_link = "news-editcomment.php?act=erase&id={$_GET['id']}";
+		$buttons   = array(
+			[BTN_SUBMIT, "Delete comment"],
+			[BTN_URL   , "Cancel", "news.php?id={$c['pid']}#{$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}	
 	
 	news_footer();

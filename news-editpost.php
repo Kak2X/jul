@@ -237,6 +237,12 @@
 		if (!$ismod && $loguser['id'] != $news['user'])
 			news_errorpage("You have no permission to do this!");
 		
+		if (confirmed($msgkey = 'del-news')) {
+			$sql->query("UPDATE news SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+			return header("Location: news.php");
+		}
+		
+		$title = "Warning";
 		if ($news['deleted']) {
 			$message = "Do you want to undelete this post?";
 			$btntext = "Yes";
@@ -246,14 +252,11 @@
 		}
 		$form_link = "news-editpost.php?del&id={$_GET['id']}";
 		$buttons   = array(
-			0 => [$btntext],
-			1 => ["Cancel", "news.php?id={$_GET['id']}"]
+			[BTN_SUBMIT, $btntext],
+			[BTN_URL   , "Cancel", "news.php?id={$_GET['id']}"]
 		);
 		
-		if (confirmpage($message, $form_link, $buttons)) {
-			$sql->query("UPDATE news SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
-			return header("Location: news.php");
-		}
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else if (isset($_GET['erase']) && $sysadmin) {
 		// ACTION: Delete from database
@@ -263,14 +266,7 @@
 		if (!$news)
 			news_errorpage("The post doesn't exist!");
 		
-		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
-		$form_link = "news-editpost.php?erase&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete post"],
-			1 => ["Cancel", "news.php?id={$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+		if (confirmed($msgkey = 'era-news', TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM news WHERE id = {$_GET['id']}");
 			$sql->query("DELETE FROM news_comments WHERE pid = {$_GET['id']}");
@@ -278,6 +274,15 @@
 			$sql->commit();
 			return header("Location: news.php");
 		}
+		
+		$title = "Permanent Deletion";
+		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
+		$form_link = "news-editpost.php?erase&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Delete post"],
+			[BTN_URL   , "Cancel", "news.php?id={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
 		news_errorpage("No action specified.");

@@ -288,22 +288,8 @@
 		$sql->query("UPDATE `posts` SET `noob` = '1' - `noob` WHERE `id` = '{$_GET['id']}'");
 		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "thread.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
 	}
-	else if ($_GET['action'] == 'delete'){
-		if ($post['deleted']) {
-			$message = "Do you want to undelete this post?";
-			$btntext = "Yes";
-		} else {
-			$message = "Are you sure you want to <b>DELETE</b> this post?";
-			$btntext = "Delete post";
-		}
-		$form_link = "editpost.php?action=delete&id={$_GET['id']}";
-		$buttons       = array(
-			0 => [$btntext],
-			1 => ["Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
-			// :^)
+	else if ($_GET['action'] == 'delete') {
+		if (confirmed($msgkey = 'delpost')) {
 			if ($loguser['editing_locked']) {
 				xk_ircsend("1|'{$loguser['name']}' tried to ".($post['deleted'] ? "un" : "")."delete post #{$_GET['id']}");
 			} else {
@@ -315,21 +301,26 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
+		
+		$form_link = "editpost.php?action=delete&id={$_GET['id']}";
+		$title     = "Warning";
+		if ($post['deleted']) {
+			$message = "Do you want to undelete this post?";
+			$btntext = "Yes";
+		} else {
+			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$btntext = "Delete post";
+		}
+		$buttons = array(
+			[BTN_SUBMIT, $btntext],
+			[BTN_URL   , "Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else if ($_GET['action'] == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		
 		$pcount  = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$thread['id']}");
-		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
-		if ($pcount <= 1) {
-			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
-		}
-		$form_link = "editpost.php?action=erase&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete post"],
-			1 => ["Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+		if (confirmed($msgkey = 'erase-post', TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM posts WHERE id = {$_GET['id']}");
 			$sql->query("DELETE FROM posts_old WHERE pid = {$_GET['id']}");
@@ -357,6 +348,19 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id={$thread['id']}","return to the thread",0);
 			}
 		}
+		
+		$title     = "Warning";
+		$message   = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
+		if ($pcount <= 1) {
+			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
+		}
+		$form_link = "editpost.php?action=erase&id={$_GET['id']}";
+		$buttons   = array(
+			[BTN_SUBMIT, "Delete post"],
+			[BTN_URL   , "Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else {
 		errorpage("No valid action specified.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the post",0);

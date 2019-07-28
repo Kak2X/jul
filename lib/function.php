@@ -1940,57 +1940,59 @@ function boardmessage($text, $title = "Message", $layout = true) {
 	if ($layout) pagefooter();
 }
 
-function confirmpage($message, $form_link, $buttons = NULL, $token = TOKEN_MAIN) {
+
+function confirmed($key, $token = TOKEN_MAIN) {
+	$auth_key = "auth_{$key}";
 	
-	// Get the indicator
-	static $i = 0; // just in case
-	static $confirmtxt = "";
-	$key = "nk_page_confirm".($i++);
-	$status  = filter_bool($_POST[$key]);
-	$authtag = auth_tag($token, 'auth'.$i); // Auth tag needs to be printed to allow nested confirms
-	
-	if ($status) { // All ok; do not print anything (unless the token is bad, that is)
-		check_token($_POST['auth'.$i], $token);
-		$confirm = "<input type='hidden' name='{$key}' value='1'>{$authtag}";
-		$confirmtxt .= $confirm;
-		return $confirm;
+	// Check if the auth was sent
+	if (isset($_POST[$auth_key])) {
+		check_token($_POST[$auth_key], $token);
+		return true;
 	}
+	return false;
+}
+
+const BTN_SUBMIT = 0;
+const BTN_URL = 1;
+function confirm_message($key, $text, $title = "", $form_url = "", $buttons = NULL, $token = TOKEN_MAIN) {
+	$auth = auth_tag($token, "auth_{$key}");
 	
+	// Button geneeration
 	if ($buttons !== NULL) {
-		$commands = "";
-		for ($i = 0, $cnt = count($buttons); $i < $cnt; ++$i) {
-			if ($i) {
-				$commands .= " - ";
-			}
-			// Support both links and buttons
-			if (!isset($buttons[$i][1])) {
-				$commands .= "<input type='submit' class='submit' name='{$key}' value=\"{$buttons[$i][0]}\">";
-			} else {
-				$commands .= "<a href=\"{$buttons[$i][1]}\">{$buttons[$i][0]}</a>";
+		$cmd = [];
+		foreach ($buttons as $k => $btn) {
+			switch ($btn[0]) {
+				case BTN_SUBMIT:
+					// type, text, name, value
+					$cmd[] = "<button type='submit' name=\"".(isset($btn[2]) ? $btn[2] : "cmch_{$key}")."\" value=\"".(isset($btn[3]) ? $btn[3] : $btn[1])."\">{$btn[1]}</button>";
+					break;
+				case BTN_URL:
+					// type, text, link
+					$cmd[] = "<a href=\"{$btn[2]}\" class='button'>{$btn[1]}</a>";
+					break;
 			}
 		}
+		$commands = implode(" - ", $cmd);
 	} else {
-		$commands = "<input type='submit' class='submit' name='{$key}' value='Yes'> - <a href='#' onclick='window.history.go(-1); return false;'>No</a>";
+		$commands = "<input type='submit' class='submit' name='cmch_{$key}' value='Yes'> - <a href='#' class='button' onclick='window.history.go(-1); return false;'>No</a>";
 	}
+	
+	$form_tag = $form_url ? ["<form method='POST' action='{$form_url}'>","</form>"] : ["",""];
 	
 	if (!defined('HEADER_PRINTED')) {
 		pageheader();
-	}	
-?>
-	<form method="POST" action="<?= $form_link ?>">
-	<center>
-	<div class="table center tdbg1" style="max-width: 600px">
-		<?= $message ?><br/>
-		<br/>
-		<?= $commands ?><br/>
-		<?= $authtag . $confirmtxt ?>
-	</div>
-	</center>
-	</form>
-<?php
-
+	}
+	
+	print "
+	{$form_tag[0]}
+	<table class='table' style='margin: auto; width: unset'>
+		".($title ? "<tr><td class='tdbgh center b'>{$title}</td></tr>" : "")."
+		<tr><td class='tdbg1 center' style='padding: 1em'>{$text}</td></tr>
+		<tr><td class='tdbg2 center'>{$commands}".save_vars($_POST)."{$auth}</td></tr>
+	</table>
+	{$form_tag[1]}";
+	
 	pagefooter();
-	return false;
 }
 
 function notAuthorizedError($thing = 'forum') {
@@ -2507,7 +2509,7 @@ function save_vars($arr, $nested = "") {
 		// Generate the associative key if needed (nests to config[something][dfgdsg]
 		$name = ($nested) ? "{$nested}[{$key}]" : $key;
 		if (is_array($val)) {
-			$out .= save_post_vars($val, $name);
+			$out .= save_vars($val, $name);
 		} else {
 			$out .= "<input type='hidden' name='{$name}' value=\"".htmlspecialchars($val)."\">";
 		}

@@ -38,17 +38,8 @@
 	if ($_GET['action'] == 'catdelete') {	
 		if (!$sql->resultq("SELECT COUNT(*) FROM archive_cat WHERE id = {$_GET['cat']}"))
 			errorpage("This category does not exist.");
-		$categories = $sql->getresultsbykey("SELECT id, title FROM archive_cat WHERE id != {$_GET['cat']}");
-	
-		$message = "
-			Are you sure you want to <b>DELETE</b> this category?<br><br>
-			The items will be moved into this category: ".field_select('mergeid', $categories, 0, 'Select a category...');
-		$form_link = "?action=catdelete&cat={$_GET['cat']}";
-		$buttons       = array(
-			0 => ["Yes"],
-			1 => ["No", "?"]
-		);
-		if (confirmpage($message, $form_link, $buttons)) {
+		
+		if (confirmed($msgkey = 'del-cat')) {
 			$_POST['mergeid'] = filter_int($_POST['mergeid']);
 			$valid = $sql->resultq("SELECT COUNT(*) FROM archive_cat WHERE id = {$_POST['mergeid']} AND id != {$_GET['cat']}");
 			if (!$valid) {
@@ -64,6 +55,18 @@
 			$sql->commit();
 			errorpage("Category deleted!", "?", 'the category index');
 		}
+		
+		$categories = $sql->getresultsbykey("SELECT id, title FROM archive_cat WHERE id != {$_GET['cat']}");
+		$title   = "Delete Category";
+		$message = "
+			Are you sure you want to <b>DELETE</b> this category?<br><br>
+			The items will be moved into this category: ".field_select('mergeid', $categories, 0, 'Select a category...');
+		$form_link = "?action=catdelete&cat={$_GET['cat']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Yes"],
+			[BTN_URL   , "No", "?"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	} else if ($_GET['action'] == 'catedit') {
 		
 		if (isset($_POST['submit']) || isset($_POST['submit2'])) {
@@ -155,19 +158,23 @@
 		if (!$sql->resultq("SELECT COUNT(*) FROM archive_items WHERE id = {$_GET['id']}"))
 			errorpage("This item does not exist.");
 		
-		$message = "Are you sure you want to <b>DELETE</b> this item?";
-		$form_link = "?action=delete&cat={$_GET['cat']}&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Yes"],
-			1 => ["No", "?cat={$_GET['cat']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons)) {		
+		if (confirmed($msgkey = 'del-item')) {		
 			$sql->beginTransaction();
 			$sql->query("UPDATE `archive_cat` SET `count` = `count` - 1 WHERE id = (SELECT `cat` FROM `archive_items` WHERE `id` = '{$_GET['id']}')");
 			$sql->query("DELETE FROM `archive_items` WHERE `id` = '{$_GET['id']}'");
 			$sql->commit();
 			errorpage("Item deleted!", "?cat={$_GET['cat']}", 'the category');
 		}
+		
+		$title   = "Warning";
+		$message = "Are you sure you want to <b>DELETE</b> this item?";
+		$form_link = "?action=delete&cat={$_GET['cat']}&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Yes"],
+			[BTN_URL   , "No", "?cat={$_GET['cat']}"]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	} else if ($_GET['action'] == 'edit') {
 		
 		if (isset($_POST['submit']) || isset($_POST['submit2'])) {

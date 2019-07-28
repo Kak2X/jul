@@ -36,16 +36,19 @@
 			errorpage("No event selected for deletion.",'calendar.php', 'return to the calendar',0);
 		}
 		
-		$message   = "Are you sure you want to <b>DELETE</b> this event?";
-		$form_link = "event.php?action=delete&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete event"],
-			1 => ["Cancel", "calendar.php?event={$_GET['id']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons)) {
+		if (confirmed($msgkey = 'del-event')) {
 			$sql->query("DELETE FROM events WHERE id = {$_GET['id']}");
 			errorpage("Thank you, {$loguser['name']}, for deleting the event.","calendar.php","return to the calendar",0);
 		}
+		
+		$title     = "Delete event";
+		$message   = "Are you sure you want to <b>DELETE</b> this event?";
+		$form_link = "event.php?action=delete&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Delete event"],
+			[BTN_URL   , "Cancel", "calendar.php?event={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	
 	

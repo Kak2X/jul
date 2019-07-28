@@ -24,33 +24,25 @@
 		if (!$config['allow-thread-deletion'] || !$sysadmin) {
 			errorpage("You can not edit broken PM threads.", "showprivate.php?id={$_GET['id']}", 'the thread');
 		}
-		$message   = "It's impossible to edit a broken PM thread.<br>You have to delete the invalid posts, or merge them to another thread.";
-		$form_link = "?id={$_GET['id']}";
-		$buttons   = array(
-			0 => ["Delete all posts"],
-			1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons)) {
-			$_POST['deletethread'] = true;
+		
+		if (!confirmed($msgkey = 'broken-notice')) {
+			$message   = "
+				It's impossible to edit a broken PM thread.<br/>
+				You have to delete the invalid posts, or merge them to another thread.
+				<input type='hidden' name='deletethread' value='1'>
+			";
+			$form_link = "?id={$_GET['id']}";
+			$buttons   = array(
+				[BTN_SUBMIT, "Delete all posts"],
+				[BTN_URL   , "Cancel", "showprivate.php?id={$_GET['id']}"]
+			);
+			
+			confirm_message($msgkey, $message, $title, $form_link, $buttons);
 		}
 	}
 	
 	if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
-		$message = "
-			<big><b>DANGER ZONE</b></big><br>
-			<br>
-			Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
-			This will remove the conversation from the inbox of all partecipants<br>
-			<br><input type='hidden' name='deletethread' value=1>
-			<input type='checkbox' class='radio' name='reallysure' id='reallysure' value=1> <label for='reallysure'>I'm sure</label>
-		";
-		$form_link     = "?id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete thread"],
-			1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {	
+		if (confirmed($msgkey = 'del-thread', TOKEN_SLAMMER)) {	
 			// Double-confirm the checkbox 
 			if (!filter_bool($_POST['reallysure'])) {
 				errorpage("You haven't confirmed the choice.", "showprivate.php?id={$_GET['id']}", 'the thread');
@@ -71,48 +63,68 @@
 			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "private.php", "your private message box");
 			
 		}
+		
+		$title   = "<big>DANGER ZONE</big>";
+		$message = "
+			Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
+			This will remove the conversation from the inbox of all partecipants<br>
+			<br>
+			<label><input type='checkbox' name='reallysure' value='1'> I'm sure</label>
+		";
+		$form_link     = "?id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Delete thread"],
+			[BTN_URL   , "Cancel", "showprivate.php?id={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else if ($_GET['action'] == 'movethread') {
 		if (!$access) {
 			errorpage("You don't have access to the thread, so you can't move it to the other folders.", "showprivate.php?id={$_GET['id']}", 'the thread');
 		}
+		
+		if (confirmed($msgkey = 'move')) {
+			// Double-confirm the checkbox 
+			$_POST['folder'] = filter_int($_POST['folder']);
+			if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
+				errorpage("Invalid folder selected.");
+			}
+			$sql->query("UPDATE pm_access SET folder = {$_POST['folder']} WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
+			errorpage("Thank you, {$loguser['name']}, for moving the thread.", "showprivate.php?id={$_GET['id']}", "return to the thread");
+		}
+		
+		$title   = "Move Thread";
 		$message = "
 			Where do you want to move this thread?<br>
 			<br>
 			New folder: ".pm_folder_select('folder', $loguser['id'], $access['folder'])."
 		";
-		$form_link     = "?id={$_GET['id']}&action=movethread";
-		$buttons       = array(
-			0 => ["Move thread"],
-			1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
+		$form_link = "?id={$_GET['id']}&action=movethread";
+		$buttons   = array(
+			[BTN_SUBMIT, "Move thread"],
+			[BTN_URL   , "Cancel", "showprivate.php?id={$_GET['id']}"]
 		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {	
-			// Double-confirm the checkbox 
-			$_POST['folder'] = filter_int($_POST['folder']);
-			if (valid_pm_folder($_POST['folder'], $loguser['id'])) {
-				$sql->query("UPDATE pm_access SET folder = {$_POST['folder']} WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-			} else {
-				errorpage("Invalid folder selected.");
-			}
-			errorpage("Thank you, {$loguser['name']}, for moving the thread.", "private.php", "your private message box");
-		}
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);		
 	}
 	else if ($_GET['action'] == 'trashthread') {
 		if (!$access) {
 			errorpage("You don't have access to the thread, so you can't move it to the trash folder.", "showprivate.php?id={$_GET['id']}", 'the thread');
 		}
 		
-		$message       = "Are you sure you want to trash this thread?";
-		$form_link     = "?action=trashthread&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Trash Thread"],
-			1 => ["Cancel", "showprivate.php?id={$_GET['id']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {		
+		if (confirmed($msgkey = 'trash')) {		
 			$sql->query("UPDATE pm_access SET folder = '".PMFOLDER_TRASH."' WHERE thread = '{$_GET['id']}' AND user = {$loguser['id']}");
 			errorpage("Thread successfully trashed.","showprivate.php?id={$_GET['id']}",'return to the thread');
 		}
+		
+		$title         = "Trash Thread";
+		$message       = "Are you sure you want to trash this thread?";
+		$form_link     = "?action=trashthread&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Trash Thread"],
+			[BTN_URL   , "Cancel", "showprivate.php?id={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+
 	}
 	//
 	// THE FOLLOWING ACTIONS CAN ONLY BE DONE BY AN ADMIN (and the thread owner, sometimes)

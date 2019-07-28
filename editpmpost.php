@@ -222,21 +222,8 @@
 		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
 	}
   
-	else if ($_GET['action'] == 'delete'){
-		if ($post['deleted']) {
-			$message = "Do you want to undelete this post?";
-			$btntext = "Yes";
-		} else {
-			$message = "Are you sure you want to <b>DELETE</b> this post?";
-			$btntext = "Delete post";
-		}
-		$form_link = "?action=delete&id={$_GET['id']}";
-		$buttons       = array(
-			0 => [$btntext],
-			1 => ["Cancel", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
+	else if ($_GET['action'] == 'delete') {
+		if (confirmed($msgkey = 'delete')) {
 			$sql->query("UPDATE pm_posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
 			if ($post['deleted']) {
 				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
@@ -244,24 +231,29 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
+		
+		if ($post['deleted']) {
+			$message = "Do you want to undelete this post?";
+			$btntext = "Yes";
+		} else {
+			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$btntext = "Delete post";
+		}
+		$title     = "Warning";
+		$form_link = "?action=delete&id={$_GET['id']}";
+		$buttons   = array(
+			[BTN_SUBMIT, $btntext],
+			[BTN_URL   , "Cancel", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else if ($_GET['action'] == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		
 		$pcount  = $sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$post['thread']}");
-		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
-		if ($pcount <= 1) {
-			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
-		}
-		$form_link = "?action=erase&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete post"],
-			1 => ["Cancel", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {
+		if (confirmed($msgkey = 'erase')) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM pm_posts WHERE id = {$_GET['id']}");
-			
 			
 			if ($pcount <= 1) {
 				// We have deleted the last remaining post from a thread
@@ -284,6 +276,19 @@
 				errorpage("Thank you, {$loguser['name']}, for deleting the post.","showprivate.php?id={$post['thread']}","return to the thread",0);
 			}
 		}
+		
+		$title   = "Permanent deletion";
+		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
+		if ($pcount <= 1) {
+			$message .= "<br><span class='fonts'>You are trying to delete the last post in the thread. If you continue, the thread will be <i>deleted</i> as well.</span>";
+		}
+		$form_link = "?action=erase&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Delete post"],
+			[BTN_URL   , "Cancel", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else {
 		errorpage("No valid action specified.","showprivate.php?id={$post['thread']}#{$post['thread']}","return to the post",0);

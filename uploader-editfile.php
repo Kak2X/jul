@@ -157,16 +157,19 @@ if ($_GET['action'] == 'edit') {
 else if ($_GET['action'] == 'delete') {
 	$filename = htmlspecialchars(trim($file['filename']));
 	
-	$message   = "Are you sure you want to <b>delete</b> the file '<tt>{$filename}</tt>'?";
-	$form_link = $baseparams;
-	$buttons   = array(
-		0 => ["Delete file"],
-		1 => ["Cancel", "uploader.php?cat={$file['cat']}"]
-	);
-	
-	if (confirmpage($message, $form_link, $buttons)) {
+	if (confirmed($msgkey = 'del-file')) {
 		delete_upload($file);	
 		errorpage("The file '{$filename}' has been deleted!", "uploader.php?cat={$file['cat']}", "the uploader");
 	}
+	
+	$title     = "File deletion";
+	$message   = "Are you sure you want to <b>delete</b> the file '<tt>{$filename}</tt>'?";
+	$form_link = $baseparams;
+	$buttons   = array(
+		[BTN_SUBMIT, "Delete file"],
+		[BTN_URL   , "Cancel", "uploader.php?cat={$file['cat']}"]
+	);
+	
+	confirm_message($msgkey, $message, $title, $form_link, $buttons);
 }
 	pagefooter();

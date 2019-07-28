@@ -7,37 +7,27 @@
 	$_GET['action'] = filter_string($_GET['action']);
 	
 	if ($_GET['action'] == 'resync') {
-		$message = "
-			This will resyncronize the post rating totals for all users.<br>
-			This can be a potentially slow action; please don't flood this page with requests.";
-		$form_link = "?action=resync";
-		$buttons       = array(
-			0 => ["Resyncronize ratings"],
-			1 => ["Cancel", "?"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
+		if (confirmed($msgkey = 'resync')) {
 			resync_post_ratings();
 			errorpage("The rating counts have been syncronized.<br>Click <a href='?'>here</a> to continue.");
 		}
+		
+		$title     = "Post Rating Syncronization";
+		$message   = "
+			This will resyncronize the post rating totals for all users.<br>
+			This can be a potentially slow action; please don't flood this page with requests.";
+		$form_link = "?action=resync";
+		$buttons   = array(
+			[BTN_SUBMIT, "Resyncronize ratings"],
+			[BTN_URL   , "Cancel", "?"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	
 	
 	if (isset($_POST['submit']) || isset($_POST['submit2'])) {
 		if ($_GET['id'] > 0 && filter_bool($_POST['delete'])) {
-			// Warn before doing potentially bad stuff
-			$message = "
-				Are you sure you want to <b>permanently DELETE</b> this rating?<br>
-				If you only want to soft delete a rating, please disable it instead.<br><br>
-				After deleting the rating, you may want to resyncronize the rating counts.
-				<input type='hidden' name='delete' value='1'><input type='hidden' name='submit' value='1'>";
-			$form_link = "?id={$_GET['id']}";
-			$buttons       = array(
-				0 => ["Delete rating"],
-				1 => ["Cancel", "?id={$_GET['id']}"]
-			);
-			
-			if (confirmpage($message, $form_link, $buttons)) {
+			if (confirmed($msgkey = 'rat-del')) {
 				$sql->beginTransaction();
 				//--
 				$sql->query("DELETE FROM ratings WHERE id = {$_GET['id']}");
@@ -46,7 +36,22 @@
 				//--
 				$sql->commit();
 				$id = 0; // Don't display edit window
+				die(header("Location: ?"));
 			}
+			
+			// Warn before doing potentially bad stuff
+			$title     = "Warning";
+			$message   = "
+				Are you sure you want to <b>permanently DELETE</b> this rating?<br>
+				If you only want to soft delete a rating, please disable it instead.<br><br>
+				After deleting the rating, you may want to resyncronize the rating counts.";
+			$form_link = "?id={$_GET['id']}";
+			$buttons   = array(
+				[BTN_SUBMIT, "Delete rating"],
+				[BTN_URL   , "Cancel", "?id={$_GET['id']}"]
+			);
+			confirm_message($msgkey, $message, $title, $form_link, $buttons);
+
 		} else {
 			check_token($_POST['auth']);
 			$values = array(

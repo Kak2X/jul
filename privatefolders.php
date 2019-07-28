@@ -63,10 +63,25 @@ else if ($_POST['delcheck']) { // Delete folders and merge every PM in a new fol
 	if (!valid_pm_folder($_POST['delcheck'], $u, true)) {
 		errorpage("You have selected at least one invalid folder.", "?{$idparam}", "the folder editor");
 	}
-	$delfield  = "";
-	foreach ($_POST['delcheck'] as $x) {
-		$delfield .= "<input type='hidden' name='delcheck[]' value='{$x}'>";
+	
+	if (confirmed($msgkey = 'del-folder')) {	
+		$_POST['mergeid'] = filter_int($_POST['mergeid']);
+		if (in_array($_POST['mergeid'], $_POST['delcheck']) || !valid_pm_folder($_POST['mergeid'], $u)) {
+			errorpage("No valid folder selected to merge to.", "?{$idparam}", "the folder editor");
+		}
+		
+		$sql->beginTransaction(); // All OK
+		delete_pm_folder($_POST['delcheck'], $_POST['mergeid'], $u);
+		$sql->commit();
+		return header("Location: ?{$idparam}");
 	}
+	
+	$delfield  = "";
+	/*foreach ($_POST['delcheck'] as $x) {
+		$delfield .= "<input type='hidden' name='delcheck[]' value='{$x}'>";
+	}*/
+	
+	$title   = "Delete folder";
 	$message = "{$delfield}
 		You are about to delete ".count($_POST['delcheck'])." folder(s).<br>
 		<br>
@@ -74,19 +89,10 @@ else if ($_POST['delcheck']) { // Delete folders and merge every PM in a new fol
 		".pm_folder_select('mergeid', $u, $_POST['delcheck'], PMSELECT_MERGE);
 	$form_link     = "?{$idparam}";
 	$buttons       = array(
-		0 => ["Delete folder"],
-		1 => ["Cancel", "?{$idparam}"]
+		[BTN_SUBMIT, "Delete folder"],
+		[BTN_URL   , "Cancel", "?{$idparam}"]
 	);
-	if (confirmpage($message, $form_link, $buttons)) {	
-		$_POST['mergeid'] = filter_int($_POST['mergeid']);
-		if (in_array($_POST['mergeid'], $_POST['delcheck']) || !valid_pm_folder($_POST['mergeid'], $u)) {
-			errorpage("No valid folder selected to merge to.", "?{$idparam}", "the folder editor");
-		}
-		$sql->beginTransaction(); // All OK
-		delete_pm_folder($_POST['delcheck'], $_POST['mergeid'], $u);
-		$sql->commit();
-		return header("Location: ?{$idparam}");
-	}
+	confirm_message($msgkey, $message, $title, $form_link, $buttons);
 }
 pageheader($windowtitle);
 

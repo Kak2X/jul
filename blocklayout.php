@@ -35,13 +35,43 @@
 		
 		errorpage("Thank you, {$loguser['name']}, for {$verb} a post layout.", filter_string($_SERVER['HTTP_REFERER']), 'the previous page', 0);
 	} else if ($_GET['action'] == 'nuke' && $isadmin) {
+		if (confirmed($msgkey = 'del-layout')) {
+			$_POST['title']   = filter_string($_POST['title']);
+			$_POST['message'] = filter_string($_POST['message']);
+			$_POST['color']   = filter_string($_POST['color']);
+			$_POST['nukebio'] = filter_bool($_POST['nukebio']);
+			
+			$values = [
+				"<hr>"
+				.($_POST['title'] ? "[<span class='font b' style='font-size: 10pt; color: {$_POST['color']}'>{$_POST['title']}</span>]<br/>" : "")
+				.($_POST['message'] ? $_POST['message'] : _NUKE_DEFAULT_MESSAGE)
+			];
+			
+			// Optional bio nuking
+			if ($_POST['nukebio']) {
+				$values[1] = $values[0]; // we cannot reuse the same parameter
+				$rmbioq    = " `bio` = ?,";
+				$txt       = "Bio, header, and signature fields nuked!";
+			} else {
+				$rmbioq    = "";
+				$txt       = "Header and signature fields nuked!";
+			}
+			
+			$sql->queryp("UPDATE `users` SET `signature` = ?,{$rmbioq} `postheader` = '', `css` = '' WHERE `id` = '{$_GET['id']}'", $values);
+			errorpage($txt, "profile.php?id={$_GET['id']}", 'the user\'s profile page', 0);
+		}
+		$title   = "Nuke Layout";
 		$message = "
-		This will replace ".getuserlink($user)."'s signature and bio fields with the text customizable below.<br/>
+		This will replace ".getuserlink($user)."'s signature and (optionally) the bio field with the text customizable below.<br/>
 		The CSS and post header fields will also be erased.<br/>
 		You should only be doing this when dealing with particularly <i>bad layouts</i> by bad users.<br/>
 		<br/>
 		You can customize the message options, or leave the defaults in.<br/>
+		<br/>
 		<table class='table'>
+			<tr>
+				<td class='tdbgh center b' colspan='2'>Message options</td>
+			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Title</td>
 				<td class='tdbg2'><input type='text' name='title' style='width: 250px' value=\""._NUKE_DEFAULT_TITLE."\"> <input type='color' name='color' value=\""._NUKE_DEFAULT_TITLE_COLOR."\"></td>
@@ -50,26 +80,21 @@
 				<td class='tdbg1 center b vatop'>Message</td>
 				<td class='tdbg2'><textarea name='message' class='w' style='resize: vertical'>"._NUKE_DEFAULT_MESSAGE."</textarea></td>
 			</tr>
+			<tr>
+				<td class='tdbg1 center b vatop'>Options</td>
+				<td class='tdbg2'><label><input type='checkbox' name='nukebio' value='1'> Replace Bio</label></td>
+			</tr>
 		</table>
 		<br/>
 		If you are sure you want to continue, press 'NUKE IT'
 		";
 		$form_link = "?action=nuke&id={$_GET['id']}";
 		$buttons   = array(
-			0 => ["NUKE IT"],
-			1 => ["Cancel", "profile.php?id={$_GET['id']}"]
+			[BTN_SUBMIT, "NUKE IT"],
+			[BTN_URL   , "Cancel", "profile.php?id={$_GET['id']}"]
 		);
-		if (confirmpage($message, $form_link, $buttons)) {
-			$_POST['title']   = filter_string($_POST['title']);
-			$_POST['message'] = filter_string($_POST['message']);
-			$_POST['color']   = filter_string($_POST['color']);
-			
-			$text = "<hr>"
-					.($_POST['title'] ? "[<span class='font b' style='font-size: 10pt; color: {$_POST['color']}'>{$_POST['title']}</span>]<br/>" : "")
-					.($_POST['message'] ? $_POST['message'] : _NUKE_DEFAULT_MESSAGE);
-			$sql->queryp("UPDATE `users` SET `signature` = ?, `bio` = ?, `postheader` = '', `css` = '' WHERE `id` = '{$_GET['id']}'", [$text, $text]);
-			errorpage("Bio, header, and signature fields nuked!", "profile.php?id={$_GET['id']}", 'the user\'s profile page', 0);
-		}
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+
 	} else if ($_GET['action'] == 'view' && $isadmin) {
 		$user = load_user($_GET['id']);
 		$thisuser = getuserlink($user);

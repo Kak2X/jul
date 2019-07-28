@@ -63,7 +63,7 @@
 		if ($_POST['user'] != 0 && !valid_user($_POST['user']))
 			errorpage("This user you selected as owner doesn't exist.");
 		
-		if ($_POST['user'] || uploader_private_file_confirmpage($_GET['cat'])) {
+		if ($_POST['user'] || uploader_private_file_confirmation($_GET['cat'])) {
 			$values = array(
 				'title'          => $_POST['title'],
 				'description'    => filter_string($_POST['description']),
@@ -189,17 +189,7 @@
 	else if ($_GET['action'] == 'delete') {		
 		// Essentially what we're doing is moving files to another folder
 		// ie: only needs upload permissions
-		
-		$message = "Are you sure you want to <b>delete</b> the category '".htmlspecialchars($cat['title'])."'?<br>".
-		           "All files will be moved to the category below.<br>".
-		           uploader_cat_select('mergeid', $_GET['cat'], UCS_DEFAULT | UCS_UPLOADPERM, "Choose a category to merge the files into...");
-		$form_link = "uploader-catman.php{$baseparams}&action=delete&cat={$_GET['cat']}";
-		$buttons   = array(
-			0 => ["DELETE"],
-			1 => ["Cancel", $baseparams]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons)) {
+		if (confirmed($msgkey = 'del-cat')) {
 			$_POST['mergeid'] = filter_int($_POST['mergeid']);
 			if ($_POST['mergeid'] == -1)
 				errorpage("You forgot to select a directory.");
@@ -209,7 +199,7 @@
 				errorpage("You aren't allowed to move files to this category.");
 			
 			$allowprivate = $validcats[$_POST['mergeid']]['user']; // in user category
-			if ($allowprivate || uploader_private_file_confirmpage($_GET['cat'])) {			
+			if ($allowprivate || uploader_private_file_confirmation($_GET['cat'])) {
 				$sql->beginTransaction();
 				$sql->query("UPDATE uploader_files SET cat = {$_POST['mergeid']}".(!$allowprivate ? ", private = 0" : "")." WHERE cat = {$_GET['cat']}");
 				$sql->query("UPDATE uploader_cat SET files = files + {$cat['files']}, downloads = downloads + {$cat['downloads']} WHERE id = {$_POST['mergeid']}");
@@ -219,8 +209,18 @@
 				errorpage("The category has been deleted!", $baseparams, "the uploader");
 			}
 			return header("Location: $baseparams");
-
 		}
+		
+		$title   = "Delete Category";
+		$message = "Are you sure you want to <b>delete</b> the category '".htmlspecialchars($cat['title'])."'?<br>".
+		           "All files will be moved to the category below.<br>".
+		           uploader_cat_select('mergeid', $_GET['cat'], UCS_DEFAULT | UCS_UPLOADPERM, "Choose a category to merge the files into...");
+		$form_link = "uploader-catman.php{$baseparams}&action=delete&cat={$_GET['cat']}";
+		$buttons   = array(
+			[BTN_SUBMIT, "DELETE"],
+			[BTN_URL   , "Cancel", $baseparams]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	
 	if (MODE_USER) {
@@ -272,19 +272,24 @@
 	print $breadcrumbs;
 	pagefooter();
 
-function uploader_private_file_confirmpage($id) {
+function uploader_private_file_confirmation($id) {
 	global $sql, $baseparams, $scriptname;
 	$uhoh = $sql->resultq("SELECT COUNT(*) FROM uploader_files WHERE cat = {$id} && private = 1");
-	if ($uhoh) {
-		$message = "This folder contains {$uhoh} private file".($uhoh != 1 ? "s" : "").".<br>".
-				   "Because private files are not allowed in shared folders,<br>continuing will <b>make public all of the files</b>.<br><br>".
-				   "Are you sure you want to continue?".save_vars($_POST);
+	if ($uhoh && !confirmed($msgkey = 'prv-warn')) {
+		$title = "Private files will become public";
+		$message = "
+			This folder contains {$uhoh} private file".($uhoh != 1 ? "s" : "").".<br>
+			Because private files are not allowed in shared folders,<br>
+			continuing will <b>make public all of the files</b>.<br>
+			<br>
+			Are you sure you want to continue?
+		";
 		$form_link = "{$scriptname}{$baseparams}&action={$_GET['action']}&cat={$_GET['cat']}";
 		$buttons   = array(
-			0 => ["Yes"],
-			1 => ["No", $baseparams]
+			[BTN_SUBMIT, "Yes"],
+			[BTN_URL   , "No", $baseparams]
 		);
-		return confirmpage($message, $form_link, $buttons);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	return true;
 }

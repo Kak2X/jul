@@ -41,37 +41,26 @@
 	else if ($ismod && $_GET['action'] == 'trashthread') {
 		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);
 		
-		$message       = "Are you sure you want to trash this thread?";
-		$form_link     = "editthread.php?action=trashthread&id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Trash Thread"],
-			1 => ["Cancel", "thread.php?id={$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {		
+		if (confirmed($msgkey = 'trash', TOKEN_SLAMMER)) {		
 			$sql->beginTransaction();
 			move_thread($_GET['id'], $config['trash-forum'], $thread);
 			$sql->commit();
 			errorpage("Thread successfully trashed.","thread.php?id={$_GET['id']}",'return to the thread');
 		}
+		
+		$title         = "Warning";
+		$message       = "Are you sure you want to trash this thread?";
+		$form_link     = "editthread.php?action=trashthread&id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Trash Thread"],
+			[BTN_URL   , "Cancel", "thread.php?id={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
 		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);	
 
-		$message = "
-			<big><b>DANGER ZONE</b></big><br>
-			<br>
-			Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
-			<br><input type='hidden' name='deletethread' value=1>
-			<input type='checkbox' class='radio' name='reallysure' id='reallysure' value=1> <label for='reallysure'>I'm sure</label>
-		";
-		$form_link     = "editthread.php?id={$_GET['id']}";
-		$buttons       = array(
-			0 => ["Delete thread"],
-			1 => ["Cancel", "thread.php?id={$_GET['id']}"]
-		);
-		
-		if (confirmpage($message, $form_link, $buttons, TOKEN_SLAMMER)) {	
+		if (confirmed($msgkey = 'erase-thread', TOKEN_SLAMMER)) {	
 			// Double-confirm the checkbox 
 			if (!filter_bool($_POST['reallysure'])) {
 				errorpage("You haven't confirmed the choice.", "thread.php?id={$_GET['id']}", 'the thread');
@@ -99,6 +88,20 @@
 			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
 			
 		}
+		
+		$title   = "<big>DANGER ZONE</big>";
+		$message = "
+			Are you sure you want to permanently <b>delete</b> this thread and <b>all of its posts</b>?<br>
+			<br>
+			<label><input type='checkbox' name='reallysure' value='1'> I'm sure</label>
+		";
+		$form_link     = "editthread.php?id={$_GET['id']}";
+		$buttons       = array(
+			[BTN_SUBMIT, "Delete thread"],
+			[BTN_URL   , "Cancel", "thread.php?id={$_GET['id']}"]
+		);
+		
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
 		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);

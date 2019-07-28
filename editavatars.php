@@ -40,22 +40,31 @@
 	// Deletions and whatever
 	if (isset($_GET['del'])) {
 		$_GET['del'] = (int) $_GET['del'];
-		$avatar = $sql->fetchq("SELECT * FROM users_avatars WHERE user = {$_GET['id']} AND file = {$_GET['del']}");
+		$avatar = $sql->fetchq("SELECT id, title, weblink FROM users_avatars WHERE user = {$_GET['id']} AND file = {$_GET['del']}");
 		if (!$avatar) {
 			errorpage("You are trying to delete a nonexisting avatar.");
 		}
 		
-		$message       = "Are you sure you want to delete this avatar?";
-		$form_link     = "?id={$_GET['id']}&del={$_GET['del']}";
-		$buttons       = array(
-			0 => ["Delete avatar"],
-			1 => ["Cancel", "?id={$_GET['id']}"]
-		);
-		if (confirmpage($message, $form_link, $buttons)) {
+		if (confirmed($msgkey = 'rat-del')) {
 			delete_avatar($_GET['id'], $_GET['del']);
-			//msg_holder::set_cookie("Avatar '<i>{{$data['title']}}</i>' deleted!");
+			//msg_holder::set_cookie("Avatar '<i>{{$avatar['title']}}</i>' deleted!");
 			return header("Location: ?id={$_GET['id']}");
 		}
+		
+		$title         = "Delete confirmation";
+		$message       = "
+			Are you sure you want to delete this avatar?<br/>
+			<br/>
+			".avbox($_GET['id'], $_GET['del'], $avatar, true)."
+			
+		";
+		$form_link     = "?id={$_GET['id']}&del={$_GET['del']}";
+		$buttons   = array(
+			[BTN_SUBMIT, "Delete avatar"],
+			[BTN_URL   , "Cancel", "?id={$_GET['id']}"]
+		);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+
 	}
 	
 	// Apparently Kafuka has an avatar limit, which is a nice thing to have I guess
@@ -268,15 +277,20 @@
 	function avbox($user, $file, $data, $options = 0) {	
 		$data['title']   = htmlspecialchars($data['title']);
 		$data['weblink'] = htmlspecialchars($data['weblink']);
-		$options = $data['hidden'] ? "<b>Hidden</b>" : "";
+		
 		if (isset($data['new'])) {
-			$links = "<a href='?id={$user}&edit={$file}'>Upload</a>";
 			$image = "images/_.gif";
+			$links = "<a href='?id={$user}&edit={$file}'>Upload</a>";
 		} else {
-			$links = "<a href='?id={$user}&edit={$file}'>Edit</a> - <a href='?id={$user}&del={$file}'>Delete</a>";
 			$image = avatar_path($user, $file, $data['weblink']);
-			if ($data['hidden']) {
-				$data['title'] = "<i>{$data['title']}</i>";
+			if (!$options) {
+				// only a single option (read only) for now. maybe more for later
+				$links = "<a href='?id={$user}&edit={$file}'>Edit</a> - <a href='?id={$user}&del={$file}'>Delete</a>";
+				if ($data['hidden']) {
+					$data['title'] = "<i>{$data['title']}</i>";
+				}
+			} else {
+				$links = "";
 			}
 		}
 		

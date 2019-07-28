@@ -40,6 +40,8 @@
 	// Get the first day of the week for the next month, to determine blank cells after the last day of the month
 	$date = getdate(mktime(0,0,0,$month+1,0,$year));
 	$max  = $date['mday'];
+	
+	pageheader("Calendar for {$mn[$month]} {$year}");
 
 	// User birthdays for the month
 	$bdaytext = array_fill(1, 31, "");
@@ -68,8 +70,6 @@
 		if ($event1['private']) $userlink = "[$userlink]";
 		$eventtext[$event1['d']] .= "<br>- $userlink | <a href='calendar.php?event={$event1['id']}'>".htmlspecialchars($event1['title'])."</a>";
 	}
-	
-	pageheader("Calendar for {$mn[$month]} {$year}");
 	
 	?>
 	<table style="width: 100%">

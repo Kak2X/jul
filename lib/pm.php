@@ -45,10 +45,10 @@ function pm_folder_select($name, $user, $sel = 0, $flags = 0) {
 	if ($flags & PMSELECT_MERGE) {
 		$preopt = "<option value='-100' selected>Choose a folder to merge into...</option>";
 		if (is_array($sel)) { // hack for multi delete (in order to hide multiple folders)
-			$nosel  = "WHERE folder NOT IN (".implode(',', $sel).")";
+			$nosel  = "AND folder NOT IN (".implode(',', $sel).")";
 			$sel    = -100;
 		} else {
-			$nosel  = "WHERE folder != {$sel}";
+			$nosel  = "AND folder != {$sel}";
 		}
 	}
 	if ($flags & PMSELECT_JS) {
@@ -91,7 +91,7 @@ function pm_folder_select($name, $user, $sel = 0, $flags = 0) {
 		}
 		$groups .= "</optgroup>";
 	}
-	$folders = $sql->query("SELECT folder, title FROM pm_folders {$nosel} WHERE user = {$user} ORDER BY ord ASC, id ASC");
+	$folders = $sql->query("SELECT folder, title FROM pm_folders WHERE user = {$user} {$nosel} ORDER BY ord ASC, id ASC");
 	$custom = "";
 	while ($x = $sql->fetch($folders)) {
 		if ($flags & PMSELECT_SHOWCNT) {

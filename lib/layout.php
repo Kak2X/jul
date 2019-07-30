@@ -325,6 +325,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
 
+	if ($issuper) {
+		$config['board-title'] .= $config['title-submessage'];
+	}
+	
 	if ($schemepre) {
 		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";
 	}

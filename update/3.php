@@ -14,3 +14,10 @@ $res = add_scheme([
 ]);
 
 print checkres($res);
+
+
+update_step();
+
+print "<br>Moving the 'Mario Movie' scheme...";
+$res = $sql->query("UPDATE schemes SET cat = 1 WHERE file = 'mariomovie.php'");
+print checkres($res);

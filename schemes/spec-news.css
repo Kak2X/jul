@@ -112,15 +112,15 @@ body{
 	/*text-shadow: 	-1px 0 #000, 0 1px #000, 1px 0 #000, 0 -1px #000;*/
 	color:			#fff !important;
 }
-a:link,a:visited,a:active,a:hover{
+a,a:visited,a:active,a:hover{
 	text-decoration:none;
 	font-weight:bold;
 	text-shadow: -1px -1px #000, 0px -1px #000, 1px -1px #000, 1px 0px #000, 1px 1px #000, 0px 1px #000, -1px 1px #000, -1px 0px #000
 }
-a:link		{color: #BEFEBA}
-a:visited	{color: #99c090}
-a:active	{color: #CFFFBE}
-a:hover		{color: #CEFECA}
+a:not(.button)			{color: #BEFEBA}
+a:not(.button):visited	{color: #99c090}
+a:not(.button):active	{color: #CFFFBE}
+a:not(.button):hover	{color: #CEFECA}
 
 textarea, input, select, button, .button {
 	color:			#DDDDDD;

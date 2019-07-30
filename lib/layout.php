@@ -260,7 +260,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$nullscheme = 0;
 	$schemetype = 0;
 	$formcss 	= 0;
-	
+	$usebtn     = 0;
 	// If a scheme is being forced board-wise, make it override forum-specific schemes
 	// (Special schemes and $specialscheme now pass through $forcescheme)
 	if ($miscdata['scheme'] !== NULL)
@@ -361,6 +361,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<link rel='stylesheet' href='schemes/base.css' type='text/css'>
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
+		
+		$usebtn = 1;
 		// backwards compat
 		//global $bgcolor, $linkcolor;
 		//$bgcolor = "000";
@@ -497,6 +499,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  border:	#$inputborder solid 2px;
 		  font:	10pt $font;}
 		.button{color: #$formtextcolor !important;}
+		";
+	} else if (!$usebtn) {
+		$css.="
+		a.button, a.button:active, a.button:hover {
+			font-weight: bold !important;
+			cursor: pointer;
+		}
 		";
 	}
 

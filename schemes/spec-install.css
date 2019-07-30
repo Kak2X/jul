@@ -16,12 +16,10 @@ body{
 .tdbgh{
 	text-align:		center;
 	background:		#222;
-	width:			0px; /* ?????? (this was width=0 in td)*/
 }
 .table{
 	background:		#111;
 	vertical-align:	top;
-/*	height: 		100%;*/
 	font-family:	"Courier New", Courier, monospace;
 }
 .warn, .highlight, .ok { font-weight: bold }

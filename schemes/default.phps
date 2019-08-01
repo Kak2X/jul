@@ -8,6 +8,7 @@
 	**************************************************************************/
 	
 	$formcss		= 1;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
+	$usebtn			= 1;		# Allows rendering links using the .button CSS class as actual buttons. Only has effect when $formcss is set to 0, otherwise the effect is always enabled.
 	$numcols		= 100;		# Width of text entry, just use css extra again
 
 	# Banner; comment for default
@@ -91,4 +92,28 @@
 		body, .tdbg1, .tdbg2	{background-attachment: fixed; background-position: top-left;}
 		input, textarea, select	{border: 1px solid #008;}
 		";
-	
+		
+	# Sample CSS which styles custom form inputs. Only when $formcss is set to 1.
+	/*
+	$css_extra		.= "
+	textarea, input, select, button, .button {
+		border:		1px solid #a89;
+		background:	#fff;
+		color:		#000;
+		font:		10pt $font;
+	}
+	input[type=radio], .radio {
+		border:		none;
+		background: #fff0f8;
+		color:		#ffffff;
+		font:		10pt $font;
+	}
+	input[type=submit], input[type=button], button, .button {
+		border:		#000 solid 2px;
+		font:		10pt $font;
+	}
+	.button { 
+		color: 		#000 !important;
+	}
+	";
+	*/

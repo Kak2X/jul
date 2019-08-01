@@ -34,7 +34,7 @@
 	.table, .tdbg1, .tdbg2, .tdbgc, .tdbgh {
 		box-shadow: 0px 0px 2px 1px #FFF;
 	}
-	select, input, button, textarea {
+	textarea, input, select, button, .button {
 		box-shadow: 0px 0px 2px 0.5px #FFF;
 	}
 	optgroup {
@@ -43,7 +43,7 @@
 	.table, .font, .fonts {
 		font-size: 12px !important;
 	}
-	a, b, .b {
+	a:not(.button), b, .b {
 		font-weight: normal !important;
 		text-decoration: underline !important;
 		text-shadow: 0px 0px 1.5px #FFF;

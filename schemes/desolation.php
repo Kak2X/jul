@@ -29,7 +29,7 @@
 	$tableheadtext = 'dddddd';
 	$tableheadbg   = 'DDDDDD; background: url(schemes/desolation/tdbgh.png); font-weight: bold;';
 	$tableborder   = '000000';
-	$inputborder   = '444 outset 2px';
+	$inputborder   = '444';
 	
 	$scr3 = '400044';
 	$scr7 = '000000';
@@ -45,6 +45,10 @@
 		background-position: bottom left;
 		background-repeat: no-repeat';
 	}
+	textarea,input,select,button,.button{
+		border: 2px outset #444 !important;
+	}
+	
 	a {
 		font-size: 0.9em;
 	}

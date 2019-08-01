@@ -1,5 +1,6 @@
 <?php
 	$formcss        = 0;        # formcss makes forms black with tableborder borders; using cssextra below is easier
+	$usebtn			= 1;		# enable .button link rendering
 	$numcols        = 100;        # same thing, more or less
 
 	$bgimage        = 'schemes/pinstripe/bluebg.png';
@@ -74,7 +75,7 @@ body > table[width='100%'] td[align='right'] a:hover, body > table[width='100%']
 
 .tdbgc, .tdbgh { padding: 3px; font-weight: bold; font-size: 11px; }
 
-textarea,input,select{
+textarea,input,select,button,.button{
 	border: #000 solid 1px;
 	background: #2e3f68;
 	color: #bfcef2;
@@ -87,11 +88,14 @@ input[type='radio'], .radio {
 	color: #bfcef2;
 	font: 10pt verdana;
 }
-.submit{
+input[type=submit],input[type=button],button,.button{
 	border: #000 solid 2px;
 	font: 8pt verdana;
 	padding: 1px 6px;
 }
-
+.button{
+	color: #bfcef2 !important;
+	padding: 2px 6px;
+}
 table.table[cellspacing='0'] td.tbl.font[height='220'] { padding: 1px; }
 ";

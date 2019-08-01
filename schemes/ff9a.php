@@ -22,7 +22,7 @@
 	$tableheadbg   = '101859';
 	//$tableborder   = 'FFFFFF'; // this bright white border is terrible
 	$tableborder = "AAA";
-	$css_extra = " .table { border-radius: 4px }";
+	//$css_extra = " .table { border-radius: 4px }";
 
 
 	$statusicons['new']			= '<img src="schemes/ff9a/status/new.png">';

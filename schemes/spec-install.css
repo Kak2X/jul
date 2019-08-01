@@ -57,8 +57,11 @@ textarea, input, select, button, .button {
 	font-family:		"Courier New", Courier, monospace;
 	font-size:			13px;
 }
-.submit {
+input[type=submit], input[type=button], button, .button {
 	border: 			2px solid #80FF80;
+}
+.button {
+	color: #DDDDDD !important;
 }
 .sel {
 	text-align: 	left;

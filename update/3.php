@@ -15,6 +15,20 @@ $res = add_scheme([
 
 print checkres($res);
 
+update_step();
+
+print "<br>Adding the 'System (Windows 98)' scheme...";
+$res = add_scheme([
+	'id'       => 53,
+	'ord'      => 53,
+	'name'     => 'System (Windows 98)',
+	'file'     => 'system-w98.php',
+	'special'  => 0,
+	'cat'      => 8,
+	'minpower' => 0,
+]);
+
+print checkres($res);
 
 update_step();
 

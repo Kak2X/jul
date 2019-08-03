@@ -296,7 +296,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = '{$scheme}'");
 
 	$filename	= "";
-	if ($schemerow) {
+	if ($schemerow && file_exists("schemes/{$schemerow['file']}")) {
 		$filename	= $schemerow['file'];
 	} else {
 		$filename	= "night.php";

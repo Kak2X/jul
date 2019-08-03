@@ -34,15 +34,7 @@
 	
 	// Determine if to show conditionally the MySQL query list.
 	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
-		if (isset($_GET['debugsql'])) {
-			// Don't redirect loop
-			if (!is_numeric($_GET['debugsql']))
-				die(header("Location: ?sec=1"));
-			
-			$debugopt = filter_bool($_GET['debugsql']);
-			set_board_cookie('debugsql', $debugopt);
-			
-			// Remove debugsql parameter and redirect back
+		if (toggle_board_cookie($_GET['debugsql'], 'debugsql')) {
 			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
 			die(header("Location: ".get_current_script()."?{$params}"));
 		}
@@ -2917,6 +2909,16 @@ function set_board_cookie($name, $value, $expire = 2147483647) {
 }
 function remove_board_cookie($name) {
 	setcookie($name, '', time() - 3600, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+}
+function toggle_board_cookie(&$signal, $key, $expire = 2147483647) {
+	return toggle_board_cookie_man($signal, $key, $_COOKIE[$key], $expire);
+}
+function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) {
+	if (!$signal) {
+		return false;
+	}
+	setcookie($key, !$value, $expire, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+	return true;
 }
 
 function error_reporter($type, $msg, $file, $line) {

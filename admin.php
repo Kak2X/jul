@@ -8,14 +8,12 @@
 		errorpage("Uh oh, you are not the admin go away.");
 	}
 	
-	
-	$oldbar = filter_bool($_COOKIE['linkbar']);
 	// Admin bar type toogle code
-	if (isset($_GET['togglebar'])) {
-		$oldbar = !$oldbar;
-		set_board_cookie('linkbar', $oldbar);
-		return header("Location: admin.php");
+	if (toggle_board_cookie($_GET['togglebar'], 'linkbar')) {
+		die(header("Location: admin.php"));
 	}
+	$oldbar = filter_bool($_COOKIE['linkbar']);
+	
 		
 	pageheader($windowtitle);
 	
@@ -86,7 +84,7 @@
 			Alternatively you can change some general board options in the section below.
 			<br>
 			<br>
-			<small>(Click <a href="?togglebar">here</a> to use the <?= $oldbar ? "new" : "old" ?> style panel)</small>
+			<small>(Click <a href="?togglebar=1">here</a> to use the <?= $oldbar ? "new" : "old" ?> style panel)</small>
 			<?= (false && $sysadmin ? "<br><br>To change the hard configuration, click <a href='install/?chconfig'>here</a>." : "") ?>
 			<br>&nbsp;
 		</td></tr>

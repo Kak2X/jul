@@ -75,15 +75,13 @@
 	
 	// Collapsable categories support
 	$_GET['cat']	= filter_int($_GET['cat']);
-	if (isset($_GET['toggle'])) {
-		set_board_cookie("hcat[{$_GET['cat']}]", 1 - filter_int($_COOKIE['hcat'][$_GET['cat']]));
-		header("Location: index.php");
-		die;
+	if (toggle_board_cookie_man($_GET['toggle'], "hcat[{$_GET['cat']}]", $_COOKIE['hcat'][$_GET['cat']])) {
+		die(header("Location: index.php"));
 	}
-
+	
 	// Move it after the auto-redirect actions, otherwise the redirect breaks
 	pageheader();
-		
+	
 	$postread = readpostread($loguser['id']);
 	
 	/*
@@ -552,5 +550,5 @@
 	
 
 function collapse_toggle($cat, $hidden) {
-	return "<div style='float: right'><a href='?cat={$cat}&toggle'>[".($hidden ? "+" : "-")."]</a></div>";
+	return "<div style='float: right'><a href='?cat={$cat}&toggle=1'>[".($hidden ? "+" : "-")."]</a></div>";
 }

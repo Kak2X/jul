@@ -645,7 +645,7 @@ function dotags($msg, $user, &$tags = array()) {
 
 			'&numposts&'	=> $user['posts'],
 			'&rank&'		=> getrank($user['useranks'], '', $user['posts'], 0),
-			'&postrank&'	=> $sql->resultq("SELECT count(*) FROM `users` WHERE posts > {$user['posts']}") + 1,
+			'&postrank&'	=> $sql->resultq("SELECT count(*) FROM `users` WHERE posts > {$user['posts']}", 0, 0, mysql::FETCH_ALL) + 1,
 			'&5000&'		=>  5000 - $user['posts'],
 			'&10000&'		=> 10000 - $user['posts'],
 			'&20000&'		=> 20000 - $user['posts'],

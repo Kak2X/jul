@@ -60,8 +60,13 @@ a:not(.button) {
 	border-top: 1px solid #808080; 
 }
  
-.tdbgh { 
+ .table tr {
 	background: linear-gradient(to right, rgb(0,0,128) 0%,rgb(16,132,208) 100%);
+ }
+ .table td:not(.tdbgh) {
+	background: #C0C0C0;
+ }
+.tdbgh { 
 	color: #fff;
 	text-align: left;
 }

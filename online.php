@@ -25,18 +25,11 @@
 	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 /* || $loguser['id'] == 5 || $loguser['id'] == 2100*/);
 
 	if ($banorama && filter_string($_GET['banip'])) {
-		check_token($_POST['auth'], TOKEN_BANNER, $_GET['banip']);
-		// Just in case
-		$sql->queryp("INSERT INTO `ipbans` SET `ip` = :ip, `reason` = :reason, `date` = :date, `banner` = :banner",
-		[
-			'ip'		=> $_GET['banip'],
-			'reason'	=> 'online.php ban',
-			'date'		=> ctime(),
-			'banner'	=> $loguser['id'],
-		]);
+		check_token($_GET['auth'], TOKEN_BANNER, $_GET['banip']);
+		$ircmsg = xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_GET['banip'] . xk(7) .".";
+		ipban($_GET['banip'], "online.php ban", $ircmsg);
 //		if ($_GET['uid']) mysql_query("UPDATE `users` SET `powerlevel` = -1, `title` = 'Banned; account hijacked. Contact admin via PM to change it.' WHERE `id` = '". $_GET['uid'] ."'") or print mysql_error();
-		xk_ircsend("1|". xk(8) . $loguser['name'] . xk(7) ." added IP ban for ". xk(8) . $_GET['banip'] . xk(7) .".");
-		return header("Location: online.php?m=1");
+		return header("Location: online.php"); // ?m=1
 	}
 
 

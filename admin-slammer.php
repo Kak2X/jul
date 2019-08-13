@@ -79,7 +79,7 @@ else if ($_POST['knockout']) {
 	$sql->query("ALTER TABLE users AUTO_INCREMENT = {$new_maxid}");
 	echo "Max ID set to {$new_maxid}.\n";
 
-	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $uinfo['lastip'] ."', `date` = '". ctime() ."', `reason` = 'Thanks for playing!'");
+	ipban($uinfo['lastip'], "Thanks for playing!");
 	echo "Delivered IP ban to {$uinfo['lastip']}.\n";
 
 	xk_ircsend("1|". xk(8) . $uinfo['name'] . xk(7). " (IP " . xk(8) . $uinfo['lastip'] . xk(7) .") is the latest victim of the new EZ BAN button(tm).");

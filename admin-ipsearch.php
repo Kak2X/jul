@@ -130,7 +130,7 @@
 		$users = $sql->queryp("
 			SELECT u.*, i.ip ipbanned
 			FROM users u 
-			LEFT JOIN ipbans i ON u.lastip = i.ip
+			LEFT JOIN ipbans i ON u.lastip = i.ip AND (i.expire = 0 OR i.expire > ".ctime().")
 			WHERE u.lastip LIKE ? $usort
 			LIMIT ".($_POST['ppp'] * $_POST['page']).", {$_POST['ppp']}
 		", [$_POST['ip']]);
@@ -193,7 +193,7 @@
 		<td class='tdbg2 center'><?=
 			($user['ipbanned'] ? 
 			"<a href='admin-ipbans.php?searchip={$user['lastip']}'>[IP BANNED]</a>" : 
-			"<a href='admin-ipbans.php?newip={$user['lastip']}#addban'>IP Ban</a>")?>
+			"<a href='admin-ipbans.php?action=add&ip={$user['lastip']}'>IP Ban</a>")?>
 		</td>
 	</tr>
 <?php } ?>

@@ -122,9 +122,7 @@
 		      `ban_expire` < ".ctime()
 	);
 	
-	$sql->query("DELETE FROM `ipbans`    WHERE `expire` != 0 AND `expire` < ".ctime());
 	$sql->query("DELETE FROM `forumbans` WHERE `expire` != 0 AND `expire` < ".ctime());
-	
 	$loguser = array();
 
 	// Just making sure.  Don't use this anymore.
@@ -327,6 +325,7 @@
 					  $checkips  = "INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1";
 	if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
 	if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
+	$checkips .= " AND (expire = 0 OR expire > ".ctime().")";
 
 	$baninfo = $sql->fetchq("SELECT ip, expire FROM ipbans WHERE $checkips");
 	if($baninfo) $ipbanned = 1;
@@ -1555,15 +1554,47 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 // Banner 0 = automatic ban
 function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
-	if ($expire) {
+	if ($expire > 0) {
 		$expire = ctime() + 3600 * $expire;
 	}
 	$sql->queryp("
 		INSERT INTO `ipbans` (`ip`,`reason`,`date`,`banner`,`expire`) 
-		VALUES(?,?,?,?,?) ", [$ip, $reason, ctime(), $banner, $expire]);
+		VALUES(?,?,?,?,?) 
+		ON DUPLICATE KEY UPDATE 
+			`reason` = VALUES(`reason`),
+			`date`   = VALUES(`date`),
+			`banner` = VALUES(`banner`),
+			`expire` = VALUES(`expire`)
+		", [$ip, $reason, ctime(), $banner, $expire]);
 	if ($ircreason !== NULL) {
 		xk_ircsend("{$destchannel}|{$ircreason}");
 	}
+}
+
+function ipban_edit($sourceip, $ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
+	global $sql;
+	// UPDATE
+	$values = array(
+		'ip'     => $ip,
+		'reason' => $reason,
+		'banner' => $banner,
+	);
+	if ($expire >= 0) { // Ignore expired bans
+		$values['expire'] = $expire ? ctime() + 3600 * $expire : 0;	
+	}
+	$phs = mysql::setplaceholders($values);
+	
+	// WHERE
+	$values['sourceip'] = $sourceip;
+	
+	$sql->queryp("UPDATE `ipbans` SET {$phs} WHERE `ip` = :sourceip", $values);
+	if ($ircreason !== NULL) {
+		xk_ircsend("{$destchannel}|{$ircreason}");
+	}
+}
+function ipban_exists($ip) {
+	global $sql;
+	return $sql->resultp("SELECT COUNT(*) FROM ipbans WHERE ip = ?", [$ip]);
 }
 
 function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permanent = false){
@@ -2690,11 +2721,44 @@ function page_select($total, $ppp) {
 	return "<select name='page'>{$pagectrl}</select>";
 }
 
-function ban_hours($name, $time = 0, $condition = true) {
-		$val = ($condition && $time) ? ceil(($time - ctime()) / 3600) : 0;
-		
+function ban_select($name, $time = 0) {
+		// Complete ban list
 		$selector = array(
-			$val     => timeunits2($val*3600),
+			-1       => "",
+			0        => "*** Permanent ***",
+			1        => "1 hour",
+			3        => "3 hours",
+			6        => "6 hours",
+			24       => "1 day",
+			72       => "3 days",
+			168      => "1 week",
+			336      => "2 weeks",
+			774      => "1 month",
+			1488     => "2 months",
+			4464     => "6 months",
+			89280    => "SA Ban",
+		);
+		
+		// The first element should always be auto-picked -- no need for select logic		
+		if (!$time) {
+			unset($selector[-1]);
+		} else {
+			$selector[-1] = "*** ".($time < ctime() ? "Keep expired" : "Keep unchanged (".timeunits2($time-ctime()).")")." ***";
+		}
+
+		// Fill out the select box
+		$out = "";
+		foreach ($selector as $i => $x) {
+			$out .= "<option value='$i'>$x</option>";
+		}
+		return "<select name='{$name}'>{$out}</select>";
+}
+
+function ban_hours($name, $time = 0, $condition = true) {
+		trigger_error("Use ban_select() instead", E_USER_DEPRECATED);
+		$val = ($condition && $time) ? ceil(($time - ctime()) / 3600) : 0;
+		$selector = array(
+			$val     => $val > 0 ? timeunits2($val*3600) : "*** Keep Expired ***",
 			0        => "*** Permanent ***",
 			1        => "1 hour",
 			3        => "3 hours",

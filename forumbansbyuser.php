@@ -45,7 +45,7 @@
 			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".getuserlink($x, $x['banner'])."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
-			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
+			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>
 		</tr>";
 	}
 	

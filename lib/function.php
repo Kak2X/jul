@@ -121,8 +121,6 @@
 		      `powerlevel` = '-1' AND
 		      `ban_expire` < ".ctime()
 	);
-	
-	$sql->query("DELETE FROM `forumbans` WHERE `expire` != 0 AND `expire` < ".ctime());
 	$loguser = array();
 
 	// Just making sure.  Don't use this anymore.
@@ -1619,7 +1617,7 @@ function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permane
 function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
 	
-	if ($expire) {
+	if ($expire > 0) {
 		$expire = ctime() + 3600 * $expire;
 	}
 			
@@ -1628,6 +1626,23 @@ function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel =
 		VALUES(?,?,?,?,?,?)", [$user, $forum, ctime(), $banner, $expire, $reason]);
 		
 	if ($ircreason !== NULL){
+		xk_ircsend("{$destchannel}|{$ircreason}");
+	}
+}
+
+function forumban_edit($source, $forum, $user, $reason = "", $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0) {
+	global $sql;
+	
+	$values = array(
+		'user'   => $user,
+		'reason' => $reason,
+	);
+	if ($expire >= 0) {
+		$values['expire'] = $expire ? ctime() + 3600 * $expire : 0;	
+	}
+	$sql->queryp("UPDATE forumbans SET ".mysql::setplaceholders($values)." WHERE id = {$source}", $values);
+	
+	if ($ircreason !== NULL) {
 		xk_ircsend("{$destchannel}|{$ircreason}");
 	}
 }
@@ -1646,8 +1661,17 @@ function is_banned($forum, $user) {
 		SELECT f.id, f.banner, f.expire, f.reason, $userfields uid
 		FROM forumbans f
 		LEFT JOIN users u ON f.banner = u.id
-		WHERE f.user = {$user} AND f.forum = {$forum}
+		WHERE f.user = {$user} AND f.forum = {$forum} AND (!f.expire OR f.expire > ".ctime().")
 	");
+}
+
+function ban_expire($ban) {
+	if (!$ban['expire']) {
+		return "Permanent";
+	} else {
+		return ($ban['expire'] < ctime() ? "Expired" : timeunits2($ban['expire'] - ctime()))
+		       ."<br><small>(".printdate($ban['expire'])/*." - ".timeunits2($ban['expire'] - $ban['date'])*/.")</small>";
+	}
 }
 
 function onlineusers($forum = NULL, $thread = NULL){

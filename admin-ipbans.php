@@ -139,12 +139,6 @@
 	
 	$txt = "";
 	while ($x = $sql->fetch($bans)) {
-		// Expiration date
-		if (!$x['expire']) {
-			$expiry = "Never";
-		} else {
-			$expiry = ($x['expire'] < ctime() ? "Expired" : timeunits2($x['expire']-ctime()))." <small>(".printdate($x['expire']).")</small>";
-		}
 		$ip = htmlspecialchars($x['ip']);
 		
 		$txt .= "
@@ -153,7 +147,7 @@
 				<td class='tdbg2 center fonts'><a href=\"?action=edit&ip={$ip}\">Edit</a></td>
 				<td class='tdbg1 center'>{$ip}</td>
 				<td class='tdbg2 center'>".printdate($x['date'])."</td>
-				<td class='tdbg2 center'>{$expiry}</td>
+				<td class='tdbg2 center'>".ban_expire($x)."</td>
 				<td class='tdbg1'>".htmlspecialchars($x['reason'])."</td>
 				<td class='tdbg2 center'>".($x['banner'] ? getuserlink($x) : "<i>Automatic</i>")."</td>
 			</tr>

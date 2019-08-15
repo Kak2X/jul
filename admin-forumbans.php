@@ -63,13 +63,8 @@ if ($_GET['forum']) {
 			$ircmessage = xk(8) . $loguser['name'] . xk(7) ." added forum ban for ". xk(8) . $user['name'] . xk(7) ." in ". xk(8) . $forum['title'] . xk(7) . $ircreason .".";;
 			forumban($_GET['forum'], $_POST['user'], $_POST['reason'], $ircmessage, IRC_STAFF, $_POST['expire'], $loguser['id']);
 		} else {
-			$values = array(
-				'user'   => $_POST['user'],
-				'expire' => ctime() + 3600 * $_POST['expire'],
-				'reason' => $_POST['reason'],
-			);
-			$sql->queryp("UPDATE forumbans SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['edit']}", $values);
-			xk_ircsend(IRC_STAFF."|". xk(8) . $loguser['name'] . xk(7) ." updated the forum ban for ". xk(8) . $user['name'] . xk(7) ." in ". xk(8) . $forum['title'] . xk(7) .".");
+			$ircmessage = xk(8) . $loguser['name'] . xk(7) ." updated the forum ban for ". xk(8) . $user['name'] . xk(7) ." in ". xk(8) . $forum['title'] . xk(7) .".";
+			forumban_edit($_GET['edit'], $_GET['forum'], $_POST['user'], $_POST['reason'], $ircmessage, IRC_STAFF, $_POST['expire']);
 		}
 		return header("Location: ?forum={$_GET['forum']}");
 	}
@@ -131,12 +126,12 @@ if (!$_GET['forum']) {
 	$_POST['searchreason']      = filter_string($_POST['searchreason']);
 	$_POST['searchuser']        = filter_int($_POST['searchuser']);
 	$_POST['page']              = filter_int($_POST['page']);
+	$_POST['showexpired']       = filter_int($_POST['showexpired']);
+	
 
 	$formlink = "?forum={$_GET['forum']}";
-	if (!isset($_GET['ppp'])) {
-		$ppp = 100;
-	} else {
-		$ppp = max(min(((int) $_GET['ppp']), 500), 1);
+	$ppp = get_ipp($_GET['ipp'], 100);
+	if ($ppp != 100) {
 		$formlink .= "&ppp={$ppp}";
 	}
 	
@@ -151,6 +146,9 @@ if (!$_GET['forum']) {
 	if ($_POST['searchuser']) {
 		//$userid   = $sql->resultp("SELECT id FROM users WHERE name = ?", [$_POST['searchuser']]);
 		$qsearch .= " AND f.user = {$_POST['searchuser']}";
+	}
+	if (!$_POST['showexpired']) {
+		$qsearch .= " AND (!f.expire OR f.expire > ".ctime().")";
 	}
 	//--
 	
@@ -192,7 +190,7 @@ if (!$_GET['forum']) {
 			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(get_userfields($x, 'u2'), $x['banner']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
-			<td class='tdbg{$bg} center'>".($x['expire'] ? timeunits2($x['expire'] - ctime()) : "Permanent" )."</td>
+			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>
 		</tr>";
 	}
 	
@@ -218,6 +216,14 @@ if (!$_GET['forum']) {
 			</td>
 			<td class='tdbg2'>
 				<input type='text' name='searchreason' size=72 value="<?= htmlspecialchars($_POST['searchreason']) ?>">
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center b'>
+				Options:
+			</td>
+			<td class='tdbg2'>
+				<label><input type='checkbox' name='showexpired' value='1'<?= ($_POST['showexpired'] ? " checked" : "")?>> Show expired</label>
 			</td>
 		</tr>
 		<tr id="pagetr">
@@ -286,7 +292,7 @@ if (!$_GET['forum']) {
 		<tr>
 			<td class="tdbg1 center b">Ban duration</td>
 			<td class="tdbg2">
-				<?= ban_hours('expire', $ban['expire']) ?>
+				<?= ban_select('expire', $ban['expire']) ?>
 			</td>
 		</tr>
 		<tr>

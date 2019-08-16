@@ -34,14 +34,6 @@ print checkres($res);
 // ====================
 update_step();
 
-print "<br>Moving the 'Mario Movie' scheme...";
-$res = $sql->query("UPDATE schemes SET cat = 1 WHERE file = 'mariomovie.php'");
-
-print checkres($res);
-
-// ====================
-update_step();
-
 print "<br>Adding the 'Rugged Blue (Yoshi Dude)' scheme...";
 $res = add_scheme([
 	'id'       => 54,
@@ -52,6 +44,30 @@ $res = add_scheme([
 	'cat'      => 8,
 	'minpower' => 0,
 ]);
+
+print checkres($res);
+
+// ====================
+update_step();
+
+print "<br>Adding the 'ROM Hacking Archive 2' scheme...";
+$res = add_scheme([
+	'id'       => 55,
+	'ord'      => 55,
+	'name'     => 'ROM Hacking Archive 2',
+	'file'     => 'rha2.php',
+	'special'  => 0,
+	'cat'      => 8,
+	'minpower' => 0,
+]);
+
+print checkres($res);
+
+// ====================
+update_step();
+
+print "<br>Moving the 'Mario Movie' scheme...";
+$res = $sql->query("UPDATE schemes SET cat = 1 WHERE file = 'mariomovie.php'");
 
 print checkres($res);
 

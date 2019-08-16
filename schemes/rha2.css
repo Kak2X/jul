@@ -1,0 +1,80 @@
+body {
+	font-family: 	"Verdana", sans-serif;
+	font-size: 		10px;
+	color:			#e0e0ff;
+	margin: 		5px 5px 5px 5px;
+	padding: 		5px 5px 5px 5px;
+	background: 	#000020 url("rha2/bg.png");
+}
+
+a 			{color: #ffb050}
+a:visited	{color: #dd9050}
+a:active 	{color: #ffe090}
+a:hover		{color: #ffe090}
+
+.table {
+	/*padding: 		0px;*/
+	border:			1px solid #5050a0;
+	background:		#000000;
+	border-spacing:	0px;
+}
+
+.tdbg1, .tdbg2, .tdbgc, .tdbgh {
+	color:				#c0c0ee;
+	/* vertical-align: 	middle; */
+	font-size:			11px;
+	/*padding: 			2px 3px 2px 3px;*/
+	border-top:			1px solid #181848;
+	border-left:		1px solid #181848;
+	border-right:		1px solid #303090;
+	border-bottom:		1px solid #303090;
+}
+
+.tdbg1 {
+	background:			#101030 url("rha2/tdbg1.png");
+}
+.tdbg2, .attachment-box, .attachment-box-addnew  {
+	background:			#101030 url("rha2/tdbg2.png");
+}
+
+.tdbgh, .tdbgc {
+	/*padding: 			1px 3px 1px 3px;*/
+	font-weight:		bold;
+}
+.tdbgh {
+	/* more accurate to RHA2... but looks off. so, it's commented out */
+	/* text-align: 		left; */
+	background:			#4040b0 url("rha2/tdbgh.png");
+	/* special uppercase effect */
+	font-variant:		small-caps;
+	font-size:			12px;
+}
+.tdbgc {
+	background:			#202050 url("rha2/tdbgc.png");
+}
+
+input, textarea, select, button, .button {
+	font-size:			12px;
+	color:				#e0e0ff;
+	background-color:	#000000;
+	border:				1px solid #303090;
+	margin:				0px 0px 0px 0px;
+}
+
+select {
+	font-size:			11px !important;
+}
+
+.attachment-box, .attachment-box-addnew {
+	border: 			1px solid #303090;
+}
+
+.attachment-box:hover, .attachment-box-addnew:hover {
+	background:			#202050 url("rha2/tdbg1.png");
+}
+	
+hr {
+	border:				0px;
+	border-top:			1px solid #3030a0;
+	margin:				3px 3px 3px 3px;
+}

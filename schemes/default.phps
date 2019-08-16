@@ -65,7 +65,7 @@
 */
 
 	# 'Powered by' image, if one is provided
-//	$poweredby      = '<img src="images/poweredby.gif">';
+//	$poweredbypic   = '<img src="images/poweredby.gif">';
 
 	# Number graphics (leave these alone unless you know what you're doing)
 /*
@@ -93,7 +93,7 @@
 		input, textarea, select	{border: 1px solid #008;}
 		";
 		
-	# Sample CSS which styles custom form inputs. Only when $formcss is set to 1.
+	# Sample CSS which styles custom form inputs. Only makes sense when $formcss is set to 0.
 	/*
 	$css_extra		.= "
 	textarea, input, select, button, .button {

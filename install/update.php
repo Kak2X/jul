@@ -30,7 +30,7 @@ $sql = new mysql;
 $sql->connect($sqlhost, $sqluser, $sqlpass, $dbname) or
 	die("Couldn't connect to the MySQL server.<hr/>". $sql->error);
 
-$banned = $sql->fetchq("SELECT ip, reason FROM ipbans WHERE INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1 AND (i.expire = 0 OR i.expire > ".ctime().")");
+$banned = $sql->fetchq("SELECT ip, reason FROM ipbans WHERE INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1 AND (expire = 0 OR expire > ".ctime().")");
 if ($banned)
 	die("You are IP banned.<br><br>Reason: {$banned['reason']}");
 

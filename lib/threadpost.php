@@ -95,7 +95,7 @@
 				$post['edited'] .= ")";
 			} else {
 				// Display revision info if one is selected
-				if ($_GET['rev'] && $_GET['pin'] == $post['id']) {
+				if (__($_GET['rev']) && $_GET['pin'] == $post['id']) {
 					$post['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
 					$sel = $_GET['rev'];
 				} else { // Select max revision if none is specified

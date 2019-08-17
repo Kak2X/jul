@@ -59,6 +59,10 @@
 		// Attachments
 		'attach_key' => NULL,
 		//'attach_sel' => $attachsel,
+		
+		// Override this option to avoid always printing out the current user
+		// (which is not valid when viewing the page as a guest)
+		'editedby' => $loguser['id'] ? $loguser : $user, 
 	);
 	
 	

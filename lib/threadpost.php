@@ -307,7 +307,8 @@
 				$ppost['attach'] = array_merge($real, $temp);
 			}
 			// Edit marker
-			$ppost['edited']	= getuserlink($loguser);
+			$editedby           = isset($data['editedby']) ? $data['editedby'] : $loguser;
+			$ppost['edited']	= getuserlink($editedby);
 			$ppost['editdate'] 	= $currenttime;
 		} else if ($flags == PREVIEW_PROFILE) {
 			$data['ip'] = $user['lastip'];

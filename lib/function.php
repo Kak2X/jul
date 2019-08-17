@@ -249,11 +249,6 @@
 	
 	register_shutdown_function('error_printer', false, ($loguser['powerlevel'] == 4), $GLOBALS['errors']);
 	
-	// Support for stupid shit
-	if (file_exists("lib/hacks.php")) {
-		require "lib/hacks.php";
-	}
-	
 	$banned    = (int) ($loguser['powerlevel'] <  0);
 	$issuper   = (int) ($loguser['powerlevel'] >= 1);
 	$ismod     = (int) ($loguser['powerlevel'] >= 2);
@@ -268,6 +263,11 @@
 	// more >_>
 	if ($loguser['uploads_locked']) {
 		$config['allow-attachments'] = false;
+	}
+	
+	// Support for stupid shit
+	if (file_exists("lib/hacks.php")) {
+		require "lib/hacks.php";
 	}
 	
 	// Doom timer setup

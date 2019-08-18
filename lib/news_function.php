@@ -147,7 +147,7 @@
 				</td>
 			</tr>
 			
-			<tr><td class='tdbg2' style='padding-bottom: 12px'>".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."</td></tr>
+			<tr><td class='tdbg2' style='padding-bottom: 12px' colspan='2'>".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."</td></tr>
 			$viewfull
 			".($hideondel ? "" : "
 			<tr class='tdbg1 fonts'>

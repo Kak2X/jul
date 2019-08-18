@@ -623,7 +623,9 @@ function readpostread($userid) {
 }
 
 function replace_tags($msg, $tags) {
-	$msg	= strtr($msg, $tags);
+	if ($tags) {
+		$msg	= strtr($msg, $tags);
+	}
 	return $msg;
 }
 
@@ -637,7 +639,6 @@ function get_tags($data, $repl = null) {
 		$tags = json_decode($data, true);
 	} else if (!empty($data)) {
 		// when passed an array of the base data to generate tags
-		
 		$tagdata['posts']       = isset($repl['posts']) ? $repl['posts'] : $data['posts'];
 		$tagdata['days']        = (ctime() - $data['regdate']) / 86400;
 		$tagdata['exp']         = calcexp($tagdata['posts'], $tagdata['days']);
@@ -650,6 +651,7 @@ function get_tags($data, $repl = null) {
 			'/me '          => "*<b>". $data['name'] ."</b> ",
 			'&date&'        => date($loguser['dateformat'], ctime() + $loguser['tzoff']),
 			'&numdays&'     => floor($tagdata['days']),
+			'&mood&'        => filter_int($repl['mood']),
 
 			'&numposts&'    => $tagdata['posts'],
 			'&rank&'        => getrank($data['useranks'], '', $tagdata['posts'], 0),

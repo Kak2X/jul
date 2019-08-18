@@ -30,6 +30,7 @@
 		// Force extended layout by default
 		$loguser['layout'] = 6;
 	}
+	$_POST['moodid'] = filter_int($_POST['moodid']);
 	
 	// So that the layout shows up
 	$loguser['viewsig'] = 1;
@@ -53,7 +54,7 @@
 		'nosmilies' => 0,
 		'nohtml'    => 0,
 		'nolayout'  => 0,
-		'moodid'    => 0,
+		'moodid'    => $_POST['moodid'],
 		'noob'      => 0,
 		'revision'  => 0,
 		// Attachments
@@ -101,22 +102,27 @@
 <?= preview_post($user, $data, PREVIEW_EDITED, getuserlink($user)."'s post layout") ?>
 </div>
 <table class="table">
-	<tr><td class="tdbgh center b" colspan=2>CSS</td></tr>
+	<colgroup>
+		<col style="width: 50%">
+		<col style="width: 25%">
+		<col style="width: 25%">
+	</colgroup>
+	<tr><td class="tdbgh center b" colspan=3>CSS</td></tr>
 	<tr>
-		<td class="tdbg1 vatop" colspan=2>
-			<textarea id="css" name="css" rows=10 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['css']) ?></textarea>
+		<td class="tdbg1 vatop" colspan="3">
+			<textarea id="css" name="css" rows="10" style="resize:vertical; width: 100%"><?= htmlspecialchars($user['css']) ?></textarea>
 		</td>
 	</tr>
 	
 	<tr>
-		<td class="tdbgh center b" style="width: 50%">Header</td>
-		<td class="tdbgh center b" style="width: 50%">Signature</td>
+		<td class="tdbgh center b">Header</td>
+		<td class="tdbgh center b" colspan="2">Signature</td>
 	</tr>
 	<tr>
 		<td class="tdbg1 vatop">
 			<textarea id="postheader" name="postheader" rows=4 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['postheader']) ?></textarea>
 		</td>
-		<td class="tdbg1 vatop">
+		<td class="tdbg1 vatop" colspan="2">
 			<textarea id="signature" name="signature" rows=4 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['signature']) ?></textarea>
 		</td>
 	</tr>
@@ -124,6 +130,7 @@
 	<tr>
 		<td class="tdbgh center b">Sidebar code (regular/extended only)</td>
 		<td class="tdbgh center b">Sidebar options (regular/extended only)</td>
+		<td class="tdbgh center b">Avatar preview</td>
 	</tr>
 	<tr>
 		<td class="tdbg1 vatop">
@@ -136,10 +143,13 @@
 		<td class="tdbg1 vatop">
 			<?= $sidebartype ?>
 		</td>
+		<td class="tdbg1 vatop">
+			<center><?=mood_layout(0, $user['id'], $_POST['moodid'])?></center>
+		</td>		
 	</tr>
 	
 	<tr>
-		<td class="tdbg1" colspan=2>
+		<td class="tdbg1" colspan="3">
 			<span id="jsbtn">
 				<label><input type="checkbox" id="autoupdate" value="1"<?= $_COOKIE['plp_aupd'] ? " checked" : ""?>> Auto update CSS</label> | 
 				<input type="button" onclick="quickpreview(true)" value="Preview CSS"> 
@@ -147,7 +157,8 @@
 			<input type="submit" name="submit" value="Preview All"> | 
 			Thread layout: <select name="tlayout">
 				<?= $tlayouts ?>
-			</select>
+			</select> | 
+			<?=mood_layout(1, $user['id'], $_POST['moodid'])?>
 		</td>
 	</tr>
 </table>

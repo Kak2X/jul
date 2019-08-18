@@ -53,7 +53,10 @@
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
 				
-				$message 	= replace_tags($message, get_tags($loguser));
+				$gtopt = array(
+					'mood' => $moodid,
+				);
+				$message 	= replace_tags($message, get_tags($loguser, $gtopt));
 				$edited 	= getuserlink($loguser);
 				
 

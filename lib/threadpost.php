@@ -173,8 +173,12 @@
 			}
 		}
 		
-		// process tags
-		$tags = get_tags($post['tagval']);
+		// process tags 
+		
+		$gtopt = array(
+			'mood' => $post['moodid'],
+		);
+		$tags = get_tags($post['tagval'], $gtopt);
 		$post['headtext'] = replace_tags($post['headtext'],$tags);
 		$post['signtext'] = replace_tags($post['signtext'],$tags);
 		$post['csstext']  = replace_tags($post['csstext'], $tags);
@@ -238,14 +242,12 @@
 		
 		$currenttime    = ctime();
 		$numdays		= ($currenttime - $user['regdate']) / 86400;
-		$tagrepl        = null;
 		
 		if ($flags == PREVIEW_EDITED) {
 			$posts     = $user['posts'];
 		} else {
 			if ($flags == PREVIEW_NEW) {
 				$posts    = $user['posts'] + 1;
-				$tagrepl['posts'] = $posts;
 			} else {
 				$posts	  = $user['posts'];
 			}
@@ -267,7 +269,11 @@
 		$ppost['moodid'] = $data['moodid'];
 		$ppost['noob']   = filter_int($data['noob']);
 		
-		$tags = get_tags($user, $tagrepl);
+		$gtopt = array(
+			'posts' => $posts,
+			'mood'  => $data['moodid'],
+		);
+		$tags = get_tags($user, $gtopt);
 		$ppost['text']   = replace_tags($data['message'], $tags);
 		$ppost['tagval'] = json_encode($tags);
 

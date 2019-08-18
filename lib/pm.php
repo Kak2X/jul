@@ -380,7 +380,10 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 		if (!$user) return 0;
 	}
 	
-	$tags             = get_tags($user);
+	$gtopt = array(
+		'mood' => $moodid,
+	);
+	$tags             = get_tags($user, $gtopt);
 	$message          = replace_tags($message, $tags);
 	$tagval           = json_encode($tags);
 	$currenttime      = ctime();

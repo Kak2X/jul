@@ -431,8 +431,12 @@
 			if (!$user) return 0;
 		}
 		
-		$numposts       = $user['posts'] + 1;	
-		$tags           = get_tags($user, ['posts' => $numposts]);
+		$numposts       = $user['posts'] + 1;
+		$gtopt = array(
+			'mood'     => $moodid,
+			'numposts' => $numposts,
+		);
+		$tags           = get_tags($user, $gtopt);
 		$message        = replace_tags($message, $tags);
 		$tagval         = json_encode($tags);
 		

@@ -144,15 +144,14 @@
 	function setlayout($post) {
 		global $sql,$loguser,$postl,$blockedlayouts;
 		
-		
-		if ($loguser['viewsig']!=1) { // Autoupdate
-			$post['headid']=$post['signid']=$post['cssid']=0;
+		if ($loguser['viewsig'] != 1) { // Autoupdate or disabled
+			$post['headid']   = $post['signid']   = $post['cssid']    = 0; 		// disable post layout assignment
 		}
 
 		$post['blockedlayout'] = isset($blockedlayouts[$post['uid']]);
 		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout']) { // Disabled
-			$post['headtext']=$post['signtext']=$post['csstext']='';
-			$post['headid']=$post['signid']=$post['cssid']=0;
+			$post['headtext'] = $post['signtext'] = $post['csstext'] = '';
+			$post['headid']   = $post['signid']   = $post['cssid']   = 0;
 			return $post;
 		}
 
@@ -173,16 +172,12 @@
 				$post['csstext']=$postl[$cssid];
 			}
 		}
-
-		$post['headtext'] = settags($post['headtext'],filter_string($post['tagval']));
-		$post['signtext'] = settags($post['signtext'],filter_string($post['tagval']));
-		$post['csstext']  = settags($post['csstext'], filter_string($post['tagval']));
-
-		if ($loguser['viewsig'] == 2) { // Autoupdate
-			$post['headtext'] = doreplace($post['headtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
-			$post['signtext'] = doreplace($post['signtext'],$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
-			$post['csstext']  = doreplace($post['csstext'] ,$post['num'],($post['date']-$post['regdate'])/86400,$post['uid']);
-		}
+		
+		// process tags
+		$tags = get_tags($post['tagval']);
+		$post['headtext'] = replace_tags($post['headtext'],$tags);
+		$post['signtext'] = replace_tags($post['signtext'],$tags);
+		$post['csstext']  = replace_tags($post['csstext'], $tags);
 		
 		$post['headtext'] = "<span id='body{$post['id']}'>".doreplace2($post['headtext']);
 		$post['signtext'] = doreplace2($post['signtext'])."</span>";
@@ -237,28 +232,28 @@
 			if ($user == $loguser['id']) {
 				$user = $loguser;
 			} else {
-				$user = $sql->fetchq("SELECT * FROM users WHERE id = {$user}");
+				$user = load_user($user, true);
 			}
 		}
-		//$data           = array_merge($user, $data);
+		
 		$currenttime    = ctime();
 		$numdays		= ($currenttime - $user['regdate']) / 86400;
+		$tagrepl        = null;
 		
 		if ($flags == PREVIEW_EDITED) {
 			$posts     = $user['posts'];
-			$tags      = NULL;
 		} else {
-			if ($flags == PREVIEW_PROFILE) {
-				$posts	  = $user['posts'];
-			} else {
+			if ($flags == PREVIEW_NEW) {
 				$posts    = $user['posts'] + 1;
+				$tagrepl['posts'] = $posts;
+			} else {
+				$posts	  = $user['posts'];
 			}
 			$data['date'] = $currenttime;
 			$data['num']  = $posts;
 			$data['head'] = $user['postheader'];
 			$data['sign'] = $user['signature'];
 			$data['css']  = $user['css'];
-			$tags         = array();
 		}
 		
 		loadtlayout();
@@ -271,17 +266,20 @@
 		$ppost['date']   = $data['date'];
 		$ppost['moodid'] = $data['moodid'];
 		$ppost['noob']   = filter_int($data['noob']);
-		$ppost['text']   = doreplace($data['message'],$posts,$numdays,$user['id'],$tags);
-		$ppost['tagval'] = $tagval = json_encode($tags);
+		
+		$tags = get_tags($user, $tagrepl);
+		$ppost['text']   = replace_tags($data['message'], $tags);
+		$ppost['tagval'] = json_encode($tags);
 
+		// tags for the post layout handled separately
 		if ($data['nolayout']) {
 			$ppost['headtext'] = "";
 			$ppost['signtext'] = "";
 			$ppost['csstext']  = "";
 		} else {
-			$ppost['headtext'] = doreplace($data['head'],$posts,$numdays,$user['id']);	
-			$ppost['signtext'] = doreplace($data['sign'],$posts,$numdays,$user['id']);
-			$ppost['csstext']  = doreplace($data['css'],$posts,$numdays,$user['id']);
+			$ppost['headtext'] = $data['head'];	
+			$ppost['signtext'] = $data['sign'];
+			$ppost['csstext']  = $data['css'];
 		}
 
 		$ppost['deleted']       = 0;

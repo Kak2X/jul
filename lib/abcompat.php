@@ -75,4 +75,27 @@
 	function loaduser($id,$type=1){	return load_user($id); }
 	function printtimedif($x=0) { pagefooter(); }
 	function makeheader() { return ""; }
+	
+	function doreplace($msg, $posts, $days, $userid, &$tags = null) {
+		if (empty($tags)) {
+			$tags = get_tags(load_user($userid, true), ['posts' => $posts]);
+		}
+		return replace_tags($msg, $tags);
+	}
+	
+	function settags($text, $tags) { return replace_tags($text, get_tags($tags)); }
+	function dotags($msg, $tagdata, &$tags = array()) {
+		global $sql, $loguser;
+		
+		// does this come directly from the 'tagval' field (settags)?
+		if (is_string($tags)) $tags = get_tags($tags);
+		
+		// settags sent us here and we have nothing to go off of.
+		// Shrug our shoulders, and move on.
+		if (empty($tags) && empty($tagdata)) return $msg;
+
+		if (empty($tags)) $tags = get_tags($tagdata);
+		
+		return replace_tags($msg, $tags);
+	}
 	pageheader();

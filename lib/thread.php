@@ -431,11 +431,10 @@
 			if (!$user) return 0;
 		}
 		
-		$numposts 		= $user['posts'] + 1;
-		$numdays 		= (ctime() - $user['regdate']) / 86400;
-		$tags			= array();
-		$message 		= doreplace($message, $numposts, $numdays, $user['id'], $tags);
-		$tagval			= json_encode($tags);
+		$numposts       = $user['posts'] + 1;	
+		$tags           = get_tags($user, ['posts' => $numposts]);
+		$message        = replace_tags($message, $tags);
+		$tagval         = json_encode($tags);
 		
 		if ($nolayout) {
 			$headid = 0;

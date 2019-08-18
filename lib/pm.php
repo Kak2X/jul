@@ -380,9 +380,8 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 		if (!$user) return 0;
 	}
 	
-	$numdays          = (ctime() - $user['regdate']) / 86400;
-	$tags             = array();
-	$message          = doreplace($message, $user['posts'], $numdays, $user['id'], $tags);
+	$tags             = get_tags($user);
+	$message          = replace_tags($message, $tags);
 	$tagval           = json_encode($tags);
 	$currenttime      = ctime();
 	

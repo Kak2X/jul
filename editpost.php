@@ -87,10 +87,7 @@
 				
 				check_token($_POST['auth']);
 				
-				$numposts 	= $loguser['posts'];
-				$numdays 	= (ctime() - $loguser['regdate']) / 86400;
-				$message 	= doreplace($message, $numposts, $numdays, $loguser['id']);
-
+				$message 	= replace_tags($message, get_tags($loguser));
 				$edited 	= getuserlink($loguser);
 				
 				/*

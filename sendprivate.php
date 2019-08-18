@@ -97,7 +97,6 @@ if ($_GET['id']) {
 		
 	$smilies = readsmilies();
 	pageheader("Conversation: ".htmlspecialchars($thread['title'])." -- New Reply");
-	$barlinks .= " - <a href='showprivate.php?id={$_GET['id']}'>".htmlspecialchars($thread['title'])."</a>";
 	
 	/*
 		Previous posts in the conversation
@@ -143,7 +142,7 @@ if ($_GET['id']) {
 			'attach_key' => $attach_key,
 			#'attach_sel' => "",
 		);
-		print preview_post($loguser, $data);
+		print preview_post($loguser, $data, PREVIEW_PM);
 	} else {
 		$_POST['close'] = $thread['closed'];
 	}

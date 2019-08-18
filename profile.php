@@ -220,7 +220,7 @@
 			'Real name' => htmlspecialchars($user['realname']),
 			'Location'  => str_ireplace("&lt;br&gt;", "<br>", htmlspecialchars($user['location'])),
 			'Birthday'  => "{$birthday} {$age}",
-			'User bio'  => dofilters(doreplace2(doreplace($user['bio'], $user['posts'], $numdays, $_GET['id']))),
+			'User bio'  => dofilters(doreplace2(replace_tags($user['bio'], get_tags($user)))),
 		],
 	];
 	

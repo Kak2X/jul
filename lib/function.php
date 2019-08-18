@@ -622,84 +622,69 @@ function readpostread($userid) {
 	return $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = $userid");
 }
 
-function dotags($msg, $user, &$tags = array()) {
-	global $sql, $loguser;
-	if (is_string($tags)) {
-		$tags	= json_decode($tags, true);
-	}
-
-	if (empty($tags) && empty($user)) {
-		// settags sent us here and we have nothing to go off of.
-		// Shrug our shoulders, and move on.
-		return $msg;
-	}
-
-	if (empty($tags)) {
-		$tags	= array(
-			'/me '			=> "*<b>". $user['username'] ."</b> ",
-			'&date&'		=> date($loguser['dateformat'], ctime() + $loguser['tzoff']),
-			'&numdays&'		=> floor($user['days']),
-
-			'&numposts&'	=> $user['posts'],
-			'&rank&'		=> getrank($user['useranks'], '', $user['posts'], 0),
-			'&postrank&'	=> $sql->resultq("SELECT count(*) FROM `users` WHERE posts > {$user['posts']}", 0, 0, mysql::FETCH_ALL) + 1,
-			'&5000&'		=>  5000 - $user['posts'],
-			'&10000&'		=> 10000 - $user['posts'],
-			'&20000&'		=> 20000 - $user['posts'],
-			'&30000&'		=> 30000 - $user['posts'],
-
-			'&exp&'			=> $user['exp'],
-			'&expgain&'		=> calcexpgainpost($user['posts'], $user['days']),
-			'&expgaintime&'	=> calcexpgaintime($user['posts'], $user['days']),
-
-			'&expdone&'		=> $user['expdone'],
-			'&expdone1k&'	=> floor($user['expdone'] /  1000),
-			'&expdone10k&'	=> floor($user['expdone'] / 10000),
-
-			'&expnext&'		=> $user['expnext'],
-			'&expnext1k&'	=> floor($user['expnext'] /  1000),
-			'&expnext10k&'	=> floor($user['expnext'] / 10000),
-
-			'&exppct&'		=> sprintf('%01.1f', ($user['lvllen'] ? (1 - $user['expnext'] / $user['lvllen']) : 0) * 100),
-			'&exppct2&'		=> sprintf('%01.1f', ($user['lvllen'] ? (    $user['expnext'] / $user['lvllen']) : 0) * 100),
-
-			'&level&'		=> $user['level'],
-			'&lvlexp&'		=> calclvlexp($user['level'] + 1),
-			'&lvllen&'		=> $user['lvllen'],
-		);
-	}
-
+function replace_tags($msg, $tags) {
 	$msg	= strtr($msg, $tags);
 	return $msg;
 }
 
+// to get the tag array out of something
+function get_tags($data, $repl = null) {
+	global $sql, $loguser;
+	
+	if (is_string($data)) {
+		// this is if we're given directly the 'tagval' field, which already contains everything we need.
+		// though it must be first converted to an array.
+		$tags = json_decode($data, true);
+	} else if (!empty($data)) {
+		// when passed an array of the base data to generate tags
+		
+		$tagdata['posts']       = isset($repl['posts']) ? $repl['posts'] : $data['posts'];
+		$tagdata['days']        = (ctime() - $data['regdate']) / 86400;
+		$tagdata['exp']         = calcexp($tagdata['posts'], $tagdata['days']);
+		$tagdata['level']       = calclvl($tagdata['exp']);
+		$tagdata['expdone']     = $tagdata['exp'] - calclvlexp($tagdata['level']);
+		$tagdata['expnext']     = calcexpleft($tagdata['exp']);
+		$tagdata['lvllen']      = totallvlexp($tagdata['level']);
+		
+		$tags = array(
+			'/me '          => "*<b>". $data['name'] ."</b> ",
+			'&date&'        => date($loguser['dateformat'], ctime() + $loguser['tzoff']),
+			'&numdays&'     => floor($tagdata['days']),
 
-function doreplace($msg, $posts, $days, $userid, &$tags = null) {
-	global $tagval, $sql;
+			'&numposts&'    => $tagdata['posts'],
+			'&rank&'        => getrank($data['useranks'], '', $tagdata['posts'], 0),
+			'&postrank&'    => $sql->resultq("SELECT COUNT(*) FROM `users` WHERE posts > {$tagdata['posts']}", 0, 0, mysql::FETCH_ALL) + 1,
+			'&5000&'        =>  5000 - $tagdata['posts'],
+			'&10000&'       => 10000 - $tagdata['posts'],
+			'&20000&'       => 20000 - $tagdata['posts'],
+			'&30000&'       => 30000 - $tagdata['posts'],
 
-	$user	= $sql->fetchq("SELECT name, useranks FROM `users` WHERE `id` = $userid", PDO::FETCH_ASSOC, mysql::USE_CACHE);
+			'&exp&'         => $tagdata['exp'],
+			'&expgain&'     => calcexpgainpost($tagdata['posts'], $tagdata['days']),
+			'&expgaintime&' => calcexpgaintime($tagdata['posts'], $tagdata['days']),
 
-	$userdata		= array(
-		'id'		=> $userid,
-		'username'	=> $user['name'],
-		'posts'		=> $posts,
-		'days'		=> $days,
-		'useranks'	=> $user['useranks'],
-		'exp'		=> calcexp($posts,$days)
-	);
+			'&expdone&'     => $tagdata['expdone'],
+			'&expdone1k&'   => floor($tagdata['expdone'] /  1000),
+			'&expdone10k&'  => floor($tagdata['expdone'] / 10000),
 
-	$userdata['level']		= calclvl($userdata['exp']);
-	$userdata['expdone']	= $userdata['exp'] - calclvlexp($userdata['level']);
-	$userdata['expnext']	= calcexpleft($userdata['exp']);
-	$userdata['lvllen']		= totallvlexp($userdata['level']);
+			'&expnext&'     => $tagdata['expnext'],
+			'&expnext1k&'   => floor($tagdata['expnext'] /  1000),
+			'&expnext10k&'  => floor($tagdata['expnext'] / 10000),
 
+			'&exppct&'      => sprintf('%01.1f', ($tagdata['lvllen'] ? (1 - $tagdata['expnext'] / $tagdata['lvllen']) : 0) * 100),
+			'&exppct2&'     => sprintf('%01.1f', ($tagdata['lvllen'] ? (    $tagdata['expnext'] / $tagdata['lvllen']) : 0) * 100),
 
-	if (!$tags) {
-		$tags	= array();
+			'&level&'       => $tagdata['level'],
+			'&lvlexp&'      => calclvlexp($tagdata['level'] + 1),
+			'&lvllen&'      => $tagdata['lvllen'],
+		);
+	} else {
+		// we were sent here and we have nothing to go off of.
+		// shrug our shoulders, and move on.
+		$tags = array();
 	}
-	$msg	= dotags($msg, $userdata, $tags);
-
-	return $msg;
+	
+	return $tags;
 }
 
 function escape_codeblock($text) {
@@ -786,18 +771,6 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 	if (!$nosbr) sbr(0,$msg);
 
 	return $msg;
-}
-
-
-function settags($text, $tags) {
-
-	if (!$tags) {
-		return $text;
-	} else {
-		$text	= dotags($text, array(), $tags);
-	}
-
-	return $text;
 }
 
 /*

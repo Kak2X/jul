@@ -53,8 +53,7 @@
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
 				
-				$numdays 	= (ctime() - $loguser['regdate']) / 86400;
-				$message 	= doreplace($message,$loguser['posts'],$numdays,$loguser['id']);
+				$message 	= replace_tags($message, get_tags($loguser));
 				$edited 	= getuserlink($loguser);
 				
 

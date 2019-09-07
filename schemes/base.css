@@ -9,8 +9,8 @@ body,.table,.font,.fonth,div.lastpost:first-line{
 /* Limit the max page width so the page won't stretch too much */
 body {
 	max-width: 1440px;
-	margin-left: auto;
-	margin-right: auto;
+	margin: auto;
+	padding: 8px;
 }
 
 /* Make images upscale crispy */

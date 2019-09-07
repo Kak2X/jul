@@ -5,9 +5,7 @@ body{
 	color:			#ddd;
 }
 .container{
-	padding: 		4px;
-	border-spacing: 0px;
-	border: 		0px;
+	width: 			auto;
 	min-width: 		700px;
 	max-width: 		1000px;
 	height: 		100%;

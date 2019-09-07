@@ -283,13 +283,13 @@ function load_pm_thread($id) {
 function valid_pm_acl($userlist, $allow_self = false, &$error) {
 	global $config, $loguser;
 	// Increase the limit to account ourselves
-	$limit = $allow_self ? $config['pmthread-dest-limit'] + 1 : $config['pmthread-dest-limit'];
+	$limit = ($allow_self && $config['pmthread-dest-limit'] > 0) ? $config['pmthread-dest-limit'] + 1 : $config['pmthread-dest-limit'];
 	
 	$destcount = count($userlist);
 	if (!$destcount) {
 		$error = "You haven't entered an existing username to send this conversation to.";
 		return false;
-	} else if ($destcount > $config['pmthread-dest-limit']) {
+	} else if ($config['pmthread-dest-limit'] && $destcount > $config['pmthread-dest-limit']) {
 		$error = "You have entered too many usernames.";
 		return false;
 	}

@@ -244,7 +244,6 @@ else {
 		$_POST['users']     = filter_string($_POST['users']);
 	}
 	$userlist  = array_filter(explode(';', $_POST['users']), 'trim');
-	$destcount = count($userlist);
 	
 	$_POST['moodid']        = filter_int($_POST['moodid']);
 	$_POST['nosmilies']     = filter_int($_POST['nosmilies']);
@@ -263,10 +262,6 @@ else {
 			$error = "You haven't entered a message.";
 		} else if (!$_POST['subject']) {
 			$error = "You haven't entered a subject.";
-		} else if (!$destcount) {
-			$error = "You haven't entered an existing username to send this conversation to.";
-		} else if ($destcount > $config['pmthread-dest-limit']) {
-			$error = "You have entered too many usernames.";
 		} else if ($loguser['lastpmtime'] > (ctime()-30)) {
 			$error	= "You are trying to post too rapidly.";
 		} else if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
@@ -416,7 +411,7 @@ else {
 			<td class='tdbg1 center b'>Other partecipants:</td>
 			<td class='tdbg2' colspan=2>
 				<input type='text' name=users SIZE=60 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['users'])?>">
-				<span class='fonts'>Max <?= $config['pmthread-dest-limit'] ?> users allowed. Multiple users separated with a semicolon.</span>
+				<span class='fonts'><?= ($config['pmthread-dest-limit'] > 0 ? "Max {$config['pmthread-dest-limit']} users allowed. " : "") ?>Multiple users separated with a semicolon.</span>
 			</td>
 		</tr>
 		

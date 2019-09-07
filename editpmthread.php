@@ -145,13 +145,6 @@
 		return header("Location: showprivate.php?id={$_GET['id']}");
 	}
 	else {	
-		// We are increasing the limit since admins can edit the ACL
-		// This is because the thread owner (which usually is $loguser['id'] if we're not admins) is normally omitted from the list
-		// If we're admins (which can peek on otherwise restricted threads) this can be no longer true, so admins get the full list without omissions.
-		if ($isadmin) {
-			$config['pmthread-dest-limit']++;
-		}
-		
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
 			
@@ -242,7 +235,7 @@
 				<td class='tdbg1 center b'><?=$other_p?>artecipants:</td>
 				<td class='tdbg2' colspan=2>
 					<input type='text' name=users SIZE=60 MAXLENGTH=100 VALUE="<?=implode('; ', $accesslist)?>">
-					<span class='fonts'>Max <?= $config['pmthread-dest-limit'] ?> users allowed. Multiple users separated with a semicolon.</span>
+					<span class='fonts'><?= ($config['pmthread-dest-limit'] > 0 ? "Max ".($config['pmthread-dest-limit'] + (int)$isadmin)." users allowed. " : "") ?>Multiple users separated with a semicolon.</span>
 				</td>
 			</tr>
 			<tr>

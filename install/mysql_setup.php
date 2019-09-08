@@ -1,7 +1,6 @@
 <?php
 
-class mysql_plus extends mysql{
-	
+class mysql_setup extends mysql {
 	public $errors = 0;
 	public $q_errors = array();
 	
@@ -40,7 +39,7 @@ class mysql_plus extends mysql{
 	
 	public function selectdb($db){
 		try {
-			$res = $this->connection->query("USE {$db}"); // sigh 2
+			$res = $this->connection->query("USE `".str_replace('`', '``', $db)."`"); // sigh 2
 		}
 		catch (PDOException $x){
 			$this->error = $x->getMessage();
@@ -52,12 +51,10 @@ class mysql_plus extends mysql{
 	// Import the SQL file line by line
 	// If a line ends with ; process the buffer		
 	public function import($file){
-		//$errors = 0;
-		//$fail   = array();
-		
-		$h = fopen($file, 'r');
 		$b = "";
-		while(($l = fgets($h, 1024)) !== false){
+		$h = fopen($file, 'r');
+		
+		while(($l = fgets($h)) !== false){
 			$l	  = trim($l);
 			
 			$comment = substr($l, 0, 2);

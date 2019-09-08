@@ -1,0 +1,24 @@
+.c-error, .c-highlight, .c-success, .c-info { font-weight: bold }
+.c-error			{ color: #ff8080 }
+.c-highlight		{ color: #e0e080 }
+.c-info				{ color: #8080e0 }
+.c-success			{ color: #60ff60 }
+.table {
+	width: unset;
+}
+.main-window {
+	min-width: 600px;
+}
+.btn-area {
+	position: relative;
+	margin: auto;
+	width: 1px;
+	height: 30px;
+}
+.btn-area > button {
+	position: absolute;
+	margin: 5px 10px;
+}
+button[disabled] {
+	opacity: 0.3;
+}

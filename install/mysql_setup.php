@@ -4,16 +4,16 @@ class mysql_setup extends mysql {
 	public $errors = 0;
 	public $q_errors = array();
 	
-	public function connect($host, $user, $pass, $dummy = NULL, $dummy2 = NULL) {
+	public function connect($host, $user, $pass, $dbname = NULL, $dummy2 = NULL) {
 		global $config;
 			
 		$start = microtime(true);
 		
-		$dsn = "mysql:host=$host;charset=utf8mb4";
+		$dsn = "mysql:".($dbname !== null ? "dbname=$dbname;" : "")."host=$host;charset=utf8mb4";
 		$opt = array(
 			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
 			PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-			PDO::ATTR_EMULATE_PREPARES   => true, // sigh
+			PDO::ATTR_EMULATE_PREPARES   => $dbname === null, // sigh
 			PDO::ATTR_PERSISTENT         => false,
 		);
 		try {

@@ -30,8 +30,8 @@ switch ($_POST['step']) {
 				<br><label><input type='radio' name='setup_mode' value='1'".v($opt[1]).(INSTALLED && updates_available() ? "" : " readonly disabled")."> Perform upgrade</label>
 				<br><span class='fonts'>Updates the board configuration. Only available when new update scripts are found in the update folder.</span>
 				<br>
-				<br><label><input type='radio' name='setup_mode' value='2'".v($opt[2]).(INSTALLED ? "" : " readonly disabled")."> Change configuration</label>
-				<br><span class='fonts'>Only updates the configuration file. Available when the board is already installed.</span>ducks";
+				<br><label><input type='radio' name='setup_mode' value='2'".v($opt[2]).(INSTALLED && !updates_available() ? "" : " readonly disabled")."> Change configuration</label>
+				<br><span class='fonts'>Only updates the configuration file. Available when the board is already installed and updated.</span>ducks";
 		break;
 	default:
 		$modes = ["install", "update", "config"];

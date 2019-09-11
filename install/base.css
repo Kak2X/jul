@@ -9,6 +9,10 @@
 .main-window {
 	min-width: 600px;
 }
+.version-table ul {
+	margin: 0px;
+	padding-left: 15px;
+}
 .btn-area {
 	position: relative;
 	margin: auto;

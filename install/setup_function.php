@@ -54,6 +54,16 @@
 		return get_available_db_version() > get_current_db_version();
 	}
 	
+	// To view and reset the upgrade step
+	function update_step() {
+		global $_updstp;
+		print "<div class='center b'>[ Step ".(++$_updstp)." ]</div>";
+	}
+	function reset_update_step() {
+		global $_updstp;
+		$_updstp = 0;
+	}
+	
 	function add_scheme($theme) {
 		global $sql;
 		$used = $sql->resultq("SELECT COUNT(*) FROM `schemes` WHERE id = '{$theme['id']}'");

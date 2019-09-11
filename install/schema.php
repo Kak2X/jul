@@ -1,8 +1,16 @@
 <?php
 
-function get_input($varname, $key, $data) {
-	// get an input value for writing in config
-	$inpt = v($_POST['config'][$varname][$key]);
+function get_install_input($varname, $key, $data) {
+	$value = v($_POST['config'][$varname][$key]);
+	return _get_input($value, $varname, $key, $data, true);
+}
+
+function get_update_input($varname, $key, $data) {
+	$value = v($data['direct']) ? $GLOBALS[$key] : $GLOBALS[$varname][$key];
+	return _get_input($value, $varname, $key, $data);
+}
+
+function _get_input($inpt, $varname, $key, $data, $semicolon = false) {
 	switch ($data['type']) {
 		case 'string':
 			return "\"".str_replace("\"", "\\\"", $inpt)."\"";
@@ -12,7 +20,11 @@ function get_input($varname, $key, $data) {
 		case 'bool':
 			return $inpt ? "true" : "false";
 		case 'array':
-			return "array(\"".str_replace(";", "\",\"", str_replace("\"", "\\\"", $inpt))."\")";
+			$sntz = str_replace("\"", "\\\"", $inpt);
+			$ardata = $semicolon 
+				? str_replace(";", "\",\"", $sntz)
+				: implode("\",\"", $sntz);
+			return "array(\"{$ardata}\")";
 	}
 	die("Unrecognized type in schema: {$data['type']} (key: {$key})");
 }
@@ -156,7 +168,7 @@ function get_config_layout() {
 	return $out;
 }
 
-function generate_config() {
+function generate_config($mode = false) {
 	$out    = "";
 	$direct = "";
 	
@@ -170,10 +182,11 @@ function generate_config() {
 		foreach ($section as $cat_label => $fields) {
 			$out .= "//\r\n// {$cat_label}\r\n//\r\n";
 			foreach ($fields as $key => $data) {
+				$value = $mode ? get_update_input($var_name, $key, $data) : get_install_input($var_name, $key, $data);
 				if (v($data['direct'])) {
-					$direct .= "$".str_pad($key, 10)." = ".get_input($var_name, $key, $data)."; // {$data['desc']}\r\n";
+					$direct .= "$".str_pad($key, 10)." = {$value}; // {$data['desc']}\r\n";
 				} else {
-					$out .= "\t".str_pad("'{$key}'", 30)." => ".get_input($var_name, $key, $data).", // {$data['desc']}\r\n";
+					$out .= "\t".str_pad("'{$key}'", 30)." => {$value}, // {$data['desc']}\r\n";
 				}
 			}
 		}
@@ -192,5 +205,9 @@ function generate_config() {
 {$direct}
 
 {$out}
+
+	// Are we using SSL?
+	if (isset(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] != 'off')
+		\$config['board-url'] = str_replace(\"http://\", \"https://\", \$config['board-url']);
 ";
 }

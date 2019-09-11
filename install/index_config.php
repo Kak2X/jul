@@ -6,22 +6,20 @@ if (!INSTALLED) {
 	$output = "
 	<span class='c-error'>You can only perform this action if the board is already installed.</span>";
 	$error = true;
-	break;
-}
-if (updates_available()) {
+} else if (updates_available()) {
 	$windowtitle = "Updates are available.";
 	$output = "
 	<span class='c-error'>You can only perform this action if the board configuration is updated.</span>";
 	$error = true;
-	break;
 }
 
-require "install\schema.php";
-require "lib\defines.php";
-require "lib\config.php";
-require "lib\classes\mysql.php";
-
 if (!$error) {
+	
+	require "install\schema.php";
+	require "lib\defines.php";
+	require "lib\config.php";
+	require "lib\classes\mysql.php";
+
 	switch ($_POST['step']) {
 		case BASE_STEP + 0:
 			$windowtitle = "Board Configuration";

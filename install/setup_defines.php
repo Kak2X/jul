@@ -3,6 +3,15 @@
 	// file inclusion marker
 	const INSTALL_FILE = true;
 	
+	// lockout after first install
+	const INSTALL_LOCK = true;
+	
+	// enables logout / unban links
+	const SETUP_DEBUG = false;
+	
+	// requires a valid SQL connection to use the installer when the board is already installed.
+	const INSTALL_VALID_CONN = true;
+	
 	// path to the "db version" number, used by the upgrade tool
 	const DBVER_PATH = "lib/dbsver.dat";
 	

@@ -180,13 +180,16 @@ function generate_config($mode = false) {
 			$out .= "$".$var_name." = array(\r\n";
 		}
 		foreach ($section as $cat_label => $fields) {
-			$out .= "//\r\n// {$cat_label}\r\n//\r\n";
+			if (!$skip) {
+				$out .= "//\r\n// {$cat_label}\r\n//\r\n";
+			}
 			foreach ($fields as $key => $data) {
 				$value = $mode ? get_update_input($var_name, $key, $data) : get_install_input($var_name, $key, $data);
+				$comment = $data['desc'] ? "// {$data['desc']}" : "";
 				if (v($data['direct'])) {
-					$direct .= "$".str_pad($key, 10)." = {$value}; // {$data['desc']}\r\n";
+					$direct .= "$".str_pad($key, 10)." = {$value}; {$comment}\r\n";
 				} else {
-					$out .= "\t".str_pad("'{$key}'", 30)." => {$value}, // {$data['desc']}\r\n";
+					$out .= "\t".str_pad("'{$key}'", 30)." => {$value}, {$comment}\r\n";
 				}
 			}
 		}

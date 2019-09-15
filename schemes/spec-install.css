@@ -1,53 +1,42 @@
-body{
-	background: 	#333;
+body {
+	background: 	#111;
 	font-family:	"Courier New", Courier, monospace;
 	font-size:		13px;
 	color:			#ddd;
 }
-.container{
-	width: 			auto;
-	min-width: 		700px;
-	max-width: 		1000px;
-	height: 		100%;
-	text-align:		center;
-}
-.tdbgh{
-	text-align:		center;
-	background:		#222;
-}
-.table{
-	background:		#111;
-	vertical-align:	top;
-	font-family:	"Courier New", Courier, monospace;
-}
-.warn, .highlight, .ok { font-weight: bold }
-.warn		{ color: #ff8080 }
-.highlight	{ color: #e0e080 }
-.ok			{ color: #60ff60 }
 
-.tdbg1, .tdbg2{
-	background:		#333;
+.fonts { font-size: 11px !important; }
+a:link,a:visited,a:active,a:hover{
+	text-decoration:	underline;
+	color:				#80FF80;
+	font-weight: 		normal;
+}
+
+.table {
+	font-family:	"Courier New", Courier, monospace;
+	vertical-align:	top;
+	border-collapse: collapse;
+}
+.tdbg1, .tdbg2, .tdbgh, .tdbgc {
+	border: 1px solid #000;
 	border-spacing: 0px;
-	border: 		0px;
-	/*white-space: 	nowrap;*/
+}
+.tdbg1 {
+	background:		#333;
 }
 .tdbg2{
 	background:		#282828;
 }
 .tdbgc{
 	background:		#224;
-	border-spacing: 0px;
-	border: 		0px;
 	text-align:		center;
 	font-family:	"Courier New", Courier, monospace;
-	/*white-space: 	nowrap;*/
 }
-.fonts { font-size: 11px !important; }
-a:link,a:visited,a:active,a:hover{
-	text-decoration-color: #80FF80;
-	color:			#80FF80;
-	font-weight: 	normal;
+.tdbgh{
+	text-align:		center;
+	background:		#222;
 }
+
 textarea, input, select, button, .button {
 	border: 			1px solid #ffdd33;
 	background-color: 	#000000;
@@ -60,17 +49,4 @@ input[type=submit], input[type=button], button, .button {
 }
 .button {
 	color: #DDDDDD !important;
-}
-.sel {
-	text-align: 	left;
-	border-spacing: 0px;
-	border: 		0px;
-}
-
-/* special table used by the upgrader */
-.update-table  ul {
-	margin: 0;
-}
-.update-table  .tdbg1 , .update-table  .tdbg2 {
-	border-top: 1px solid #111;
 }

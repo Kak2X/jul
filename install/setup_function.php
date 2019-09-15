@@ -1,32 +1,4 @@
 <?php
-	chdir("..");
-	
-	require "install\setup_defines.php";
-	require "install\setup_layout.php";
-	
-	// Get the current step number
-	$step = filter_int($_POST['step']);
-	
-	// initialize button status
-	$btn = $step > 0 ? BTN_PREV | BTN_NEXT : BTN_NEXT;
-	
-	function filter_int(&$x) { return (int)$x; }
-	function v(&$x) { return $x; }
-	
-	function save_vars($arr, $nested = "") {
-		$out = "";
-		foreach ($arr as $key => $val) {
-			// Generate the associative key if needed (nests to config[something][dfgdsg]
-			$name = ($nested) ? "{$nested}[{$key}]" : $key;
-			if (is_array($val)) {
-				$out .= save_vars($val, $name);
-			} else {
-				$out .= "<input type='hidden' name='{$name}' value=\"".htmlspecialchars($val)."\">";
-			}
-		}
-		return $out;
-	}
-	
 
 	// Validation reporting (usually a query result is passed here)
 	function checkres($r) {

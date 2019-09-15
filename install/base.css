@@ -1,13 +1,14 @@
 .c-error, .c-highlight, .c-success, .c-info { font-weight: bold }
 .c-error			{ color: #ff8080 }
 .c-highlight		{ color: #e0e080 }
-.c-info				{ color: #8080e0 }
+.c-info				{ color: #b0e0ff }
 .c-success			{ color: #60ff60 }
 .table {
 	width: unset;
 }
 .main-window {
 	min-width: 600px;
+	margin: auto;
 }
 .version-table ul {
 	margin: 0px;

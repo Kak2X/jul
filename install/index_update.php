@@ -19,11 +19,6 @@ if (!$error) {
 	define('CURRENT_VERSION', get_current_db_version());
 	define('AVAILABLE_VERSION', get_available_db_version());
 
-	require "install\schema.php";
-	require "lib\defines.php";
-	require "lib\config.php";
-	require "lib\classes\mysql.php";
-
 	switch ($_POST['step']) {
 		case BASE_STEP + 0:
 			$windowtitle = "Board Configuration";

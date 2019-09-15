@@ -1,15 +1,6 @@
 <?php
 if (!defined('INSTALL_FILE')) die;
 
-require "install\schema.php";
-require "lib\defines.php";
-if (INSTALLED) {
-	require "lib\config.php";
-}
-require "lib\classes\mysql.php";
-require "install\mysql_setup.php";
-
-
 if ($_POST['step'] >= BASE_STEP + 1) {
 	$dbinfo = $_POST['config']['__sql'];
 	$sql = new mysql_setup();
@@ -33,8 +24,6 @@ if ($_POST['step'] >= BASE_STEP + 1) {
 	} else {
 		$db_exists = $sql->selectdb($dbinfo['dbname']);
 	}
-	
-
 }
 
 if (!$error) {
@@ -54,6 +43,7 @@ if (!$error) {
 			Please enter the SQL credentials.
 			<br>The installer will attempt to connect to the specified server on the next page.
 			<br>
+			<br>Warning: the data in the database you choose will be deleted.
 			<br>
 			".get_config_sql_layout();
 			break;

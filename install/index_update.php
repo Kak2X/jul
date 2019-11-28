@@ -19,7 +19,7 @@ if (!$error) {
 	define('CURRENT_VERSION', get_current_db_version());
 	define('AVAILABLE_VERSION', get_available_db_version());
 
-	switch ($_POST['step']) {
+	switch ($step) {
 		case BASE_STEP + 0:
 			$windowtitle = "Board Configuration";
 			$output = "

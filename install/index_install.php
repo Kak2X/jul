@@ -1,7 +1,7 @@
 <?php
 if (!defined('INSTALL_FILE')) die;
 
-if ($_POST['step'] >= BASE_STEP + 1) {
+if ($step >= BASE_STEP + 1) {
 	$dbinfo = $_POST['config']['__sql'];
 	$sql = new mysql_setup();
 	// Attempt connection to the SQL server
@@ -27,7 +27,7 @@ if ($_POST['step'] >= BASE_STEP + 1) {
 }
 
 if (!$error) {
-	switch ($_POST['step']) {
+	switch ($step) {
 		case BASE_STEP + 0:
 			$windowtitle = "Server Credentials";
 			$output = "";
@@ -44,6 +44,7 @@ if (!$error) {
 			<br>The installer will attempt to connect to the specified server on the next page.
 			<br>
 			<br>Warning: the data in the database you choose will be deleted.
+			<br>
 			<br>
 			".get_config_sql_layout();
 			break;

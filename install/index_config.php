@@ -14,7 +14,7 @@ if (!INSTALLED) {
 }
 
 if (!$error) {
-	switch ($_POST['step']) {
+	switch ($step) {
 		case BASE_STEP + 0:
 			$windowtitle = "Board Configuration";
 			$output = "

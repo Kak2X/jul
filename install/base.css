@@ -27,3 +27,16 @@
 button[disabled] {
 	opacity: 0.3;
 }
+.color-rot {
+	animation: rotate 10s linear 0s infinite;
+}
+@keyframes rotate {
+  0% {background: rgba(0,255,0,0.5); }
+  14% {background: rgba(0,255,255,0.5); }
+  28% {background: rgba(0,0,255,0.5); }
+  42% {background: rgba(255,0,255,0.5); }
+  56% {background: rgba(255,0,0,0.5); }
+  70% {background: rgba(255,128,0,0.5); }
+  84% {background: rgba(255,255,0,0.5); }
+  100% {background: rgba(0,255,0,0.5); }
+}

@@ -12,19 +12,19 @@ if (INSTALLED && INSTALL_LOCK && INSTALL_VALID_CONN && $sql === null) {
 }
 
 // Disable password prompt
-if (!INSTALLED && $_POST['step'] < 0) {
-	$_POST['step'] = 0;
+if (!INSTALLED && $step < 0) {
+	$step = 0;
 }
 // don't bother asking for a superadmin password if the SQL credentials are invalid or no superadmin account exists
-if (INSTALLED && INSTALL_LOCK && $sql != null && $_POST['step'] >= 0) {
+if (INSTALLED && INSTALL_LOCK && $sql != null && $step >= 0) {
 	$usercount = $sql->resultq("SELECT * FROM users WHERE powerlevel >= ".PWL_SYSADMIN."");
 	if ($usercount > 0) {
 		require "install/setup_password.php";
 	}
 }
 
-if (!$error && $_POST['step'] >= -1) {
-	switch ($_POST['step']) {
+if (!$error && $step >= -1) {
+	switch ($step) {
 		case -1:
 			$windowtitle = "Password required";
 			$output = "
@@ -34,8 +34,7 @@ if (!$error && $_POST['step'] >= -1) {
 				<br>
 				<table class='table' style='margin: auto'>
 					<!-- autocomplete prevention -->
-					<input style='display:none' type='text'     name='__f__usernm__'>
-					<input style='display:none' type='password' name='__f__passwd__'>
+					<input style='display:none' type='text'><input style='display:none' type='password'>
 					<tr><td class='tdbgh center b' colspan='2'>Credentials</td></tr>
 					<tr>
 						<td class='tdbg1 center b'>Username:</td>
@@ -95,7 +94,7 @@ if ($error) {
 
 
 if (isset($_GET['ajax'])) {
-	die(json_encode(['title' => $windowtitle, 'text' => $output, 'btn' => $btn, 'vars' => $_POST]));
+	die(json_encode(['title' => $windowtitle, 'text' => $output, 'btn' => $btn, 'step' => $step, 'vars' => $_POST]));
 }
 
 setupheader($windowtitle, $btn);

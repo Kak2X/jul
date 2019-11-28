@@ -1,14 +1,14 @@
 <?php
 	chdir("..");
 	
-	require "install\setup_function.php";
-	require "install\setup_tempfunc.php";
-	require "install\setup_defines.php";
-	require "install\setup_layout.php";
-	require "install\schema.php";
-	require "lib\defines.php";
-	require "lib\classes\mysql.php";
-	require "install\mysql_setup.php";
+	require "install/setup_function.php";
+	require "install/setup_tempfunc.php";
+	require "install/setup_defines.php";
+	require "install/setup_layout.php";
+	require "install/schema.php";
+	require "lib/defines.php";
+	require "lib/classes/mysql.php";
+	require "install/mysql_setup.php";
 	
 	if (INSTALLED) {
 		require "lib\config.php";
@@ -37,7 +37,8 @@
 	}	
 	
 	// Get the current step number
-	$_POST['step'] = filter_int($_POST['step']);
+	$step = filter_int($_POST['step']);
+	unset($_POST['step']);
 	
 	// initialize button status
-	$btn = $_POST['step'] > 0 ? BTN_PREV | BTN_NEXT : BTN_NEXT;
+	$btn = $step > 0 ? BTN_PREV | BTN_NEXT : BTN_NEXT;

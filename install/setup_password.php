@@ -5,14 +5,12 @@ if (!defined('INSTALL_FILE')) die;
 
 do {
 	if (SETUP_DEBUG && isset($_GET['logout'])) {
-		remove_board_cookie('setupid');
-		remove_board_cookie('setupverify');
 		die(header("Location: ?"));
 	}
 	
 	// Cookie verification
-	$loguserid = filter_int($_COOKIE['setupid']);
-	$logverify 	= v($_COOKIE['setupverify']);
+	$loguserid = filter_int($_POST['setupid']);
+	$logverify 	= v($_POST['setupverify']);
 
 	if ($loguserid && $logverify) {
 		$loguser    = $sql->fetchq("SELECT powerlevel, password FROM `users` WHERE `id` = $loguserid");
@@ -20,8 +18,7 @@ do {
 		$verifyhash = create_verification_hash($verifyid, $loguser['password']);
 		
 		if ($verifyhash !== $logverify) {
-			remove_board_cookie('setupid');
-			remove_board_cookie('setupverify');
+			unset($_POST['setupid'], $_POST['setupverify']);
 		} else {
 			break;
 		}
@@ -33,7 +30,7 @@ do {
 	// No password sent
 	if (!trim($_POST['user']) || !trim($_POST['pass'])) {
 		$btn = BTN_NEXT;
-		$_POST['step'] = -1;
+		$step = -1;
 		break;
 	} 
 	
@@ -70,17 +67,17 @@ do {
 	// Save to cookie (force /32 verification)
 	$verify = create_verification_hash(4, $user['password']);
 
-	set_board_cookie('setupid', $userid);
-	set_board_cookie('setupverify', $verify);
+	$_POST['setupid'] = $userid;
+	$_POST['setupverify'] = $verify;
+	
 	unset($_POST['user'], $_POST['pass']);
 	
 } while (false);
 
 function _no_login($btn_step = BTN_PREV) {
-	global $error, $btn;
-	$_POST['step'] = 0;
-	remove_board_cookie('setupid');
-	remove_board_cookie('setupverify');
+	global $error, $btn, $step;
+	$step = 0;
+	unset($_POST['setupid'], $_POST['setupverify']);
 	$error = true;
 	$btn = $btn_step;
 }

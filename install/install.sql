@@ -429,7 +429,7 @@ CREATE TABLE `delusers` (
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `extrafields` TEXT NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2438,7 +2438,7 @@ CREATE TABLE `users` (
   KEY `sex` (`sex`),
   KEY `ban_expire` (`ban_expire`),
   KEY `lastthread` (`lastthread`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

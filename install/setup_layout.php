@@ -1,8 +1,6 @@
 <?php
 
 function setupheader($title) {
-	
-	
 ?><!doctype html>
 <html>
 	<head>
@@ -48,7 +46,7 @@ function setupfooter($buttons = 0) {
 		</tr>
 		<tr>
 			<td class="tdbgh center b">
-				Acmlmboard Installer 2.0 (14-09-2019)
+				Acmlmboard Installer 2.0 (30-11-2019)
 			</td>
 		</tr>
 <?php if (SETUP_DEBUG) { ?>
@@ -60,7 +58,7 @@ function setupfooter($buttons = 0) {
 <?php } ?>
 	</table>
 	</form>
-	<script type="text/javascript" src="installer.js"></script> 
+<!--	<script type="text/javascript" src="installer.js"></script> -->
 	</body>
 </html>
 <?php

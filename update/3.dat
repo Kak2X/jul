@@ -4,4 +4,5 @@
 	<li>Add new scheme: ROM Hacking Archive 2</li>
 	<li>Place Mario Movie scheme in the correct category</li>
 	<li>Rename various schemes to use the proper name</li>
+	<li>Updating ROW_FORMAT to DYNAMIC in users table</li>	
 </ul>

@@ -1,6 +1,8 @@
 <?php
 if (!defined('INSTALL_FILE')) die;
 
+$_POST['noimport'] = filter_int($_POST['noimport']);
+
 if ($step >= BASE_STEP + 1) {
 	$dbinfo = $_POST['config']['__sql'];
 	$sql = new mysql_setup();
@@ -88,9 +90,19 @@ if (!$error) {
 			$output = "
 				The board will now be installed.
 				<br>
+				<br>You can go back to review the choices, or click <span class='c-info'>'Next'</span> to start the installation.
 				<br>
-				<br>You can go back to review the choices, or click <span class='highlight'>'Next'</span> to start the installation.
-				<br>As this process may take a while please be patient.";
+				<br>
+				<br><span class='c-error'>NOTE</span>
+				<br><span class='c-highlight'>It may be possible for the SQL queries in <span class='c-info'>install.sql</span> to take a long time.</span>
+				<br><span class='c-highlight'>If that happens, the browser may time out the connection automatically.</span>
+				<br>
+				<br>If the page stops loading (browser time out), you can try this option:
+				<br><label><input type='checkbox' name='noimport' value='1'".($_POST['noimport'] ? " checked" : "")."> Skip importing install.sql</label>
+				<br>
+				<br>If you choose to skip the phase, you will need to manually import the SQL file
+				<br>under a tool like PhpMyAdmin.				
+				";
 			break;
 		case BASE_STEP + 4:
 			$windowtitle = "Installing";
@@ -131,18 +143,18 @@ if (!$error) {
 				$output .= "</pre></span>";
 				break;
 			}
-			
-			$output .= "\nImporting SQL files...";
-			$sql->import("install/install.sql");
-			
-			$output .= checkres(!$sql->errors);
-			
-			if ($sql->errors) {
-				$output .= "\n".$sql->errors." queries have failed<!-- likely because whoever made install.sql fucked up -->.\nBroken queries:\n\n";
-				$output .= implode("\n", $sql->q_errors);
-				$output .= "\nIf you would like to retry, you can return to the previous page and try again.";
-				$output .= "</pre></span>";
-				break;
+			if (!$_POST['noimport']) {
+				$output .= "\nImporting SQL files...";
+				$sql->import("install/install.sql");
+				$output .= checkres(!$sql->errors);
+				
+				if ($sql->errors) {
+					$output .= "\n".$sql->errors." queries have failed<!-- likely because whoever made install.sql fucked up -->.\nBroken queries:\n\n";
+					$output .= implode("\n", $sql->q_errors);
+					$output .= "\nIf you would like to retry, you can return to the previous page and try again.";
+					$output .= "</pre></span>";
+					break;
+				}
 			}
 			
 			// Save the current db version as we're doing a clean install
@@ -157,7 +169,12 @@ if (!$error) {
 			$output .= checkres($res);
 			
 			$output .= "\nOperation completed successfully!\n";
-			$output .= "\nYou can now register <a href='../register.php'>here</a>.";
+			if (!$_POST['noimport']) {
+				$output .= "\nYou can now register <a href='../register.php'>here</a>.";
+			} else {
+				$output .= "\nHowever, the board isn't fully installed.";
+				$output .= "\nTo finish the installation, you need to manually import <span class='c-info'>install.sql</span>\nin a tool such as <span class='c-info'>PhpMyAdmin</span>.";
+			}
 			
 			$btn &= ~BTN_PREV;
 			$output .= "</pre></span>";

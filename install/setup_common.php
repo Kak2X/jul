@@ -11,7 +11,7 @@
 	require "install/mysql_setup.php";
 	
 	if (INSTALLED) {
-		require "lib\config.php";
+		require "lib/config.php";
 		$sql = new mysql;
 		if ($sql->connect($sqlhost, $sqluser, $sqlpass, $dbname)) {
 			if (SETUP_DEBUG && isset($_GET['unban'])) {

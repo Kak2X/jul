@@ -86,3 +86,12 @@ $sql->execute($ren, ['id' => 178, 'old' => "Yoshi", 'new' => "Yoshi's Island"]);
 $sql->execute($ren, ['id' => 175, 'old' => "Twilight", 'new' => "Twilight Princess"]);
 
 print checkres($res);
+// ====================
+update_step();
+
+print "<br>Updating ROW_FORMAT to DYNAMIC in users and delusers tables...";
+$res1 = $sql->query("ALTER TABLE users ROW_FORMAT=DYNAMIC");
+$res2 = $sql->query("ALTER TABLE delusers ROW_FORMAT=DYNAMIC");
+print checkres($res1 && $res2);
+
+

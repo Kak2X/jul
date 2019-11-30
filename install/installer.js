@@ -1,12 +1,13 @@
 document.getElementById("main-form").addEventListener("submit", function(e) {
 	var stepElem = document.activeElement;
+	var oldContent = ["","",""];
 	if (stepElem.getAttribute("name") == "step") {
 		var step = stepElem.value;
 		
 		var req = new XMLHttpRequest();
 		req.open("POST", "?ajax=1");
 		req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-		
+		req.timeout = 100000;
 		req.onload = function() {
 			var data = JSON.parse(req.response);
 			
@@ -22,12 +23,19 @@ document.getElementById("main-form").addEventListener("submit", function(e) {
 			document.getElementById("page-contents").innerHTML = saveVars(data.vars) + data.text;
 		};
 		req.onError = function() {
-			document.getElementById("page-contents").innerHTML = "An unknown error occurred. Try again.";
+			restoreContent(oldContent, "An unknown error occurred. Try again.");
 		}
-		
+		req.ontimeout = function (e) {		
+			restoreContent(oldContent, "The browser timed out during the request.\nIf the timeout happened during the actual installation process, it may be possible that the board is fully installed.");
+		};
 		var params = getFormInputs(step);
 		
 		// Loader setup
+		oldContent = [
+			document.getElementById("page-contents").innerHTML,
+			document.getElementById("button-area").innerHTML,
+			document.getElementById("page-title").innerHTML,
+		];
 		document.getElementById("page-contents").innerHTML = "<div class='center color-rot'><img src='nowloading.png' style='height: 32px'><br>This process may take a while to finish.</div>";
 		document.getElementById("button-area").style.display = "none";
 		
@@ -48,6 +56,14 @@ function setButtonStatus(step, btnMask) {
 		? "<button type='submit' name='step' value='"+(step - 1)+"' style='right: 0px'>Back</button>"
 		: "<button type='button' disabled style='right: 0px'>Back</button>");	
 	document.getElementById("button-area").innerHTML = btnArea;
+}
+
+function restoreContent(oldContent, message = "") {
+	alert(message);
+	document.getElementById("page-contents").innerHTML = oldContent[0];
+	document.getElementById("button-area").innerHTML = oldContent[1];
+	document.getElementById("page-title").innerHTML = oldContent[2];
+	document.getElementById("button-area").style.display = "block";
 }
 
 function getFormInputs(step) {

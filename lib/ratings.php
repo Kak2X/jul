@@ -206,18 +206,32 @@ function resync_post_ratings() {
 	$prefixes = array('','pm_');
 	$joinpfs  = array('posts','pm');
 	$sql->query("TRUNCATE ratings_cache");
+	
 	$users = $sql->getresults("SELECT id FROM users");
-	for ($i = 0; $i < 1; ++$i) {
+	for ($i = 0; $i < 2; ++$i) {
 		$resync = $sql->prepare("
 			INSERT INTO ratings_cache (user, mode, type, rating, total)
-			SELECT IF(a.user = ?,a.user,p.user) user, {$i}, IF(a.user = ?,0,1) `key`, a.rating, COUNT(*) total
-			FROM {$prefixes[$i]}posts p
-			INNER JOIN {$joinpfs[$i]}_ratings a ON p.id = a.post
-			WHERE p.user = ? OR a.user = ?
-			GROUP BY `key`, a.rating
-		"); //  --, SUM(r.points) points
+			SELECT x.user, x.mode, x.`key`, x.rating, COUNT(*) total 
+			FROM (
+				SELECT IF(r.user = ?,r.user,p.user) user, {$i} mode, IF(r.user = ?,0,1) `key`, r.rating
+				FROM {$prefixes[$i]}posts p
+				INNER JOIN {$joinpfs[$i]}_ratings r ON p.id = r.post
+				WHERE p.user = ? OR r.user = ?
+				"./* 
+				include the duplicate count in case of self-rated posts (r.user = p.user) 
+				the query above always considers them as "Given", so below we also add a copy as "Received"
+				
+				(though honestly, it could be considered to outright disable self-rating, even if it's an admin-only "feature")
+				*/"
+				UNION ALL
+				SELECT p.user, {$i} mode, 1 `key`, r.rating
+				FROM {$prefixes[$i]}posts p
+				INNER JOIN {$joinpfs[$i]}_ratings r ON p.id = r.post
+				WHERE p.user = ? AND p.user = r.user
+			) x
+			GROUP BY x.`key`, x.rating
+		");
 		foreach ($users as $user)
-			$sql->execute($resync, [$user, $user, $user, $user]);
+			$sql->execute($resync, [$user, $user, $user, $user, $user]);
 	}
 }
-//resync_post_ratings();

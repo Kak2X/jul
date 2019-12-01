@@ -88,13 +88,21 @@
 		}
 	}
 	
-	function load_thread($id, $check_forum = true, $ignore_errors = false) { // we boardc now
+	function load_thread($id, $postread = false, $check_forum = true, $ignore_errors = false) { // we boardc now
 		global $sql, $meta, $loguser, $ismod, $thread, $forum, $forum_error;
 		$error        = 0;
 		$forum_error = "";
 		
-		$thread = $sql->fetchq("SELECT * FROM threads WHERE id = $id");
-
+		// Optional thread read info
+		$trfield = $trjoin = "";
+		if ($postread && $loguser['id']) {
+			$trfield = ", r.read tread, r.time treadtime";
+			$trjoin = "LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}";
+		}
+		
+		$thread = $sql->fetchq("SELECT t.*{$trfield} FROM threads t {$trjoin} WHERE t.id = {$id}");
+		
+		
 		if (!$thread) {
 			$meta['noindex'] = true; // prevent search engines from indexing
 			if (!$ismod && !$ignore_errors) {

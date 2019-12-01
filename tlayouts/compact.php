@@ -24,7 +24,7 @@ function postcode($post,$set){
 				<span class='fonts'> Posts: {$postnum}</span>
 			</td>
 			<td class='tdbg{$set['bg']} vatop' style='width: 50%'>
-				<div class='fonts right'> Posted on {$set['date']}$threadlink</div>
+				<div class='fonts right'>{$set['new']} Posted on {$set['date']}$threadlink</div>
 				<div class='right'>{$controls['quote']}{$controls['edit']}</div>
 				<span style='float: right'>&nbsp;{$controls['ip']}</span>{$set['rating']}
 			</td>

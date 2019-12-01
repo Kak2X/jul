@@ -50,6 +50,7 @@
 		'ip'      => $_SERVER['REMOTE_ADDR'],
 	//	'num'     => 0,
 		'date'    => ctime(),
+		'new'     => true,
 		// (mod) Options
 		'nosmilies' => 0,
 		'nohtml'    => 0,

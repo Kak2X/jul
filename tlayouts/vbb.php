@@ -64,7 +64,7 @@ function postcode($post, $set){
 			</td>
 		</tr>
 		<tr>
-			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$postdate}</td>
+			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$set['new']}{$postdate}</td>
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
 				<table class='w fonts'><tr>
 					<td>[<a href='profile.php?id=$u'>Profile</a>] [<a href='sendprivate?userid=$u'>Send PM</a>]{$homepage} [<a href='thread.php?user=$u'>Search</a>]{$threadlink}</td>

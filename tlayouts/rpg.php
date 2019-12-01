@@ -75,7 +75,7 @@ return "
 		<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_2'>
 			<table class='w fonts' cellspacing=0 cellpadding=2>
 				<tr>
-					<td>Posted on {$postdate}{$threadlink}{$post['edited']}</td>
+					<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
 					<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
 				</tr>
 			</table>

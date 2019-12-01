@@ -59,7 +59,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg{$set['bg']} fonts w' colspan=2>
-				Posted on {$postdate}{$threadlink}{$post['edited']}
+				{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}
 			</td>
 		</tr>
 		{$optionrow}

@@ -271,7 +271,7 @@ function postcode($post,$set){
 						<table cellspacing=0 cellpadding=2 class='w fonts'>
 							<tr>
 								<td>
-									Posted on $postdate$threadlink{$post['edited']}
+									{$set['new']}Posted on $postdate$threadlink{$post['edited']}
 								</td>
 								<td class='nobr' style='width: 255px'>
 									{$controls['quote']}{$controls['edit']}{$controls['ip']}

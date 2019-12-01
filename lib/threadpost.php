@@ -2,7 +2,7 @@
 	
 	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0,$pthread = '', $multiforum = false) {
 		
-		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod;
+		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -114,6 +114,8 @@
 			$post['edited'] = "";
 		}
 		
+		$set['new'] = __($post['new']) ? "{$statusicons['new']} | " : "";
+			
 		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
 		
 		return dofilters(postcode($post,$set), $forum, $multiforum);
@@ -292,7 +294,7 @@
 		$ppost['revision']      = 0;
 		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
-		
+		$ppost['new']           = filter_bool($data['new']);
 		// Save ourselves a query if we're (somehow) not needing the picture link
 		if ($config['allow-avatar-storage']) {
 			$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$data['moodid']}");

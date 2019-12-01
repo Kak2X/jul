@@ -40,7 +40,7 @@ function postcode($post,$set) {
 				<br>
 				<b>{$set['userrank']}</b><br>
 				Posts: {$postnum}<br>
-				({$set['date']}){$threadlink}<br>
+				{$set['new']}({$set['date']}){$threadlink}<br>
 				{$post['edited']}
 				{$controls['ip']}<br>
 				{$controls['quote']}{$controls['edit']}<br>

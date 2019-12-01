@@ -57,7 +57,7 @@
 	$forum_error   = "";
 	$multiforum    = false;
 	if ($_GET['id']) {
-		load_thread($_GET['id']);
+		load_thread($_GET['id'], true);
 
 		$specialscheme = $forum['specialscheme'];
 		$specialtitle  = $forum['specialtitle'];
@@ -65,20 +65,8 @@
 		$tlinks = array();
 		
 		if ($loguser['id']) {
-			// Unread posts count
+			// Unread posts count (base value, for forum)
 			$readdate = (int) $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '{$forum['id']}'");
-			
-			if ($thread['lastpostdate'] > $readdate)
-				$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
-
-			$unreadcount = $sql->resultq("
-				SELECT COUNT(*) FROM `threads`
-				WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '{$loguser['id']}' AND `read` = '1')
-				AND `lastpostdate` > '{$readdate}' AND `forum` = '{$forum['id']}'
-			");
-			
-			if ($unreadcount == 0)
-				$sql->query("REPLACE INTO forumread VALUES ( {$loguser['id']}, {$forum['id']}, ".ctime().")");
 		
 			// Favorites
 			if ($sql->resultq("SELECT COUNT(*) FROM favorites WHERE user = {$loguser['id']} AND thread = {$_GET['id']}"))
@@ -128,6 +116,14 @@
 		errorpage("No thread specified.","index.php",'the index page');
 	}
 	
+	// Strip _GET variables that can set the page number
+	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
+	$query = preg_replace("'pid=(\d*)'si", "id={$_GET['id']}", $query);
+	$query = preg_replace("'&{2,}'si", "&", $query);
+	//if ($query && substr($query, -1) != "&")
+	//	$query	.= "&";
+
+	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
 	
 	pageheader($windowtitle, $specialscheme, $specialtitle);
 
@@ -220,20 +216,37 @@
 	if ($_GET['user']) $searchon = "p.user={$_GET['user']}";
 	else               $searchon = "p.thread={$_GET['id']}";
 	
+	// each posts can potentially come from a different forum
+	// we must get these from the query in "Show Posts" mode
+	$trfield = $trjoin = "";
+	if (!$_GET['id'] && $loguser['id']) {
+		$trfield = ", r.read tread, r.time treadtime, f.readdate freadtime";
+		$trjoin = "
+		LEFT JOIN threads     t ON p.thread = t.id
+		LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
+		LEFT JOIN forumread   f ON t.forum = f.forum AND f.user = {$loguser['id']}
+		";
+	}
+	
 	// heh
 	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
-				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
+				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}$trfield
 		FROM posts p
 		
 		LEFT JOIN users u ON p.user = u.id
+		$trjoin
 		{%AVJOIN%}
 		
 		WHERE {$searchon}
 		ORDER BY p.id
 		LIMIT $min,$ppp
 	"));
+	
+	if (!count($posts)) {
+		errorpage("There are no posts in this page. Please select a valid thread page:<br>$pagelinks");
+	}
 	
 	if ($_GET['pin'] && $_GET['rev']) {
 		$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
@@ -325,6 +338,15 @@
 				$post['rating'] = $ratings[$post['id']];
 			}
 		}
+		// Logged in users get the "new" indicator for individual posts
+		if ($loguser['id']) {
+			if ($_GET['id']) {
+				$threadread = $thread['treadtime'] ? $thread['treadtime'] : $readdate;
+			} else {
+				$threadread = $post['treadtime'] ? $post['treadtime'] : $post['freadtime'];
+			}
+			$post['new'] = $post['date'] > $threadread;
+		}
 
 		$pforum		= NULL;
 		$pthread	= NULL;
@@ -342,17 +364,31 @@
 		$postlist .= threadpost($post, $bg, MODE_POST, $forum['id'], $pthread, $multiforum);
 			
 	}
-
-	// Strip _GET variables that can set the page number
-	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
-	$query = preg_replace("'pid=(\d*)'si", "id={$_GET['id']}", $query);
-	$query = preg_replace("'&{2,}'si", "&", $query);
-	//if ($query && substr($query, -1) != "&")
-	//	$query	.= "&";
-
-	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
 	
-	//print $header.sizelimitjs()."
+	// Unread posts count
+	if ($_GET['id'] && $loguser['id']) {
+		
+		// don't mark thread read info when the last post isn't read
+		// nice shortcut as we don't have something like postsread, so we can't really track the read status for specific posts
+		// of course this won't work when viewing posts from newest to oldest
+		if ($post['new']) {
+			$targetdate = $post['date'] == $thread['lastpostdate'] ? ctime() : $post['date'];
+			
+			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '{$targetdate}', `read` = '1'");
+			
+			// When all threads without specific threadsread info have a lower last post date than the forumread date,
+			// the forumread date can be updated
+			$unreadcount = $sql->resultq("
+				SELECT COUNT(*) FROM `threads`
+				WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '{$loguser['id']}' AND `read` = '1')
+				AND `lastpostdate` > '{$readdate}' AND `forum` = '{$forum['id']}'
+			");
+		
+			if ($unreadcount == 0) {
+				$sql->query("REPLACE INTO forumread VALUES ( {$loguser['id']}, {$forum['id']}, {$targetdate})");
+			}
+		}
+	}
 	
 	print "
 		{$barlinks}

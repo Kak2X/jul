@@ -32,7 +32,7 @@
 			errorpage("You need to be logged in to edit your favorites!", "forum.php?id={$t['forum']}", 'return to the forum');
 		}
 		$_GET['thread'] = filter_int($_GET['thread']);		
-		$res = load_thread($_GET['thread'], true, true);
+		$res = load_thread($_GET['thread'], false, true, true);
 		
 		if ($_GET['fav']) {
 			$returl = "forum.php?fav=1";

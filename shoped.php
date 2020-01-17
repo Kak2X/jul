@@ -145,7 +145,7 @@
 		}
 
 		foreach ($stats as $n => $stat) {
-			if (!isset($newitem) && $item['stype']{$n} == "m") {
+			if (!isset($newitem) && $item['stype'][$n] == "m") {
 				$optionbox		= "<select name=\"m$stat\"><option value=\"m\" selected>x</option><option value=\"a\">+/-</option></select>";
 				$val			= number_format($item[$stat] / 100, 2);
 			} else {

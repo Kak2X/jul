@@ -860,7 +860,6 @@ function doforumlist($id, $name = '', $shownone = ''){
 	return $forumlinks;
 }
 
-// Note: -1 becomes NULL
 const SL_SHOWSPECIAL = 0b1;
 const SL_SHOWNONE    = 0b10;
 const SL_SHOWUSAGE   = 0b100;
@@ -899,7 +898,6 @@ function doschemelist($sel = 0, $name = 'scheme', $flags = 0){
 		]);
 	}
 	
-	if ($sel === NULL) $sel = '-1';
 	$scheme[$sel] = "selected";
 	
 	$input 	  = "";
@@ -919,8 +917,10 @@ function doschemelist($sel = 0, $name = 'scheme', $flags = 0){
 			.($x['special'] ? "*" : "")."{$x['name']}".($flags & SL_SHOWUSAGE ? " ({$x['used']})" : "")
 			."</option>";
 	}
-	return "<select name='$name'>".($flags & SL_SHOWNONE ? "<option value='-1' ".filter_string($scheme['-1']).">None</option>" : "")."$input</optgroup></select>";
+	return "<select name='$name'>".($flags & SL_SHOWNONE ? "<option value='' ".filter_string($scheme[null]).">None</option>" : "")."$input</optgroup></select>";
 }
+// logic for "parsing" the option from the above function when the "none" option is allowed
+function get_scheme_opt(&$var) { return $var === "" ? null : (int)$var; }
 
 // When it comes to this kind of code being repeated across files...
 function dothreadiconlist($iconid = NULL, $customicon = '') {
@@ -2607,7 +2607,7 @@ function deletefolder($directory) {
 		rmdir($directory);
 	}
 }
-
+// TODO: is < and > really necessary for attributes?. ' and " could be enough...
 function escape_attribute($attr) {
 	return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
 }

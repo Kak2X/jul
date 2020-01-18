@@ -23,10 +23,6 @@
 		// Token check
 		check_token($_POST['auth']);
 		
-		// (NULL -> do nothing ; 0 -> force theme 0)
-		$scheme = filter_int($_POST['scheme']);
-		if ($scheme == '-1') $scheme = NULL;
-		
 		if (filter_bool($_POST['maxusersreset'])) {
 			$maxusers 		= 0;
 			$maxusersdate 	= 0;
@@ -52,7 +48,7 @@
 			'donations' 		=> filter_float($_POST['donations']),
 			'ads' 				=> filter_float($_POST['ads']),
 			'valkyrie' 			=> filter_float($_POST['valkyrie']),
-			'scheme' 			=> $scheme,
+			'scheme' 			=> get_scheme_opt($_POST['scheme']),
 			'defaultscheme' 	=> filter_int($_POST['defaultscheme']),
 			'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 			'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),

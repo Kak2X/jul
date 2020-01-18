@@ -17,14 +17,6 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	#if (!$isadmin) 
 	#	die("You aren't an admin!");
 	check_token($_POST['auth']);
-
-	//$hidden = (($_POST['hidden']) ? 1 : 0);
-	
-	
-	if (isset($_POST['specialscheme']) && $_POST['specialscheme'] == -1)
-		$_POST['specialscheme'] = NULL;
-	else
-		$_POST['specialscheme'] = filter_int($_POST['specialscheme']);
 	
 	$values = array(
 		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
@@ -36,7 +28,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'numthreads' 		=> filter_int($_POST['numthreads']),
 		'numposts' 			=> filter_int($_POST['numposts']),
 		'forder' 			=> filter_int($_POST['forder']), 
-		'specialscheme' 	=> $_POST['specialscheme'],
+		'specialscheme' 	=> get_scheme_opt($_POST['specialscheme']),
 		'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
 		'hidden' 			=> filter_int($_POST['hideforum']),
 		'pollstyle' 		=> filter_int($_POST['pollstyle']),

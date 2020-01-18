@@ -32,6 +32,10 @@
 			if (!$valid) 
 				errorpage("Invalid post ID specified.");
 			
+			$user = filter_int($_POST['user']);
+			if (!valid_user($user))
+				errorpage("You didn't select an user.");
+			
 			// Upload / reupload
 			$file = filter_array($_FILES['upload']);
 			if (upload_error($file, true))
@@ -51,7 +55,6 @@
 				
 				// Go through normal post procedure.
 				$key   = "aac{$loguser['id']}";
-				$user  = filter_int($_POST['user']);
 				$post  = $_POST['assign'];
 				$flags = ($pm ? ATTACH_PM : 0);
 				
@@ -64,7 +67,7 @@
 					'filename' => filter_string($_POST['filename']),
 					'post'     => $post,
 					'pm'       => $pm,
-					'user'     => filter_int($_POST['user']),
+					'user'     => $user,
 				);
 			} else {
 				if ($file) {
@@ -87,7 +90,7 @@
 					'views'    => filter_int($_POST['views']),
 					'size'     => filter_int($_POST['size']),
 					'is_image' => filter_int($_POST['is_image']),
-					'user'     => filter_int($_POST['user']),
+					'user'     => $user,
 				);
 			}
 			
@@ -217,6 +220,7 @@
 		$_POST['filename'] = filter_string($_POST['filename']);
 		$_POST['mime']     = filter_string($_POST['mime']);
 		$_POST['thumb']    = filter_int($_POST['thumb']);
+		$_POST['user']     = filter_int($_POST['user']);
 		
 		$ppp = 50;
 		$min = $_POST['page'] * $ppp;
@@ -239,6 +243,10 @@
 		switch ($_POST['thumb']) {
 			case 1: $where[] = "a.is_image != 0"; break;
 			case 2: $where[] = "a.is_image = 0"; break;
+		}
+		if ($_POST['user']) {
+			$where[] = "a.user = ?";
+			$values[] = $_POST['user'];
 		}
 		
 		if ($where)
@@ -283,6 +291,7 @@
 				<td class='tdbg{$cell} center'><a href='download.php?id={$x['id']}{$typelink}' target='_blank'>".htmlspecialchars($x['filename'])."</a></td>
 				<td class='tdbg{$cell} center'>{$x['mime']}</td>
 				<td class='tdbg{$cell} center'>".sizeunits($x['size'])."</td>
+				<td class='tdbg{$cell} center'>".getuserlink($x, $x['uid'])."</td>
 				<td class='tdbg{$cell} center'>{$x['views']}</td>
 				<td class='tdbg{$cell} center'>".($x['is_image'] ? "Yes" : "No")."</td>
 				<td class='tdbg{$cell} center'>{$type}</td>
@@ -312,6 +321,12 @@
 				</td>
 			</tr>
 			<tr>
+				<td class="tdbg1 center b">Uploaded by:</td>
+				<td class="tdbg2">
+					<?= user_select('user', $_POST['user'], null, "*** Any user ***") ?>
+				</td>
+			</tr>
+			<tr>
 				<td class="tdbg1 center b">MIME type:</td>
 				<td class="tdbg2"><?= mime_select('mime', $_POST['mime']) ?></td>
 			</tr>
@@ -335,7 +350,6 @@
 			</tr>
 		</table>
 		</form>
-		<br>
 		<table class="table">
 			<tr><td class='tdbgc center'><a href='?action=edit&id=-1'>&lt; Upload a new attachment &gt;</a></td></tr>
 		</table>
@@ -347,6 +361,7 @@
 				<td class='tdbgh center'>Filename</td>
 				<td class='tdbgh center'>MIME type</td>
 				<td class='tdbgh center'>Size</td>
+				<td class='tdbgh center'>Uploaded by</td>
 				<td class='tdbgh center'>Downloads</td>
 				<td class='tdbgh center'>Thumbnail</td>
 				<td class='tdbgh center'>Type</td>

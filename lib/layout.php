@@ -115,6 +115,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		if($issuper) {
 			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
 		}
+		if ($isadmin)
+			$headlinks .= '<a href="register.php" style="font-style:italic;">Register</a> - ';
+			
 		
 		// Now with logout workaround when JS is disabled
 		$logout = '

@@ -1,6 +1,6 @@
 <?php
-	const POST_LIMIT    = 5000;
-	const PROJECT_LIMIT = true;
+	const _POST_LIMIT    = 5000;
+	const _PROJECT_LIMIT = true;
 	
 	require 'lib/function.php';
 	
@@ -13,7 +13,7 @@
 		errorpage("The specified user doesn't exist.");
 	}
 	
-	$windowtitle = "Profile for {$user['name']}";
+	$windowtitle = "Profile for ".htmlspecialchars($user['name']);
 
 //	if ($_GET['id'] == 1 && !$x_hacks['host']) {
 //		pageheader();
@@ -53,13 +53,13 @@
 	//// Projected date
 	$projtext   = "";
 	if ($user['posts']) {
-		$topposts = POST_LIMIT * (PROJECT_LIMIT ? 1 : ceil($user['posts'] / POST_LIMIT));
+		$topposts = _POST_LIMIT * (_PROJECT_LIMIT ? 1 : ceil($user['posts'] / _POST_LIMIT));
 		// regtime * remaining posts / posts
 		$projdate = ctime() + (ctime() - $user['regdate']) * ($topposts - $user['posts']) / ($user['posts']);
 		if (
 			$projdate > ctime() && 
 			$projdate < 2000000000 && 
-			(!PROJECT_LIMIT || $user['posts'] < POST_LIMIT)
+			(!_PROJECT_LIMIT || $user['posts'] < _POST_LIMIT)
 		) {
 			$projtext = " -- Projected date for {$topposts} posts: ".printdate($projdate);
 		}
@@ -142,7 +142,8 @@
 	// Last activity (IP info)
 	$lastip = "";
 	if ($isadmin && $user['lastip']) {
-		$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$user['lastip']}' style='font-style:italic;'>{$user['lastip']}</a>";
+		$lastip = htmlspecialchars($user['lastip']);
+		$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$lastip}' style='font-style:italic;'>{$lastip}</a>";
 	}
 
 	// Email address
@@ -213,7 +214,7 @@
 		'User settings' => [
 			'Timezone offset' => "{$tzoffset} hours from the server, {$tzoffrel} hours from you (current time: {$tzdate})",
 			'Items per page'  => "{$user['threadsperpage']} threads, {$user['postsperpage']} posts",
-			'Color scheme'    => $sql->resultq("SELECT name FROM schemes WHERE id = {$user['scheme']}"),
+			'Color scheme'    => htmlspecialchars($sql->resultq("SELECT name FROM schemes WHERE id = {$user['scheme']}")),
 		],
 		
 		'Personal information' => [
@@ -242,8 +243,8 @@
 	foreach ($shops as $shopid => $shopname) {
 		$shoplist .= "
 			<tr>
-				<td class='tdbg1 fonts center'>{$shopname}</td>
-				<td class='tdbg2 fonts center' style='width: 100%'>".filter_string($equip[$shopid]['name'])."&nbsp;</td>
+				<td class='tdbg1 fonts center'>".htmlspecialchars($shopname)."</td>
+				<td class='tdbg2 fonts center' style='width: 100%'>".htmlspecialchars(filter_string($equip[$shopid]['name']))."&nbsp;</td>
 			</tr>
 		";
 	}
@@ -270,7 +271,7 @@
 			<tr>
 				<td class='tdbg1 fonts center'>".rating_image($data)."</td>
 				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata[1][$id]), $data['points'])."</td>
-				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata[0][$id]),  $data['points'])."</td>
+				<td class='tdbg2 fonts center'>".rating_colors(filter_int($ratedata[0][$id]), $data['points'])."</td>
 			</tr>
 			";
 		}
@@ -392,7 +393,7 @@
 				<td class='tdbg{$cell} center' style='width: 1px'>{$newmark}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 60px'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 150px'>".printdate($x['date'])."</td>
-				<td class='tdbg{$cell}'>".getuserlink($x).": ".htmlspecialchars($x['text'])."</td>
+				<td class='tdbg{$cell}'>".getuserlink($x).": ".dofilters(doreplace2($x['text']))."</td>
 			</tr>";
 	}
 	
@@ -421,15 +422,15 @@
 <table cellpadding=0 cellspacing=0 border=0>
 	<tr>
 		<td width=100% valign=top>
-		<?= profile_table($profile, 'General information') ?>
+		<?= _profile_table($profile, 'General information') ?>
 		<br>
-		<?= profile_table($profile, 'Contact information') ?>
+		<?= _profile_table($profile, 'Contact information') ?>
 		<br>
-		<?= profile_table($profile, 'User settings') ?>
+		<?= _profile_table($profile, 'User settings') ?>
 		<br>
-		<?= profile_table($profile, 'Personal information') ?>	
+		<?= _profile_table($profile, 'Personal information') ?>	
 		<br>
-		<?= isset($profile['Extra']) ? profile_table($profile, 'Extra') : "" ?>	
+		<?= isset($profile['Extra']) ? _profile_table($profile, 'Extra') : "" ?>	
 	</td>
 	<td>&nbsp;&nbsp;&nbsp;</td>
 	<td valign=top>
@@ -458,16 +459,16 @@
 <br>
 <table class='table'>
 	<tr><td class='tdbgh fonts center'>Options</td></tr>
-	<?= profile_controls($options, 0) ?>
-	<?= profile_controls($options, 1) ?>
-	<?= profile_controls($options, 2) ?>
+	<?= _profile_controls($options, 0) ?>
+	<?= _profile_controls($options, 1) ?>
+	<?= _profile_controls($options, 2) ?>
 </table>
 <?php
 
 	pagefooter();
   
   
-function profile_table($arr, $head) {
+function _profile_table($arr, $head) {
 	$out = "";
 	foreach ($arr[$head] as $field => $val) {
 		if ($val !== NULL) {
@@ -481,7 +482,7 @@ function profile_table($arr, $head) {
 	</table>";
 }
 
-function profile_controls($arr, $key, $colspan=1) {
+function _profile_controls($arr, $key, $colspan=1) {
 	if (!isset($arr[$key])) { // Restricted set
 		return "";
 	}

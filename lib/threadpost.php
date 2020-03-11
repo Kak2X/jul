@@ -85,7 +85,7 @@
 
 		// Thread marker for posts by thread / favourites view
 		if ($pthread) { 
-			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>{$pthread['title']}</a>";
+			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>".htmlspecialchars($pthread['title'])."</a>";
 		}
 
 		// Edit date and revision selector
@@ -330,7 +330,8 @@
 		$controls = array();
 		$controls['ip'] = $controls['quote'] = $controls['edit'] = "";
 		if ($isadmin) {
-			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$data['ip']}'>{$data['ip']}</a>";
+			$ip = htmlspecialchars($data['ip']);
+			$controls['ip'] = " | IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
 		}
 		
 	// TODO: The hardcoded MODE_POST may need to be replaced if extra modes are added
@@ -388,7 +389,7 @@ function thread_history($thread, $num, $pm = false) {
 			if ($num-- > 0){
 				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
 				$userlink = getuserlink($post);
-				$message  = $post['deleted'] ? '(Post deleted)' : doreplace2(dofilters($post['text'], $thread['forum']), $post['options']);
+				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(doreplace2($post['text'], $post['options']), $thread['forum']);
 				$postlist .=
 					"<tr>
 						<td class='tdbg$bg' valign=top>
@@ -488,7 +489,7 @@ function syndrome($num, $double=false, $bar=true) {
 				</nobr>";
 		}
 		$syn = "<br>
-		<span style='font-style: italic; color: {$syndromes[$i][1]}'>Affected by {$syndromes[$i][2]}</span>
+		<span style='font-style: italic; color: {$syndromes[$i][1]}'>Affected by ".htmlspecialchars($syndromes[$i][2])."</span>
 		$bar
 		<br>";
 	}

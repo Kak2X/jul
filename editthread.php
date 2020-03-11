@@ -85,7 +85,7 @@
 			}
 			$sql->commit();
 			$fname = $sql->resultq("SELECT title FROM forums WHERE id = {$thread['forum']}");			
-			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the thread.", "forum.php?id={$thread['forum']}", $fname);
 			
 		}
 		
@@ -122,7 +122,7 @@
 			$posticons 			= file('posticons.dat');
 				
 			if ($_POST['custposticon'])
-				$icon = xssfilters($_POST['custposticon']);
+				$icon = $_POST['custposticon'];
 			else if (isset($posticons[$_POST['iconid']]))
 				$icon = trim($posticons[$_POST['iconid']]);
 			else
@@ -151,8 +151,8 @@
 			$sql->beginTransaction();
 			
 			$data = [
-				'title'        => xssfilters($_POST['subject']),
-				'description'  => xssfilters(filter_string($_POST['description'])),
+				'title'        => $_POST['subject'],
+				'description'  => filter_string($_POST['description']),
 				'icon'         => $icon,
 				'closed'       => $_POST['closed'],
 				'sticky'       => $_POST['sticky'],
@@ -175,7 +175,7 @@
 			}
 			
 			$sql->commit();
-			errorpage("Thank you, {$loguser['name']}, for editing the thread.","thread.php?id={$_GET['id']}",'return to the thread');
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing the thread.","thread.php?id={$_GET['id']}",'return to the thread');
 		}
 		
 		$posticonlist = dothreadiconlist(NULL, $thread['icon']);

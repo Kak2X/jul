@@ -96,7 +96,7 @@
 		$badcode = false;
 		
 		if ($regmode == 3) {
-			$checkcode 	= filter_string($_POST['regcode'], true);
+			$checkcode 	= filter_string($_POST['regcode']);
 			$realcode 	= $sql->resultq("SELECT regcode FROM misc");
 			
 			if ($checkcode != $realcode) {
@@ -131,7 +131,7 @@
 		// Check for duplicate names
 		$users = $sql->query('SELECT name FROM users');
 		
-		$username  = substr(xssfilters(trim($name)),0,25);
+		$username  = substr(trim($name),0,25);
 		$username2 = str_replace(' ','',$username);
 		$username2 = preg_replace("'&nbsp;?'si",'',$username2);
 		//$username2 = stripslashes($username2);
@@ -240,7 +240,7 @@
 				}
 				
 				$sql->commit();
-				errorpage("Thank you, $username, for registering your account.", 'index.php', 'the board', 0);
+				errorpage("Thank you, ".htmlspecialchars($username).", for registering your account.", 'index.php', 'the board', 0);
 			}
 			
 		} else {

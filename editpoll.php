@@ -1,9 +1,10 @@
 <?php
+
+	const _NUKE_ON_CHANGE = true;
 	
 	require 'lib/function.php';
 	
 	$meta['noindex'] = true;
-	const NUKE_ON_CHANGE = true;
 	
 	$_GET['id'] 		= filter_int($_GET['id']);
 	load_thread($_GET['id']);
@@ -94,32 +95,32 @@
 				$sql->execute($insert,
 				[
 					'poll' 		=> $thread['poll'],
-					'choice' 	=> xssfilters($x['choice']),
-					'color' 	=> xssfilters($x['color']),
+					'choice' 	=> $x['choice'],
+					'color' 	=> $x['color'],
 				]);
 			} else { // Update an existing choice
-				if (NUKE_ON_CHANGE && $poll['choices'][$key]['choice'] != $x['choice']) {
+				if (_NUKE_ON_CHANGE && $poll['choices'][$key]['choice'] != $x['choice']) {
 					$sql->query("DELETE FROM pollvotes WHERE poll = {$thread['poll']} AND choice = {$key}");
 				}
 				$sql->execute($update,
 				[
 					'id' 		=> $key,
-					'choice' 	=> xssfilters($x['choice']),
-					'color' 	=> xssfilters($x['color']),
+					'choice' 	=> $x['choice'],
+					'color' 	=> $x['color'],
 				]);
 			}
 		}
 		
 		$sql->queryp("UPDATE poll SET question = :question, briefing = :briefing, doublevote = :doublevote, closed = :closed WHERE id = {$thread['poll']}",
 		[
-			'question' 		=> xssfilters($question),
-			'briefing' 		=> xssfilters($briefing),
+			'question' 		=> $question,
+			'briefing' 		=> $briefing,
 			'doublevote' 	=> $doublevote,
 			'closed' 		=> $closed,
 		]);
 			
 		$sql->commit();
-		errorpage("Thank you, {$loguser['name']}, for editing the poll.","thread.php?id={$_GET['id']}",'return to the poll');
+		errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing the poll.","thread.php?id={$_GET['id']}",'return to the poll');
 		
 	}
 	

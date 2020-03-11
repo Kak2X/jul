@@ -7,7 +7,7 @@
 	$_GET['page'] 	= filter_int($_GET['page']);
 	$_GET['ppp'] 	= filter_int($_GET['ppp']);
 	
-	const PBU_DEFAULT_PPP = 50;
+	const _PBU_DEFAULT_PPP = 50;
 	
 	
 	if (!$_GET['id']) {
@@ -37,7 +37,7 @@
 	}
 	
 	if (!$_GET['page']) $_GET['page'] = 0;
- 	if (!$_GET['ppp'])  $_GET['ppp'] = PBU_DEFAULT_PPP;
+ 	if (!$_GET['ppp'])  $_GET['ppp'] = _PBU_DEFAULT_PPP;
 	$min = $_GET['ppp'] * $_GET['page'];
 
 	$posts = $sql->query(
@@ -62,7 +62,7 @@
 	// Seek to page
 	//if (!@mysql_data_seek($posts, $min)) $_GET['page'] = 0;
 
-	$postperpage = ($_GET['ppp'] != PBU_DEFAULT_PPP) ? "&ppp={$_GET['ppp']}" : "";
+	$postperpage = ($_GET['ppp'] != _PBU_DEFAULT_PPP) ? "&ppp={$_GET['ppp']}" : "";
 	$forumlink   = $forumquery ? "&forum={$_GET['forum']}" : "";
 	$pagelinks = "<span class='fonts'>".pagelist("?id={$_GET['id']}{$postperpage}{$forumlink}", $posttotal, $_GET['ppp'], true)."</span>";
 	
@@ -100,7 +100,7 @@
 			<td class='tdbg1 fonts center'<?=$strike?>><?=$post['num']?></td>
 			<td class='tdbg1 fonts center'><?=printdate($post['date'])?></td>
 			<td class='tdbg1 fonts'<?=$strike?>>#<a href="thread.php?id=<?=$post['thread']?>"><?=$post['thread']?></a> - <?=$threadlink?>
-			<?=($isadmin ? "</td><td class='tdbg1 fonts center'>{$post['ip']}" : "")?>
+			<?=($isadmin ? "</td><td class='tdbg1 fonts center'>".htmlspecialchars($post['ip']) : "")?>
 		</tr>
 		<?php
 	 }

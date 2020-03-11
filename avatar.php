@@ -50,7 +50,7 @@ while ($u = $sql->fetch($users)) {
 	}
 	//if (!$config['allow-avatar-storage'] && strpos($u['moodurl'], '$') === FALSE)
 	//	$fails = " (improper URL)";
-	$options .= "\r\n  <option value='{$u['id']}'{$selected}>{$u['id']}: {$u['name']}</option>";
+	$options .= "\r\n  <option value='{$u['id']}'{$selected}>{$u['id']}: ".htmlspecialchars($u['name'])."</option>";
 }
 
 // The user was selected
@@ -71,11 +71,11 @@ if ($me && $moods) {
 			$_GET['start'] = 1;
 		}
 		
-		$moodurl  = htmlspecialchars($me['moodurl']);
+		$moodurl  = $me['moodurl']);
 		$startimg = str_replace('$', $_GET['start'], $moodurl);
 		print set_mood_url_js($moodurl);
 		
-		$header_text = $moodurl;
+		$header_text = htmlspecialchars($moodurl);
 		$avtype = ""; // use avatarpreview()
 	}
 	
@@ -97,10 +97,10 @@ if ($me && $moods) {
 		<span class='hideme'>
 			<input type='radio' name='moodid' value='{$num}' id='mood{$num}' tabindex='". (9000 + $num) ."' style='height: 12px' {$jsclick} {$selected}>
             <label for='mood{$num}' style='font-size: 12px'>
-				&nbsp;{$num}:&nbsp;{$x['title']}
+				&nbsp;{$num}:&nbsp;".htmlspecialchars($x['title'])."
 			</label>
 		</span>
-		<noscript>&nbsp;{$num}:&nbsp;<a href='?id={$_GET['id']}&start={$num}'>{$x['title']}</a></noscript><br>";
+		<noscript>&nbsp;{$num}:&nbsp;<a href='?id={$_GET['id']}&start={$num}'>".htmlspecialchars($x['title'])."</a></noscript><br>";
 	}
 	
 	// Alternative header text
@@ -110,7 +110,7 @@ if ($me && $moods) {
 	
 	$ret = "<tr>
 		<td class='tdbgh center' colspan=2>
-			{$me['name']}: <i>{$header_text}</i>
+			".htmlspecialchars($me['name']).": <i>{$header_text}</i>
 		</td>
 	</tr>
 	<tr style='height: 400px'>
@@ -119,7 +119,7 @@ if ($me && $moods) {
 			{$txt}
 		</td>
 		<td class='tdbg2 center' style='width: 400px'>
-			<img src=\"$startimg\" id=prev>
+			<img src=\"".escape_attribute($startimg)."\" id=prev>
 		</td>
 	</tr>";
 

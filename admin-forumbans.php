@@ -119,7 +119,7 @@ if (!$_GET['forum']) {
 		$addlink = $forumlist = "";
 	}
 	
-	pageheader("{$windowtitle} - {$forum['title']}");
+	pageheader("{$windowtitle} - ".htmlspecialchars($forum['title']));
 	print adminlinkbar().$forumlist;
 	
 	//--
@@ -187,7 +187,7 @@ if (!$_GET['forum']) {
 		<tr>
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
 			<td class='tdbg{$bg} center'>".getuserlink(get_userfields($x, 'u1'), $x['user'])."</td>
-			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
+			<td class='tdbg{$bg} center'>".($x['reason'] ? htmlspecialchars($x['reason']) : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(get_userfields($x, 'u2'), $x['banner']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
 			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>

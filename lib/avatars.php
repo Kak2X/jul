@@ -108,7 +108,7 @@ function get_avatars($user, $flags = 0) {
 
 function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}_{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
-function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"{$moodurl}\")</script>"; }
+function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"".escape_attribute($moodurl)."\")</script>"; }
 
 // 0 -> side
 // 1 -> inline

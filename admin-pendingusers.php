@@ -73,9 +73,9 @@ if (isset($_POST['act'])){
 			$txt .= "
 			<tr>
 				<td class='tdbg1 center'>{$u['id']}</td>
-				<td class='tdbg2 center'>{$u['name']}</td>
+				<td class='tdbg2 center'>".htmlspecialchars($u['name'])."</td>
 				<td class='tdbg2 center'>".printdate($u['date'])."</td>
-				<td class='tdbg1 center'>{$u['ip']}</td>
+				<td class='tdbg1 center'>".htmlspecialchars($u['ip'])."</td>
 				<td class='tdbg2 center'>
 					<form method='POST' action='?id={$u['id']}' style='display: inline'>
 						{$token}

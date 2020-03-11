@@ -46,9 +46,9 @@
 		if ($_GET['act'] == 'add' && !$favorited) {
 			check_thread_error($res);
 			$sql->query("INSERT INTO favorites (user, thread) VALUES ({$loguser['id']},{$_GET['thread']})");
-			$tx = "\"{$thread['title']}\" has been added to your favorites.";
+			$tx = "\"".htmlspecialchars($thread['title'])."\" has been added to your favorites.";
 		} else if ($_GET['act'] == 'rem' && $favorited) {
-			$threadtitle = ($res == THREAD_OK) ? "\"{$thread['title']}\"" : "The restricted thread";
+			$threadtitle = ($res == THREAD_OK) ? "\"".htmlspecialchars($thread['title'])."\"" : "The restricted thread";
 			$sql->query("DELETE FROM favorites WHERE user = {$loguser['id']} AND thread = {$_GET['thread']}");
 			$tx = "{$threadtitle} has been removed from your favorites.";
 		} else {
@@ -131,7 +131,7 @@
 	}
 
 	
-	pageheader($forum['title'], $specialscheme, $specialtitle);
+	pageheader(htmlspecialchars($forum['title']), $specialscheme, $specialtitle);
 	if ($_GET['id']) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum)."</table>";
 	}
@@ -216,7 +216,7 @@
 							". ($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;") ."
 						</td>
 						<td class='tdbg1' colspan=".(6 + $extracols).">
-							<a href=announcement.php".($i ? "?f={$annc['forum']}" : "").">{$annc['atitle']}</a> -- Posted by ".getuserlink($annc)." on ".printdate($annc['date'])."
+							<a href=announcement.php".($i ? "?f={$annc['forum']}" : "").">".htmlspecialchars($annc['atitle'])."</a> -- Posted by ".getuserlink($annc)." on ".printdate($annc['date'])."
 						</td>
 					</tr>";
 			}
@@ -235,7 +235,6 @@
 		$q_trval = $q_trjoin = "";
 	}
 	
-	// Now with FETCH_NAMED capabilities
 	if ($_GET['fav']) {
 		$threads = $sql->query("
 			SELECT  t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
@@ -340,7 +339,7 @@
 					There are no threads to display.
 				</td>
 			</tr>";
-	} else for ($i = 1; $thread = $sql->fetch($threads, PDO::FETCH_NAMED); ++$i) {
+	} else for ($i = 1; $thread = $sql->fetch($threads); ++$i) {
 		
 		// Sticky (or featured) separator
 		$marker = ($_GET['feat'] ? $thread['featured'] : $thread['sticky']);
@@ -395,12 +394,12 @@
 		
 		if ($threadstatus) $new = $statusicons[$threadstatus];
 
-		$posticon = "<img src=\"".htmlspecialchars($thread['icon'])."\">";
+		$posticon = "<img src=\"".escape_attribute($thread['icon'])."\">";
 		
 		
 
-		if (trim($thread['title']) == "")
-			$thread['title']	= "<i>hurr durr i'm an idiot who made a blank thread</i>";
+		if (!trim($thread['title']))
+			$thread['title'] = "<i>hurr durr i'm an idiot who made a blank thread</i>";
 		else
 			$thread['title'] = htmlspecialchars($thread['title']);//str_replace(array('<', '>'), array('&lt;', '&gt;'), trim($thread['title']));
 
@@ -430,7 +429,7 @@
 
 		// Show forum name if not in a forum
 		if (!$_GET['id'])
-			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>{$forumnames[$thread['forumid']]}</a>";
+			$belowtitle[] = "In <a href='forum.php?id={$thread['forumid']}'>".htmlspecialchars($forumnames[$thread['forumid']])."</a>";
 
 		// Extra pages
 		$pagelinks = pagelist("thread.php?id={$thread['id']}", $thread['replies'] + 1, $ppp, $maxfromstart, $maxfromend);

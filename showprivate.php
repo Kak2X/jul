@@ -112,7 +112,7 @@
 	if ($tprev) $tlinks[] = "<a href='?id={$tprev}{$navparam}' class='nobr'>Next older thread</a>";
 	$tlinks = implode(' | ', $tlinks);
 	
-	pageheader("Private messages: {$thread['title']}");
+	pageheader("Private messages: ".htmlspecialchars($thread['title']));
 
 	
 	/*
@@ -249,7 +249,8 @@
 		}
 
 		if ($isadmin) {
-			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			$ip = htmlspecialchars($post['ip']);
+			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$ip}'>{$ip}</a>";
 		}
 		
 		if ($showattachments && isset($attachments[$post['id']])) {

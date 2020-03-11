@@ -119,7 +119,7 @@
 		$controls['edit'] = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
 		if ($canthread) {
 			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
-			if ($isadmin) $controls['ip'] = " | IP: {$annc['ip']}";
+			if ($isadmin) $controls['ip'] = " | IP: ".htmlspecialchars($annc['ip']);
 		}
 		if ($config['enable-post-ratings']) {
 			$annc['showratings'] = true;

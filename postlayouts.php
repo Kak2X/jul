@@ -94,7 +94,7 @@
 	$tlayoutq = $sql->query("SELECT id, name FROM tlayouts ORDER BY ord ASC, id ASC");
 	$tlayouts = "";
 	while ($x = $sql->fetch($tlayoutq)) {
-		$tlayouts .= "<option value='{$x['id']}'".($x['id'] == $loguser['layout'] ? " selected" : "").">{$x['name']}</option>";
+		$tlayouts .= "<option value='{$x['id']}'".($x['id'] == $loguser['layout'] ? " selected" : "").">".htmlspecialchars($x['name'])."</option>";
 	}
 	
 ?>

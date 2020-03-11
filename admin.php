@@ -50,9 +50,9 @@
 			'valkyrie' 			=> filter_float($_POST['valkyrie']),
 			'scheme' 			=> get_scheme_opt($_POST['scheme']),
 			'defaultscheme' 	=> filter_int($_POST['defaultscheme']),
-			'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
+			'specialtitle' 		=> filter_string($_POST['specialtitle']),
 			'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
-			'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode'], true) : $misc['regcode']),
+			'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode']) : $misc['regcode']),
 			'private'			=> ($sysadmin ? filter_int($_POST['private']) : $misc['private']),
 		];
 			
@@ -81,7 +81,7 @@
 			<br>
 			<br>
 			<small>(Click <a href="?togglebar=1">here</a> to use the <?= $oldbar ? "new" : "old" ?> style panel)</small>
-			<?= (false && $sysadmin ? "<br><br>To change the hard configuration, click <a href='install/?chconfig'>here</a>." : "") ?>
+			<?= ($sysadmin ? "<br><br>To change the hard configuration, click <a href='install/'>here</a>." : "") ?>
 			<br>&nbsp;
 		</td></tr>
 	</table>

@@ -411,8 +411,8 @@
 				
 				'poll'              => $pollid,
 				
-				'title'             => xssfilters($title),
-				'description'       => xssfilters($description),
+				'title'             => $title,
+				'description'       => $description,
 				'icon'              => $posticon,
 				
 				'views'             => 0,
@@ -472,7 +472,7 @@
 			'cssid'         => $cssid,
 			'moodid'        => $moodid,
 			
-			'text'          => xssfilters($message),
+			'text'          => $message,
 			'tagval'        => $tagval,
 			'options'       => $nosmilies . "|" . $nohtml,
 		);
@@ -503,8 +503,8 @@
 
 		// Process main poll data
 		$vals =	array(
-			'question'			=> xssfilters($question),
-			'briefing'			=> xssfilters($briefing),
+			'question'			=> $question,
+			'briefing'			=> $briefing,
 			'closed'			=> 0,
 			'doublevote'		=> $doublevote,
 		);

@@ -136,7 +136,7 @@
 					<table class='w' style='border-spacing: 0'>
 						<tr>
 							<td class='nobr'>
-								<a href='news.php?id={$post['id']}' class='headlink'>{$post['title']}</a>
+								<a href='news.php?id={$post['id']}' class='headlink'>".htmlspecialchars($post['title'])."</a>
 							</td>
 							<td class='fonts right'>
 								$editlink ".printdate($post['date'])."<br>
@@ -321,7 +321,7 @@
 		$txt 	= "";
 		foreach($tags as $id => $data){
 			$px = 10 + round(pow($data['cnt'] / $total * 100, 0.7)); // Gradually decreate font size
-			$txt .= "<a class='nobr tag-links' href='news.php?tag={$id}' style='font-size: {$px}px'>{$data['title']}</a> ";
+			$txt .= "<a class='nobr tag-links' href='news.php?tag={$id}' style='font-size: {$px}px'>".htmlspecialchars($data['title'])."</a> ";
 		}
 		return $txt;
 	}

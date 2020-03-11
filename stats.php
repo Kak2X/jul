@@ -58,7 +58,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 fonts center'><b>Most users online:</td>
-			<td class='tdbg2 fonts'><?=$misc['maxusers']?>, on <?=date($loguser['dateformat'],$misc['maxusersdate'])?><?=$misc['maxuserstext']?></td>
+			<td class='tdbg2 fonts'><?=$misc['maxusers']?>, on <?=date($loguser['dateformat'],$misc['maxusersdate'])?><?=xssfilters($misc['maxuserstext'])?></td>
 		</tr>
 	</table>
 	<br>
@@ -81,32 +81,32 @@
 			<td class='tdbgh center'>Total size</td>
 		</tr>
 	<?php
-echo //tblinfo('posts_text').
-	tblinfo('posts')
-	.tblinfo('posts_old')
-	.tblinfo('pm_posts')
-	//.tblinfo('pmsgs_text')
-	.tblinfo('postlayouts')
-	.tblinfo('threads')
-	.tblinfo('users')
-	.tblinfo('forumread')
-	.tblinfo('threadsread')
-	.tblinfo('pm_threads')
-	.tblinfo('pm_threadsread')
-	.tblinfo('pm_foldersread')
-	.tblinfo('news')
-	.tblinfo('news_comments')
-	.tblinfo('postradar')
-	.tblinfo('ipbans')
-	.tblinfo('defines')
-	.tblinfo('dailystats')
-	.tblinfo('rendertimes');
+echo //_tblinfo('posts_text').
+	_tblinfo('posts')
+	._tblinfo('posts_old')
+	._tblinfo('pm_posts')
+	//._tblinfo('pmsgs_text')
+	._tblinfo('postlayouts')
+	._tblinfo('threads')
+	._tblinfo('users')
+	._tblinfo('forumread')
+	._tblinfo('threadsread')
+	._tblinfo('pm_threads')
+	._tblinfo('pm_threadsread')
+	._tblinfo('pm_foldersread')
+	._tblinfo('news')
+	._tblinfo('news_comments')
+	._tblinfo('postradar')
+	._tblinfo('ipbans')
+	._tblinfo('defines')
+	._tblinfo('dailystats')
+	._tblinfo('rendertimes');
 ?>	</table>
 <?php
 
 	pagefooter();
 	
-	function sp($sz) {
+	function _sp($sz) {
 //    $b="$sz B";
 //    if($sz>1023) $b=sprintf('%01.2f',$sz/1024).' kB';
 //    if($sz>10239) $b=sprintf('%01.1f',$sz/1024).' kB';
@@ -118,18 +118,18 @@ echo //tblinfo('posts_text').
 		return $b;
 	}
 
-	function tblinfo($n) {
+	function _tblinfo($n) {
 		global $tbl;
 		$t=$tbl[$n];
 		return "
 		<tr align=right>
-		<td class='tdbg2 center'>$t[Name]</td>
-		<td class='tdbg2'>".sp($t['Rows']) ."</td>
-		<td class='tdbg2'>".sp($t['Avg_row_length'])."</td>
-		<td class='tdbg2'>".sp($t['Data_length'])."</td>
-		<td class='tdbg2'>".sp($t['Index_length'])."</td>
-		<td class='tdbg2'>".sp($t['Data_free'])."</td>
-		<td class='tdbg2'>".sp($t['Data_length']+$t['Index_length'])."</td></tr>";
+		<td class='tdbg2 center'>{$t['Name']}</td>
+		<td class='tdbg2'>"._sp($t['Rows']) ."</td>
+		<td class='tdbg2'>"._sp($t['Avg_row_length'])."</td>
+		<td class='tdbg2'>"._sp($t['Data_length'])."</td>
+		<td class='tdbg2'>"._sp($t['Index_length'])."</td>
+		<td class='tdbg2'>"._sp($t['Data_free'])."</td>
+		<td class='tdbg2'>"._sp($t['Data_length']+$t['Index_length'])."</td></tr>";
 	}
 
 ?>

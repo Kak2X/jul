@@ -22,7 +22,7 @@ function ratings_html($post, $ratedata = array(), $mode = MODE_POST) {
 	foreach ($ratings as $id => $data) {
 		$picture = rating_image($data);
 		if (isset($ratedata[$id]['total']))
-			$list .= " &nbsp; {$picture}<span class='text-rating'>&nbsp;{$data['title']}</span>&nbsp;x&nbsp;<strong>{$ratedata[$id]['total']}</strong>";
+			$list .= " &nbsp; {$picture}<span class='text-rating'>&nbsp;".htmlspecialchars($data['title'])."</span>&nbsp;x&nbsp;<strong>{$ratedata[$id]['total']}</strong>";
 		if ($canrate && $data['enabled'] && $loguser['powerlevel'] >= $data['minpower'])
 			$vote .= "<a href='postratings.php?action=rate&post={$post}&rating={$id}{$typestr}{$tokenstr}' class='icon-rating".(isset($ratedata['my'][$id]) ? " icon-rated" : " ")."'>{$picture}</a> ";
 	}
@@ -34,7 +34,7 @@ function ratings_html($post, $ratedata = array(), $mode = MODE_POST) {
 }
 
 function rating_image($data) {
-	return "<img src=\"{$data['image']}\" style='max-width: 16px; max-height: 16px' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
+	return "<img src=\"".escape_attribute($data['image'])."\" style='max-width: 16px; max-height: 16px' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
 }
 function rating_colors($val, $pts) {
 	if ($pts == 0) return $val;
@@ -87,7 +87,7 @@ function load_ratings($searchon, $range, $mode = MODE_POST) {
 			$out[$x['post']][$x['rating']]['total'] = 1;
 		else
 			$out[$x['post']][$x['rating']]['total']++;
-		// Flag is the logged in user has selected that rating
+		// Flag if the logged in user has selected that rating
 		if ($x['user'] == $loguser['id'])
 			$out[$x['post']]['my'][$x['rating']] = true;
 	}

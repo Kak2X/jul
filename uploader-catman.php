@@ -16,10 +16,10 @@
 	$_GET['cat'] = filter_int($_GET['cat']);	
 	$_GET['action'] = filter_string($_GET['action']);
 	
-	define('NEW_CATEGORY', ($_GET['cat'] == -1));
-	define('MODE_USER', ($_GET['mode'] == 'u'));
+	define('_NEW_CATEGORY', ($_GET['cat'] == -1));
+	define('_MODE_USER', ($_GET['mode'] == 'u'));
 	
-	if (NEW_CATEGORY && $_GET['action'] == 'delete')
+	if (_NEW_CATEGORY && $_GET['action'] == 'delete')
 		errorpage("What r u doin dude.");
 	if (!$isadmin) {
 		if (!$_GET['cat'] && !$_GET['user'])
@@ -29,7 +29,7 @@
 	}
 	
 	// Filter by category
-	if ($_GET['cat'] && !NEW_CATEGORY) {
+	if ($_GET['cat'] && !_NEW_CATEGORY) {
 		load_uploader_category($_GET['cat']);
 		if (!can_manage_category($cat))
 			errorpage("You aren't allowed to edit this folder.");	
@@ -52,7 +52,7 @@
 		
 		// Two variations of the same check
 		if (!$isadmin) {
-			if (NEW_CATEGORY) {
+			if (_NEW_CATEGORY) {
 				if ($_POST['user'] != $loguser['id'])
 					errorpage("You cannot create shared or other users' folders.");
 			} else {
@@ -63,7 +63,7 @@
 		if ($_POST['user'] != 0 && !valid_user($_POST['user']))
 			errorpage("This user you selected as owner doesn't exist.");
 		
-		if ($_POST['user'] || uploader_private_file_confirmation($_GET['cat'])) {
+		if ($_POST['user'] || _uploader_private_file_confirmation($_GET['cat'])) {
 			$values = array(
 				'title'          => $_POST['title'],
 				'description'    => filter_string($_POST['description']),
@@ -75,7 +75,7 @@
 			);
 			
 			$sql->beginTransaction();
-			if (NEW_CATEGORY) {
+			if (_NEW_CATEGORY) {
 				$sql->queryp("INSERT INTO uploader_cat SET ".mysql::setplaceholders($values)."", $values);
 				$_GET['cat'] = $sql->insert_id();
 			} else {
@@ -109,7 +109,7 @@
 	$links = uploader_breadcrumbs_links(null, $user, [["Manager", NULL]]);
 	$barright = "";
 	if ($isadmin) {
-		if (MODE_USER)
+		if (_MODE_USER)
 			$barright = uploader_user_select('user', $_GET['user'])." - <a href='?'>Manage shared folders</a>";
 		else
 			$barright = "<a href='?mode=u'>Manage personal folders</a>";
@@ -118,7 +118,7 @@
 
 	if ($_GET['action'] == 'edit') {
 		
-		if (NEW_CATEGORY) {
+		if (_NEW_CATEGORY) {
 			// Item edit
 			$htitle = "New folder";
 			$cat = [
@@ -129,7 +129,7 @@
 				'minpowermanage' => PWL_MOD,
 				'ord' => 0,
 			];
-			if (MODE_USER) {
+			if (_MODE_USER) {
 				$cat['user'] = ($_GET['user'] ? $_GET['user'] : $loguser['id']);
 				$cat['minpowerupload'] = PWL_MOD;
 			} else {
@@ -199,7 +199,7 @@
 				errorpage("You aren't allowed to move files to this category.");
 			
 			$allowprivate = $validcats[$_POST['mergeid']]['user']; // in user category
-			if ($allowprivate || uploader_private_file_confirmation($_GET['cat'])) {
+			if ($allowprivate || _uploader_private_file_confirmation($_GET['cat'])) {
 				$sql->beginTransaction();
 				$sql->query("UPDATE uploader_files SET cat = {$_POST['mergeid']}".(!$allowprivate ? ", private = 0" : "")." WHERE cat = {$_GET['cat']}");
 				$sql->query("UPDATE uploader_cat SET files = files + {$cat['files']}, downloads = downloads + {$cat['downloads']} WHERE id = {$_POST['mergeid']}");
@@ -223,7 +223,7 @@
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	
-	if (MODE_USER) {
+	if (_MODE_USER) {
 		$where = ($_GET['user'] ? "c.user = {$_GET['user']}" : "c.user != 0");
 	} else {
 		$where = "c.user = 0".($isadmin ? "" : " AND minpowermanage >= {$loguser['powerlevel']}");
@@ -272,7 +272,7 @@
 	print $breadcrumbs;
 	pagefooter();
 
-function uploader_private_file_confirmation($id) {
+function _uploader_private_file_confirmation($id) {
 	global $sql, $baseparams, $scriptname;
 	$uhoh = $sql->resultq("SELECT COUNT(*) FROM uploader_files WHERE cat = {$id} && private = 1");
 	if ($uhoh && !confirmed($msgkey = 'prv-warn')) {

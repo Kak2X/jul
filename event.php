@@ -38,7 +38,7 @@
 		
 		if (confirmed($msgkey = 'del-event')) {
 			$sql->query("DELETE FROM events WHERE id = {$_GET['id']}");
-			errorpage("Thank you, {$loguser['name']}, for deleting the event.","calendar.php","return to the calendar",0);
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the event.","calendar.php","return to the calendar",0);
 		}
 		
 		$title     = "Delete event";
@@ -69,8 +69,8 @@
 		if (!checkdate($m,$d,$y))	errorpage("The date you have selected is invalid.",'calendar.php', 'return to the calendar');
 		
 		$values = array (
-			'title'		=> xssfilters($title),
-			'text'		=> xssfilters($message),
+			'title'		=> $title,
+			'text'		=> $message,
 			'private'	=> $private,
 			'm' => $m,
 			'd' => $d,

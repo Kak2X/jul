@@ -134,7 +134,7 @@ function attachfield($list, $extra = "") {
 					<$w href='download.php?id={$x['id']}{$extra}'><img src='{$thumb}'></$w>
 				</td>
 				<td class='attachment-box-text fonts'>
-					<div><$w href='download.php?id={$x['id']}{$extra}'>{$x['filename']}</$w></div>
+					<div><$w href='download.php?id={$x['id']}{$extra}'>".htmlspecialchars($x['filename'])."</$w></div>
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>

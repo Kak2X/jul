@@ -93,7 +93,7 @@
 		if (!$isbot) {
 			$sql->query("UPDATE threads SET views = views + 1 WHERE id = {$_GET['id']}");
 		}
-		$windowtitle = "{$forum['title']}: {$thread['title']}";
+		$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title']);
 	}
 	else if ($_GET['user']) {
 		// Posts by user
@@ -105,7 +105,7 @@
 
 		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$_GET['user']}") - 1;
 		$thread['title'] = "Posts by {$uname}";
-		$windowtitle = "Posts by {$uname}";
+		$windowtitle = "Posts by ".htmlspecialchars($uname);
 		$forum['id'] = 0;
 		$forum['title'] = "";
 		$tlinks = '';
@@ -326,7 +326,8 @@
 		}
 
 		if ($isadmin) {
-			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$post['ip']}'>{$post['ip']}</a>";
+			$ip = htmlspecialchars($post['ip']);
+			$controls['ip'] = " | IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
 		}
 		
 		if ($showattachments && isset($attachments[$post['id']])) {

@@ -142,10 +142,10 @@
 					);
 					$sql->queryp("INSERT INTO posts_old SET ".mysql::setplaceholders($save), $save);
 					// The post update query now updates these as well
-					$pdata['text']     = xssfilters($message);
-					$pdata['headtext'] = xssfilters($head);
-					$pdata['signtext'] = xssfilters($sign);
-					$pdata['csstext']  = xssfilters($css);
+					$pdata['text']     = $message;
+					$pdata['headtext'] = $head;
+					$pdata['signtext'] = $sign;
+					$pdata['csstext']  = $css;
 					$pdata['headid']   = $headid;
 					$pdata['signid']   = $signid;
 					$pdata['cssid']    = $cssid;
@@ -296,9 +296,9 @@
 				$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
 			}
 			if ($post['deleted']) {
-				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for undeleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
 		
@@ -343,9 +343,9 @@
 			$sql->commit();
 			
 			if ($pcount <= 1) {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","forum.php?id={$thread['forum']}","return to the forum",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post and the thread.","forum.php?id={$thread['forum']}","return to the forum",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","thread.php?id={$thread['id']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","thread.php?id={$thread['id']}","return to the thread",0);
 			}
 		}
 		

@@ -2,7 +2,7 @@
 	
 	require 'lib/function.php';
 
-	$mn = array(1=>'January','February','March','April','May','June','July','August','September','October','November','December');
+	const _MONTH_NAMES = [1=>'January','February','March','April','May','June','July','August','September','October','November','December'];
 
 	$date 	= getdate(time());
 	
@@ -41,7 +41,7 @@
 	$date = getdate(mktime(0,0,0,$month+1,0,$year));
 	$max  = $date['mday'];
 	
-	pageheader("Calendar for {$mn[$month]} {$year}");
+	pageheader("Calendar for "._MONTH_NAMES[$month]." {$year}");
 
 	// User birthdays for the month
 	$bdaytext = array_fill(1, 31, "");
@@ -89,7 +89,7 @@
 			<td class='tdbgh center' colspan=7>
 				<table style='width: 100%; border-spacing: 0px'>
 					<tr>
-						<td class='font center' style='width: 100%'><b>{$mn[$month]} {$day}, {$year}: ".htmlspecialchars($eventdata['title'])."</b> - ".getuserlink($user)."</td>
+						<td class='font center' style='width: 100%'><b>"._MONTH_NAMES[$month]." {$day}, {$year}: ".htmlspecialchars($eventdata['title'])."</b> - ".getuserlink($user)."</td>
 						<td class='fonts nobr right'>".($canedit ? "<a href='event.php?id={$eventdata['id']}'>Edit</a> | <a href='event.php?id={$eventdata['id']}&action=delete'>Delete</a>" : "&nbsp;")."</td>
 					</t>
 				</table>
@@ -99,7 +99,7 @@
 	}
 
 	?>
-		<tr><td class='tdbgh center' colspan=7><font size=5><?=$mn[$month]?> <?=$year?></font></td></tr>
+		<tr><td class='tdbgh center' colspan=7><font size=5><?=_MONTH_NAMES[$month]?> <?=$year?></font></td></tr>
 		<tr>
 			<td class='tdbgh center' style='width: 14.3%'>S</td>
 			<td class='tdbgh center' style='width: 14.3%'>M</td>

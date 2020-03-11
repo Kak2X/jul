@@ -15,7 +15,7 @@
 		// Select first rankset in none was specified
 		if ($_GET['set'] < 0) $_GET['set'] = $rset['id'];
 		$selected = ($rset['id'] == $_GET['set'] ? 'selected' : '' );
-		$ranksetlist .= "<option value={$rset['id']} {$selected}>{$rset['name']}";
+		$ranksetlist .= "<option value={$rset['id']} {$selected}>".htmlspecialchars($rset['name']);
 	}
 	$ch[$_GET['showall']] = 'checked';
 	
@@ -96,7 +96,7 @@
 
 		if ($userlisting != '&nbsp;' || $rank['num'] <= $loguser['posts'] || $ismod) {
 ?>	<tr>
-		<td class='tdbg2 fonts' width=200><?=$rank['text']?></td>
+		<td class='tdbg2 fonts' width=200><?=xssfilters($rank['text'])?></td>
 		<td class='tdbg1 center' width=60><?=$rank['num']?></td>
 		<td class='tdbg1 center' width=60><?=$total?></td>
 		<td class='tdbg1 center' width=30><?=$u?></td>

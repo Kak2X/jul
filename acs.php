@@ -1,7 +1,7 @@
 <?php
 	require 'lib/function.php';
 	
-	$_GET['username'] = filter_string($_GET['username'], true);
+	$_GET['username'] = filter_string($_GET['username']);
 	$_GET['u']        = filter_int($_GET['u']); // Selected user
 	$_GET['view']     = filter_int($_GET['view']); // Acs view mode
 	$_GET['cday']     = filter_int($_GET['cday']); // Custom day
@@ -84,7 +84,7 @@
 			<td class='tdbg2'>
 				<input type="radio" name="u" value=1 <?=filter_string($ch2[1])?>> None &nbsp;&nbsp;
 				<input type="radio" name="u" value=0 <?=filter_string($ch2[0])?>> You &nbsp;&nbsp;
-				<input type="radio" name="u" value=2 <?=filter_string($ch2[2])?>> Other: <input type='text' name=username VALUE="<?=$_GET['username']?>" SIZE=25 MAXLENGTH=25>
+				<input type="radio" name="u" value=2 <?=filter_string($ch2[2])?>> Other: <input type="text" name="username" value="<?=escape_attribute($_GET['username'])?>" size="25" maxlength="25">
 			</td>
 		</tr>
 		
@@ -221,8 +221,8 @@
 			$dailyposts     .= $tie . $ndailyposts;
 			$dailypoints    .= $tie . $ndailypoints;
 			// ...and THEN we update it to the current
-			$ndailyposts     = "$r) ". $myfakename ." - ". $user['cnt'] ."<br>";
-			$ndailypoints    = "$r) ". $myrealname ." - ". ($spoints - $r) ."<br>";
+			$ndailyposts     = "$r) ". htmlspecialchars($myfakename) ." - ". $user['cnt'] ."<br>";
+			$ndailypoints    = "$r) ". htmlspecialchars($myrealname) ." - ". ($spoints - $r) ."<br>";
 
 //			$ndailyposts	= "$tie$r) ". $user['name'] ." - ". $user['cnt'] ." - ". ($spoints - $r) ."<br>";
 //			$ndailyposts	= "$tie$r) ". $user['name'] ." - ". $user['cnt'] ." - ". ($spoints - $r) ."<br>";

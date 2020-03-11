@@ -18,7 +18,7 @@
 	} else {
 
 	
-	$faq	.= faqformat("darules", "The Rules", "
+	$faq	.= _faqformat("darules", "The Rules", "
 		Our rules are really <i>really simple</i>, if you take the time to learn them. And you <i>should!</i>
 		<ol>
 			<li><b>Don't be an asshole.</b> If you don't have something constructive to say, <i>don't say it!</i> This is the big one.
@@ -38,17 +38,17 @@
 		-->
 	");
 
-	$faq	.= faqformat("aboot", "About Jul", "
+	$faq	.= _faqformat("aboot", "About Jul", "
 		Jul itself is a community made up of people who predominantly like to just hang around friendlies and talk about whatever, though we also like games and occasionally anime/other things.
 	");
 
-	$faq	.= faqformat("newbies", "I'm new here. Where should I start?", "
+	$faq	.= _faqformat("newbies", "I'm new here. Where should I start?", "
 		Always, by reading the rules... but since you're here, it's <i>probably</i> a safe bet that you've already done that. (If you haven't, <i>now is a great time.</i>)
 		<br>
 		<br>Once you've done that, <a href='register.php'>sign up for an account</a> (or <a href='login.php'>log in</a> if you've already made one). It's simple and very easy to do. After you're registered, you're more than welcome to just <a href='forum.php?id=1'>jump in and say hi</a> by posting in the Introductions thread, or even making your own. We're friendly people and won't bite (usually). Let us know about yourself, how you found us, or whatever's on your mind &mdash; or just jump in and start contributing to discussions.
 	");
 /*
-	$faq	.= faqformat("n00b", "I have this <img src='images/noob/noobsticker2-4.png' alt='n00b' title='TKEP regulars know this one' align='absmiddle' style='margin-top: -4px; margin-bottom: -4px;'> sticker on my post. What's up with that?", "
+	$faq	.= _faqformat("n00b", "I have this <img src='images/noob/noobsticker2-4.png' alt='n00b' title='TKEP regulars know this one' align='absmiddle' style='margin-top: -4px; margin-bottom: -4px;'> sticker on my post. What's up with that?", "
 		The n00b sticker is our way of telling you that your post was pretty awful. Usually it's for one of the following reasons:
 		<ol>
 			<li>Complete disregard for our rules. If you show that you really can't even be bothered to read the small number of rules we have here, you're going to wear your welcome out <em>very</em> fast.</li>
@@ -62,7 +62,7 @@
 		<br><strong>Remember:</strong> The fastest way to get yourself stamped is to make a big deal out of it.
 	");
 */
-	$faq	.= faqformat("layoutlowdown", "What are post layouts?", "
+	$faq	.= _faqformat("layoutlowdown", "What are post layouts?", "
 	Post layouts are like signatures on other forums, but on steroids. Rather than just some text, an image, and maybe a link, post layouts allow you to style your <em>entire post</em>! You too can turn your wonderful contributions into a GeoCities&trade;-esque abomination.
 	<br>
 	<br>You can enable or disable the showing of post layouts by choosing the relevant option in your <a href='editprofile.php'>profile settings</a>.
@@ -73,7 +73,7 @@
 	");
 
 
-	$faq	.= faqformat("tags", "What are &amp;tags&amp;?", "
+	$faq	.= _faqformat("tags", "What are &amp;tags&amp;?", "
 		These are variables that can be used in your post header or signature. Once you post, they'll get replaced with a value depending on the tag used.
 		<br>
 		<br>
@@ -181,7 +181,7 @@
 		</table>
 	");
 
-	$faq	.= faqformat("bbcode", "What is BBcode?", doreplace2("
+	$faq	.= _faqformat("bbcode", "What is BBcode?", doreplace2("
 		BBcode is a simple syntax which you can use on your posts to format the text or add images and videos. Below is a list of the supported tags:
 		<br>
 		<br>
@@ -281,22 +281,22 @@
 		</table>
 	"));
 
-	$faq	.= faqformat("halp", "I've got a question and I need some help, or I found a bug somewhere.", "
+	$faq	.= _faqformat("halp", "I've got a question and I need some help, or I found a bug somewhere.", "
 		<a href='forum.php?id=39'>Post it in the forum here</a>, or alternatively just message the <a href='sendprivate.php?userid=1'>main administrator</a>. If it's a security bug in the code, we <i>really</i> recommend the latter.
 	");
 
-	$faq	.= faqformat("band", "I've been banned. Now what?", "
+	$faq	.= _faqformat("band", "I've been banned. Now what?", "
 		You can try checking your title (under your username in your posts) to find out the reason and when it expires. If there's no expiration, it's probably <i>permanent</i>. If you're post due for unbanning, <a href='sendprivate.php?userid=1'>let an admin know</a> and they'll take care of it.
 		<br>
 		<br>On the other hand, if it's permanent, you can always try to show us you've changed and request a <i>second chance</i>... but any further antics after that will usually get your account <b>deleted</b>.
 	");
 
-	$faq	.= faqformat("cantpass", "I've lost/forgotten my password. Now what?", "
+	$faq	.= _faqformat("cantpass", "I've lost/forgotten my password. Now what?", "
 		The best thing you can do is to <a href='profile.php?id=1'>contact Xkeeper directly</a>. He can help you get it fixed.
 	");
 
 
-	$faq	.= faqformat("frosteddonut", "I want to throw money at you guys. How do I do that?", "
+	$faq	.= _faqformat("frosteddonut", "I want to throw money at you guys. How do I do that?", "
 			Really? How generous.
 		<br>
 		<br>Donations with this button go straight to the hosting bill, and we can't withdraw them, so you don't have to worry about us secretly buying drugs or other fancy stuff with your money.
@@ -326,7 +326,7 @@
 
 	pagefooter();
 
-	function faqformat($a, $title, $content) {
+	function _faqformat($a, $title, $content) {
 		global $topiclist;
 	
 		$topiclist	.= "\n\t\t<li><a href='#$a'>$title</a></li>";

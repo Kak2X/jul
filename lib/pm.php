@@ -162,7 +162,7 @@ function delete_pm_folder($dir, $dest, $user) {
 function create_pm_folder($title, $user, $ord = 0) {
 	global $sql;
 	$values = array(
-		'title'     => xssfilters($title),
+		'title'     => $title,
 		'ord'       => $ord,
 		'folder'    => ((int) $sql->resultq("SELECT MAX(folder) FROM pm_folders WHERE user = {$user}")) + 1,
 		'user'      => $user,
@@ -180,7 +180,7 @@ function create_pm_folder($title, $user, $ord = 0) {
 function edit_pm_folder($folder, $title, $user, $ord = 0) {
 	global $sql;
 	$values = array(
-		'title'     => xssfilters($title),
+		'title'     => $title,
 		'ord'       => $ord,
 	);
 	$sql->queryp("UPDATE `pm_folders` SET ".mysql::setplaceholders($values)." WHERE `folder` = '{$folder}' AND `user` = '{$user}'", $values);
@@ -304,7 +304,7 @@ function valid_pm_acl($userlist, $allow_self = false, &$error) {
 		} else if ($valid = valid_user($x)) {
 			$destid[$valid] = $valid; // no duplicates please
 		} else {
-			$badusers .= "<li>{$x}</li>";
+			$badusers .= "<li>".htmlspecialchars($x)."</li>";
 		}
 	}
 	
@@ -358,8 +358,8 @@ function create_pm_thread($user, $title, $description, $posticon, $closed = 0) {
 		'user'				=> $user,
 		'closed'			=> $closed,
 		
-		'title'				=> xssfilters($title),
-		'description'		=> xssfilters($description),
+		'title'				=> $title,
+		'description'		=> $description,
 		'icon'				=> $posticon,
 		
 		'replies'			=> 0,
@@ -410,7 +410,7 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 		'cssid'				=> $cssid,
 		'moodid'			=> $moodid,
 		
-		'text'				=> xssfilters($message),
+		'text'				=> $message,
 		'tagval'			=> $tagval,
 		'options'			=> $nosmilies . "|" . $nohtml,
 	);

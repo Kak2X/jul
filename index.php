@@ -1,5 +1,5 @@
 <?php
-	const WND_FEATURED = -3;
+	const _WND_FEATURED = -3;
 	
 	if (isset($_GET['u']) && $_GET['u']) {
 		header("Location: profile.php?id=". $_GET['u']);
@@ -273,7 +273,7 @@
 					<?=($loguser['id'] && $annc['readdate'] < $annc['date'] ? $statusicons['new'] : "&nbsp;")?>
 				</td>
 				<td class='tdbg1'>
-					<a href="announcement.php"><?=$annc['atitle']?></a> -- Posted by <?=getuserlink($annc)?> on <?=printdate($annc['date'])?>
+					<a href="announcement.php"><?=htmlspecialchars($annc['atitle'])?></a> -- Posted by <?=getuserlink($annc)?> on <?=printdate($annc['date'])?>
 				</td>
 			</tr>
 		</table>
@@ -291,10 +291,10 @@
 		WHERE t.featured = 1 AND ".can_view_forum_query()."
 	");
 	if ($featured) {
-		$hidden = filter_int($_COOKIE['hcat'][WND_FEATURED]);
+		$hidden = filter_int($_COOKIE['hcat'][_WND_FEATURED]);
 ?>
 		<table class="table">
-			<tr><td class="tdbgh center fonts" colspan="2">Featured thread<?= collapse_toggle(WND_FEATURED, $hidden) ?></td></tr>
+			<tr><td class="tdbgh center fonts" colspan="2">Featured thread<?= _collapse_toggle(_WND_FEATURED, $hidden) ?></td></tr>
 <?php
 		if (!$hidden) {
 			$featid = pick_any($featured);
@@ -335,7 +335,7 @@
 				</td>
 				<td class="tdbg1">
 					<a href="thread.php?id=<?= $fthread['id'] ?>"><?= htmlspecialchars($fthread['title']) ?></a>
-					<br><span class="fonts"><?= $fthread['description'] ?></span>
+					<br><span class="fonts"><?= htmlspecialchars($fthread['description']) ?></span>
 				</td>
 			</tr>
 			<?= $polltbl ?>
@@ -436,7 +436,7 @@
 			<tr id='cat{$category['id']}'>
 				<td class='tbl tdbgc center font' colspan=5>
 					<a href='index.php?cat={$category['id']}'>".htmlspecialchars($category['name'])."</a>
-					".collapse_toggle($category['id'], $hidden)."
+					"._collapse_toggle($category['id'], $hidden)."
 				</td>
 			</tr>";
 		
@@ -512,7 +512,7 @@
 				<td class='tdbg2'>
 					<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a><br>
 					<span class='fonts'>
-						{$forum['description']}<br>
+						".xssfilters($forum['description'])."<br>
 						$modlist
 					</span>
 				</td>
@@ -549,6 +549,6 @@
 	pagefooter();
 	
 
-function collapse_toggle($cat, $hidden) {
+function _collapse_toggle($cat, $hidden) {
 	return "<div style='float: right'><a href='?cat={$cat}&toggle=1'>[".($hidden ? "+" : "-")."]</a></div>";
 }

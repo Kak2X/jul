@@ -323,7 +323,7 @@ else {
 		
 		$iconpreview = "";
 		if ($posticon) {
-			$iconpreview = "<img src=\"".htmlspecialchars($posticon)."\" height=15 align=absmiddle>";
+			$iconpreview = "<img src=\"".escape_attribute($posticon)."\" height=15 align=absmiddle>";
 		}
 		// Threadpost
 		

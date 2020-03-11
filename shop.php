@@ -80,7 +80,7 @@
 			<tr>
 				<td class='tdbg1 center'><a href='shop.php{$h_q}action=items&cat={$shop['id']}#status'>".htmlspecialchars($shop['name'])."</a></td>
 				<td class='tdbg2 fonts center'>".htmlspecialchars($shop['description'])."
-				<td class='tdbg1 fonts center'>".filter_string($items[$eq['eq'.$shop['id']]]['name'])."
+				<td class='tdbg1 fonts center'>".htmlspecialchars(filter_string($items[$eq['eq'.$shop['id']]]['name']))."
 			</tr>
 			";
 		?>

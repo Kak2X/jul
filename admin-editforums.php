@@ -19,8 +19,8 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	check_token($_POST['auth']);
 	
 	$values = array(
-		'title' 			=> xssfilters(filter_string($_POST['forumtitle'], true)),
-		'description'		=> xssfilters(filter_string($_POST['description'], true)),
+		'title' 			=> filter_string($_POST['forumtitle']),
+		'description'		=> filter_string($_POST['description']),
 		'catid' 			=> filter_int($_POST['catid']),
 		'minpower' 			=> filter_int($_POST['minpower']),
 		'minpowerthread' 	=> filter_int($_POST['minpowerthread']),
@@ -29,7 +29,7 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'numposts' 			=> filter_int($_POST['numposts']),
 		'forder' 			=> filter_int($_POST['forder']), 
 		'specialscheme' 	=> get_scheme_opt($_POST['specialscheme']),
-		'specialtitle' 		=> xssfilters(filter_string($_POST['specialtitle'], true)),
+		'specialtitle' 		=> filter_string($_POST['specialtitle']),
 		'hidden' 			=> filter_int($_POST['hideforum']),
 		'pollstyle' 		=> filter_int($_POST['pollstyle']),
 		'login' 			=> filter_int($_POST['login']),
@@ -90,7 +90,7 @@ elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 	check_token($_POST['auth']);	
 
 	$values = array(
-		'name' 			=> xssfilters(filter_string($_POST['catname'], true)),
+		'name' 			=> filter_string($_POST['catname']),
 		'minpower' 		=> filter_int($_POST['minpower']),
 		'corder' 		=> filter_int($_POST['catorder']), 
 		'side' 			=> filter_int($_POST['side']),
@@ -174,7 +174,7 @@ if ($_GET['delete']) {
 				You are about to delete forum ID <b><?=$_GET['delete']?></b>.<br>
 				<br>
 				All announcements and threads will be moved to the forum below.<br>
-				<?= dropdownList($forums, -1, "mergeid") ?>
+				<?= _dropdownList($forums, -1, "mergeid") ?>
 			</td>
 		</tr>
 		<tr>
@@ -217,9 +217,6 @@ else if ($_GET['id']) {
 	} else {
 		if (!isset($categories[$forum['catid']]))
 			$categories[$forum['catid']] = "Unknown category #" . $forum['catid'];
-
-		//if ($forum['specialscheme'] == NULL)
-		//	$forum['specialscheme'] = '-1';
 	}
 
 ?>
@@ -246,21 +243,21 @@ else if ($_GET['id']) {
 
 		<tr>
 			<td class='tdbgh center'>...to view the forum</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpower'], "minpower")?></td>
+			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpower'], "minpower")?></td>
 		</tr>
 
 		<tr>
 			<td class='tdbgh center'>...to post a thread</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpowerthread'], "minpowerthread")?></td>
+			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpowerthread'], "minpowerthread")?></td>
 		</tr>
 
 		<tr>
 			<td class='tdbgh center'>...to reply</td>
-			<td class='tdbg1'><?=dropdownList($powers, $forum['minpowerreply'], "minpowerreply")?></td>
+			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpowerreply'], "minpowerreply")?></td>
 		</tr>
 		<tr>
 			<td class='tdbgh center'>...to post attachments</td>
-			<td class='tdbg1'><?=dropdownList($attachmodes, $forum['attachmentmode'], "attachmentmode")?></td>
+			<td class='tdbg1'><?=_dropdownList($attachmodes, $forum['attachmentmode'], "attachmentmode")?></td>
 		</tr>
 		
 		<tr>
@@ -269,7 +266,7 @@ else if ($_GET['id']) {
 			<td class='tdbgh center'  width='10%'>Forum order</td>
 			<td class='tdbg1' width='23%'><input type="text" name="forder" maxlength="8" size="10" value="<?=($forum['forder'] ? $forum['forder'] : "0")?>" class="right"></td>
 			<td class='tdbgh center'  width='10%'>Poll Style</td>
-			<td class='tdbg1' width='23%'><?=dropdownList($pollstyles, $forum['pollstyle'], "pollstyle")?></td>
+			<td class='tdbg1' width='23%'><?=_dropdownList($pollstyles, $forum['pollstyle'], "pollstyle")?></td>
 		</tr>
 
 		<tr>
@@ -278,7 +275,7 @@ else if ($_GET['id']) {
 			<td class='tdbgh center' >Special Scheme</td>
 			<td class='tdbg1'><?=doschemeList($forum['specialscheme'], 'specialscheme', SL_SHOWSPECIAL | SL_SHOWNONE)?></td>
 			<td class='tdbgh center' >Category</td>
-			<td class='tdbg1'><?=dropdownList($categories, $forum['catid'], "catid")?></td>
+			<td class='tdbg1'><?=_dropdownList($categories, $forum['catid'], "catid")?></td>
 		</tr>
 		
 		<tr>
@@ -311,7 +308,7 @@ else if ($_GET['catdelete']) {
 				You are about to delete category ID <b><?=$_GET['catdelete']?></b>.<br>
 				<br>
 				All forums will be moved to the category below.<br>
-				<?= dropdownList($categories, -1, "mergeid") ?>
+				<?= _dropdownList($categories, -1, "mergeid") ?>
 			</td>
 		</tr>
 		<tr>
@@ -355,7 +352,7 @@ else if ($_GET['catid']) {
 			<td class='tdbgh center nobr'>Options</td>
 			<td class='tdbg1'><label><input type="checkbox" name="side" value="1" <?=($category['side'] ? " checked" : "")?>> Right side</label></td>
 			<td class='tdbgh center nobr'>Minimum power needed to view</td>
-			<td class='tdbg1'><?=dropdownList($powers, $category['minpower'], "minpower")?></td>
+			<td class='tdbg1'><?=_dropdownList($powers, $category['minpower'], "minpower")?></td>
 		</tr>		
 		<tr>
 			<td class='tdbgc center' colspan=6>
@@ -459,18 +456,17 @@ foreach ($categories as $category) {
 			$tc2	= '2';
 		}
 
-	  $forumlist[$category['side']].="
+		$forumlist[$category['side']] .= "
 		<tr>
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
 				<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>$hidden<br>
-				<font class='fonts'>{$forum['description']}<br>$modlist
+				<font class='fonts'>".xssfilters($forum['description'])."<br>$modlist
 			</td>
 			<td class='tdbg{$tc1} center'>{$forum['numthreads']}</td>
 			<td class='tdbg{$tc1} center'>{$forum['numposts']}</td>
 			<td class='tdbg{$tc2} center nobr'><span class='lastpost'>$forumlastpost</span>$by</td>
-		</tr>
-	  ";
+		</tr>";
 
 		unset($forums[$forumplace]);
 	}
@@ -525,7 +521,7 @@ if (!isset($preview) && count($forums)) {
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
 				<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>$hidden<br>
-				<font class='fonts'>{$forum['description']}<br>$modlist
+				<font class='fonts'>".xssfilters($forum['description'])."<br>$modlist
 			</td>
 			<td class='tdbg{$tc1} center'>{$forum['numthreads']}</td>
 			<td class='tdbg{$tc1} center'>{$forum['numposts']}</td>
@@ -542,7 +538,7 @@ if ($forumlist[0]) $forumlist[0] = "<td style='width: 50%' class='vatop'><table 
 if ($forumlist[1]) $forumlist[1] = "<td style='width: 50%' class='vatop'><table class='table'>{$forumheaders}{$forumlist[1]}</table></td>";
 if ($forumlist[-1]) $forumlist[-1] = "<br><table class='table'>{$forumheaders}{$forumlist[-1]}</table>";
 
-print "<center><b>Preview forums with powerlevel:</b> ".previewbox()."</center>\n";
+print "<center><b>Preview forums with powerlevel:</b> "._previewbox()."</center>\n";
 print "
 <table class='table'>
 	<tr><td class='tdbgc center' colspan=2>&lt; <a href='admin-editforums.php?id=-1$prevtext'>Create a new forum</a> &gt; &nbsp; &lt; <a href='admin-editforums.php?catid=-1$prevtext'>Create a new category</a> &gt;</td></tr>
@@ -555,17 +551,17 @@ print "
 
 pagefooter();
 
-function dropdownList($links, $sel, $n) {
+function _dropdownList($links, $sel, $n) {
 	$r	= "<select name=\"$n\">";
 
 	foreach($links as $link => $name) {
-		$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">$name</option>";
+		$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">".htmlspecialchars($name)."</option>";
 	}
 
 	return $r ."</select>";
 }
 
-function previewbox(){
+function _previewbox(){
 	global $preview;
 	if ($_GET['id']) {
 		$idtxt  = "id=" . $_GET['id'] . "&";

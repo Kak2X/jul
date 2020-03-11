@@ -172,7 +172,7 @@
 		}
 		
 ?>
-		<form method='POST' action='?ip=<?= htmlspecialchars($_GET['ip']) ?>'>
+		<form method='POST' action="?ip=<?= htmlspecialchars($_GET['ip']) ?>">
 		<?= $token ?>
 		<table class='table'>
 			<tr><td class='tdbgh center b' colspan='2'><?= $title ?></td></tr>

@@ -120,9 +120,9 @@
 				$lastpost = "????<span class='fonts'><br>by ????";
 			}
 			else {
-				$threadlink = "<a href='thread.php?id=$ms[id]'>$ms[title]</a>";
+				$threadlink = "<a href='thread.php?id={$ms['id']}'>".htmlspecialchars($ms['title'])."</a>";
 				$threadlink .= '<br><span class="fonts" style="position: relative; top: -1px;">&nbsp;&nbsp;&nbsp;'
-							. "In <a href='forum.php?id=$ms[forum]'>".$ms['forumtitle']."</a>"
+							. "In <a href='forum.php?id={$ms['forum']}'>".htmlspecialchars($ms['forumtitle'])."</a>"
 							. '</span>';
 				$threadauthor 	= getuserlink(get_userfields($ms, 'u1'), $ms['user']);
 				$lastposter 	= getuserlink(get_userfields($ms, 'u2'), $ms['lastposter']);
@@ -133,7 +133,7 @@
 
 				$replies 	= $ms['replies'];
 				$views 		= $ms['views'];
-				$tpic 		= ($ms['icon']) ? "<img src=\"".htmlspecialchars($ms['icon'])."\">" : "&nbsp;";
+				$tpic 		= ($ms['icon']) ? "<img src=\"".escape_attribute($ms['icon'])."\">" : "&nbsp;";
 			}
 			$threadstable .= "<tr>
 				<td class='tdbg1 center'>{$ms['id']}</td>

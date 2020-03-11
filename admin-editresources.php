@@ -68,17 +68,19 @@ switch ($_GET['type']) {
 				'label'     => 'Code',
 				'type'      => 'text',
 				'editstyle' => 'width: 150px',
+				'filter'    => 'html',
 			],
 			'url' => [
 				'label'     => 'Image URL',
 				'type'      => 'text',
 				'editstyle' => 'width: 500px',
+				'filter'    => 'html',
 			]
 		);
 		$values = array();
 		foreach ($res as $id => $x) {
 			$values[$id] = array(
-				-1     => "<img src=\"{$x[1]}\">",
+				-1     => "<img src=\"".escape_attribute($x[1])."\">",
 				'code' => $x[0],
 				'url'  => $x[1],
 			);
@@ -135,12 +137,13 @@ switch ($_GET['type']) {
 				'label'     => 'Image URL',
 				'type'      => 'text',
 				'editstyle' => 'width: 500px',
+				'filter'    => 'html',
 			]
 		);
 		$values = array();
 		foreach ($res as $id => $x) {
 			$values[$id] = array(
-				-1     => "<img src=\"{$x}\">",
+				-1     => "<img src=\"".escape_attribute($x)."\">",
 				'url'  => $x,
 			);
 		}
@@ -174,6 +177,9 @@ switch ($_GET['type']) {
 			
 			if (!$_POST['color'] || !$_POST['text'])
 				errorpage("You didn't enter the required fields.");
+			
+			if (!parse_color_input($_POST['color']))
+				errorpage("You didn't enter a valid syndrome color.");
 			
 			if (!in_array(find_syndrome($res, $_POST['postcount']), array(-1, $_GET['id'])))
 				errorpage("No post count duplicates allowed.");
@@ -218,6 +224,7 @@ switch ($_GET['type']) {
 				'type'      => 'text',
 				'editstyle' => 'width: 500px',
 				'default'   => "'Default syndrome' +",
+				'filter'    => 'html',
 			],
 			'enabled' => [
 				'label'     => 'Options', // lazy; will not work for multiple options

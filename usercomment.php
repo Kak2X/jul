@@ -28,9 +28,9 @@
 		
 		$vals = array(
 			'userfrom' => $loguser['id'], 
-			'userto' => $_GET['id'],
-			'date' => ctime(),
-			'text' => xssfilters($_POST['text']),
+			'userto'   => $_GET['id'],
+			'date'     => ctime(),
+			'text'     => $_POST['text'],
 		);
 		$sql->queryp("INSERT INTO users_comments SET ".mysql::setplaceholders($vals), $vals);		
 		return header("Location: profile.php?id={$_GET['id']}#comments");
@@ -106,7 +106,7 @@
 				<td class='tdbg{$cell} center fonts'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr'>".getuserlink($x)."</td>
 				<td class='tdbg{$cell} center nobr'>".printdate($x['date'])."</td>
-				<td class='tdbg{$cell}'>".htmlspecialchars($x['text'])."</td>
+				<td class='tdbg{$cell}'>".dofilters(doreplace2($x['text']))."</td>
 			</tr>";
 		}
 		

@@ -291,8 +291,7 @@
 ?>
 	<center>
 	<form method='POST' action='?id=<?= $_GET['id'] ?>&new'>
-	<input type='hidden' name='auth' value='$token'>
-
+	
 	<table class='table'>
 		<tr><td class='tdbgh center b' colspan='2'>Create post</td></tr>		
 		<tr>

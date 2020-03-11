@@ -113,7 +113,7 @@
 			);
 			$what = "a new category";
 		} else {
-			$what = "'{$cat['title']}'";
+			$what = "'".htmlspecialchars($cat['title'])."'";
 		}
 		
 ?>
@@ -233,7 +233,7 @@
 			);
 			$what = "a new item";
 		} else {
-			$what = "'{$item['title']}'";
+			$what = "'".htmlspecialchars($item['title'])."'";
 		}
 		
 		
@@ -271,7 +271,7 @@
 					<textarea wrap="virtual" id="feattxt" name="features" rows="20" cols="80" style="width: 100%; resize:vertical; white-space: pre; overflow-x: scroll"><?= htmlspecialchars($item['features']) ?></textarea>
 				</td>
 				<td class="tdbg1 center b lh">Built on:</td>
-				<td class="tdbg2"><?= datetofields($item['date'], 'date', DTF_DATE); ?></td>
+				<td class="tdbg2"><?= datetofields($item['date'], 'date', DTF_DATE) ?></td>
 			</tr>
 			<tr>
 				<td class="tdbg1 center b lh">Order:</td>
@@ -341,12 +341,12 @@
 			$txt .= "
 			<tr id='i{$x['id']}'>
 				<td class='tdbg{$cell} center vatop'>
-					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>{$x['title']}</a>
+					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>".htmlspecialchars($x['title'])."</a>
 					<br>{$editlink}
 					".($x['date'] ? "<div class='fonts'>(".printdate($x['date'], true).")</div>" : "")."
 				</td>
 				<td class='tdbg{$cell} vatop'>
-					<div>".nl2br($x['description'])."</div>
+					<div>".nl2br(xssfilters($x['description']))."</div>
 					".($_COOKIE['verAll'] || $x['id'] == $_GET['id'] ? "
 					<br>
 					<div>".
@@ -366,12 +366,12 @@
 								}
 								return $x[1].$x[2]."<li>";
 							},
-							doreplace2($x['features'], '0|0')
+							xssfilters($x['features'])
 						)."</div>
 					" : "")."
 				</td>
 				<td class='tdbg{$cell} center vatop'>
-					".nl2br($x['links'])."
+					".nl2br(xssfilters($x['links']))."
 				</td>
 			</tr>";
 		}
@@ -442,8 +442,8 @@
 			<tr>
 				<td class='tdbg{$cell} center'><a href='?cat={$x['id']}'>View</a>{$editlink}</td>
 				<td class='tdbg{$cell}'>
-					<b>{$x['title']}</b>
-					<div class='fonts'>{$x['description']}</div>
+					<b>".htmlspecialchars($x['title'])."</b>
+					<div class='fonts'>".xssfilters($x['description'])."</div>
 				</td>
 				<td class='tdbg{$cell} center'>{$x['count']}</td>
 			</tr>";

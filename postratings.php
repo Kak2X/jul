@@ -95,8 +95,8 @@
 					$userlist .= "<div>".getuserlink($user, $user['uid'])." <a href='?action=delete&type={$_GET['type']}&post={$_GET['post']}&r={$id}&u={$user['uid']}{$tokenstr}' style='float: right' title='Delete rating'>[X]</a></div>";
 			print "
 			<table class='table rating-table-sect'>
-				<tr><td class='tdbgh center'><img src=\"{$data['image']}\"> {$data['title']} <span style='float: right'>".rating_colors("[{$data['points']}]", $data['points'])."</span></td></tr>
-				<tr><td class='tdbgc center fonts'>{$data['description']}</td></tr>
+				<tr><td class='tdbgh center'><img src=\"".escape_attribute($data['image'])."\"> ".htmlspecialchars($data['title'])." <span style='float: right'>".rating_colors("[{$data['points']}]", $data['points'])."</span></td></tr>
+				<tr><td class='tdbgc center fonts'>".xssfilters($data['description'])."</td></tr>
 				<tr><td class='tdbg1 rating-table-userlist'><div class='rating-div-userlist'>{$userlist}</div></td></tr>
 			</table>";
 		}

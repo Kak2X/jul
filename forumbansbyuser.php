@@ -41,8 +41,8 @@
 		$txt .= "
 		<tr>
 			<td class='tdbg{$bg} center fonts' style='width: 60px'>{$editlink}</td>
-			<td class='tdbg{$bg} center'><a href='forum.php?id={$x['forum']}'>{$x['forumname']}</a></td>
-			<td class='tdbg{$bg} center'>".($x['reason'] ? $x['reason'] : "&mdash;")."</td>
+			<td class='tdbg{$bg} center'><a href='forum.php?id={$x['forum']}'>".htmlspecialchars($x['forumname'])."</a></td>
+			<td class='tdbg{$bg} center'>".($x['reason'] ? htmlspecialchars($x['reason']) : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".getuserlink($x, $x['banner'])."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
 			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>

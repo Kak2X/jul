@@ -1,11 +1,11 @@
 <?php
-	const LT_NONALPHA = '%';
+	const _LT_NONALPHA = '%';
 	const _POWL_ALL = 42;
 	const _LINK_SEPARATOR = ' | ';
 	
 	require 'lib/function.php';
 	
-	function sortbyexp($a,$b) {
+	function _sortbyexp($a,$b) {
 		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
 		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
 		if (!$_GET['ord']) { // DESC
@@ -16,7 +16,7 @@
 			return $cmpa - $cmpb;
 		}	
 	}
-	function sortbyrating($a, $b){
+	function _sortbyrating($a, $b){
 		if (!$_GET['ord']) { // DESC
 			return ($b['rating'] - $a['rating']);
 		} else {
@@ -79,7 +79,7 @@
 		$qwhere[] = "powerlevel $sqlpower";
 	}
 	if ($_GET['lt']) {
-		if ($_GET['lt'] == LT_NONALPHA) { // Non alphabetic
+		if ($_GET['lt'] == _LT_NONALPHA) { // Non alphabetic
 			$qwhere[] = "u.name NOT REGEXP '^[a-z]'";
 		} else {
 			// Alphabetic chars only
@@ -143,7 +143,7 @@
 	}
 	
 	if ($_GET['sort'] == 'exp') {
-		usort($users,'sortbyexp');
+		usort($users,'_sortbyexp');
 	} else if ($_GET['sort'] == 'rating') {
 	
 		// Alternative: one query per user (no thanks)
@@ -190,7 +190,7 @@
 			$users[$aid]['rating'] = $ratescore * 100000 / $ratetotal / 10000;
 		}
 		unset($tempdb, $aid, $userids);
-		usort($users, 'sortbyrating');
+		usort($users, '_sortbyrating');
   }
 	
 	$pagelinks = 
@@ -247,7 +247,7 @@
 		$c = chr(65 + $i);
 		$alphaelem[$c] = $c;
 	}
-	$alphaelem[LT_NONALPHA] = '#';
+	$alphaelem[_LT_NONALPHA] = '#';
 	$alphaelem[""] = 'All';
 	
 	//--

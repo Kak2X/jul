@@ -71,7 +71,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	/*
 		Board title (and sub titles)
 	*/
-	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . $windowtitle : "");
+	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . htmlspecialchars($windowtitle) : "");
 	
 	// Admin-only info
 	// in_array($loguserid,array(1,5,2100))
@@ -299,7 +299,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = '{$scheme}'");
 
 	$filename	= "";
-	if ($schemerow && file_exists("schemes/{$schemerow['file']}")) {
+	if ($schemerow && substr($schemerow['file'], -4) === ".php" && valid_filename(substr($schemerow['file'], 0, -4)) && file_exists("schemes/{$schemerow['file']}")) {
 		$filename	= $schemerow['file'];
 	} else {
 		$filename	= "night.php";
@@ -332,8 +332,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		$config['board-title'] .= $config['title-submessage'];
 	}
 	
+	$config['board-title'] = xssfilters($config['board-title']);
+	
 	if ($schemepre) {
-		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". $schemerow['name'] ."</b>\"</span>";
+		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". htmlspecialchars($schemerow['name']) ."</b>\"</span>";
 	}
 	// Default bar image definition
 	$barimg = array(
@@ -696,7 +698,8 @@ piwikTracker.enableLinkTracking();
 <script type=\"text/javascript\" src=\"js/useful.js\"></script> -->
 	*/
 	
-	print "<script type='text/javascript' src='js/jquery.min.js'></script><br><br><center>";
+	//print "<script type='text/javascript' src='js/jquery.min.js'></script>";
+	print "<br><br><center>";
 	
 	if ($showfooter) {
 		?>

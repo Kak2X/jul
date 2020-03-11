@@ -7,8 +7,8 @@
 		//"24.234.157.232",			// also me	
 	);
 	
-	const SHOW_ALL    = -20;
-	const SHOW_BANNED = -10;
+	const _SHOW_ALL    = -20;
+	const _SHOW_BANNED = -10;
 
 	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers) && !$sysadmin && $loguser['id'] != 1) errorpage("Nein.");
   
@@ -128,7 +128,7 @@
 	
 	// Display only banned users by default
 	if (!isset($_POST['sortpower'])) {
-		$_POST['sortpower'] = SHOW_BANNED;
+		$_POST['sortpower'] = _SHOW_BANNED;
 	} else {
 		$_POST['sortpower'] = filter_int($_POST['sortpower']);
 	}
@@ -139,8 +139,8 @@
 	$ordsel[$_POST['sortord']]           = 'checked';
 
 	// Hack around adding extra elements to the select list
-	$pwlnames[SHOW_ALL]    = "* Any powerlevel";
-	$pwlnames[SHOW_BANNED] = "* All banned (default)";
+	$pwlnames[_SHOW_ALL]    = "* Any powerlevel";
+	$pwlnames[_SHOW_BANNED] = "* All banned (default)";
 	ksort($pwlnames);
  
  ?>
@@ -194,9 +194,9 @@
 		$values['searchname']   = "%{$_POST['searchname']}%";
 	}
 
-	if ($_POST['sortpower'] == SHOW_BANNED) { // Special handler for all banned
+	if ($_POST['sortpower'] == _SHOW_BANNED) { // Special handler for all banned
 		$sqlwhere[] = "(`powerlevel` < 0) ";
-	} else if ($_POST['sortpower'] != SHOW_ALL) {
+	} else if ($_POST['sortpower'] != _SHOW_ALL) {
 		$sqlwhere[] = "`powerlevel` = :powerlevel";
 		$values['powerlevel'] = $_POST['sortpower'];
 	}
@@ -257,8 +257,8 @@
 		<td class="tdbg1 center"><?= $regdate ?></td>
 		<td class="tdbg1 center"><?= $lastpost ?></td>
 		<td class="tdbg1 center"><?= $lastactivity ?></td>
-		<td class="tdbg2"><?= $user['lasturl'] ?>&nbsp;</td>
-		<td class="tdbg2 center"><?= $user['lastip'] ?></td>
+		<td class="tdbg2"><?= htmlspecialchars($user['lasturl']) ?>&nbsp;</td>
+		<td class="tdbg2 center"><?= htmlspecialchars($user['lastip']) ?></td>
 	</tr>
 		<?php
 	}

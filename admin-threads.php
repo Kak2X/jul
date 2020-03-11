@@ -76,7 +76,7 @@
 			?>
 			<tr>
 				<td class='tdbg1 center'><a href="thread.php?id=<?= $data['thread'] ?>"><?= $data['thread'] ?></a></td>
-				<td class='tdbg2'><a href="thread.php?id=<?= $data['thread'] ?>"><?= $data['threadname'] ?></a></td>
+				<td class='tdbg2'><a href="thread.php?id=<?= $data['thread'] ?>"><?= htmlspecialchars($data['threadname']) ?></a></td>
 				<td class='tdbg1 right'><?=$data['replies']?></td>
 				<td class='tdbg1 right'><?=$data['real']?></td>
 				<td class='tdbg2 right'><b><?=$data['offset']?></b></td>

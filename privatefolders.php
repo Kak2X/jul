@@ -33,10 +33,10 @@ $idparam = opt_param(['id']);
 // Endless folders are no fun
 if ($config['pmthread-folder-limit']) {
 	$limit = $sql->resultq("SELECT COUNT(*) FROM pm_folders WHERE user = {$u}");
-	define('LIMIT_REACHED', $limit >= $config['pmthread-folder-limit']);
+	define('_LIMIT_REACHED', $limit >= $config['pmthread-folder-limit']);
 	unset($limit);
 } else {
-	define('LIMIT_REACHED', false);
+	define('_LIMIT_REACHED', false);
 }
 
 if (isset($_POST['edit'])) { // Add or edit a folder
@@ -48,7 +48,7 @@ if (isset($_POST['edit'])) { // Add or edit a folder
 	}
 	$sql->beginTransaction();
 	if ($_GET['edit'] <= -1) {
-		if (LIMIT_REACHED) {
+		if (_LIMIT_REACHED) {
 			errorpage("Go delete at least one folder before continuing, okay?", "?{$idparam}", "the folder editor");
 		}
 		create_pm_folder($_POST['title'], $u, $_POST['ord']);
@@ -118,13 +118,13 @@ if (!$folders) {
 	}
 }
 
-if (LIMIT_REACHED) {
+if (_LIMIT_REACHED) {
 	$newtag = "Max number of folders reached.";
 } else {
 	$newtag = "<a href='?{$idparam}&edit=-1'>&lt; Create a new folder &gt;</a>";
 }
 
-$users_p = ($u != $loguser['id']) ? htmlspecialchars(load_user($u)['name'])."'s p" : "P";
+$users_p = ($u != $loguser['id']) ? load_user($u)['name']."'s p" : "P";
 $links = array(
 	["{$users_p}rivate messages", "private.php?{$idparam}"],
 	["Manage folders", NULL],

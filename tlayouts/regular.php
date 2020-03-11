@@ -234,7 +234,6 @@ function postcode($post,$set){
 				$sidebar = preg_replace_callback("'&(expbar)(?:_(\d*))?&'", $expbar_apply, $sidebar);
 				
 			}
-			$sidebar = xssfilters($sidebar);
 		}
 		
 		

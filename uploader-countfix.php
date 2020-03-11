@@ -102,7 +102,7 @@
 			}
 			print "<tr>
 				<td class='tdbg{$cell} center'>{$x['id']}</td>
-				<td class='tdbg{$cell}'><a href='uploader.php?cat={$x['id']}'>{$x['title']}</a></td>
+				<td class='tdbg{$cell}'><a href='uploader.php?cat={$x['id']}'>".htmlspecialchars($x['title'])."</a></td>
 				<td class='tdbg{$cell} center'>{$x['count_cur']}</td>
 				<td class='tdbg{$cell} center'>{$x['count_real']}</td>
 				<td class='tdbg{$cell} center'>{$x['offset']}</td>

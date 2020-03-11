@@ -41,7 +41,7 @@
 				set_board_cookie('loguserid', $userid);
 				set_board_cookie('logverify', $verify);
 
-				$msg = "You are now logged in as $username.";
+				$msg = "You are now logged in as ".getuserlink(null, $userid).".";
 			//} else if (/*$username == "Blaster" || */$username === "tictOrnaria") {
 			//	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Abusive / malicious behavior'");
 			//	@xk_ircsend("1|". xk(7) ."Auto banned tictOrnaria (malicious bot) with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");

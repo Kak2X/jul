@@ -161,8 +161,8 @@
 		if ($thread['closed']) $threadstatus .= "off";
 		
 		// Thread title column
-		$threadtitle = "<a href='showprivate.php?id={$thread['id']}{$navlink}'>{$thread['title']}</a>";
-		$posticon    = $thread['icon'] ? "<img src=\"".htmlspecialchars($thread['icon'])."\">" : "&nbsp;";
+		$threadtitle = "<a href='showprivate.php?id={$thread['id']}{$navlink}'>".htmlspecialchars($thread['title'])."</a>";
+		$posticon    = $thread['icon'] ? "<img src=\"".escape_attribute($thread['icon'])."\">" : "&nbsp;";
 		$belowtitle  = array(); // An extra line below the title in certain circumstances
 		// Extra pages
 		$threadlinks = pagelist("showprivate.php?id={$thread['id']}", $thread['replies'] + 1, $ppp, $maxfromstart, $maxfromend);

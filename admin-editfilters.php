@@ -250,7 +250,7 @@ if (!$_GET['type']) {
 			<td class='tdbg1 center'>".($x['method'] == 2 ? 'RegEx' : 'Replace').($x['method'] == 1 ? "<div class='fonts'>Case Insensitive</div>" : "")."</td>
 			<td class='tdbg2 center'>".
 				($x['comment'] 
-				? "<span style='border-bottom: 1px dotted #f00; font-weight: bold' title=\"".str_replace('"', "'", $x['comment'])."\">?</span>"
+				? "<span style='border-bottom: 1px dotted #f00; font-weight: bold' title=\"".escape_attribute($x['comment'])."\">?</span>"
 				: "&nbsp;")."
 			</td>
 		</tr>";

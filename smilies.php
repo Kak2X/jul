@@ -17,7 +17,7 @@
 	// Display 4 smilies on each row
 	foreach($s as $i => $v) {
 		if (!($i % 4)) print "<tr></tr>";	
-		if ($v) print "<td class='tdbg1 center'><img src=\"". $v[1] ."\"></td><td class='tdbg2 center'>". $v[0] ."</td>";
+		if ($v) print "<td class='tdbg1 center'><img src=\"". escape_attribute($v[1]) ."\"></td><td class='tdbg2 center'>". htmlspecialchars($v[0]) ."</td>";
 	}
 
 

@@ -80,13 +80,14 @@
 		if (!$user['posts']) $user['lastposttime'] = getblankdate();
 		else                 $user['lastposttime'] = printdate($user['lastposttime']);
 
+		$user['lastip'] = htmlspecialchars($user['lastip'], ENT_QUOTES);
 		//$user['lasturl']=str_replace('<','&lt;',$user['lasturl']);
 		//$user['lasturl']=str_replace('>','&gt;',$user['lasturl']);
 		//$user['lasturl']=str_replace('%20',' ',$user['lasturl']);
 		$user['lasturl']=str_replace('shop?h&','shop?',$user['lasturl']);
 		$user['lasturl']=preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
 		$user['lasturl']=preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
-		$user['lasturl']=htmlspecialchars($user['lasturl'], ENT_QUOTES);		
+		$user['lasturl']=escape_attribute($user['lasturl']);		
 		if (substr($user['lasturl'], -11) =='(IP banned)' || substr($user['lasturl'], -11) =='(Tor proxy)' || substr($user['lasturl'], -5) == '(Bot)') {
 			$ptr = strrpos($user['lasturl'], '(', -4);
 			$realurl = substr($user['lasturl'], 0, $ptr-1);
@@ -100,7 +101,7 @@
 			<td class='tdbg2'><?=$userlink?></td>
 			<td class='tdbg1 center'><?=date('h:i:s A',$user['lastactivity']+$loguser['tzoff'])?></td>
 			<td class='tdbg1 center'><?=$user['lastposttime']?></td>
-			<td class='tdbg2'><a rel="nofollow" href="<?=urlformat($realurl)?>"><?=$user['lasturl']?></td>
+			<td class='tdbg2'><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$user['lasturl']?></td>
 		<?php
 
 		if ($banorama)
@@ -139,6 +140,7 @@
 	<?php
 
 	for($i=1;$guest=$sql->fetch($guests);++$i){
+		$guest['ip'] = htmlspecialchars($user['ip'], ENT_QUOTES);
 		//$guest['lasturl']=str_replace('<','&lt;',$guest['lasturl']);
 		//$guest['lasturl']=str_replace('>','&gt;',$guest['lasturl']);
 		$guest['lasturl']=str_replace('shop?h&','shop?',$guest['lasturl']);
@@ -162,7 +164,7 @@
 			$realurl = $guest['lasturl'];
 		}
 /*
-		$lasturltd	= "<td class='tdbg2'$marker><a rel=\"nofollow\" href=\"". urlformat($guest['lasturl']) ."\">$guest[lasturl]";
+		$lasturltd	= "<td class='tdbg2'$marker><a rel=\"nofollow\" href=\"". _urlformat($guest['lasturl']) ."\">$guest[lasturl]";
 		if (substr($guest['lasturl'], -11) =='(IP banned)')
 			$lasturltd	= "<td class='tdbg2'$marker><a rel=\"nofollow\" href=\"". substr($guest['lasturl'], 0, -12) ."\">". substr($guest['lasturl'], 0, -12) ."</a> (IP banned)";
 		elseif (substr($guest['lasturl'], -11) =='(Tor proxy)')
@@ -176,7 +178,7 @@
 			<td class='tdbg1 center'<?=$marker?>><?=$i?></td>
 			<td class='tdbg2 fonts center'<?=$marker?>><?=htmlspecialchars($guest['useragent'])?></td>
 			<td class='tdbg1 center'<?=$marker?>><?=date('h:i:s A',$guest['date']+$loguser['tzoff'])?></td>
-			<td class='tdbg2'<?=$marker?>><a rel="nofollow" href="<?=urlformat($realurl)?>"><?=$guest['lasturl']?></td>
+			<td class='tdbg2'<?=$marker?>><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$guest['lasturl']?></td>
 		<?php
 
 
@@ -202,6 +204,6 @@
 	
 	pagefooter();
 
-	function urlformat($url) {
+	function _urlformat($url) {
 		return preg_replace("/^\/thread\.php\?pid=([0-9]+)$/", "/thread.php?pid=\\1#\\1", $url);
 	}

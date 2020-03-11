@@ -31,9 +31,9 @@
 	
 	// load_thread takes care of view permissions, but the reply permissions still need to be checked
 	if (!$ismod && $thread['closed']) {
-		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.{$lastchance}","thread.php?id={$_GET['id']}",$thread['title'],0);
+		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.{$lastchance}","thread.php?id={$_GET['id']}",htmlspecialchars($thread['title']),0);
 	} else if ($loguser['powerlevel'] < $forum['minpowerreply'] || $banned) {
-		errorpage("You are not allowed to reply to this thread.{$lastchance}","thread.php?id={$_GET['id']}",$thread['title'],0);
+		errorpage("You are not allowed to reply to this thread.{$lastchance}","thread.php?id={$_GET['id']}",htmlspecialchars($thread['title']),0);
 	}
 	
 	if ($forum_error) {

@@ -46,8 +46,8 @@
 		}
 		
 		$vals = array(
-			'name'		=> filter_string($_POST['name'], true),
-			'desc'		=> filter_string($_POST['desc'], true),
+			'name'		=> filter_string($_POST['name']),
+			'desc'		=> filter_string($_POST['desc']),
 			'cat'		=> filter_int($_POST['cat']),
 			'type'		=> filter_int($_POST['type']),
 			'effect'	=> filter_int($_POST['effect']),
@@ -117,7 +117,7 @@
 
 	$cat	= $_GET['cat'] ? $_GET['cat'] : 1;
 	
-	echo linkbar($categories, $cat);
+	echo _linkbar($categories, $cat);
 
 //	$stats	= array("sHP", "sMP", "sAtk", "sDef", "sInt", "sMDf", "sDex", "sLck", "sSpd");
 
@@ -168,13 +168,13 @@
 					<?=($hiddeneditok ? "<br><input type=\"checkbox\" id=\"hiddenitem\" name=\"hidden\" value=\"1\"". ($item['hidden'] ? " checked" : "") ."> <label for=\"hiddenitem\">Hidden item</label>" : "")?>
 				</td>
 				<td class='tdbgh center'>Category</td>
-				<td class='tdbg1'><?=linkbar($categories, $item['cat'], 1, "cat")?> / <?=linkbar($alltypes, $item['type'], 1, "type")?></td>
+				<td class='tdbg1'><?=_linkbar($categories, $item['cat'], 1, "cat")?> / <?=_linkbar($alltypes, $item['type'], 1, "type")?></td>
 			</tr>
 			<tr>
 				<td class='tdbgh center'>Desc</td>
 				<td class='tdbg1' colspan=3><input type="text" name="desc" value="<?=htmlspecialchars($item['desc'])?>" style="width: 100%"></td>
 				<td class='tdbgh center'>Effect</td>
-				<td class='tdbg1'><?=linkbar($effects, $item['effect'], 1, "effect")?></td>
+				<td class='tdbg1'><?=_linkbar($effects, $item['effect'], 1, "effect")?></td>
 			</tr>
 
 			<tr><td class='tdbgc center' colspan=6><img src="images/_.gif" height=6 width=6></td></tr>
@@ -251,18 +251,18 @@
 		}
 */
 		if ($item['uname']) {
-			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['upow'], $item['unc']) ."'>". $item['uname'] ."</span></a></nobr>";
+			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['upow'], $item['unc']) ."'>". htmlspecialchars($item['uname']) ."</span></a></nobr>";
 		} else {
 			$item['uname']	= "";
 		}
 
 		if ($item['desc']) {
-			$item['name']	.= " <span class=\"fonts\" style=\"color: #88f;\">- ". $item['desc'] ."</span>";
+			$item['name']	.= " <span class=\"fonts\" style=\"color: #88f;\">- ". htmlspecialchars($item['desc']) ."</span>";
 		}
 
 		$typerow[$item['type']] .= "<tr>
 				<td class='tdbg1 fonts center'><a href=\"?cat=$cat&id=". $item['id'] . ($_GET['type'] ? "&type=". $_GET['type'] : "") ."\">Edit</a></td>
-				<td class='tdbg{$tc2} center'>". $item['uname'] ."</td><td class='tdbg{$tc2}'>". $item['name'] ."</td>";
+				<td class='tdbg{$tc2} center'>". htmlspecialchars($item['uname']) ."</td><td class='tdbg{$tc2}'>". htmlspecialchars($item['name']) ."</td>";
 
 		$val	= 0;
 		foreach($stats as $n => $stat) {
@@ -336,7 +336,7 @@
 
 
 
-	function linkbar($links, $sel = 1, $type = 0, $name = "cat") {
+	function _linkbar($links, $sel = 1, $type = 0, $name = "cat") {
 
 		if ($type == 0) {
 			$c	= count($links);
@@ -347,7 +347,7 @@
 			foreach($links as $link => $name) {
 
 				$cell = ($link == $sel) ? "c" : "1";
-				$r	.= "<td class='tdbg{$cell} center' width=\"$w%\"><a href=\"?cat=$link\">$name</a></td>";
+				$r	.= "<td class='tdbg{$cell} center' width=\"$w%\"><a href=\"?cat=$link\">".htmlspecialchars($name)."</a></td>";
 			}
 
 			return $r ."</table><br>";

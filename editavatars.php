@@ -8,8 +8,8 @@
 	if ($loguser['avatar_locked'])        errorpage("You aren't allowed to upload avatars.");
 	
 	
-	const DEFAULT_STR    = "[Default Avatar]";
-	//const DELAYED_CRAP = " <br>(the changes may not take effect immediately)";
+	const _DEFAULT_STR    = "[Default Avatar]";
+	//const _DELAYED_CRAP = " <br>(the changes may not take effect immediately)";
 	
 	
 	$_GET['id']   = filter_int($_GET['id']);
@@ -55,7 +55,7 @@
 		$message       = "
 			Are you sure you want to delete this avatar?<br/>
 			<br/>
-			".avbox($_GET['id'], $_GET['del'], $avatar, true)."
+			"._avbox($_GET['id'], $_GET['del'], $avatar, true)."
 			
 		";
 		$form_link     = "?id={$_GET['id']}&del={$_GET['del']}";
@@ -104,7 +104,7 @@
 				$newid     = $_GET['edit']; // Pick the selected avatar
 			}
 			
-			$_POST['title']   = xssfilters(filter_string($_POST['title']));
+			$_POST['title']   = filter_string($_POST['title']);
 			$_POST['hidden']  = filter_int($_POST['hidden']);
 			if (!$_POST['title']) {
 				errorpage("The avatar title cannot be blank.");
@@ -112,7 +112,7 @@
 		}
 		
 		$_FILES['upload'] = filter_array($_FILES['upload']);
-		$_POST['weblink'] = xssfilters(trim(filter_string($_POST['weblink'])));
+		$_POST['weblink'] = trim(filter_string($_POST['weblink']));
 		
 		// Make sure you aren't uploading something blank
 		$valid_file = (isset($_FILES['upload']) && !filter_int($_FILES['upload']['error']));
@@ -142,7 +142,7 @@
 			save_avatar($qdata);
 		}
 		
-		//msg_holder::set_cookie("Avatar '<i>".htmlspecialchars($title)."</i>' uploaded!".DELAYED_CRAP);
+		//msg_holder::set_cookie("Avatar '<i>".htmlspecialchars($title)."</i>' uploaded!"._DELAYED_CRAP);
 		return header("Location: editavatars.php?id={$_GET['id']}");
 	}
 	
@@ -150,17 +150,17 @@
 	// Iterate between avatars (always show the default regardless it if exists or not)
 	$usermood = get_avatars($_GET['id'], AVATARS_ALL);
 	if (!isset($usermood[0])) {
-		$usermood[0] = dummy_avatar(DEFAULT_STR, 0);
+		$usermood[0] = dummy_avatar(_DEFAULT_STR, 0);
 		$usermood[0]['new'] = true;
 		ksort($usermood);
 	} else {
-		$usermood[0]['title'] = DEFAULT_STR;
+		$usermood[0]['title'] = _DEFAULT_STR;
 	}
 	
 	
 	$txt = "";
 	foreach ($usermood as $file => $data) {
-		$txt .= avbox($_GET['id'], $file, $data);
+		$txt .= _avbox($_GET['id'], $file, $data);
 	}
 	
 	pageheader("Edit avatars");
@@ -274,9 +274,9 @@
 	
 	pagefooter();
 	
-	function avbox($user, $file, $data, $options = 0) {	
+	function _avbox($user, $file, $data, $options = 0) {	
 		$data['title']   = htmlspecialchars($data['title']);
-		$data['weblink'] = htmlspecialchars($data['weblink']);
+		$data['weblink'] = escape_attribute($data['weblink']);
 		
 		if (isset($data['new'])) {
 			$image = "images/_.gif";

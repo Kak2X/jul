@@ -17,7 +17,7 @@
 		if ($add) $sql->query("INSERT INTO postradar (user, comp) VALUES ({$loguser['id']}, $add)");
 		
 		if (isset($_POST['submit2'])) { // Save and finish
-			errorpage("Thank you, {$loguser['name']}, for editing your post radar.",'index.php','return to the board',0);
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing your post radar.",'index.php','return to the board',0);
 		}
 	}
 
@@ -31,7 +31,7 @@
 
 	$remlist = "";
 	while ($user = $sql->fetch($users1)) {
-		$remlist .= "<option value='{$user['comp']}'>{$user['name']} -- {$user['posts']} posts</option>";
+		$remlist .= "<option value='{$user['comp']}'>".htmlspecialchars($user['name'])." -- {$user['posts']} posts</option>";
 		$idlist[] = $user['comp'];
 	}
 
@@ -43,7 +43,7 @@
 
 	$addlist = "";
 	while ($user = $sql->fetch($users1)){
-		$addlist .= "<option value={$user['id']}>{$user['name']} -- {$user['posts']} posts</option>";
+		$addlist .= "<option value={$user['id']}>".htmlspecialchars($user['name'])." -- {$user['posts']} posts</option>";
 	}
 
 ?>

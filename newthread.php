@@ -15,7 +15,7 @@
 	load_forum($_GET['id']);
 	check_forumban($_GET['id'], $loguser['id']);
 	
-	$windowtitle = "{$forum['title']} -- New Thread";
+	$windowtitle = htmlspecialchars($forum['title'])." -- New Thread";
 	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
 	
 	$smilies = readsmilies();
@@ -174,7 +174,7 @@
 				xk_ircout(strtolower($whatisthis), $user['name'], array(
 					'forum'		=> $forum['title'],
 					'fid'		=> $forum['id'],
-					'thread'	=> str_replace("&lt;", "<", $_POST['subject']),
+					'thread'	=> $_POST['subject'],
 					'pid'		=> $pid,
 					'pow'		=> $forum['minpower'],
 				));
@@ -259,7 +259,7 @@
 	if (isset($_POST['preview']) && !$error) {
 		
 		if ($posticon)
-			$iconpreview = "<img src=\"".htmlspecialchars($posticon)."\" height=15 align=absmiddle>";
+			$iconpreview = "<img src=\"".escape_attribute($posticon)."\" height=15 align=absmiddle>";
 	
 		// Preview a poll always in normal style
 		$pollpreview = $_GET['poll'] ? preview_poll($_POST, $_GET['id']) : "";

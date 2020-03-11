@@ -70,7 +70,7 @@
 			?>
 		<tr>
 			<td class='tdbg1 center'><?=$data['id']?></td>
-			<td class='tdbg2'><a href="thread.php?id=<?=$data['id']?>"><?=$data['title']?></a></td>
+			<td class='tdbg2'><a href="thread.php?id=<?=$data['id']?>"><?= htmlspecialchars($data['title']) ?></a></td>
 			<td class='tdbg1 center'><?=($data['lastpostdate'] ? printdate($data['lastpostdate']) : "-")?></td>
 			<td class='tdbg1 center'><?=($data['realdate'] ? printdate($data['realdate']) : "-")?></td>
 			<td class='tdbg1 center'><?=timeunits2($data['lastpostdate'] - $data['realdate'])?></td>

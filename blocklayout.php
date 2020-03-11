@@ -33,7 +33,7 @@
 			$verb = "blocking";
 		}
 		
-		errorpage("Thank you, {$loguser['name']}, for {$verb} a post layout.", filter_string($_SERVER['HTTP_REFERER']), 'the previous page', 0);
+		errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for {$verb} a post layout.", filter_string($_SERVER['HTTP_REFERER']), 'the previous page', 0);
 	} else if ($_GET['action'] == 'nuke' && $isadmin) {
 		if (confirmed($msgkey = 'del-layout')) {
 			$_POST['title']   = filter_string($_POST['title']);

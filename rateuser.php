@@ -25,14 +25,14 @@
 		
 		$_POST['rating'] = numrange(filter_int($_POST['rating']), 0, 10);
 		if ($_GET['id'] == $loguser['id']) {
-			errorpage("Thank you, {$loguser['name']}, for attempting to rate yourself.", 'index.php', 'return to the board');
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for attempting to rate yourself.", 'index.php', 'return to the board');
 		}
 		$sql->query("
 			INSERT INTO userratings (userfrom, userrated, rating) 
 			VALUES ({$loguser['id']}, {$_GET['id']}, {$_POST['rating']})
 			ON DUPLICATE KEY UPDATE rating = VALUES(rating)
 		");
-		errorpage("Thank you, {$loguser['name']}, for rating this user.", "profile.php?id={$_GET['id']}", "the user's profile");
+		errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for rating this user.", "profile.php?id={$_GET['id']}", "the user's profile");
 	} else if ($_GET['action'] == 'viewvotes' && $isadmin) {
 		$userlink = getuserlink(NULL, $_GET['id']);
 		

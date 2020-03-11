@@ -181,7 +181,9 @@
 		<td class='tdbgc center'>Posts</td>
 		<td class='tdbgc center' colspan=2>Last IP</td>
 	</tr>
-<?php for ($c = 0; $user = $sql->fetch($users); ++$c) { ?>
+<?php for ($c = 0; $user = $sql->fetch($users); ++$c) { 
+	$lastip = htmlspecialchars($user['lastip']);
+?>
 	<tr>
 		<td class='tdbg2 center'><?=$user['id']?></td>
 		<td class='tdbg1 center'><?=getuserlink($user)?></td>
@@ -189,11 +191,11 @@
 		<td class='tdbg1 center'><?=printdate($user['lastposttime'])?></td>
 		<td class='tdbg1 center'><?=printdate($user['lastactivity'])?></td>
 		<td class='tdbg1 center'><?=$user['posts']?></td>
-		<td class='tdbg2 center'><?=$user['lastip']?></td>
+		<td class='tdbg2 center'><?=$lastip?></td>
 		<td class='tdbg2 center'><?=
 			($user['ipbanned'] ? 
-			"<a href='admin-ipbans.php?searchip={$user['lastip']}'>[IP BANNED]</a>" : 
-			"<a href='admin-ipbans.php?action=add&ip={$user['lastip']}'>IP Ban</a>")?>
+			"<a href=\"admin-ipbans.php?searchip={$lastip}\">[IP BANNED]</a>" : 
+			"<a href=\"admin-ipbans.php?action=add&ip={$lastip}\">IP Ban</a>")?>
 		</td>
 	</tr>
 <?php } ?>
@@ -216,7 +218,7 @@
 		<td class='tdbg1 center'><?=getuserlink($post, $post['user'])?></td>
 		<td class='tdbg1 center'><a href="thread.php?id=<?=$post['thread']?>"><?=htmlspecialchars($post['title'])?></a></td>
 		<td class='tdbg1 center nobr'><?=printdate($post['date'])?></td>
-		<td class='tdbg2 center'><?=$post['ip']?></td>
+		<td class='tdbg2 center'><?=htmlspecialchars($post['ip'])?></td>
 	</tr>
 <?php }	?>
 </table>
@@ -238,7 +240,7 @@
 		<td class='tdbg1 center'><?=getuserlink($pm, $pm['user'])?></td>
 		<td class='tdbg1 center'><a href="showprivate.php?id=<?=$pm['thread']?>"><?=htmlspecialchars($pm['title'])?></a></td>
 		<td class='tdbg1 center nobr'><?=printdate($pm['date'])?></td>
-		<td class='tdbg2 center'><?=$pm['ip']?></td>
+		<td class='tdbg2 center'><?=htmlspecialchars($pm['ip'])?></td>
 	</tr>
 <?php }	?>
 </table>

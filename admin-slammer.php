@@ -80,7 +80,7 @@ else if ($_POST['knockout']) {
 	echo "Max ID set to {$new_maxid}.\n";
 
 	ipban($uinfo['lastip'], "Thanks for playing!");
-	echo "Delivered IP ban to {$uinfo['lastip']}.\n";
+	echo "Delivered IP ban to ".htmlspecialchars($uinfo['lastip']).".\n";
 
 	xk_ircsend("1|". xk(8) . $uinfo['name'] . xk(7). " (IP " . xk(8) . $uinfo['lastip'] . xk(7) .") is the latest victim of the new EZ BAN button(tm).");
 
@@ -95,12 +95,12 @@ else if ($_POST['knockout']) {
 	$ct_threads = count($threads);
 	$ct_posts   = count($posts);
 
-	echo "Up on the chopping block today is \"{$uinfo['name']}\".\n\n";
-	echo "Their last known IP address is \"{$uinfo['lastip']}\".\n\n";
+	echo "Up on the chopping block today is \"".htmlspecialchars($uinfo['name'])."\".\n\n";
+	echo "Their last known IP address is \"".htmlspecialchars($uinfo['lastip'])."\".\n\n";
 
 	echo "They have made {$ct_threads} thread(s):\n";
 	foreach ($threads as $th)
-		echo "{$th['id']}: {$th['title']} (in forum {$th['forum']})\n";
+		echo "{$th['id']}: ".htmlspecialchars($th['title'])." (in forum {$th['forum']})\n";
 
 	echo "\nThey have made {$ct_posts} post(s):\n";
 	foreach ($posts as $po)

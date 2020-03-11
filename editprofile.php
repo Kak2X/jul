@@ -120,8 +120,7 @@
 			// Always process the backup entry, so it can be updated even when it isn't selected
 			$_POST['namecolor'] = filter_string($_POST['namecolor']); // Color input type
 			if ($_POST['namecolor']) {
-				$namecolor_bak = substr($_POST['namecolor'], 1); // Remove #
-				if (!ctype_xdigit($namecolor_bak)) {
+				if (!($namecolor_bak = parse_color_input($_POST['namecolor']))) {
 					errorpage("What are you trying to accomplish?");
 				}
 			} else { // This is a failsafe in case a color was never selected previously (causing the ctype check to fail)
@@ -151,41 +150,35 @@
 		
 		$sql->beginTransaction();
 		
-		// TODO: xssfilters tends to be done twice (first in input, then output), which is not really necessary
-		// 	     considering the filters may need to be updated, it's better to only filter html during output.
-		
-		// Generally, anything that is allowed to contain HTML goes through xssfilters() here
-		// Things that don't will be htmlspecialchars'd when they need to be displayed, so we don't bother 
-		
 		// Editprofile fields
 		$mainval = array(
 			// Login info
 			'password'			=> $passwordenc,	
 			// Appareance
-			'title'				=> $titleopt ? xssfilters(filter_string($_POST['title'], true)) : $userdata['title'],
+			'title'				=> $titleopt ? filter_string($_POST['title']) : $userdata['title'],
 			'namecolor'			=> $namecolor,
 			'namecolor_bak'		=> $namecolor_bak,
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
-			'css' 				=> xssfilters(filter_string($_POST['css'])), // NOT nl2br'd
-			'postheader' 		=> xssfilters($_POST['postheader']),
-			'signature' 		=> xssfilters($_POST['signature']),
+			'css' 				=> filter_string($_POST['css']), // NOT nl2br'd
+			'postheader' 		=> $_POST['postheader'],
+			'signature' 		=> $_POST['signature'],
 			'sidebar'			=> $_POST['sidebar'],
 			'sidebartype'		=> $_POST['sidebartype'],
 			// Personal information
 			'sex' 				=> numrange(filter_int($_POST['sex']), 0, 2),
-			'aka' 				=> filter_string($_POST['aka'], true),
-			'realname' 			=> filter_string($_POST['realname'], true),
-			'location' 			=> xssfilters(filter_string($_POST['location'], true)),
+			'aka' 				=> filter_string($_POST['aka']),
+			'realname' 			=> filter_string($_POST['realname']),
+			'location' 			=> filter_string($_POST['location']),
 			'birthday'			=> fieldstotimestamp('birth', '_POST'),
-			'bio' 				=> xssfilters($bio),
+			'bio' 				=> $bio,
 			// Online services
-			'email' 			=> filter_string($_POST['email'], true),
+			'email' 			=> filter_string($_POST['email']),
 			'privateemail' 		=> filter_int($_POST['privateemail']),
 			'icq' 				=> filter_int($_POST['icq']),
-			'aim' 				=> filter_string($_POST['aim'], true),
-			'imood' 			=> filter_string($_POST['imood'], true),
-			'homepageurl' 		=> filter_string($_POST['homepageurl'], true),
-			'homepagename'	 	=> filter_string($_POST['homepagename'], true),
+			'aim' 				=> filter_string($_POST['aim']),
+			'imood' 			=> filter_string($_POST['imood']),
+			'homepageurl' 		=> filter_string($_POST['homepageurl']),
+			'homepagename'	 	=> filter_string($_POST['homepagename']),
 			// Options
 			'dateformat' 		=> $eddateformat,
 			'dateshort' 		=> $eddateshort,
@@ -223,7 +216,7 @@
 			}
 			
 			// Same for the avatar
-			$weblink = xssfilters(trim(filter_string($_POST['picture_weblink'])));
+			$weblink = trim(filter_string($_POST['picture_weblink']));
 			if (filter_int($_POST['del_picture'])) {
 				delete_avatar($id, 0);
 			} else if (filter_int($_FILES['picture']['size'])) {
@@ -262,7 +255,7 @@
 			 // Do the double name check here
 			$users = $sql->query('SELECT name FROM users');
 			
-			$username  = substr(xssfilters(filter_string($_POST['name'], true)),0,25);
+			$username  = substr(filter_string($_POST['name']),0,25);
 			$username2 = str_replace(' ','',$username);
 			$username2 = preg_replace("'&nbsp;?'si",'',$username2);
 			
@@ -306,9 +299,9 @@
 		
 		$sql->commit();
 		if (!$edituser)	{
-			errorpage("Thank you, {$loguser['name']}, for editing your profile.","profile.php?id=$id",'view your profile',0);
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing your profile.","profile.php?id=$id",'view your profile',0);
 		} else { 
-			errorpage("Thank you, {$loguser['name']}, for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing this user.","profile.php?id=$id","view {$userdata['name']}'s profile",0);
 		}
 		
 	}
@@ -333,7 +326,7 @@
 			(You can now set a maxlength for input fields)
 		*/
 
-		table_format("Login information", array(
+		_table_format("Login information", array(
 			"User name" 	=> [4, "name", "If you want to change this, ask an admin.", 25, 25], // static
 			"Password"		=> [4, "password", "You can change your password by entering a new one here."], // password field
 		));
@@ -343,7 +336,7 @@
 			$fields["Login information"]["User name"][0] = 0;
 			
 			// ... and also gets the extra "Administrative bells and whistles"
-			table_format("Administrative bells and whistles", array(
+			_table_format("Administrative bells and whistles", array(
 				"Power level" 				=> [4, "powerlevel", ""], // Custom listbox with negative values.
 				"Ban duration"			    => [4, "ban_hours", ""],
 				"Number of posts"			=> [0, "posts", "", 6, 10],
@@ -359,43 +352,43 @@
 		}
 		
 		if ($titleopt) {
-			table_format("Appareance", array(
+			_table_format("Appareance", array(
 				"Custom title" => [0, "title", "This title will be shown below your rank.", 60, 255],
 			));
 		}
 		if ($issuper) {
-			table_format("Appareance", array(
+			_table_format("Appareance", array(
 				"Name color" 	=> [4, "namecolor", "Your username will be shown using this color."],
 			));
 		}
-		table_format("Appareance", array(
+		_table_format("Appareance", array(
 			"User rank"         => [4, "useranks", "You can hide your rank, or choose from different sets."],
 		));
 		if ($config['allow-avatar-storage']) {
-			table_format("Appareance", array(
+			_table_format("Appareance", array(
 				"Avatar"	 => [4, "picture", "The image showing up below your username in posts. Select an image to upload."],
 				"Minipic"	 => [4, "minipic", "This picture will appear next to your username. Select an image to upload."],
 			));
 		} else {
-			table_format("Appareance", array(
+			_table_format("Appareance", array(
 				"Avatar"            => [0, "picture", "The full URL of the image showing up below your username in posts. Leave it blank if you don't want to use a avatar. Anything over {$config['max-avatar-size-x']}&times;{$config['max-avatar-size-y']} pixels will be removed.", 60, 100],
 				"Mood avatar"       => [0, "moodurl", "The URL of a mood avatar set. '\$' in the URL will be replaced with the mood, e.g. <b>http://your.page/here/\$.png</b>!", 60, 100],
 				"Minipic"           => [0, "minipic", "The full URL of a small picture showing up next to your username on some pages. Leave it blank if you don't want to use a picture. The picture is resized to {$config['max-minipic-size-x']}&times;{$config['max-minipic-size-y']}.", 60, 100],
 			));
 		}
-		table_format("Appareance", array(
+		_table_format("Appareance", array(
 			"Post layout"       => [1, "css", "CSS added here will be added on its own tag.", 16],
 			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
 			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
 		if ($issuper) {
-			table_format("Appareance", array(
+			_table_format("Appareance", array(
 				"Sidebar"       => [1, "sidebar", "HTML added here will be used for the post sidebar in the regular or extended layout. Leave blank to use the default sidebar."],
 				"Sidebar type"  => [4, "sidebartype", "You can select a few different sidebar modes."],
 			));
 		}
 		
-		table_format("Personal information", array(
+		_table_format("Personal information", array(
 			"Sex" 		    => [2, "sex", "Male or female. (or N/A if you don't want to tell it).", "Male|Female|N/A"],
 			"Also known as" => [0, "aka", "If you go by an alternate alias (or are constantly subjected to name changes), enter it here.  It will be displayed in your profile if it doesn't match your current username.", 25, 25],
 			"Real name"     => [0, "realname", "Your real name (you can leave this blank).", 40],
@@ -404,7 +397,7 @@
 			"Bio"		    => [1, "bio", " Some information about yourself, showing up in your profile. Accepts HTML."],
 		));
 
-		table_format("Online services", array(
+		_table_format("Online services", array(
 			"Email address" 	=> [0, "email", "This is only shown in your profile; you don't have to enter it if you don't want to.", 60, 60],
 			"Email privacy" 	=> [2, "privateemail", "You can select a few privacy options for the email field.", "Public|Hide to guests|Private"],
 			"AIM screen name" 	=> [0, "aim", "Your AIM screen name, if you have one.", 30, 30],
@@ -414,7 +407,7 @@
 			"Homepage Name" 	=> [0, "homepagename", "Your homepage name, if you have a homepage.", 60, 100],
 		));
 		
-		table_format("Options", array(
+		_table_format("Options", array(
 			"Custom date format" 			=> [0, "dateformat", "Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting. Leave blank to use the default.", 16, 32],
 			"Custom short date format" 		=> [0, "dateshort", "Change how abbreviated dates are displayed. Uses the same formatting. Leave blank to reset.", 8, 16],
 			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
@@ -433,12 +426,12 @@
 			"Profile comments"			 	=> [2, "comments", "You can disable them here.", "Disable|Enable"],
 		));
 		if ($edituser){
-			table_format("Options", array(
+			_table_format("Options", array(
 				"Green coins" 	=> [0, "gcoins", "", 10, 10],
 			));
 		}
 		
-		table_format("Miscellaneous", array(
+		_table_format("Miscellaneous", array(
 			"Extra profile fields"		 	=> [4, "extrafields", ""],
 		));
 		
@@ -532,8 +525,8 @@
 		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;
 		$scheme = doschemelist($userdata['scheme'], 'scheme', $schflags);
 		// listbox with <name> <used>
-		$layout   = queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
-		$useranks = queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
+		$layout   = _queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
+		$useranks = _queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');
 		
 		
 		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
@@ -616,7 +609,7 @@
 	
 	pagefooter();
 
-	function table_format($name, $array){
+	function _table_format($name, $array){
 		global $fields;
 		
 		if (isset($fields[$name])){ // Already exists: merge arrays
@@ -627,13 +620,13 @@
 	}
 	
 	// When it comes to copy / pasted code...
-	function queryselectbox($val, $query) {
+	function _queryselectbox($val, $query) {
 		global $sql, $userdata;
 		$txt = "";
 		$q = $sql->query($query);
 		while ($x = $sql->fetch($q, PDO::FETCH_ASSOC)) {
 			$sel = ($x['id'] == $userdata[$val] ? ' selected' : '');
-			$txt .=" <option value={$x['id']}{$sel}>{$x['name']} ({$x['used']})</option>\n\r";			
+			$txt .=" <option value={$x['id']}{$sel}>".htmlspecialchars($x['name'])." ({$x['used']})</option>\n\r";			
 		}
 		return "<select name='$val'>$txt</select>";
 	}

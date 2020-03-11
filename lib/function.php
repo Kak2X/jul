@@ -454,10 +454,10 @@
 		if ($loguser['title'] == "Banned; account hijacked. Contact admin via PM to change it.") {
 			$reason	= "Your account was hijacked; please contact {$config['admin-name']} to reset your password and unban your account.";
 		} elseif ($loguser['title']) {
-			$reason	= "Ban reason: {$loguser['title']}<br>If you think have been banned in error, please contact {$config['admin-name']}.";
+			$reason	= "Ban reason: ".xssfilters($loguser['title'])."<br>If you think have been banned in error, please contact {$config['admin-name']}.";
 		} else {
 			$reason	= $sql->resultq("SELECT `reason` FROM ipbans WHERE $checkips");
-			$reason	= ($reason ? "Reason: $reason" : "<i>(No reason given)</i>");
+			$reason	= ($reason ? "Reason: ".xssfilters($reason) : "<i>(No reason given)</i>");
 		}
 		
 		$expiration = (
@@ -722,7 +722,8 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 		if (!$smilies) $smilies = readsmilies();
 		for($s = 0; isset($smilies[$s]); ++$s){
 			$smilie = $smilies[$s];
-			if ($htmloff) $smilie[0] = htmlspecialchars($smilie[0]);
+			// what?
+			//if ($htmloff) $smilie[0] = htmlspecialchars($smilie[0]);
 			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);
 		}
 	}
@@ -834,7 +835,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 	while ($forum = $sql->fetch($forums)) {
 		// New category
 		if ($prev != $forum['catid']) {
-			$forumlinks .= "</optgroup><optgroup label=\"{$forum['catname']}\">";
+			$forumlinks .= "</optgroup><optgroup label=\"".htmlspecialchars($forum['catname'])."\">";
 			$prev = $forum['catid'];
 		}
 		
@@ -842,7 +843,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 			$forum['title'] = "({$forum['title']})";
 		}
 		
-		$forumlinks .= "<option value={$forum['id']}".($forum['id'] == $id ? ' selected' : '').">{$forum['title']}</option>";
+		$forumlinks .= "<option value={$forum['id']}".($forum['id'] == $id ? ' selected' : '').">".htmlspecialchars($forum['title'])."</option>";
 	}
 	
 	// Multi-use forum list
@@ -914,7 +915,7 @@ function doschemelist($sel = 0, $name = 'scheme', $flags = 0){
 		}
 		$input	.= ""
 			."<option value='{$x['id']}' ".filter_string($scheme[$x['id']]).">"
-			.($x['special'] ? "*" : "")."{$x['name']}".($flags & SL_SHOWUSAGE ? " ({$x['used']})" : "")
+			.($x['special'] ? "*" : "").htmlspecialchars($x['name']).($flags & SL_SHOWUSAGE ? " ({$x['used']})" : "")
 			."</option>";
 	}
 	return "<select name='$name'>".($flags & SL_SHOWNONE ? "<option value='' ".filter_string($scheme[null]).">None</option>" : "")."$input</optgroup></select>";
@@ -924,9 +925,6 @@ function get_scheme_opt(&$var) { return $var === "" ? null : (int)$var; }
 
 // When it comes to this kind of code being repeated across files...
 function dothreadiconlist($iconid = NULL, $customicon = '') {
-	
-
-
 	// Check if we have selected one of the default thread icons
 	$posticons = file('posticons.dat');
 	
@@ -951,7 +949,7 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 			$checked    = '';
 		}
 
-		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src='{$posticons[$i]}' HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
+		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src=\"".escape_attribute($posticons[$i])."\" HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
 
 		$i++;
 		if($i % 10 == 0) $posticonlist .= '<br>';
@@ -967,6 +965,9 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 	return $posticonlist;
 }
 
+const FILTER_NONE = 0;
+const FILTER_ATTR = 1;
+const FILTER_HTML = 2;
 function row_display($headers, $values, $strings, $sel = NULL, $page = 0, $limit = -1, $rowcount = 0) {
 	static $setid = 0;
 	
@@ -999,7 +1000,14 @@ function row_display($headers, $values, $strings, $sel = NULL, $page = 0, $limit
 			</td>";
 		foreach ($headers as $key => $x) {
 			if (!isset($x['nodisplay'])) {
-				$row_txt .= "<td class='tdbg{$cell} center'>{$row[$key]}</td>";
+				$val = $row[$key];
+				if (isset($x['filter'])) {
+					switch ($x['filter']) {
+						case 'html': $val = htmlspecialchars($val); break;
+						case 'xss': $val = xssfilters($val); break;
+					}
+				}
+				$row_txt .= "<td class='tdbg{$cell} center'>{$val}</td>";
 			}
 		}
 		$row_txt .= "
@@ -1197,7 +1205,7 @@ function getrank($rankset, $title, $posts, $powl, $bandate = NULL){
 	if($rank && (in_array($powl, $powerranks) || $title)) $rank.='<br>';
 
 	if($title)
-		$rank .= $title;
+		$rank .= xssfilters($title);
 	elseif (in_array($powl, $powerranks))
 		$rank .= filter_string($powerranks[$powl]);
 		
@@ -1352,19 +1360,20 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		}
 	}
 	
-	if ($id) {
-		$u['id'] = $id;
-	}
 	// When the username is null it typically means the user has been deleted.
 	// Print this so we don't just end up with a blank link.
 	if ($u['name'] == NULL) {
 		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
 	}
 	
+	if (!$id) {
+		$id = $u['id'];
+	}
+	
 	$akafield		= htmlspecialchars($u['aka']);
 	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: {$akafield}\"" : '';
 	
-	$u['name'] 		= htmlspecialchars($u['name'], ENT_QUOTES);
+	$username       = htmlspecialchars($u['name'], ENT_NOQUOTES);
 	
 	if ($u['namecolor']) {
 		if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) { // Don't calculate birthday effect again
@@ -1378,9 +1387,9 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 	
 	$namecolor		= getnamecolor($u['sex'], $u['powerlevel'], $u['namecolor']);
 	
-	$minipic		= $useicon ? get_minipic($u['id'], filter_string($u['minipic'])) : "";
+	$minipic		= $useicon ? get_minipic($id, filter_string($u['minipic'])) : "";
 	
-	return "{$minipic}<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$u['id']}'{$alsoKnownAs}>{$u['name']}</a>";
+	return "{$minipic}<a style='color:#{$namecolor}' class='{$urlclass} nobr' href='profile.php?id={$id}'{$alsoKnownAs}>{$username}</a>";
 }
 
 function getnamecolor($sex, $powl, $namecolor = ''){
@@ -1625,7 +1634,7 @@ function forumban_edit($source, $forum, $user, $reason = "", $ircreason = NULL, 
 function check_forumban($forum, $user) {
 	if ($wban = is_banned($forum, $user)) {
 		$banner = ($wban['banner'] ? " by ".getuserlink($wban, $wban['uid']) : "");
-		$reason = ($wban['reason'] ? $wban['reason'] : "<i>No reason given.</i>");
+		$reason = ($wban['reason'] ? xssfilters($wban['reason']) : "<i>No reason given.</i>");
 		errorpage("Sorry, but you have been banned{$banner} from posting in this forum.<br/>Reason: {$reason}");
 	}
 }
@@ -1792,9 +1801,9 @@ function jspageexpand($start, $end) {
 function redirect($url, $msg, $delay = 1){
 	global $config;
 	if ($config['no-redirects'] || $delay < 0) {
-		return "Go back to <a href=$url>$msg</a>."; //"Click <a href=\"{$url}\">here</a> to be continue to {$msg}.";
+		return "Go back to <a href=$url>".htmlspecialchars($msg)."</a>."; //"Click <a href=\"{$url}\">here</a> to be continue to {$msg}.";
 	} else {
-		return "You will now be redirected to <a href=$url>$msg</a>...<META HTTP-EQUIV=REFRESH CONTENT=".max(1,$delay).";URL=$url>";
+		return "You will now be redirected to <a href=$url>".htmlspecialchars($msg)."</a>...<META HTTP-EQUIV=REFRESH CONTENT=".max(1,$delay).";URL=$url>";
 	}
 }
 
@@ -1937,6 +1946,9 @@ function loadtlayout(){
 	$layoutfile = $sql->resultq("SELECT file FROM tlayouts WHERE id = $tlayout");
 	if (!$layoutfile) {
 		errorpage("The thread layout you've been using has been removed by the administration.<br/>You need to <a href='editprofile.php'>choose a new one</a> before you'll be able to view threads.");
+	}
+	if (!valid_filename($layoutfile)) {
+		errorpage("The thread layout you're using points to a disallowed filename and has been blocked.<br/>You need to <a href='editprofile.php'>choose a new one</a> before you'll be able to view threads.");
 	}
 	require "tlayouts/$layoutfile.php";
 }
@@ -2268,9 +2280,8 @@ function xssfilters($data, $validate = false){
 	} while ($old_data !== $data);
 	if ($data !== $temp) $diff = true;
 	
-	if ($diff) {
-		nuke_js($orig, $data);
-		if ($validate) return NULL;
+	if ($diff && $validate) {
+		return NULL;
 	}
 	
 	return $data;
@@ -2511,6 +2522,23 @@ function unescape($in) {
 
 }
 
+// for validating php files referenced in the db
+function valid_filename($filename) {
+	return ctype_alnum(str_replace(['_','-'], '', $filename));
+}
+
+function parse_color_input($field) {
+	// field with input type='color' have # as the first character, which breaks the valid hex number check
+	if (!is_string($field) || strlen($field) != 7)
+		return false;
+	
+	$color = substr($field, 1); // Remove #
+	if (!ctype_xdigit($color)) {
+		return false;
+	}
+	return $color;
+}
+
 // get the query string from optional parameters, if set
 function opt_param($list) {
 	$idparam = "";
@@ -2607,9 +2635,10 @@ function deletefolder($directory) {
 		rmdir($directory);
 	}
 }
-// TODO: is < and > really necessary for attributes?. ' and " could be enough...
+
 function escape_attribute($attr) {
-	return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
+	return str_replace(":", "&colon;", htmlspecialchars($attr, ENT_QUOTES));
+	//return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
 }
 
 function get_current_script() {
@@ -2789,7 +2818,7 @@ function user_select($name, $sel = 0, $condition = NULL, $zlabel = NULL, $flags 
 	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` ".($condition ? "WHERE {$condition} " : "")."ORDER BY `name`");
 	while($x = $sql->fetch($users)) {
 		$selected = ($x['id'] == $sel) ? " selected" : "";
-		$userlist .= "<option value='{$x['id']}'{$selected}>{$x['name']} -- [{$x['powerlevel']}]</option>\r\n";
+		$userlist .= "<option value='{$x['id']}'{$selected}>".htmlspecialchars($x['name'])." -- [{$x['powerlevel']}]</option>\r\n";
 	}
 	if (!$zlabel)
 		$zlabel = "Select a user...";
@@ -3073,7 +3102,7 @@ function highlight_trace($arr) {
 	foreach ($arr as $k => $v) {
 		$out .= "<span style='color: #FFF'>{$k}</span><span style='color: #F44'>#</span> ".
 		        "<span style='color: #0f0'>{$v['file']}</span>#<span style='color: #6cf'>{$v['line']}</span> ".
-		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".print_r($v['args'], true)."\n)</span></span>\n";
+		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".htmlspecialchars(print_r($v['args'], true))."\n)</span></span>\n";
 	}
 	//implode("<span style='color: #0F0'>,</span>", $v['args'])
 	return $out;

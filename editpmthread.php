@@ -60,7 +60,7 @@
 				}
 			}
 			$sql->commit();
-			errorpage("Thank you, {$loguser['name']}, for deleting the thread.", "private.php", "your private message box");
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the thread.", "private.php", "your private message box");
 			
 		}
 		
@@ -90,7 +90,7 @@
 				errorpage("Invalid folder selected.");
 			}
 			$sql->query("UPDATE pm_access SET folder = {$_POST['folder']} WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
-			errorpage("Thank you, {$loguser['name']}, for moving the thread.", "showprivate.php?id={$_GET['id']}", "return to the thread");
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for moving the thread.", "showprivate.php?id={$_GET['id']}", "return to the thread");
 		}
 		
 		$title   = "Move Thread";
@@ -160,7 +160,7 @@
 			}
 			$posticons 		= file('posticons.dat');
 			if ($_POST['custposticon']) {
-				$icon = xssfilters($_POST['custposticon']);
+				$icon = $_POST['custposticon'];
 			} else if (isset($posticons[$_POST['iconid']])) {
 				$icon = trim($posticons[$_POST['iconid']]);
 			} else {
@@ -175,15 +175,15 @@
 			
 			$sql->beginTransaction();
 			$data = [
-				'title'        => htmlspecialchars($_POST['subject']),
-				'description'  => xssfilters(filter_string($_POST['description'])),
+				'title'        => $_POST['subject'],
+				'description'  => filter_string($_POST['description']),
 				'icon'         => $icon,
 				'closed'       => $_POST['closed'],
 			];
 			$sql->queryp("UPDATE pm_threads SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 			set_pm_acl($destid, $_GET['id'], $isadmin, PMFOLDER_MAIN);
 			$sql->commit();
-			errorpage("Thank you, {$loguser['name']}, for editing the thread.","showprivate.php?id={$_GET['id']}",'return to the thread');
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing the thread.","showprivate.php?id={$_GET['id']}",'return to the thread');
 		}
 		
 		$check1[$thread['closed']]='checked=1';

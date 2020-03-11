@@ -66,7 +66,7 @@
 			$link="(restricted)";
 			$viewall="(<s><b>view</b></s>)";
 		} else {
-			$link="<a href='forum.php?id=$f[id]'>$f[title]</a>";
+			$link="<a href='forum.php?id={$f['id']}'>".htmlspecialchars($f['title'])."</a>";
 			$timeid = ($_GET['posttime'] ? "&time={$_GET['posttime']}" : '');
 			$viewall = ($_GET['id'] ? "(<a href='postsbyuser.php?id={$_GET['id']}&forum={$f['id']}{$timeid}'>View</a>)" : "");
 		}

@@ -66,10 +66,10 @@
 
 				
 				$data = [
-					'text'		=> xssfilters($message),
-					'headtext'	=> xssfilters($head),
-					'signtext'	=> xssfilters($sign),
-					'csstext'	=> xssfilters($css),
+					'text'		=> $message,
+					'headtext'	=> $head,
+					'signtext'	=> $sign,
+					'csstext'	=> $css,
 					
 					
 					'options'	=> $nosmilies . "|" . $nohtml,
@@ -228,9 +228,9 @@
 		if (confirmed($msgkey = 'delete')) {
 			$sql->query("UPDATE pm_posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
 			if ($post['deleted']) {
-				errorpage("Thank you, {$loguser['name']}, for undeleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for undeleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
 		
@@ -273,9 +273,9 @@
 			}
 			$sql->commit();
 			if ($pcount <= 1) {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post and the thread.","private.php","return to the private message box",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post and the thread.","private.php","return to the private message box",0);
 			} else {
-				errorpage("Thank you, {$loguser['name']}, for deleting the post.","showprivate.php?id={$post['thread']}","return to the thread",0);
+				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","showprivate.php?id={$post['thread']}","return to the thread",0);
 			}
 		}
 		

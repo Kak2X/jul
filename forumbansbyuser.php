@@ -45,7 +45,7 @@
 			<td class='tdbg{$bg} center'>".($x['reason'] ? htmlspecialchars($x['reason']) : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".getuserlink($x, $x['banner'])."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
-			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>
+			<td class='tdbg{$bg} center'>".print_ban_time($x)."</td>
 		</tr>";
 	}
 	

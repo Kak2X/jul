@@ -1649,7 +1649,7 @@ function is_banned($forum, $user) {
 	");
 }
 
-function ban_expire($ban) {
+function print_ban_time($ban) {
 	if (!$ban['expire']) {
 		return "Permanent";
 	} else {

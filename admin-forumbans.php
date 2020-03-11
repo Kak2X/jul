@@ -190,7 +190,7 @@ if (!$_GET['forum']) {
 			<td class='tdbg{$bg} center'>".($x['reason'] ? htmlspecialchars($x['reason']) : "&mdash;")."</td>
 			<td class='tdbg{$bg} center'>".($x['banner'] ? getuserlink(get_userfields($x, 'u2'), $x['banner']) : "Autoban")."</td>
 			<td class='tdbg{$bg} center'>".printdate($x['date'])."</td>
-			<td class='tdbg{$bg} center'>".ban_expire($x)."</td>
+			<td class='tdbg{$bg} center'>".print_ban_time($x)."</td>
 		</tr>";
 	}
 	

@@ -594,6 +594,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<meta name='viewport' content='width=device-width, initial-scale=1'>
 		<?=$metatag?>
 		<title><?=$windowtitle?></title>
+		<?= 
+		/* Because this breaks links which do not specify a page (ie: ?id=1), this is disabled for pages loaded directly without the help of pageloader */
+		(isset($meta['base']) ? "<base href=\"{$meta['base']}\">" : "")
+		 ?>
 		<link rel='shortcut ico' href='images/favicon/<?=$favicon?>.ico' type='image/x-icon'>
 		<?=$css?>
 	</head>

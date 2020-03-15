@@ -31,12 +31,21 @@
 	require 'lib/layout.php';
 	require 'lib/rpg.php';
 	require 'lib/datetime.php';	
+	require_once 'lib/routing.php';
+	require 'lib/extension.php';
+	
+	$scriptname = basename($_SERVER['PHP_SELF']);
+	// If not previously defined, calculate the root page and script path.
+	if (!isset($root)) {
+		fetch_root($root, $boardurl);
+		$scriptpath = $scriptname;
+	}
 	
 	// Determine if to show conditionally the MySQL query list.
 	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
 		if (toggle_board_cookie($_GET['debugsql'], 'debugsql')) {
 			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
-			die(header("Location: ".get_current_script()."?{$params}"));
+			die(header("Location: {$scriptname}?{$params}"));
 		}
 		
 		if (filter_int($_COOKIE['debugsql']))
@@ -84,9 +93,6 @@
 		dialog($message, $messagetitle, $title);
 	}
 	
-	// Get the running script's filename
-	$scriptname = get_current_script();
-	
 	// determine if the current request is an ajax request, currently only a handful of libraries
 	// set the x-http-requested-with header, with the value "XMLHttpRequest"
 	if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest") {
@@ -106,6 +112,8 @@
 	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
 		require 'lib/firewall.php';
 	}
+	
+	ext_init();
 	
 	function do404() {
 		header("HTTP/1.1 404 Not Found");
@@ -2104,6 +2112,7 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 		array(
 			'admin.php'	              => "Admin Control Panel",
 //			'admin-todo.php'          => "To-do list",
+			'admin-extensions.php'    => "Extensions manager",
 		),
 		'Quick jump' => array(
 			'announcement.php'        => "Go to Announcements",
@@ -2346,6 +2355,7 @@ require 'lib/threadpost.php';
 require 'lib/thread.php';
 require 'lib/pm.php';
 require 'lib/ratings.php';
+require 'lib/schema.php';
 
 // New reply toolbar loader
 function replytoolbar($elem, $smil) {
@@ -2522,7 +2532,7 @@ function unescape($in) {
 
 }
 
-// for validating php files referenced in the db
+// for validating php files referenced in the db / ext list
 function valid_filename($filename) {
 	return ctype_alnum(str_replace(['_','-'], '', $filename));
 }
@@ -2639,22 +2649,6 @@ function deletefolder($directory) {
 function escape_attribute($attr) {
 	return str_replace(":", "&colon;", htmlspecialchars($attr, ENT_QUOTES));
 	//return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
-}
-
-function get_current_script() {
-	$path = explode("/", $_SERVER['SCRIPT_NAME']);
-	$scriptname = end($path);
-	return $scriptname;
-}
-
-function get_board_root() {
-	static $root;
-	if ($root === null) {
-		// 16 is for removing "lib\function.php"
-		// if you move this function elsewhere update the number
-		$root = strip_doc_root(substr(__FILE__, 0, -16));
-	}
-	return $root;
 }
 
 // $startrange === true -> print all pages
@@ -2997,10 +2991,12 @@ function gethttpheaders() {
 }
 
 function set_board_cookie($name, $value, $expire = 2147483647) {
-	setcookie($name, $value, $expire, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+	global $root;
+	setcookie($name, $value, $expire, $root, $_SERVER['SERVER_NAME'], false, true);
 }
 function remove_board_cookie($name) {
-	setcookie($name, '', time() - 3600, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+	global $root;
+	setcookie($name, '', time() - 3600, $root, $_SERVER['SERVER_NAME'], false, true);
 }
 function toggle_board_cookie(&$signal, $key, $expire = 2147483647) {
 	return toggle_board_cookie_man($signal, $key, $_COOKIE[$key], $expire);
@@ -3009,7 +3005,8 @@ function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) 
 	if (!$signal) {
 		return false;
 	}
-	setcookie($key, !$value, $expire, get_board_root(), $_SERVER['SERVER_NAME'], false, true);
+	global $root;
+	setcookie($key, !$value, $expire, $root, $_SERVER['SERVER_NAME'], false, true);
 	return true;
 }
 

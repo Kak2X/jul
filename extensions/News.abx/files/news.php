@@ -1,13 +1,13 @@
 <?php
 
 	/*
-		News Engine v0.4 -- 06/05/18
+		News Engine v0.4c -- 16/03/20
 		
 		DESCRIPTION:
-		A news engine (read: alternate announcements page) that everybody can read, but only privileged or up can write.
-		Any logged in user can create comments.
-		The permission settings are stored in config.php
-		(this is a test for forum integration)
+		A news engine with customizable settings.
+		Test port of existing code to the extension system.
+
+		Settings can be configured from the extension manager.
 	*/
 	
 	require "lib/function.php";
@@ -110,7 +110,7 @@
 			"</div>";
 	}
 	
-	$url = "?tag={$_GET['tag']}&user={$_GET['user']}";
+	$url = "{$extName}/news.php?tag={$_GET['tag']}&user={$_GET['user']}";
 	
 	?>
 	<br>
@@ -141,7 +141,7 @@
 <?php			if ($canwrite) { ?>
 				<table class='table fonts small-shadow'>
 					<tr><td class='tdbgh center'>Options</td></tr>
-					<tr><td><a href='news-editpost.php?new'>New post</a></td>
+					<tr><td><a href='<?=$extName?>/news-editpost.php?new'>New post</a></td>
 					</tr>
 				</table>
 				<br> 

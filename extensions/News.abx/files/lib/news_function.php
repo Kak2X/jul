@@ -1,6 +1,6 @@
 <?php
 	
-	const NEWS_VERSION = "v0.4b -- 12/07/19";
+	const NEWS_VERSION = "v0.4c -- 16/03/20";
 	const SHOW_SPECIAL_HEADER = true;
 	
 	if (!$config['enable-news']){
@@ -27,6 +27,7 @@
 	}
 	
 	function news_header($title) {
+		global $extName;
 		if (SHOW_SPECIAL_HEADER) {
 			global $config;
 			print "<!doctype html>"; // We need to print this here, since the "deleted header" flag in pageheader() doesn't print a doctype
@@ -36,7 +37,7 @@
 			<table class='table top-header'>
 				<tr>
 					<td class='center nobr header-title-td'>
-						<h1><a href='news.php' class='header-title'><?= $config['news-title'] ?></a></h1>
+						<h1><a href='<?=$extName?>/news.php' class='header-title'><?= $config['news-title'] ?></a></h1>
 					</td>
 				</tr>
 				<tr>
@@ -77,8 +78,7 @@
 		/*
 			threadpost() replacement as the original function obviously wouldn't work for this
 		*/
-		global $loguser, $config, $ismod, $sysadmin, $sql, $userfields;
-		
+		global $loguser, $config, $ismod, $sysadmin, $sql, $userfields, $extName;
 		
 		// The first post is rendered in a different (blue) color scheme.
 		static $theme;
@@ -101,26 +101,26 @@
 		$editlink = $lastedit = $viewfull = "";
 		// Preview to view full post
 		if ($text_shrunk)
-			$viewfull = "<tr><td class='fonts'>To read the full text, click <a href='news.php?id={$post['id']}'>here</a>.</td></tr>";
+			$viewfull = "<tr><td class='fonts'>To read the full text, click <a href='{$extName}/news.php?id={$post['id']}'>here</a>.</td></tr>";
 		
 		// Post controls
 		
 		if ($post['id']) {
 			if ($ismod || $loguser['id'] == $post['user']) {
-				$editlink = "<a href='news-editpost.php?id={$post['id']}&edit'>Edit</a>";
+				$editlink = "<a href='{$extName}/news-editpost.php?id={$post['id']}&edit'>Edit</a>";
 				if ($post['deleted'])
-					$editlink .= " - <a href='news-editpost.php?id={$post['id']}&del'>Undelete</a> - <a href='?id={$post['id']}&pin={$post['id']}'>Peek</a>";
+					$editlink .= " - <a href='{$extName}/news-editpost.php?id={$post['id']}&del'>Undelete</a> - <a href='{$extName}/news.php?id={$post['id']}&pin={$post['id']}'>Peek</a>";
 				else
-					$editlink .= " - <a href='news-editpost.php?id={$post['id']}&del'>Delete</a>";
+					$editlink .= " - <a href='{$extName}/news-editpost.php?id={$post['id']}&del'>Delete</a>";
 			}				
 			if ($sysadmin) 
-				$editlink .= " - <a class='danger' href='news-editpost.php?id={$post['id']}&erase'>Erase</a>";
+				$editlink .= " - <a class='danger' href='{$extName}/news-editpost.php?id={$post['id']}&erase'>Erase</a>";
 		}
 		
 		if (filter_int($post['lastedituser'])) {
 			$lastedit     = " (Last edited by ".getuserlink($post['edituserdata'], $post['lastedituser'])." at ".printdate($post['lasteditdate']).")";
 		}
-		$usersort = "<a href='news.php?user={$post['user']}'>View all by this user</a>";
+		$usersort = "<a href='{$extName}/news.php?user={$post['user']}'>View all by this user</a>";
 		
 		$hideondel = ($post['deleted'] && $post['id'] != $pin);
 		if ($hideondel) {
@@ -136,7 +136,7 @@
 					<table class='w' style='border-spacing: 0'>
 						<tr>
 							<td class='nobr'>
-								<a href='news.php?id={$post['id']}' class='headlink'>".htmlspecialchars($post['title'])."</a>
+								<a href='{$extName}/news.php?id={$post['id']}' class='headlink'>".htmlspecialchars($post['title'])."</a>
 							</td>
 							<td class='fonts right'>
 								$editlink ".printdate($post['date'])."<br>
@@ -162,7 +162,7 @@
 	
 	// Display the comment section for any given post
 	function news_comments($post, $author, $edit = 0) {
-		global $sql, $loguser, $ismod, $sysadmin, $userfields;
+		global $sql, $loguser, $ismod, $sysadmin, $userfields, $extName;
 		$token = generate_token(TOKEN_MGET);
 		
 		$comments = $sql->query("
@@ -179,13 +179,13 @@
 			// Check if we are editing this comment (and if we can do so)
 			$editlink = $lastedit = $editcomment = "";
 			if ($ismod || $loguser['id'] == $x['user']) {
-				$editlink = "<a href='?id={$post}&edit={$x['id']}#{$x['id']}'>Edit</a> - ".
-							"<a href='news-editcomment.php?act=del&id={$x['id']}&auth={$token}'>".($x['deleted'] ? "Und" : "D")."elete</a>";
+				$editlink = "<a href='{$extName}/news.php?id={$post}&edit={$x['id']}#{$x['id']}'>Edit</a> - ".
+							"<a href='{$extName}/news-editcomment.php?act=del&id={$x['id']}&auth={$token}'>".($x['deleted'] ? "Und" : "D")."elete</a>";
 				$editcomment = ($edit == $x['id']);
 			}
 			
 			if ($sysadmin) 
-				$editlink .= " - <a class='danger' href='news-editcomment.php?act=erase&id={$x['id']}'>Erase</a>";
+				$editlink .= " - <a class='danger' href='{$extName}/news-editcomment.php?act=erase&id={$x['id']}'>Erase</a>";
 			
 			$author = getuserlink(get_userfields($x, 'u1'), $x['user']);
 			if ($x['deleted'])
@@ -205,7 +205,7 @@
 				$txt .= "
 				<tr>
 					<td colspan=2>
-					<form method='POST' action='news-editcomment.php?act=edit&id={$x['id']}'>
+					<form method='POST' action='{$extName}/news-editcomment.php?act=edit&id={$x['id']}'>
 						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea><br>
 						<input type='submit' name='doedit' value='Edit comment'>
 						".auth_tag()."
@@ -225,7 +225,7 @@
 			<tr><td class='tdbgh center b' colspan=2>New comment</td></tr>
 			<tr>
 				<td class='tdbg2' colspan=2>
-					<form method='POST' action='news-editcomment.php?post={$post}'>
+					<form method='POST' action='{$extName}/news-editcomment.php?post={$post}'>
 						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'></textarea>
 						<br><input type='submit' name='submit' value='Submit comment'>".auth_tag()."
 					</form>
@@ -306,28 +306,29 @@
 	}
 	
 	function news_tag_format($tags){
+		global $extName;
 		$text = array();
 		foreach($tags as $id => $data)
-			$text[] = "<a href='news.php?tag={$id}'>".htmlspecialchars($data['title'])."</a>";
+			$text[] = "<a href='{$extName}/news.php?tag={$id}'>".htmlspecialchars($data['title'])."</a>";
 		return implode(", ", $text);
 	}
 	
 	
 	function main_news_tags($num){
-		global $sql;
+		global $sql, $extName;
 		$tags = load_news_tags(0, $num); // Grab 15 most used tags, in order
 		$total = count($tags);
 		
 		$txt 	= "";
 		foreach($tags as $id => $data){
 			$px = 10 + round(pow($data['cnt'] / $total * 100, 0.7)); // Gradually decreate font size
-			$txt .= "<a class='nobr tag-links' href='news.php?tag={$id}' style='font-size: {$px}px'>".htmlspecialchars($data['title'])."</a> ";
+			$txt .= "<a class='nobr tag-links' href='{$extName}/news.php?tag={$id}' style='font-size: {$px}px'>".htmlspecialchars($data['title'])."</a> ";
 		}
 		return $txt;
 	}
 	
 	function recentcomments($limit){
-		global $sql, $userfields;
+		global $sql, $userfields, $extName;
 		//List with latest 5 (or 10?) comments showing user and thread
 		// should use IF and log editing
 		$list = $sql->query("
@@ -350,7 +351,7 @@
 					</tr>
 					<tr>
 						<td class='tdbg1' colspan=2>
-							<a href='news.php?id={$x['pid']}#{$x['id']}'>Comment</a> posted on <a href='news.php?id={$x['pid']}'>".htmlspecialchars($x['title'])."</a>
+							<a href='{$extName}/news.php?id={$x['pid']}#{$x['id']}'>Comment</a> posted on <a href='{$extName}/news.php?id={$x['pid']}'>".htmlspecialchars($x['title'])."</a>
 						</td>
 					</tr>
 				</table>

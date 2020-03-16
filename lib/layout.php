@@ -137,7 +137,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
 		- <a href="forum.php?fav=1">Favorites</a>
-		- <a href="blocklayout.php">Blocked layouts</a>';
+		- <a href="blocklayout.php">Blocked layouts</a>'.print_hook('header-links');
 		
 		// Page-specific addendums
 		switch ($scriptname) {
@@ -184,8 +184,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
 		- <a href='online.php'>Online users</a>
 		- <a href='forum.php?feat=1'>Featured threads archive</a>
-		".($config['enable-news'] ? " - <a href='news.php'>News</a>" : "")."
 		".($config['allow-uploader'] ? " - <a href='uploader.php'>Uploader</a>".($loguser['id'] ? " (<a href='uploader.php?mode=u&user={$loguser['id']}'>My folders</a>)" : "") : "")."
+		".print_hook('header-links-2')."
 		<br>
 		<a href='ranks.php'>Ranks</a>
 		- <a href='faq.php'>Rules/FAQ</a>

@@ -41,7 +41,7 @@
 		if (file_exists($loadPath)) {
 			$scriptpath = "$extName/$extFile"; // For forms
 			$meta['base'] = $boardurl."/"; // Enable base href tag to point to correct images/CSS
-			unset($url, $extPos, $extName, $extFile);
+			unset($url, $extPos, $extFile);
 			require_once($loadPath);
 			die;
 		}

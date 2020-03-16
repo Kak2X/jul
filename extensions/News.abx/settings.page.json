@@ -1,0 +1,48 @@
+{
+	"xconf":{
+		"Layout options":{
+			"news-name":{
+				"title":"News page name",
+				"desc":"Title of the news page, which is visible in the page title and the breadcrumbs.",
+				"input":"text",
+				"type":"string",
+				"default":"News",
+				"width":300
+			},
+			"news-title":{
+				"title":"News header HTML",
+				"desc":"The header used in the news page, which can be an image. Clicking on it will redirect to the main news page.",
+				"input":"text",
+				"type":"string",
+				"default":"News page",
+				"width":500
+			},
+			"max-preview-length":{
+				"title":"Character limit in preview",
+				"desc":"Maximum amount of characters shown for entries in the main news page.",
+				"input":"text",
+				"type":"int",
+				"default":500,
+				"width":40
+			}
+		},
+		"Permissions":{
+			"news-write-perm":{
+				"title":"Powerlevel required to add news",
+				"desc":"Minimum power required to post in the news section.",
+				"input":"select",
+				"type":"int",
+				"default":1,
+				"special":"powerlevel"
+			},
+			"news-admin-perm":{
+				"title":"Powerlevel required to moderate news",
+				"desc":"Minimum power required to edit and delete other users' posts and comments in the news section.",
+				"input":"select",
+				"type":"int",
+				"default":3,
+				"special":"powerlevel"
+			}
+		}
+	}
+}

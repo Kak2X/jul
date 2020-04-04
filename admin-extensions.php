@@ -53,6 +53,11 @@
 
 	pageheader("Extensions");
 	print adminlinkbar();
+	
+	$links = array(
+		["Optional features", null],
+	);
+	$barlinks = dobreadcrumbs($links); 
 
 	// Get all extensions installed, including disabled ones
 	$extensions = ext_list();
@@ -62,18 +67,14 @@
 		.installCtrl {
 			float: right;
 			text-align: right;
-			padding: 10px 10px 10px 0px;
+			padding-right: 10px; /* 10px 10px 0px; */
 		}
 		.settingsCtrl {
 			padding-top: 10px;
 		}
 	</style>	
 	
-	<?= auth_tag() ?>
-
-	<table class="table">
-		<tr><td class="tdbgh center b">Feature list</tr></tr>
-	</table>
+	<?= $barlinks ?>
 <?php
 	foreach ($extensions as $ext) {
 ?>
@@ -84,14 +85,14 @@
 		<thead>
 			<tr>
 				<td class="tdbgh b" colspan="2">
-					<?= $ext['name'].($ext['enabled'] ? "" : "<i>(disabled)</i>") ?>
+					<?= $ext['name'].($ext['enabled'] ? "" : "<i>(disabled)</i>") ?> v<?=$ext['version']?>
 				</td>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<td class="tdbg1 vatop">
-					<?= ($ext['image'] ? "<img src=\"{$x['image']}\">" : "") ?>
+				<td class="tdbg1 vatop" style="width: 1px">
+					<?= ($ext['image'] ? "<img src=\"extensions/{$ext['file']}.abx/{$ext['image']}\">" : "") ?>
 				</td>
 				<td class="tdbg2">
 					<?php /*
@@ -123,7 +124,8 @@
 					<?= $ext['description'] ?><br>
 					<br>
 					<span class="fonts">
-						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: {$ext['enableDate']}" : "") ?>
+						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: {$ext['enableDate']}" : "") ?><br/>
+						Version: <?=$ext['version']?> (<?=$ext['date']?>)
 					</span>
 				</td>
 			</tr>

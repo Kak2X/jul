@@ -5,7 +5,7 @@
 
 	// Prepare the extension name
 	$_POST['extfile'] = filter_string($_POST['extfile']);
-	if (!$_POST['extfile']) {
+	if (!$_POST['extfile']) { 
 		// An extension name is expected. Redirect out if missing.
 		die(header("Location: admin-extensions.php"));
 	}
@@ -17,20 +17,22 @@
 		errorpage("Settings saved!", "admin-extensions.php", "the extensions manager");
 	}
 	
+	$info = ext_read_metadata($_POST['extfile']);
+	$xname = htmlspecialchars($info['name']);
 	
-	pageheader("Settings");
+	pageheader("{$xname}: Settings");
 	print adminlinkbar("admin-extensions.php");
 
-
+	$links = array(
+		["Optional features", "admin-extensions.php"],
+		[$info['name'], null]
+	);
+	$barlinks = dobreadcrumbs($links); 
 ?>
 <form method="POST" action="admin-settings.php">
 <input type="hidden" name="extfile" value="<?= $_POST['extfile'] ?>">
-<table class="table">
-	<tr>
-		<td class="tdbgh center b" colspan="2">
-			Settings for '<?= $_POST['extfile'] ?>'
-		</td>
-	</tr>
+	<?= $barlinks ?>
+	
 	<?php
 		// Because the settings page json is loaded separately and it's not done anywhere else
 		// it's possible to afford doing slow shit for a prettier json format (I hope)
@@ -79,9 +81,11 @@
 			}
 		}*/
 	?>
+<table class="table">
 	<tr>
-		<td class="tdbg1"></td>
-		<td class="tdbg2"><input type="submit" name="submit" value="Save settings"></td>
+		<td class="tdbg2 center">
+			<input type="submit" name="submit" value="Save settings"> &mdash; <a href="admin-extensions.php" class="button">Cancel</a>
+		</td>
 	</tr>
 </table>
 </form>

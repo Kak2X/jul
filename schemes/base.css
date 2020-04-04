@@ -1,6 +1,5 @@
 /* Global CSS styles across every theme */
 
-
 /* Set up global font  */
 body,.table,.font,.fonth,div.lastpost:first-line{
 	font: 13px verdana, geneva, sans-serif;
@@ -13,14 +12,18 @@ body {
 	padding: 8px;
 }
 
-/* Make images upscale crispy */
+
 * {
+	/* Make images upscale crispy */
 	image-rendering: -moz-crisp-edges;
 	image-rendering: -o-crisp-edges;
 	image-rendering: -webkit-optimize-contrast;
 	image-rendering: crisp-edges;
 	image-rendering: pixelated;
 	-ms-interpolation-mode:nearest-neighbor;
+	
+	/* Use the less bullshit box sizing (for the pages which don't use quirks mode) */
+	box-sizing: border-box;
 }
 
 /* Make all links bold and not underlined by default */
@@ -32,10 +35,17 @@ img { border:none; }
 
 
 /* Shorthand alignment styles */
-.left      { text-align:left }
-.center	{ text-align:center }
-.right	{ text-align:right }
+.left      { text-align:left !important }
+.center	{ text-align:center !important }
+.right	{ text-align:right !important }
 .vatop    { vertical-align:top }
+
+/* Shorthand for disabling borders, mostly used to suppress table borders */
+.nbd { border: none !important }
+.nbdl { border-left: none !important }
+.nbdr { border-right: none !important }
+.nbdt { border-top: none !important }
+.nbdb { border-bottom: none !important }
 
 /* Miscellaneous common attributes */
 .w,.table { width:100% }

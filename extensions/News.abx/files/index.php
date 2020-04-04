@@ -1,2 +1,2 @@
 <?php
-	die(header("Location: news.php"));
+	require "news.php";

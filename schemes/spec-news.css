@@ -3,7 +3,6 @@ body{
 	font-size: 			13px;
 	color:				#fff;
 	background: 		#000 url('spec-news/bg.png') repeat-x fixed top -2px left -6px;
-	padding:			0px 30px 20px 30px;
 }
 
 .table{
@@ -11,22 +10,6 @@ body{
 	border:				2px solid rgba(50,50,100, 0.8);
 	border-radius:		4px;
 	background:			rgba(16,16,16, 0.9);
-}
-.news-container{
-	padding:			5px;
-	box-shadow:			20px 18px 8px rgba(0,0,12, 0.8);
-}
-.small-shadow{
-	box-shadow:			9px 7px 2px rgba(0,0,8, 0.8);
-}
-.tag-links{
-	background:			rgba(50,255,50, 0.2);
-	/*border: 			1px solid #50B050;*/
-	padding:			3px; 
-	line-height:		230%; /* necessary to give tags some space and prevent box overlapping */
-	box-shadow:			0px 0px 3px #50FF50; /* Need a nice glow effect */
-	border-radius:		3px;
-	text-shadow: 		/*-1px -1px #030, 1px 1px #030*/ none !important;
 }
 .tdbgh{
 	background:			rgba(42,42,84, 0.5);
@@ -39,83 +22,16 @@ body{
 	/*background:			rgba(16,16,16, 0.9);
 	border-radius:		4px;*/
 }
-.new-post{
-	background:			rgba(06,06,30, 0.9);
-	border:				2px solid rgba(100,100,200, 0.6) !important;
-}
-.headlink{
-	font-size: 			18px;
-	color: 				#fff !important;
-}
-.comment-userbar{
-	background:			rgba(32,32,64, 0.4);			
-}
 
-/*
-	This is used by the header at the top
-	We need to override the common CSS elements here
-*/
-.header-title{
-	color: 				#eef !important;
-	font-size:			30px;
-	/*text-shadow: 		0 0 12px #66B, -1px 0 #88E, 0 1px #44A, 1px 0 #66C, 0 -1px #99F none !important;*/
-	text-shadow: 		-1px 0 #444, 0 1px #444, 1px 0 #444, 0 -1px #444 !important;
-}
-.header-link{
-	color: 				#faa !important;
-	font-weight:		normal !important;
-	text-decoration:	underline !important;
-	text-shadow: 		none !important;
-}
-
-.top-header{
-	position:			relative;
-	top:				-10px;
-	background:			rgba(32,32,32, 0.9);
-	box-shadow:			0px 2px 16px 14px #000;
-	width: 500px;
-}
-
-.header-title-td, .tdbgc{
-	background:			rgba(47,47,47, 0.8);
-}
-.header-title-td{
-	padding: 			0px 100px;
-	border-radius:		6px;	
-}
-
-/*
-	Convenience CSS things
-*/
-/*
-.w{
-	width: 100%;
-}
-.c{
-	text-align: center;
-}
-.r{
-	text-align: right;
-}
-.fonts{
-	font-size: 10px;
-}
-.danger{
-	color: #faa !important;
-}
-.nobr{
-	white-space: nowrap;
-}
-*/
-.b{
-	font-weight:	bold;
-	/*text-shadow: 	-1px 0 #000, 0 1px #000, 1px 0 #000, 0 -1px #000;*/
+b,.b{
 	color:			#fff !important;
+}
+b,.b,a,a:visited,a:active,a:hover{
+	font-weight:bold;
+	text-shadow: -1px -1px #000, 0px -1px #000, 1px -1px #000, 1px 0px #000, 1px 1px #000, 0px 1px #000, -1px 1px #000, -1px 0px #000;
 }
 a,a:visited,a:active,a:hover{
 	text-decoration:none;
-	font-weight:bold;
-	text-shadow: -1px -1px #000, 0px -1px #000, 1px -1px #000, 1px 0px #000, 1px 1px #000, 0px 1px #000, -1px 1px #000, -1px 0px #000
 }
 a:not(.button)			{color: #BEFEBA}
 a:not(.button):visited	{color: #99c090}
@@ -126,16 +42,67 @@ textarea, input, select, button, .button {
 	color:			#DDDDDD;
 	border: 		1px solid #50B050;
 	border-radius:	3px;
-	background: 	#0C0C0C;/*rgba(0,0,0, 0.6);*/
+	background: 	#0C0C0C;
 }
 input[type=submit], input[type=button], button, .button {
 	border: 		2px solid #60C060;
 }
+
+
+/* CUSTOM NEWS COMPONENTS */
+.new-post{
+	background:			rgba(06,06,30, 0.9);
+	border:				2px solid rgba(100,100,200, 0.6) !important;
+}
+.headlink{
+	color: 				#fff !important;
+}
+.comment-userbar{
+	background:			rgba(32,32,64, 0.4);			
+}
+
+/**/
+.news-container{
+	padding:			5px;
+	box-shadow:			20px 18px 8px rgba(0,0,12, 0.8);
+}
+.small-shadow{
+	box-shadow:			9px 7px 2px rgba(0,0,8, 0.8);
+}
+.tag-links{
+	background:			rgba(50,255,50, 0.2) !important;
+	box-shadow:			0px 0px 3px #50FF50; /* Need a nice glow effect */
+	text-shadow: 		none !important;
+}
+
 /*
-.nmcol-20{color: #666666 !important;} .nmcol-21{color: #666666 !important;} .nmcol-22{color: #666666 !important;}
-.nmcol-10{color: #888888 !important;} .nmcol-11{color: #888888 !important;} .nmcol-12{color: #888888 !important;}
-.nmcol00{color: #97ACEF !important;} .nmcol01{color: #F185C9 !important;} .nmcol02{color: #7C60B0 !important;}
-.nmcol10{color: #D8E8FE !important;} .nmcol11{color: #FFB3F3 !important;} .nmcol12{color: #EEB9BA !important;}
-.nmcol20{color: #D8E8FE !important;} .nmcol21{color: #FFB3F3 !important;} .nmcol22{color: #EEB9BA !important;} 
-.nmcol30{color: #AFFABE !important;} .nmcol31{color: #C762F2 !important;} .nmcol32{color: #7C60B0 !important;}
-.nmcol40{color: #FFEA95 !important;} .nmcol41{color: #C53A9E !important;} .nmcol42{color: #F0C413 !important;}*/
+	This is used by the header at the top
+	We need to override the common CSS elements here
+*/
+.header-title{
+	color: 				#eef !important;
+	text-shadow: 		-1px 0 #444, 0 1px #444, 1px 0 #444, 0 -1px #444 !important;
+}
+.header-links a{
+	color: 				#faa !important;
+	font-weight:		normal !important;
+	text-decoration:	underline !important;
+	text-shadow: 		none !important;
+}
+
+.top-header{
+	background:			rgba(32,32,32, 0.9);
+	box-shadow:			0px 2px 16px 14px #000;
+}
+
+.header-title-td, .tdbgc{
+	background:			rgba(47,47,47, 0.8);
+}
+.header-title-td{
+	border-radius:		6px;	
+}
+
+/* post box */
+.news-item-summary  .tdbg1, .news-item-summary  .tdbg2{
+	border-radius: 0;
+}

@@ -1,24 +1,25 @@
 <?php
 	
-	const NEWS_VERSION = "v0.4c -- 16/03/20";
-	const SHOW_SPECIAL_HEADER = true;
-	
-	if (!$config['enable-news']){
-		return header("Location: index.php");
-	}
+	const NEWS_VERSION = "v0.5 -- 04/04/20";
 	
 	// Load "permissions"
 	if ($banned) $loguser['id'] = 0; // oh dear
-	$ismod	    = ($loguser['id'] && $loguser['powerlevel'] >= $config['news-admin-perm']);
-	$canwrite	= ($loguser['id'] && $loguser['powerlevel'] >= $config['news-write-perm']);
+	$ismod	    = ($loguser['id'] && $loguser['powerlevel'] >= $xconf['admin-perm']);
+	$canwrite	= ($loguser['id'] && $loguser['powerlevel'] >= $xconf['write-perm']);
 	
-	// override absolutely any forced scheme
-	// necessary because this scheme contains news-specific CSS missing from other schemes
-	$miscdata['scheme'] = 211;
+	// override the scheme, if enabled
+	// while the news page now also works with other schemes, it isn't the way it was intended to look like
+	if (!filter_int($_COOKIE['news-noschrep']))
+		$miscdata['scheme'] = 211;
 	
 	// Not truly alphanumeric as it also allows spaces
-	function alphanumeric($text) { return preg_replace('/[^\da-z ]/i', '', $text); }
-	function escape_like_wildcards($text) { return strtr($text, array('%' => '\\%', '_' => '\\_')); }
+	// function alphanumeric($text) { return preg_replace('/[^\da-z ]/i', '', $text); }
+	
+	function news_confirm_message($key, $text, $title = "", $form_url = "", $buttons = NULL, $token = TOKEN_MAIN) {
+		if (!defined('HEADER_PRINTED'))	news_header(); 
+		confirm_message($key, $text, $title, $form_url, $buttons, $token);
+	}
+	
 	function news_errorpage($text) {
 		if (!defined('HEADER_PRINTED'))	news_header("Error"); 
 		print "<table class='table news-container'><tr><td class='tdbg2 center'>{$text}</td></tr></table>";
@@ -26,28 +27,29 @@
 		news_footer();
 	}
 	
-	function news_header($title) {
-		global $extName;
-		if (SHOW_SPECIAL_HEADER) {
-			global $config;
-			print "<!doctype html>"; // We need to print this here, since the "deleted header" flag in pageheader() doesn't print a doctype
+	function news_header($title = "") {
+		global $xconf, $meta;
+		$meta['baserel'] = "<link rel='stylesheet' href='".actionlink("css/news.css")."' type='text/css'>";
+		if ($xconf['show-special-header']) {
+			print "<!doctype html>"; // We need to print this here, since pageheader() doesn't set one
 			pageheader($title, NULL, NULL, true);
 			?>
+			
 			<center>
 			<table class='table top-header'>
 				<tr>
-					<td class='center nobr header-title-td'>
-						<h1><a href='<?=$extName?>/news.php' class='header-title'><?= $config['news-title'] ?></a></h1>
+					<td class='tdbg1 center nobr header-title-td'>
+						<h1><a href="<?=actionlink("news.php")?>" class="header-title"><?= $xconf['page-header'] ?></a></h1>
 					</td>
 				</tr>
 				<tr>
-					<td class='center'>
-						<a class='header-link' href='index.php'>board</a> - 
-						<a class='header-link' href='/'>the index</a>
+					<td class='tdbg2 center header-links'>
+						<?= xssfilters($xconf['header-links']) ?>
 					</td>
 				</tr>
 			</table>
 			</center>
+			<br/>
 			<?php
 		} else {
 			pageheader($title);
@@ -55,13 +57,14 @@
 	}
 	
 	function news_footer() {
-		if (SHOW_SPECIAL_HEADER) {
+		global $xconf;
+		if ($xconf['show-special-header']) {
 			?>
 			<br>
 			<center>
-			<table class='table center news-container new-post' style='padding: 5px 50px; width: 400px'>
+			<table class='table center news-container new-post news-footer'>
 				<tr>
-					<td>
+					<td class="tdbg2">
 						News Engine (<?= NEWS_VERSION ?>)
 					</td>
 				</tr>
@@ -78,7 +81,7 @@
 		/*
 			threadpost() replacement as the original function obviously wouldn't work for this
 		*/
-		global $loguser, $config, $ismod, $sysadmin, $sql, $userfields, $extName;
+		global $loguser, $xconf, $ismod, $sysadmin, $sql, $userfields;
 		
 		// The first post is rendered in a different (blue) color scheme.
 		static $theme;
@@ -92,7 +95,7 @@
 		if ($preview) {
 			// Get message length to shrink it if it's a preview
 			$charcount = strlen($post['text']);
-			if ($charcount > $config['max-preview-length']){
+			if ($charcount > $xconf['max-preview-length']){
 				$post['text'] = news_preview($post['text'], $charcount)."...";
 				$text_shrunk = true;
 			}
@@ -101,26 +104,26 @@
 		$editlink = $lastedit = $viewfull = "";
 		// Preview to view full post
 		if ($text_shrunk)
-			$viewfull = "<tr><td class='fonts'>To read the full text, click <a href='{$extName}/news.php?id={$post['id']}'>here</a>.</td></tr>";
+			$viewfull = "<tr><td class='tdbg2 fonts'>To read the full text, click <a href='".actionlink("news.php?id={$post['id']}")."'>here</a>.</td></tr>";
 		
 		// Post controls
 		
 		if ($post['id']) {
 			if ($ismod || $loguser['id'] == $post['user']) {
-				$editlink = "<a href='{$extName}/news-editpost.php?id={$post['id']}&edit'>Edit</a>";
+				$editlink = "<a href='".actionlink("news-editpost.php?id={$post['id']}&edit")."'>Edit</a>";
 				if ($post['deleted'])
-					$editlink .= " - <a href='{$extName}/news-editpost.php?id={$post['id']}&del'>Undelete</a> - <a href='{$extName}/news.php?id={$post['id']}&pin={$post['id']}'>Peek</a>";
+					$editlink .= " - <a href='".actionlink("news-editpost.php?id={$post['id']}&del")."'>Undelete</a> - <a href='".actionlink("news.php?id={$post['id']}&pin={$post['id']}")."'>Peek</a>";
 				else
-					$editlink .= " - <a href='{$extName}/news-editpost.php?id={$post['id']}&del'>Delete</a>";
+					$editlink .= " - <a href='".actionlink("news-editpost.php?id={$post['id']}&del")."'>Delete</a>";
 			}				
 			if ($sysadmin) 
-				$editlink .= " - <a class='danger' href='{$extName}/news-editpost.php?id={$post['id']}&erase'>Erase</a>";
+				$editlink .= " - <a class='danger' href='".actionlink("news-editpost.php?id={$post['id']}&erase")."'>Erase</a>";
 		}
 		
 		if (filter_int($post['lastedituser'])) {
 			$lastedit     = " (Last edited by ".getuserlink($post['edituserdata'], $post['lastedituser'])." at ".printdate($post['lasteditdate']).")";
 		}
-		$usersort = "<a href='{$extName}/news.php?user={$post['user']}'>View all by this user</a>";
+		$usersort = "<a href='".actionlink("news.php?user={$post['user']}")."'>View all by this user</a>";
 		
 		$hideondel = ($post['deleted'] && $post['id'] != $pin);
 		if ($hideondel) {
@@ -135,8 +138,8 @@
 				<td class='tdbgh' colspan=2>
 					<table class='w' style='border-spacing: 0'>
 						<tr>
-							<td class='nobr'>
-								<a href='{$extName}/news.php?id={$post['id']}' class='headlink'>".htmlspecialchars($post['title'])."</a>
+							<td class='nobr left'>
+								<a href='".actionlink("news.php?id={$post['id']}")."' class='headlink'>".htmlspecialchars($post['title'])."</a>
 							</td>
 							<td class='fonts right'>
 								$editlink ".printdate($post['date'])."<br>
@@ -150,11 +153,12 @@
 			<tr><td class='tdbg2' style='padding-bottom: 12px' colspan='2'>".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."</td></tr>
 			$viewfull
 			".($hideondel ? "" : "
-			<tr class='tdbg1 fonts'>
-				<td>Comments: {$post['comments']}</td>
-				<td class='nobr right'>$usersort</td>
+			<tr class='fonts news-item-summary'>
+				<td class='tdbg1' colspan='2'>
+					<div>Comments: <b>{$post['comments']}</b><span style='float:right'>$usersort</span></div>
+					<div>Tags: ".news_tag_format($post['tags'])."</div>
+				</td>
 			</tr>
-			<tr><td class='tdbg1 fonts' colspan=2>Tags: ".news_tag_format($post['tags'])."</td></tr>
 			")."
 		</table>";
 		
@@ -162,7 +166,7 @@
 	
 	// Display the comment section for any given post
 	function news_comments($post, $author, $edit = 0) {
-		global $sql, $loguser, $ismod, $sysadmin, $userfields, $extName;
+		global $sql, $loguser, $ismod, $sysadmin, $userfields;
 		$token = generate_token(TOKEN_MGET);
 		
 		$comments = $sql->query("
@@ -179,13 +183,13 @@
 			// Check if we are editing this comment (and if we can do so)
 			$editlink = $lastedit = $editcomment = "";
 			if ($ismod || $loguser['id'] == $x['user']) {
-				$editlink = "<a href='{$extName}/news.php?id={$post}&edit={$x['id']}#{$x['id']}'>Edit</a> - ".
-							"<a href='{$extName}/news-editcomment.php?act=del&id={$x['id']}&auth={$token}'>".($x['deleted'] ? "Und" : "D")."elete</a>";
+				$editlink = "<a href='".actionlink("news.php?id={$post}&edit={$x['id']}#{$x['id']}")."'>Edit</a> - ".
+							"<a href='".actionlink("news-editcomment.php?act=del&id={$x['id']}&auth={$token}")."'>".($x['deleted'] ? "Und" : "D")."elete</a>";
 				$editcomment = ($edit == $x['id']);
 			}
 			
 			if ($sysadmin) 
-				$editlink .= " - <a class='danger' href='{$extName}/news-editcomment.php?act=erase&id={$x['id']}'>Erase</a>";
+				$editlink .= " - <a class='danger' href='".actionlink("news-editcomment.php?act=erase&id={$x['id']}")."'>Erase</a>";
 			
 			$author = getuserlink(get_userfields($x, 'u1'), $x['user']);
 			if ($x['deleted'])
@@ -196,24 +200,24 @@
 			// Display comment info (comments by the post author marked with [S])
 			$txt .= "
 				<tr id='{$x['id']}'>
-					<td class='comment-userbar nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
-					<td class='comment-userbar right fonts'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
+					<td class='comment-userbar tdbgh nbdr left nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
+					<td class='comment-userbar tdbgh nbdl right fonts'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
 				</tr>";
 				
 			// Display the actual message; print edit textbox instead if in edit mode
 			if ($editcomment) {
 				$txt .= "
 				<tr>
-					<td colspan=2>
-					<form method='POST' action='{$extName}/news-editcomment.php?act=edit&id={$x['id']}'>
-						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea><br>
+					<td class='tdbg2' colspan=2>
+					<form method='POST' action='".actionlink("news-editcomment.php?act=edit&id={$x['id']}")."'>
+						<textarea name='text' rows='3' style='resize:vertical;' class='w' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea><br>
 						<input type='submit' name='doedit' value='Edit comment'>
 						".auth_tag()."
 					</form>
 					</td>
 				</tr>";						
 			} else {
-				$txt .= "<tr><td class='w' colspan=2>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
+				$txt .= "<tr><td class='tdbg2 w' colspan=2>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
 			}
 		}
 		//$comment_txt .= "</table>";
@@ -225,8 +229,8 @@
 			<tr><td class='tdbgh center b' colspan=2>New comment</td></tr>
 			<tr>
 				<td class='tdbg2' colspan=2>
-					<form method='POST' action='{$extName}/news-editcomment.php?post={$post}'>
-						<textarea name='text' rows='3' style='resize:vertical; width: 850px' wrap='virtual'></textarea>
+					<form method='POST' action='".actionlink("news-editcomment.php?post={$post}")."'>
+						<textarea name='text' rows='3' class='w' style='resize:vertical' wrap='virtual'></textarea>
 						<br><input type='submit' name='submit' value='Submit comment'>".auth_tag()."
 					</form>
 				</td>
@@ -247,7 +251,7 @@
 			news_preview: shrinks a string without leaving open HTML tags
 			currently this doesn't allow to use < signs, made worse by the board unescaping &lt; entities
 		*/
-		global $config;
+		global $xconf;
 		if (!isset($length)) $length = strlen($text);
 		
 		/*
@@ -260,7 +264,7 @@
 		
 		*/
 		
-		for($i = 0, $res = "", $buffer = "", $opentags = 0, $intag = false; $i < $length && $i < $config['max-preview-length']; $i++){
+		for($i = 0, $res = "", $buffer = "", $opentags = 0, $intag = false; $i < $length && $i < $xconf['max-preview-length']; $i++){
 			
 			$buffer .= $text[$i];
 			
@@ -306,29 +310,28 @@
 	}
 	
 	function news_tag_format($tags){
-		global $extName;
 		$text = array();
 		foreach($tags as $id => $data)
-			$text[] = "<a href='{$extName}/news.php?tag={$id}'>".htmlspecialchars($data['title'])."</a>";
+			$text[] = "<a href=\"".actionlink("news.php?tag={$id}")."\">".htmlspecialchars($data['title'])."</a>";
 		return implode(", ", $text);
 	}
 	
 	
 	function main_news_tags($num){
-		global $sql, $extName;
+		global $sql;
 		$tags = load_news_tags(0, $num); // Grab 15 most used tags, in order
 		$total = count($tags);
 		
 		$txt 	= "";
 		foreach($tags as $id => $data){
 			$px = 10 + round(pow($data['cnt'] / $total * 100, 0.7)); // Gradually decreate font size
-			$txt .= "<a class='nobr tag-links' href='{$extName}/news.php?tag={$id}' style='font-size: {$px}px'>".htmlspecialchars($data['title'])."</a> ";
+			$txt .= "<a class='tdbgc nbd nobr tag-links' href=\"".actionlink("news.php?tag={$id}")."\" style='font-size: {$px}px'>".htmlspecialchars($data['title'])."</a> ";
 		}
 		return $txt;
 	}
 	
 	function recentcomments($limit){
-		global $sql, $userfields, $extName;
+		global $sql, $userfields;
 		//List with latest 5 (or 10?) comments showing user and thread
 		// should use IF and log editing
 		$list = $sql->query("
@@ -346,18 +349,120 @@
 			$txt .= "
 				<table class='table fonts' style='border-spacing: 0'>
 					<tr>
-						<td class='tdbg1'>".getuserlink($x, $x['uid'])."</td>
-						<td class='right'>".printdate($x['date'])."</td>
+						<td class='tdbgh nbdr'>".getuserlink($x, $x['uid'])."</td>
+						<td class='tdbgh nbdl right'>".printdate($x['date'])."</td>
 					</tr>
 					<tr>
 						<td class='tdbg1' colspan=2>
-							<a href='{$extName}/news.php?id={$x['pid']}#{$x['id']}'>Comment</a> posted on <a href='{$extName}/news.php?id={$x['pid']}'>".htmlspecialchars($x['title'])."</a>
+							<a href='".actionlink("news.php?id={$x['pid']}#{$x['id']}")."'>Comment</a> posted on <a href='".actionlink("news.php?id={$x['pid']}")."'>".htmlspecialchars($x['title'])."</a>
 						</td>
 					</tr>
-				</table>
-				<div style='height: 5px'></div>";
+				</table>";
 		}
 		return $txt;
 	}
 	
+	function news_calendar($extraparams = "") {
+		$months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+		
+		$out = "";
+		
+		// Initialize values
+		$cur   = getdate();
+		$day   = isset($_GET['cday']) ? (int)$_GET['cday'] : $cur['mday'];
+		$month = isset($_GET['cmonth']) ? (int)$_GET['cmonth'] : $cur['mon'];
+		$year  = isset($_GET['cyear']) ? (int)$_GET['cyear'] : $cur['year'];
+		unset($cur);
+		
+		// Get the amount of days in the previous month
+		$last = getdate(mktime(0,0,0,$month,0,$year));
+		$lastdays = $last['mday'] + 1;
+		
+		// Get the day of the week the month starts
+		// This is used to determine the amount blank cells before the first day of the month
+		$date  = getdate(mktime(0,0,0,$month,1,$year));
+		$start = $date['wday'];
+		
+		// Get the amount of days in the current month *and* the week day for the first day of the next month
+		$date  = getdate(mktime(0,0,0,$month+1,0,$year) - 1);
+		$days  = $date['mday'] + 1;
+		$rest  = $date['wday'] + 2; // to determine the extra days at the end of the list
+		
+		$out = "<table class='table small-shadow'>
+		<tr><td class='tdbgh center b' colspan='7'><big>{$date['month']} {$date['year']}</big></td></tr>
+		<tr>
+			<td class='tdbgh center b'>S</td>
+			<td class='tdbgh center b'>M</td>
+			<td class='tdbgh center b'>T</td>
+			<td class='tdbgh center b'>W</td>
+			<td class='tdbgh center b'>T</td>
+			<td class='tdbgh center b'>F</td>
+			<td class='tdbgh center b'>S</td>
+		";
+		
+		// Leftover days from the previous month
+		// These are selectable too, because why not
+		if ($start > 0) {
+			$out .= "</tr><tr>";
+			for ($i = 0, $ld = $lastdays - $start, $lm = $last['mon'], $ly = $last['year']; $i < $start; ++$i, ++$ld)
+				$out .= "<td class='tdbg2 center fonts'><a href='".actionlink(null,"?cday={$ld}&cmonth={$lm}&cyear={$ly}{$extraparams}")."'>{$ld}</a></td>";
+		}
+		
+		// Days from the current month
+		for ($dt = 1, $total = $days + $i; $i < $total; ++$i, ++$dt) {
+			if ($i % 7 == 0)
+				$out .= "</tr><tr>";
+			if ($day == $dt) $c = "c";
+			else if ($i % 7 == 0 || $i % 7 == 6) $c = "1";
+			else $c = "2";
+			$out .= "<td class='tdbg{$c} center'><a href='".actionlink(null,"?cday={$dt}&cmonth={$month}&cyear={$year}{$extraparams}")."'>{$dt}</a></td>";
+		}
+		
+		// Leftover days from the next month until the week ends
+		for ($i = 0, $total = 7 - $rest, $ld = 1, $lm = ($month%12)+1, $ly = $year + (int)($lm === 1); $i < $total; ++$i, ++$ld)
+			$out .= "<td class='tdbg2 center fonts'><a href='".actionlink(null,"?cday={$ld}&cmonth={$lm}&cyear={$ly}{$extraparams}")."'>{$ld}</a></td>";
+		
+		
+		// Print month selector
+		$out .= "</tr><tr><td class='tdbgh' colspan='7'></td></tr>
+		<tr><td class='tdbg1 center fonts' colspan='7'>";
+		for ($i = 1; $i < 13; ++$i) {
+			$w = $month == $i ? "b" : "a";
+			$out .= "<$w href='".actionlink(null,"?cday={$day}&cmonth={$i}&cyear={$year}{$extraparams}")."'>{$months[$i]}</$w> ";
+		}
+		$out .= "</td></tr>";
+		
+		// Print year selector
+		$out .= "</tr><tr><td class='tdbg1 center fonts' colspan='7'>... ";
+		for ($i = $year - 3; $i < $year + 4; ++$i) {
+			$w = $year == $i ? "b" : "a";
+			$out .= "<$w href='".actionlink(null,"?cday={$day}&cmonth={$month}&cyear={$i}{$extraparams}")."'>{$i}</$w> ";
+		}
+		$out .= "...</td></tr>";
+		
+		// Print filter reset link (to make it obvious when the filter is active)
+		
+		if (isset($_GET['cday']) || isset($_GET['cmonth']) || isset($_GET['cyear'])) {
+			$out .= "
+			<tr>
+				<td class='tdbg2 center fonts' colspan='7'>
+					Only posts from <b>{$day} {$months[$month]} {$year}</b> will be shown.<br/>
+					Click <a href='".actionlink(null, "?$extraparams")."'>here</a> to reset the date filter.
+				</td>
+			</tr>";
+		}
+		$out .= "</table>";
+		
+		return $out;
+	}
+	function news_calendar_url() {
+		$out = "";
+		if (isset($_GET['cday']))
+			$out .= "&cday={$_GET['cday']}";
+		if (isset($_GET['cmonth']))
+			$out .= "&cmonth={$_GET['cmonth']}";
+		if (isset($_GET['cyear']))
+			$out .= "&cyear={$_GET['cyear']}";
+		return $out;
+	}
 ?>

@@ -11,6 +11,13 @@
 	*/
 	
 	require "lib/function.php";
+	
+	// Toggle the forced scheme?
+	if (toggle_board_cookie($_GET['tglschrep'], 'news-noschrep')) {
+		$params = preg_replace('/\&?tglschrep(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
+		die(header("Location: news.php?{$params}"));
+	}
+	
 	require "lib/news_function.php";
 	
 	$_GET['id']         = filter_int($_GET['id']);
@@ -21,10 +28,14 @@
 	// Tag filter
 	$_GET['tag']        = filter_int($_GET['tag']);
 	
+	$_GET['cday']       = isset($_GET['cday']) ? (int)$_GET['cday'] : null;
+	$_GET['cmonth']     = isset($_GET['cmonth']) ? (int)$_GET['cmonth'] : null;
+	$_GET['cyear']      = isset($_GET['cyear']) ? (int)$_GET['cyear'] : null;
+	
 	// Search results
-	$_POST['ord']       = filter_int($_POST['ord']);
-	$_POST['search']    = filter_string($_POST['search']);
-	$_POST['page']      = filter_int($_POST['page']);
+	$_GET['ord']        = filter_int($_GET['ord']);
+	$_GET['search']     = filter_string($_GET['search']);
+	$_GET['page']       = filter_int($_GET['page']);
 	
 	news_header("Main page");
 	
@@ -40,9 +51,9 @@
 		
 		$where = $vals = array();
 		// Initial option for text search
-		if ($_POST['search']) {
+		if ($_GET['search']) {
 			$where[] = "n.text LIKE ?";
-			$vals[]  = "%".escape_like_wildcards($_POST['search'])."%";
+			$vals[]  = "%".mysql::filter_like_wildcards($_GET['search'])."%";
 		}
 		// Do not display deleted news to guests
 		if (!$canwrite) 
@@ -50,6 +61,19 @@
 		// Filter by user
 		if ($_GET['user'])
 			$where[] = "n.user = {$_GET['user']}";
+		// Filter by date
+		if ($_GET['cday'] || $_GET['cmonth'] || $_GET['cyear']) {
+			$from = mktime(0,0,0, $_GET['cmonth'], $_GET['cday'], $_GET['cyear']);
+			if ($_GET['cday'] != 0) {
+				$to = mktime(0,0,0, $_GET['cmonth'], $_GET['cday']+1, $_GET['cyear']);
+			} else if ($_GET['cmonth'] != 0) {
+				$to = mktime(0,0,0, $_GET['cmonth']+1, $_GET['cday'], $_GET['cyear']);
+			} else {
+				$to = mktime(0,0,0, $_GET['cmonth'], $_GET['cday'], $_GET['cyear']+1);
+			}
+			
+			$where[] = "n.date > {$from} AND n.date < {$to}";
+		}
 		
 		if ($where)
 			$q_where = "WHERE ".implode(' AND ', $where);
@@ -60,14 +84,16 @@
 			$tagfilter .= ($where ? " AND" : " WHERE")." a.tag = {$_GET['tag']}";
 		}
 		
+		
+		
 	}
 	
 	// Get the total right away to possibly fix bad page numbers
 	$total	= $sql->resultp("SELECT COUNT(*) FROM news n {$joins}{$q_where}{$tagfilter}", $vals);
 	$ppp    = get_ppp();
-	$pagelist = page_select($total, $ppp);
+	$pagelist = pagelist($url, $total, $ppp);
 	
-	$min = $_POST['page'] * $ppp;
+	$min = $_GET['page'] * $ppp;
 	
 	
 	// Get the posts we need
@@ -81,7 +107,7 @@
 		{$joins}
 		{$q_where}{$tagfilter}
 		GROUP BY n.id
-		ORDER BY n.date ".($_POST['ord'] ? "ASC" : "DESC")."
+		ORDER BY n.date ".($_GET['ord'] ? "ASC" : "DESC")."
 		LIMIT {$min}, {$ppp}
 	", $vals);
 	
@@ -106,25 +132,25 @@
 		$foundres = "<div class='fonts w center'>".
 				"Showing {$total} post".($total == 1 ? "" : "s")." in total".
 				($total > $ppp ? ", from ".($min + 1)." to ".min($total, $min + $ppp)." on this page" : "").".<br>".
-				"Sorting from ".($_POST['ord'] ? "oldest to newest" : "newest to oldest").".".
+				"Sorting from ".($_GET['ord'] ? "oldest to newest" : "newest to oldest").".".
 			"</div>";
 	}
 	
-	$url = "{$extName}/news.php?tag={$_GET['tag']}&user={$_GET['user']}";
+	$url = actionlink("news.php?tag={$_GET['tag']}&user={$_GET['user']}".news_calendar_url());
 	
-	?>
-	<br>
-	<table>
-		<tr>
-			<td class='w' style='vertical-align: top; padding: 10px 40px 0px 40px'>
+?>
+	<div>
+		<div class="news-list">
 			<?php
-				if (!$sql->num_rows($news)) {
-					?>
-					<table class='table news-container'>
-						<tr><td class="tdbg2 center">It looks like nothing was found. Do you want to try again?</td></tr>
-					</table>
-					<?php
-				} else while ($post = $sql->fetch($news)) {
+			if (!$sql->num_rows($news)) {
+				?>
+				<table class='table news-container'>
+					<tr><td class="tdbg2 center">It looks like nothing was found. Do you want to try again?</td></tr>
+				</table>
+				<?php
+			} else {
+				print $pagelist;
+				while ($post = $sql->fetch($news)) {
 					$post['tags'] = $tags[$post['id']];
 					$post['userdata']     = get_userfields($post, 'u1');
 					$post['edituserdata'] = get_userfields($post, 'u2');
@@ -132,68 +158,75 @@
 					if ($_GET['id'])
 						print news_comments($_GET['id'], $post['user'], $_GET['edit']);
 				}
+				print $pagelist;
+			}
 			?>
-				<br>
-				<br>
-			</td>
-			<!-- sorting options and search box -->
-			<td style='vertical-align: top'>
+		</div>
+		<div class="news-options">
+		<!-- sorting options and search box -->
 <?php			if ($canwrite) { ?>
-				<table class='table fonts small-shadow'>
-					<tr><td class='tdbgh center'>Options</td></tr>
-					<tr><td><a href='<?=$extName?>/news-editpost.php?new'>New post</a></td>
-					</tr>
-				</table>
-				<br> 
+			<table class='table fonts small-shadow'>
+				<tr><td class='tdbgh center i'>Special Controls Box</td></tr>
+				<tr><td class="tdbg2"><a href="<?=actionlink("news-editpost.php?new")?>">New post</a></td></tr>
+			</table>
+			<br> 
 <?php			} ?>
-				<form method='POST' action="<?= $url ?>">
-				<table class='table fonts small-shadow'>
-					<tr><td class="tdbgh center" colspan=2>Search</td></tr>
-					<tr>
-						<td class="tdbg1 center b">Text:</td>
-						<td class="tdbg2">
-							<input type='text' name='search' size=40 value="<?= htmlspecialchars($_POST['search']) ?>">
-						</td>
+			<?= news_calendar("&search={$_GET['search']}&ord={$_GET['ord']}&tag={$_GET['tag']}&user={$_GET['user']}") ?>
+			<br/>
+			<form method='GET' action="<?= $url ?>">
+			<table class='table fonts small-shadow'>
+				<tr><td class="tdbgh center" colspan=2>Search</td></tr>
+				<tr>
+					<td class="tdbg1 center b">Text:</td>
+					<td class="tdbg2">
+						<input type='text' name='search' class='w' value="<?= htmlspecialchars($_GET['search']) ?>">
 					</td>
-					<tr>
-						<td class="tdbg1 center b">Sorting:</td>
-						<td class="tdbg2">
-							<label><input type="radio" name="ord" value=0<?= ($_POST['ord'] == 0 ? " checked" : "")?>> Newest to oldest</label>
-						</td>
+				</td>
+				<tr>
+					<td class="tdbg1 center b">Sorting:</td>
+					<td class="tdbg2">
+						<label><input type="radio" name="ord" value=0<?= ($_GET['ord'] == 0 ? " checked" : "")?>> Newest to oldest</label>
 					</td>
-					<tr>
-						<td class="tdbg1 center b"></td>
-						<td class="tdbg2">
-							<label><input type="radio" name="ord" value=1<?= ($_POST['ord'] == 1 ? " checked" : "")?>> Oldest to newest</label>
-						</td>
+				</td>
+				<tr>
+					<td class="tdbg1 center b"></td>
+					<td class="tdbg2">
+						<label><input type="radio" name="ord" value=1<?= ($_GET['ord'] == 1 ? " checked" : "")?>> Oldest to newest</label>
 					</td>
-					<tr>
-						<td class="tdbg1 center b">Page:</td>
-						<td class="tdbg2"><?= $pagelist ?></td>
-					</tr>
-					<tr>
-						<td class="tdbg1"></td>
-						<td class="tdbg2"><input type='submit' name='dosearch' value='Search'></td>
-					</tr>
-					<tr><td class="tdbgh center b" colspan=2></td></tr>
-					<tr><td class='tdbg1' colspan=2><?= $foundres ?></td></tr>
-				</table>
-				</form>
-				<br>
-				<table class='table fonts small-shadow'>
-					<tr><td class='tdbgh center'>Tags</td></tr>
-					<tr><td style='padding: 4px'><?= main_news_tags(15) ?></td>
-					</tr>
-				</table>
-				<br>
-				<table class='table fonts small-shadow'>
-					<tr><td class='tdbgh center'>Latest comments</td></tr>
-					<tr><td class='fonts' style='padding: 4px'><?= recentcomments(5) ?></td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-	<?php
+				</td>
+				<!--<tr>
+					<td class="tdbg1 center b">Page:</td>
+					<td class="tdbg2"><?= $pagelist ?></td>
+				</tr> -->
+				<tr>
+					<td class="tdbg1"></td>
+					<td class="tdbg2"><input type='submit' value='Search'></td>
+				</tr>
+				<tr><td class="tdbgh center b" colspan=2></td></tr>
+				<tr><td class='tdbg1' colspan=2><?= $foundres ?></td></tr>
+			</table>
+			</form>
+			<br>
+			<table class='table fonts small-shadow'>
+				<tr><td class='tdbgh center'>Options</td></tr>
+				<tr><td class="tdbg2">
+				<a href="<?="{$url}&tglschrep=1"?>"><?=($_COOKIE['news-noschrep'] ? "Use special scheme file" : "Use board scheme file")?></a>
+				</td></tr>
+			</table>
+			<br>
+			<table class='table fonts small-shadow'>
+				<tr><td class='tdbgh center'>Tags</td></tr>
+				<tr><td class="tdbg2 tag-list"><?= main_news_tags(15) ?></td>
+				</tr>
+			</table>
+			<br>
+			<table class='table fonts small-shadow'>
+				<tr><td class='tdbgh center'>Latest comments</td></tr>
+				<tr><td class="tdbg2 comment-list fonts"><?= recentcomments(5) ?></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+<?php
 	
 	news_footer();

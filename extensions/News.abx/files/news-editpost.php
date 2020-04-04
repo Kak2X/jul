@@ -9,7 +9,7 @@
 	require "lib/news_function.php";
 	
 	if (!$canwrite)
-		news_errorpage("You aren't allowed to edit posts.<br>Click <a href='{$extName}/news.php'>here</a> to return to the main page.");	
+		news_errorpage("You aren't allowed to edit posts.<br>Click <a href='".actionlink("news.php")."'>here</a> to return to the main page.");	
 	
 	$_GET['id']	= filter_int($_GET['id']);
 	$smilies = readsmilies();
@@ -96,7 +96,7 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			[$config['news-name'] , "news.php"],
+			[$xconf['page-title'] , "news.php"],
 			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
@@ -195,7 +195,7 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			[$config['news-name'] , "news.php"],
+			[$xconf['page-title'] , "news.php"],
 			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
@@ -250,13 +250,13 @@
 			$message = "Are you sure you want to <b>DELETE</b> this post?";
 			$btntext = "Delete post";
 		}
-		$form_link = "{$extName}/news-editpost.php?del&id={$_GET['id']}";
+		$form_link = actionlink("news-editpost.php?del&id={$_GET['id']}");
 		$buttons   = array(
 			[BTN_SUBMIT, $btntext],
-			[BTN_URL   , "Cancel", "{$extName}/news.php?id={$_GET['id']}"]
+			[BTN_URL   , "Cancel", actionlink("news.php?id={$_GET['id']}")]
 		);
 		
-		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+		news_confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else if (isset($_GET['erase']) && $sysadmin) {
 		// ACTION: Delete from database
@@ -277,12 +277,12 @@
 		
 		$title = "Permanent Deletion";
 		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
-		$form_link = "{$extName}/news-editpost.php?erase&id={$_GET['id']}";
+		$form_link = actionlink("news-editpost.php?erase&id={$_GET['id']}");
 		$buttons       = array(
 			[BTN_SUBMIT, "Delete post"],
-			[BTN_URL   , "Cancel", "{$extName}/news.php?id={$_GET['id']}"]
+			[BTN_URL   , "Cancel", actionlink("news.php?id={$_GET['id']}")]
 		);
-		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
+		news_confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
 		news_errorpage("No action specified.");
@@ -290,7 +290,7 @@
 	
 ?>
 	<center>
-	<form method='POST' action='<?=$extName?>/news-editpost.php?id=<?= $_GET['id'] ?>&new'>
+	<form method='POST' action="<?=actionlink("news-editpost.php?id={$_GET['id']}&new")?>">
 	
 	<table class='table'>
 		<tr><td class='tdbgh center b' colspan='2'>Create post</td></tr>		

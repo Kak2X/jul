@@ -1,7 +1,7 @@
 {
 	"xconf":{
 		"Layout options":{
-			"news-name":{
+			"page-title":{
 				"title":"News page name",
 				"desc":"Title of the news page, which is visible in the page title and the breadcrumbs.",
 				"input":"text",
@@ -9,13 +9,28 @@
 				"default":"News",
 				"width":300
 			},
-			"news-title":{
+			"page-header":{
 				"title":"News header HTML",
 				"desc":"The header used in the news page, which can be an image. Clicking on it will redirect to the main news page.",
 				"input":"text",
 				"type":"string",
 				"default":"News page",
 				"width":500
+			},
+			"show-special-header":{
+				"title":"Use custom header",
+				"desc":"If disabled, the standard page header and footer will be used instead of the custom ones.",
+				"input":"radio",
+				"type":"bool",
+				"default":1,
+				"special":"yesno"
+			},
+			"header-links":{
+				"title":"Header links",
+				"desc":"Specify the clickable links shown in the header.",
+				"input":"textarea",
+				"type":"string",
+				"default":"<a href='index.php'>board</a> - \n<a href='/'>the index</a>"
 			},
 			"max-preview-length":{
 				"title":"Character limit in preview",
@@ -27,7 +42,7 @@
 			}
 		},
 		"Permissions":{
-			"news-write-perm":{
+			"write-perm":{
 				"title":"Powerlevel required to add news",
 				"desc":"Minimum power required to post in the news section.",
 				"input":"select",
@@ -35,7 +50,7 @@
 				"default":1,
 				"special":"powerlevel"
 			},
-			"news-admin-perm":{
+			"admin-perm":{
 				"title":"Powerlevel required to moderate news",
 				"desc":"Minimum power required to edit and delete other users' posts and comments in the news section.",
 				"input":"select",

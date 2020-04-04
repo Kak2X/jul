@@ -1,0 +1,66 @@
+body{
+	padding:			0px 30px 20px 30px;
+}
+
+/* CUSTOM NEWS COMPONENTS */
+.headlink{
+	font-size: 			18px;
+}
+
+/**/
+.tag-links{
+	padding:			3px; 
+	margin:				3px; 
+	display: 			inline-block;
+}
+
+.comment-list{
+	padding: 			4px;
+}
+.comment-list > .table{
+	margin-bottom: 		4px;
+}
+
+/*
+	This is used by the header at the top
+	We need to override the common CSS elements here
+*/
+.header-title{
+	font-size:			30px;
+}
+.header-links a{
+	text-decoration:	underline !important;
+}
+.top-header{
+	position:			relative;
+	top:				-10px;
+	max-width: 			500px !important;
+}
+
+.news-footer  {
+	max-width: 			400px !important;
+}
+.news-footer td {
+	padding: 			5px 50px;
+}
+
+/* dual index layout */
+.news-list, .news-options {
+	vertical-align: 	top;
+	display: 			inline-block;
+}
+.news-list {
+	width: 				calc(100% - 350px); /* 320px - 30px */
+	padding-right: 		40px;
+	padding-bottom: 	20px;
+}
+.news-options {
+	width: 				320px;
+}
+/* the right pane size is particularly egregious on small screens */
+@media (max-width: 800px) {
+	.news-list, .news-options {
+		width: 			100%;
+		padding-right: 	0;
+	}
+}

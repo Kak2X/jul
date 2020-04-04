@@ -46,7 +46,7 @@
 			[$_GET['post'], $loguser['id'], $_POST['text'], ctime()]);
 			
 			$id = $sql->insert_id();
-			return header("Location: {$extName}/news.php?id={$_GET['post']}#$id");
+			return header("Location: news.php?id={$_GET['post']}#$id");
 			
 		} else {
 			news_errorpage("I don't get what you're trying to do here.");
@@ -92,12 +92,12 @@
 			$btntext = "Delete comment";
 		}
 		$title     = "Warning";
-		$form_link = "{$extName}/news-editcomment.php?act=del&id={$_GET['id']}";
+		$form_link = actionlink("news-editcomment.php?act=del&id={$_GET['id']}");
 		$buttons   = array(
 			[BTN_SUBMIT, $btntext],
-			[BTN_URL   , "Cancel", "{$extName}/news.php?id={$c['pid']}#{$_GET['id']}"]
+			[BTN_URL   , "Cancel", actionlink("news.php?id={$c['pid']}#{$_GET['id']}")]
 		);
-		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+		news_confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
 	else if ($_GET['act'] == 'erase' && $sysadmin) {
 		if (confirmed($msgkey = 'erase-cm', TOKEN_SLAMMER)) {
@@ -107,12 +107,12 @@
 		
 		$title     = "Permanent Deletion";
 		$message   = "Are you sure you want to <b>permanently DELETE</b> this comment from the database?";
-		$form_link = "{$extName}/news-editcomment.php?act=erase&id={$_GET['id']}";
+		$form_link = actionlink("news-editcomment.php?act=erase&id={$_GET['id']}");
 		$buttons   = array(
 			[BTN_SUBMIT, "Delete comment"],
-			[BTN_URL   , "Cancel", "{$extName}/news.php?id={$c['pid']}#{$_GET['id']}"]
+			[BTN_URL   , "Cancel", actionlink("news.php?id={$c['pid']}#{$_GET['id']}")]
 		);
-		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
+		news_confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}	
 	
 	news_footer();

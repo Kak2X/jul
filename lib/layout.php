@@ -184,7 +184,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
 		- <a href='online.php'>Online users</a>
 		- <a href='forum.php?feat=1'>Featured threads archive</a>
-		".($config['allow-uploader'] ? " - <a href='uploader.php'>Uploader</a>".($loguser['id'] ? " (<a href='uploader.php?mode=u&user={$loguser['id']}'>My folders</a>)" : "") : "")."
 		".print_hook('header-links-2')."
 		<br>
 		<a href='ranks.php'>Ranks</a>
@@ -361,13 +360,15 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$bgimage = '';
 	
+	$custombase = filter_string($meta['baserel']);
+
 	if ($nullscheme) {
 		// special "null" scheme.
 		$css = "<style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
 		$css = "
-		<link rel='stylesheet' href='schemes/base.css' type='text/css'>
+		<link rel='stylesheet' href='schemes/base.css' type='text/css'>$custombase
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
 		
@@ -378,7 +379,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>
+		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>$custombase
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }

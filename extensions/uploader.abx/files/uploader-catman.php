@@ -96,23 +96,19 @@
 	
 	pageheader("Uploader Manager");
 	
-	// TODO:
-	// Select list with auto redirect for user selection (like private folders)
-	
-
 	if ($isadmin && !isset($_GET['noadmin'])) {
 		print adminlinkbar($scriptname, $_GET['mode'] ? "?mode={$_GET['mode']}" : "?", [
-			"{$scriptname}?" => "Shared folders",
-			"{$scriptname}?mode=u" => "Personal folders",
+			actionlink(null,"?") => "Shared folders",
+			actionlink(null,"?mode=u") => "Personal folders",
 		]);
 	}
 	$links = uploader_breadcrumbs_links(null, $user, [["Manager", NULL]]);
 	$barright = "";
 	if ($isadmin) {
 		if (_MODE_USER)
-			$barright = uploader_user_select('user', $_GET['user'])." - <a href='?'>Manage shared folders</a>";
+			$barright = uploader_user_select('user', $_GET['user'])." - <a href='".actionlink()."'>Manage shared folders</a>";
 		else
-			$barright = "<a href='?mode=u'>Manage personal folders</a>";
+			$barright = "<a href='".actionlink(null, "?mode=u")."'>Manage personal folders</a>";
 	}
 	$breadcrumbs = dobreadcrumbs($links, $barright);
 
@@ -143,7 +139,7 @@
 		$selperm = ($isadmin || $loguser['id'] == $cat['user']) ? 0 : SEL_DISABLED;
 		
 ?>
-		<form method="POST" action="<?=$baseparams?>&action=edit&cat=<?=$_GET['cat']?>">
+		<form method="POST" action="<?=actionlink(null, "{$baseparams}&action=edit&cat={$_GET['cat']}")?>">
 		<table class="table">
 			<tr><td class="tdbgh center b" colspan="4"><?= $htitle ?></tr>
 			<tr>
@@ -206,7 +202,7 @@
 				$sql->query("DELETE FROM uploader_cat WHERE id = {$_GET['cat']}");
 				$sql->commit();
 				
-				errorpage("The category has been deleted!", $baseparams, "the uploader");
+				errorpage("The category has been deleted!", actionlink(null, $baseparams), "the uploader");
 			}
 			return header("Location: $baseparams");
 		}
@@ -215,10 +211,10 @@
 		$message = "Are you sure you want to <b>delete</b> the category '".htmlspecialchars($cat['title'])."'?<br>".
 		           "All files will be moved to the category below.<br>".
 		           uploader_cat_select('mergeid', $_GET['cat'], UCS_DEFAULT | UCS_UPLOADPERM, "Choose a category to merge the files into...");
-		$form_link = "uploader-catman.php{$baseparams}&action=delete&cat={$_GET['cat']}";
+		$form_link = actionlink("uploader-catman.php{$baseparams}&action=delete&cat={$_GET['cat']}");
 		$buttons   = array(
 			[BTN_SUBMIT, "DELETE"],
-			[BTN_URL   , "Cancel", $baseparams]
+			[BTN_URL   , "Cancel", actionlink(null, $baseparams)]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
@@ -253,10 +249,10 @@
 
 		<tr>
 			<td class="tdbg2 center fonts nobr">
-				<a href="<?=$baseparams?>&action=edit&cat=<?=$x['id']?>">Edit</a> - <a href="<?=$baseparams?>&action=delete&cat=<?=$x['id']?>">Delete</a>
+				<a href="<?=actionlink(null, "{$baseparams}&action=edit&cat={$x['id']}")?>">Edit</a> - <a href="<?=actionlink(null, "{$baseparams}&action=delete&cat={$x['id']}")?>">Delete</a>
 			</td>
 			<td class="tdbg1">
-				<a href="uploader.php<?=$baseparams?>&cat=<?=$x['id']?>"><?= htmlspecialchars($x['title']) ?></a>
+				<a href="<?=actionlink("uploader.php{$baseparams}&cat={$x['id']}")?>"><?= htmlspecialchars($x['title']) ?></a>
 				<span class="fonts"><br/><?= htmlspecialchars($x['description']) ?></span>
 			</td>
 			<td class="tdbg2 center"><?= ($x['uid'] ? getuserlink($x, $x['uid']) : "<i>Shared</i>") ?></td>
@@ -265,7 +261,7 @@
 		</tr>			
 
 <?php	} ?>
-		<tr><td class="tdbgc center" colspan="6"><a href="<?=$baseparams?>&action=edit&cat=-1">Add a new folder</a></td></tr>
+		<tr><td class="tdbgc center" colspan="6"><a href="<?=actionlink(null, "{$baseparams}&action=edit&cat=-1")?>">Add a new folder</a></td></tr>
 	</table>
 <?php
 	
@@ -273,7 +269,7 @@
 	pagefooter();
 
 function _uploader_private_file_confirmation($id) {
-	global $sql, $baseparams, $scriptname;
+	global $sql, $baseparams;
 	$uhoh = $sql->resultq("SELECT COUNT(*) FROM uploader_files WHERE cat = {$id} && private = 1");
 	if ($uhoh && !confirmed($msgkey = 'prv-warn')) {
 		$title = "Private files will become public";
@@ -284,10 +280,10 @@ function _uploader_private_file_confirmation($id) {
 			<br>
 			Are you sure you want to continue?
 		";
-		$form_link = "{$scriptname}{$baseparams}&action={$_GET['action']}&cat={$_GET['cat']}";
+		$form_link = actionlink(null, "{$baseparams}&action={$_GET['action']}&cat={$_GET['cat']}");
 		$buttons   = array(
 			[BTN_SUBMIT, "Yes"],
-			[BTN_URL   , "No", $baseparams]
+			[BTN_URL   , "No", actionlink(null, $baseparams)]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}

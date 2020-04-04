@@ -1,7 +1,8 @@
 <?php
 
-if (!$config['allow-uploader'])
-	return header("Location: index.php");
+// not applicable anymore (finally)
+//if (!$config['allow-uploader'])
+//	return header("Location: index.php");
 
 if (!isset($meta['noparams'])) {
 	$_GET['mode'] = filter_string($_GET['mode']);
@@ -121,8 +122,8 @@ function uploader_breadcrumbs_links($cat = NULL, $user = NULL, $extra = NULL) {
 	switch ($_GET['mode']) {
 		case 'u':
 			$links = array(
-				["Uploader", "uploader.php"],
-				["Personal folders", "uploader-catbyuser.php"],
+				["Uploader", actionlink("uploader.php")],
+				["Personal folders", actionlink("uploader-catbyuser.php")],
 				[$user['name'], NULL],
 			);
 			$k = 2;
@@ -136,7 +137,7 @@ function uploader_breadcrumbs_links($cat = NULL, $user = NULL, $extra = NULL) {
 	}
 	// If a category is selected (be index or catman), add the category title
 	if ($cat || $extra !== NULL) {
-		$links[$k][1] = "uploader.php?mode={$_GET['mode']}&user={$_GET['user']}";
+		$links[$k][1] = actionlink("uploader.php?mode={$_GET['mode']}&user={$_GET['user']}");
 		if ($extra === NULL) {
 			$links[] = [$cat['title'], NULL];
 		} else {
@@ -202,7 +203,7 @@ function uploader_user_select($name, $sel = 0, $flags = UUS_JS) {
 	// Javascript autoredirect
 	$js = $prejs = $postjs = "";
 	if ($flags & UUS_JS) {
-		$js = "onChange=\"parent.location='?mode={$_GET['mode']}&user='+this.options[this.selectedIndex].value\"";
+		$js = "onChange=\"parent.location='".actionlink(null, "?mode={$_GET['mode']}&user=")."'+this.options[this.selectedIndex].value\"";
 		$prejs  = "<form method='GET' action='?' style='display: inline'>";
 		$postjs = "<noscript> <input type='hidden' name='mode' value='{$_GET['mode']}'><input type='submit' value='Go'></noscript></form>";
 	}
@@ -261,7 +262,7 @@ function uploader_filter_cat($sel = -1, $flags = UCS_DEFAULT) {
 }
 
 function upload_file($file, $user, $opt) {
-	global $sql, $config;
+	global $sql, $xconf;
 	
 	// Check for the default PHP error indicator in $file['error']
 	upload_error($file);
@@ -270,7 +271,7 @@ function upload_file($file, $user, $opt) {
 	// Just-in-case validation (probably can be removed)
 	if (!$file['size']) 
 		errorpage("This is a 0kb file");
-	if ($file['size'] > $config['uploader-max-file-size'])
+	if ($file['size'] > $xconf['max-file-size'])
 		errorpage("The file you're trying to upload is over the file size limit.");	
 	
 	//--
@@ -321,9 +322,7 @@ function upload_file($file, $user, $opt) {
 }
 
 function reupload_file($file, $orig_file, $user, $opt) {
-	global $sql, $config;
-	
-	
+	global $sql, $xconf;
 	
 	$sqldata = [];
 	//--
@@ -333,7 +332,7 @@ function reupload_file($file, $orig_file, $user, $opt) {
 		// An actual file is being reuploaded
 		if (!$file['size']) 
 			errorpage("This is a 0kb file");
-		if ($file['size'] > $config['uploader-max-file-size'])
+		if ($file['size'] > $xconf['max-file-size'])
 			errorpage("The file you're trying to upload is over the file size limit.");	
 		
 		// Image detection

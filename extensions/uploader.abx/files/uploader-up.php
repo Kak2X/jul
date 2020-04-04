@@ -46,14 +46,14 @@
 	$breadcrumbs = dobreadcrumbs($links); 
 	
 ?>
-<form method="POST" action="<?=$baseparams?>&cat=<?=$_GET['cat']?>" enctype="multipart/form-data">
+<form method="POST" action="<?=actionlink(null, "{$baseparams}&cat={$_GET['cat']}")?>" enctype="multipart/form-data">
 <table class="table">
 	<tr><td class="tdbgh center b" colspan="2">Uploading a new file to "<?= htmlspecialchars($cat['title']) ?>"</td></tr>
 	<tr>
 		<td class="tdbg1 center b">File:</td>
 		<td class="tdbg2">
-			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $config['uploader-max-file-size'] ?>">
-			<input name="up" type="file"> <span class="fonts">Max size: <?= sizeunits($config['uploader-max-file-size']) ?></span>
+			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $xconf['max-file-size'] ?>">
+			<input name="up" type="file"> <span class="fonts">Max size: <?= sizeunits($xconf['max-file-size']) ?></span>
 		</td>
 	</tr>
 	<tr>

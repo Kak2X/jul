@@ -39,6 +39,9 @@
 	if (!isset($root)) {
 		fetch_root($root, $boardurl);
 		$scriptpath = $scriptname;
+	} else {
+		// Otherwise, we're definitely running an extension script. Load the current extension config.
+		$xconf = ext_read_config($extName);
 	}
 	
 	// Determine if to show conditionally the MySQL query list.
@@ -2108,6 +2111,8 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 		global $scriptname;
 		$sel = $scriptname;
 	}
+	
+	global $links;
 	$links = array(
 		array(
 			'admin.php'	              => "Admin Control Panel",
@@ -2132,10 +2137,6 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			'admin-threads.php'       => "ThreadFix",
 			'admin-threads2.php'      => "ThreadFix 2",
 		),
-		'File uploader' => array(
-			'uploader-countfix.php'   => "File Count Fix",
-			'uploader-catman.php'     => "Folder Manager",
-		),
 		'Security' => array(
 			'admin-backup.php'        => "Board Backups",
 //			'admin-downloader.php'    => "?",	
@@ -2152,6 +2153,7 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			'admin-deluser.php'       => "Delete User",
 		)
 	);
+	load_hook('adminlinkbar');
 	
 	$oldbar = filter_int($_COOKIE['linkbar']);	
 	if (!$oldbar) {
@@ -2220,6 +2222,24 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 	}
 	
 }
+
+function adminlinkbar_add($catname, $contents) {
+	global $links;
+	if (!isset($links[$catname])) {
+		$links[$catname] = $contents;
+	} else {
+		$links[$catname] += $contents;
+	}
+}
+function adminlinkbar_add_item($catname, $key, $label) {
+	global $links;
+	if (!isset($links[$catname])) {
+		$links[$catname] = [$key => $label];
+	} else {
+		$links[$catname][$key] = $label;
+	}
+}
+
 
 function nuke_js($before, $after) {
 

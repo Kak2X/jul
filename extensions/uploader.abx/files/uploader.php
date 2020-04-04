@@ -45,7 +45,7 @@
 			$c = ($i % 2)+1;
 			print "
 			<tr>
-				<td class='tdbg{$c}".($x['private'] ? " i" : "")."'><a href='{$baseparams}&cat={$x['id']}'>".htmlspecialchars($x['title'])."</a><span class='fonts'><br>".htmlspecialchars($x['description'])."</span></td>
+				<td class='tdbg{$c}".($x['private'] ? " i" : "")."'><a href='".actionlink(null, "{$baseparams}&cat={$x['id']}")."'>".htmlspecialchars($x['title'])."</a><span class='fonts'><br>".htmlspecialchars($x['description'])."</span></td>
 				<td class='tdbg{$c} center'>{$x['files']}</td>
 				<td class='tdbg{$c} center'>{$x['downloads']}</td>
 				<td class='tdbg{$c} center'>
@@ -138,11 +138,11 @@
 		$links = uploader_breadcrumbs_links($cat, $user);
 		$barright = _barright();
 		if (can_manage_category($cat) && !$loguser['uploader_locked']) {
-			$barright .= " - <a href=\"uploader-catman.php{$baseparams}&cat={$_GET['cat']}&action=edit\">Edit this folder</a>";
+			$barright .= " - <a href=\"".actionlink("uploader-catman.php{$baseparams}&cat={$_GET['cat']}&action=edit")."\">Edit this folder</a>";
 		}
 		$breadcrumbs = dobreadcrumbs($links, $barright); 
 		
-		$pagelinks = pagelist("{$baseparams}&cat={$_GET['cat']}", $total, $ppp);
+		$pagelinks = pagelist(actionlink(null,"{$baseparams}&cat={$_GET['cat']}"), $total, $ppp);
 	
 		
 		$uploadfile = "";
@@ -150,14 +150,14 @@
 			$uploadfile = "
 			<tr>
 				<td class='tdbgc center b' colspan='8'>
-					<a href='uploader-up.php{$baseparams}&cat={$_GET['cat']}'>Upload a new file</a>
+					<a href='".actionlink("uploader-up.php{$baseparams}&cat={$_GET['cat']}")."'>Upload a new file</a>
 				</td>
 			</tr>";
 		}
 		
 ?>
 		<?= $breadcrumbs ?>
-		<form method="GET" action="?">
+		<form method="GET" action="<?=actionlink()?>">
 		<table class="table">
 			<tr><td class="tdbgh center b" colspan="2">Filters</td></tr>
 			<tr>
@@ -223,10 +223,10 @@
 				<td class='tdbg{$c} center fonts nobr'>
 					".(
 					!$loguser['uploader_locked'] && ($canmanage || (!$banned && $x['user'] == $loguser['id']))
-					? (($isadmin || $config['uploader-allow-file-edit']) ? "<a href='uploader-editfile.php?action=edit&f={$x['hash']}'>Edit</a> - " : "")."<a href='uploader-editfile.php?action=delete&f={$x['hash']}'>Delete</a>"
+					? (($isadmin || $xconf['allow-file-edit']) ? "<a href='".actionlink("uploader-editfile.php?action=edit&f={$x['hash']}")."'>Edit</a> - " : "")."<a href='".actionlink("uploader-editfile.php?action=delete&f={$x['hash']}")."'>Delete</a>"
 					: "")."
 				</td>
-				<td class='tdbg{$c}".($x['private'] ? " i" : "")."'><a href='uploader-get.php?f={$x['hash']}'>".htmlspecialchars($x['filename'])."</a></td>
+				<td class='tdbg{$c}".($x['private'] ? " i" : "")."'><a href='".actionlink("uploader-get.php?f={$x['hash']}")."'>".htmlspecialchars($x['filename'])."</a></td>
 				<td class='tdbg{$c} fonts'>".xssfilters($x['description'])."</td>
 				<td class='tdbg{$c} center'>".getuserlink(get_userfields($x, 'u1'))."</td>
 				<td class='tdbg{$c} center fonts'>".printdate($x['date'])."</td>
@@ -251,12 +251,12 @@
 	
 	function _barright() {
 		global $loguser, $isadmin, $baseparams, $user;
-		$barright = "<a href='uploader-catbyuser.php'>Folders by user</a>";
+		$barright = "<a href='".actionlink("uploader-catbyuser.php")."'>Folders by user</a>";
 		if ($loguser['id'] && !$loguser['uploader_locked']) {
 			if ($isadmin)
-				$barright .= " - <a href='uploader-catman.php'>Manage shared folders</a>";
+				$barright .= " - <a href='".actionlink("uploader-catman.php")."'>Manage shared folders</a>";
 			if (($isadmin && $_GET['user']) || $_GET['user'] == $loguser['id'])
-				$barright .= " - <a href='uploader-catman.php{$baseparams}'>Manage ".htmlspecialchars($user['name'])."'s folders</a>";
+				$barright .= " - <a href='".actionlink("uploader-catman.php{$baseparams}")."'>Manage ".htmlspecialchars($user['name'])."'s folders</a>";
 		}
 		return $barright;
 	}

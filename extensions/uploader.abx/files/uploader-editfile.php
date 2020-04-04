@@ -15,12 +15,12 @@ else if (!$_GET['f'])
 	$error = "No file was specified.";
 
 if ($error)
-	errorpage($error, "uploader.php", "the file uploader");
+	errorpage($error, actionlink("uploader.php"), "the file uploader");
 
 load_uploader_file($_GET['f']);
 
 if (!can_manage_category_files($cat) && !can_edit_file($file))
-	errorpage("You aren't allowed to edit this file.", "uploader.php", "the file uploader");
+	errorpage("You aren't allowed to edit this file.", actionlink("uploader.php"), "the file uploader");
 
 $baseparams = "?action={$_GET['action']}&f={$_GET['f']}";
 	
@@ -28,7 +28,7 @@ $baseparams = "?action={$_GET['action']}&f={$_GET['f']}";
 	
 	
 if ($_GET['action'] == 'edit') {
-	if (!$config['uploader-allow-file-edit'])
+	if (!$xconf['allow-file-edit'])
 		admincheck();
 
 	if (isset($_POST['submit'])) {
@@ -83,15 +83,15 @@ if ($_GET['action'] == 'edit') {
 	
 	pageheader("Uploader");
 ?>
-<form method="POST" action="<?=$baseparams?>" enctype="multipart/form-data">
+<form method="POST" action="<?=actionlink(null, $baseparams)?>" enctype="multipart/form-data">
 <table class="table">
 	<tr><td class="tdbgh center b" colspan="2">Editing file '<?= htmlspecialchars($file['filename']) ?>'</td></tr>
 	<tr>
 		<td class="tdbg1 center b">Reupload file:</td>
 		<td class="tdbg2">
-			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $config['uploader-max-file-size'] ?>">
+			<input type="hidden" name="MAX_FILE_SIZE" value="<?= $xconf['max-file-size'] ?>">
 			<input name="up" type="file"> <span class="fonts">
-				Select a new file if you want to replace the old one.  Max size: <?= sizeunits($config['uploader-max-file-size']) ?>.
+				Select a new file if you want to replace the old one.  Max size: <?= sizeunits($xconf['max-file-size']) ?>.
 <?php if ($isadmin) { ?>
 				<br/>Doing this will override the "Mime type" and "Image file" options (recommended).
 				<br/>If you want to change those options while reuploading the file, mark this checkbox ->
@@ -159,15 +159,15 @@ else if ($_GET['action'] == 'delete') {
 	
 	if (confirmed($msgkey = 'del-file')) {
 		delete_upload($file);	
-		errorpage("The file '{$filename}' has been deleted!", "uploader.php?cat={$file['cat']}", "the uploader");
+		errorpage("The file '{$filename}' has been deleted!", actionlink("uploader.php?cat={$file['cat']}"), "the uploader");
 	}
 	
 	$title     = "File deletion";
 	$message   = "Are you sure you want to <b>delete</b> the file '<tt>{$filename}</tt>'?";
-	$form_link = $baseparams;
+	$form_link = actionlink(null, $baseparams);
 	$buttons   = array(
 		[BTN_SUBMIT, "Delete file"],
-		[BTN_URL   , "Cancel", "uploader.php?cat={$file['cat']}"]
+		[BTN_URL   , "Cancel", actionlink("uploader.php?cat={$file['cat']}")]
 	);
 	
 	confirm_message($msgkey, $message, $title, $form_link, $buttons);

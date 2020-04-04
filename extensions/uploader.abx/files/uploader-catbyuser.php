@@ -35,12 +35,12 @@
 	// this could result in "phantom pages" but who cares and it shouldn't happen anyway
 	$total = (int) $sql->resultq("SELECT COUNT(DISTINCT c.user) FROM uploader_cat c WHERE $conditions GROUP BY c.user");
 	
-	$pagelinks = pagelist("uploader-catbyuser.php?", $total, $ppp);
+	$pagelinks = pagelist(actionlink("uploader-catbyuser.php?"), $total, $ppp);
 	
 	
 	// Breadcrumbs
 	$links = uploader_breadcrumbs_links(NULL, NULL, UBL_USERCAT);
-	$breadcrumbs = dobreadcrumbs($links, "<a href='uploader.php?mode=u'>Show all personal folders</a>"); 
+	$breadcrumbs = dobreadcrumbs($links, "<a href='".actionlink("uploader.php?mode=u")."'>Show all personal folders</a>"); 
 ?>
 	<?= $breadcrumbs ?>
 	<table class="table fonts">
@@ -50,16 +50,16 @@
 		<tr>
 			<td class="tdbg1 center">Sort by</td>
 			<td class="tdbg2 center">
-				<a href="?sort=n&ord=<?=$_GET['ord']?>">User name</a> | 
-				<a href="?sort=i&ord=<?=$_GET['ord']?>">User ID</a> | 
-				<a href="?sort=t&ord=<?=$_GET['ord']?>">Folder count</a>
+				<a href="<?=actionlink(null,"?sort=n&ord={$_GET['ord']}")?>">User name</a> | 
+				<a href="<?=actionlink(null,"?sort=i&ord={$_GET['ord']}")?>">User ID</a> | 
+				<a href="<?=actionlink(null,"?sort=t&ord={$_GET['ord']}")?>">Folder count</a>
 			</td>
 		</tr>
 		<tr>
 			<td class="tdbg1 center">Order</td>
 			<td class="tdbg2 center">
-				<a href="?sort=<?=$_GET['sort']?>&ord=0">Ascending</a> | 
-				<a href="?sort=<?=$_GET['sort']?>&ord=1">Descending</a>
+				<a href="<?=actionlink(null,"?sort={$_GET['sort']}&ord=0")?>">Ascending</a> | 
+				<a href="<?=actionlink(null,"?sort={$_GET['sort']}&ord=1")?>">Descending</a>
 			</td>
 		</tr>
 	</table>
@@ -77,7 +77,7 @@
 		$c = $i+1;
 		print "
 			<tr>
-				<td class='tdbg{$c} center'><a href='uploader.php?mode=u&user={$x['id']}'>View</td>
+				<td class='tdbg{$c} center'><a href='".actionlink("uploader.php?mode=u&user={$x['id']}")."'>View</td>
 				<td class='tdbg{$c}'>".getuserlink($x)."</td>
 				<td class='tdbg{$c} center'>{$x['total']}</td>
 			</tr>";

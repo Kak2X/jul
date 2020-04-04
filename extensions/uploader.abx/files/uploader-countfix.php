@@ -10,7 +10,7 @@
 
 	if (!isset($_POST['run'])) {
 		?>
-		<form action="?" method="post">  
+		<form action="<?= actionlink() ?>" method="post">  
 		<table class='table'>
 			<tr><td class='tdbgh center'>Uploader File Count Fix</td></tr>
 			<tr><td class='tdbg1 center'>&nbsp;
@@ -102,7 +102,7 @@
 			}
 			print "<tr>
 				<td class='tdbg{$cell} center'>{$x['id']}</td>
-				<td class='tdbg{$cell}'><a href='uploader.php?cat={$x['id']}'>".htmlspecialchars($x['title'])."</a></td>
+				<td class='tdbg{$cell}'><a href='".actionlink("uploader.php?cat={$x['id']}")."'>".htmlspecialchars($x['title'])."</a></td>
 				<td class='tdbg{$cell} center'>{$x['count_cur']}</td>
 				<td class='tdbg{$cell} center'>{$x['count_real']}</td>
 				<td class='tdbg{$cell} center'>{$x['offset']}</td>

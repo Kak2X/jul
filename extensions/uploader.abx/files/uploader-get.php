@@ -4,9 +4,9 @@
 	require "lib/function.php";
 	require "lib/uploader_function.php";
 	
-	if (!$config['uploader-all-origin'] && !SAME_ORIGIN) {
+	if (!$xconf['all-origin'] && !SAME_ORIGIN) {
 		print "<title>{$config['board-name']}</title>";
-		print "To continue to the file, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
+		print "To continue to the file, click <a href='".actionlink(null, "?{$_SERVER['QUERY_STRING']}")."'>here</a>.";
 		die;
 	}
 	

@@ -32,16 +32,25 @@ function print_hook($key) {
 	return $out;
 }
 
+// --------------
+// extra
+function actionlink($url = null, $args = "") {
+	global $scriptpath, $extName;
+	if ($url !== null)
+		return "{$extName}/{$url}";
+	return $scriptpath.$args;
+}
+
 // ------------------
 // extension system
 
 function ext_init() {
 	global $extConfig;
-	foreach (ext_get_enabled(false) as $file) {
-		$file = rtrim($file);
-		$xconf = ext_read_config($file);
-		include_once "extensions/{$file}.abx/init.php";
-		$extConfig[$file] = $xconf;
+	foreach (ext_get_enabled(false) as $extName) {
+		$extName = rtrim($extName);
+		$xconf = ext_read_config($extName);
+		include_once "extensions/{$extName}.abx/init.php";
+		$extConfig[$extName] = $xconf;
 	}
 }
 // Get the enabled extensions
@@ -71,6 +80,10 @@ function ext_write_userdata($extName, $script) {
 	return file_put_contents("extensions/{$extName}.abx/user.json", json_encode($script));
 }
 // Extension page layout
+function ext_read_metadata($extName) {
+	return json_decode(file_get_contents("extensions/{$extName}.abx/metadata.json"), true);
+}
+
 function ext_read_settingspage($extName) {
 	return json_decode(file_get_contents("extensions/{$extName}.abx/settings.page.json"), true);
 }
@@ -136,7 +149,7 @@ function ext_list($enabledOnly = false, &$enabled = null) {
 		// Don't skip if the entire list is requested (ie: extension settings)
 		if ($ena || !$enabledOnly) {
 			// Extension metadata in .json files.
-			$x = json_decode(file_get_contents("extensions/{$file}.abx/metadata.json"), true); // As array
+			$x = ext_read_metadata($file);
 			// Get user-specific metadata
 			$xtra = ext_read_userdata($file);
 			

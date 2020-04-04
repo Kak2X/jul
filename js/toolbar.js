@@ -161,11 +161,11 @@ function createMenu(id, i, menuName, offset, menuWidth, e) {
 	
 	// The window should be placed depending on the cursor position
 	if (e.pageX || e.pageY) {
-		popup.style.left = e.pageX;
-		popup.style.top  = e.pageY;
+		popup.style.left = e.pageX + "px";
+		popup.style.top  = e.pageY + "px";
 	} else if (e.clientX || e.clientY) {
-		popup.style.left = e.clientX + document.body.scrollLeft;
-		popup.style.top  = e.clientY + document.body.scrollTop;
+		popup.style.left = (e.clientX + document.body.scrollLeft) + "px";
+		popup.style.top  = (e.clientY + document.body.scrollTop) + "px";
 	}
 	
 	// Register events to destroy the window

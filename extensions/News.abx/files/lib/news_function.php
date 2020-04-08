@@ -1,6 +1,6 @@
 <?php
 	
-	const NEWS_VERSION = "v0.5 -- 04/04/20";
+	const NEWS_VERSION = "v0.6 -- 09/04/20";
 	
 	// Load "permissions"
 	if ($banned) $loguser['id'] = 0; // oh dear
@@ -81,7 +81,7 @@
 		/*
 			threadpost() replacement as the original function obviously wouldn't work for this
 		*/
-		global $loguser, $xconf, $ismod, $sysadmin, $sql, $userfields;
+		global $loguser, $config, $xconf, $ismod, $sysadmin, $sql, $userfields;
 		
 		// The first post is rendered in a different (blue) color scheme.
 		static $theme;
@@ -131,11 +131,13 @@
 			//$post['title'] = "<s>{$post['title']}</s>";
 		}
 		
+		prepare_avatar($post, $picture, $userpic);
+		
 		return "
 		<input type='hidden' name='id' value={$post['id']}>
 		<table class='table news-container {$theme}'>
 			<tr>
-				<td class='tdbgh' colspan=2>
+				<td class='tdbgh' colspan='2'>
 					<table class='w' style='border-spacing: 0'>
 						<tr>
 							<td class='nobr left'>
@@ -150,7 +152,24 @@
 				</td>
 			</tr>
 			
-			<tr><td class='tdbg2' style='padding-bottom: 12px' colspan='2'>".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."</td></tr>
+			"./*
+			<!-- standard mode (more consistent with regular tlayout) -->
+			<tr>
+				<td class='tdbg2 center vatop' style='width: {$config['max-avatar-size-x']}px'>
+					{$userpic}
+				</td>
+				<td class='tdbg2 vatop' style='padding-bottom: 12px'>
+					".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."
+				</td>
+			</tr>
+			*/"
+			<tr>
+				<td class='tdbg2 vatop' style='padding-bottom: 12px' colspan='2'>
+					<img src=\"{$picture}\" style='float:right'>
+					".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."
+				</td>
+			</tr>
+			
 			$viewfull
 			".($hideondel ? "" : "
 			<tr class='fonts news-item-summary'>
@@ -164,19 +183,63 @@
 		
 	}
 	
+	function news_post_preview($data) {
+		global $loguser, $sql;
+		
+		// Complete the list of existing tags
+		$tags = [];
+		$source = load_news_tags();
+		foreach ($data['tags'] as $tagid)
+			$tags[$tagid] = $source[$tagid];
+		// and the new tags as well
+		$extra = explode(",", $data['newtags']);
+		for ($i = 0, $c = count($extra); $i < $c; ++$i)
+			$tags[] = ['title' => $extra[$i]];
+		
+		$preview = array(
+			'id'        => $data['id'],
+			'user'      => $data['user'],
+			'date'      => isset($data['date']) ? $data['date'] : ctime(),
+			'userdata'  => $data['userdata'],
+			'deleted'   => 0,
+			'comments'  => 0,
+			'tags'      => $tags,
+			'text'      => $data['text'],
+			'title'     => $data['title'],
+			'nosmilies' => $data['nosmilies'],
+			'nohtml'    => $data['nohtml'],
+			'moodid'    => $data['moodid'],
+			'piclink'   => get_weblink($data['user'], $data['moodid']),
+			'uid'       => $data['user'],
+		);
+		if ($data['id']) {
+			$preview['comments']     = $sql->resultq("SELECT COUNT(*) FROM news_comments WHERE pid = {$data['id']}");
+			$preview['lastedituser'] = $loguser['id'];
+			$preview['lasteditdate'] = ctime();
+			$preview['edituserdata'] = $loguser;
+		}
+		
+		return "<table class='table'>
+				<tr><td class='tdbgh center b'>Message preview</td></tr>
+				<tr><td class='tdbg1'>".news_format($preview)."</td></tr>
+			</table>
+			<br>";
+	}
+	
 	// Display the comment section for any given post
 	function news_comments($post, $author, $edit = 0) {
-		global $sql, $loguser, $ismod, $sysadmin, $userfields;
+		global $sql, $config, $loguser, $ismod, $sysadmin, $userfields;
 		$token = generate_token(TOKEN_MGET);
 		
-		$comments = $sql->query("
-			SELECT c.*, ".set_userfields('u1').", ".set_userfields('u2')."
+		$comments = $sql->query(set_avatars_sql("
+			SELECT c.*, ".set_userfields('u1').", u1.id uid {%AVFIELD%}, ".set_userfields('u2')."
 			FROM news_comments c
 			LEFT JOIN users u1 ON c.user         = u1.id
 			LEFT JOIN users u2 ON c.lastedituser = u2.id
+			{%AVJOIN%}
 			WHERE c.pid = {$post} ".($ismod ? "" : "AND c.deleted = 0")."
 			ORDER BY c.id DESC
-		");
+		", 'c'));
 		
 		$txt = "";
 		while ($x = $sql->fetch($comments)){
@@ -199,50 +262,75 @@
 			
 			// Display comment info (comments by the post author marked with [S])
 			$txt .= "
+			<table class='table small-shadow'>
 				<tr id='{$x['id']}'>
-					<td class='comment-userbar tdbgh nbdr left nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
-					<td class='comment-userbar tdbgh nbdl right fonts'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
+					<td class='comment-userbar tdbgh vatop nbdr left nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
+					<td class='comment-userbar tdbgh vatop nbdl right fonts' colspan='2'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
 				</tr>";
 				
 			// Display the actual message; print edit textbox instead if in edit mode
 			if ($editcomment) {
 				$txt .= "
+				<form method='POST' action='".actionlink("news-editcomment.php?act=edit&id={$x['id']}")."'>
 				<tr>
-					<td class='tdbg2' colspan=2>
-					<form method='POST' action='".actionlink("news-editcomment.php?act=edit&id={$x['id']}")."'>
-						<textarea name='text' rows='3' style='resize:vertical;' class='w' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea><br>
-						<input type='submit' name='doedit' value='Edit comment'>
-						".auth_tag()."
-					</form>
+					<td class='tdbg2 vatop' id='nwedittd' colspan='2'>
+						<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea>
 					</td>
-				</tr>";						
+					<td class='tdbg2' style='width: {$config['max-avatar-size-x']}px'>
+						<center>".mood_layout(0, $x['user'], $x['moodid'])."</center>
+					</td>
+				</tr>
+				<tr>
+					<td class='tdbg2' colspan='3'>
+						<input type='submit' name='doedit' value='Edit comment'>".mood_layout(1, $x['user'], $x['moodid'])."
+						".auth_tag()."
+					</td>
+				</tr>
+				</form>
+				";
 			} else {
-				$txt .= "<tr><td class='tdbg2 w' colspan=2>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
+				prepare_avatar($x, $picture, $userpic);
+				$txt .= "<tr><td class='tdbg1' style='width: 100px'><img src=\"{$picture}\" style='max-width: 100px; max-height: 100px' /></td><td class='tdbg2 vatop w' colspan='2'>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
 			}
+			$txt .= "</table><div style='height:5px'></div>";
 		}
-		//$comment_txt .= "</table>";
+		
 
 		// Do not show new comment area if we're editing a comment
 		$newcomment = "";
 		if ($loguser['id'] && !$edit) {
 			$newcomment .= "
-			<tr><td class='tdbgh center b' colspan=2>New comment</td></tr>
+			<form method='POST' action='".actionlink("news-editcomment.php?post={$post}")."'>
+			<table class='table small-shadow'>
+			<tr><td class='tdbgh center b' colspan='2'>New comment</td></tr>
 			<tr>
-				<td class='tdbg2' colspan=2>
-					<form method='POST' action='".actionlink("news-editcomment.php?post={$post}")."'>
-						<textarea name='text' rows='3' class='w' style='resize:vertical' wrap='virtual'></textarea>
-						<br><input type='submit' name='submit' value='Submit comment'>".auth_tag()."
-					</form>
+				<td class='tdbg2 vatop' id='nwedittd'>
+					<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical; height: 100%' wrap='virtual'></textarea>
 				</td>
-			</tr>";
+				<td class='tdbg2' style='width: {$config['max-avatar-size-x']}px'>
+					<center>".mood_layout(0, $loguser['id'], 0)."</center>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2' colspan='2'>
+					<input type='submit' name='submit' value='Submit comment'>".mood_layout(1, $loguser['id'], 0)."
+					".auth_tag()."
+				</td>
+			</tr>
+			</table>
+			</form>
+			<br/>
+			";
 		}
 		
 		return "
-		<table class='table small-shadow'>
+		
 			{$newcomment}
-			<tr><td class='tdbgh center b' colspan=2>Comments</td></tr>
+		<table class='table small-shadow'>
+			<tr><td class='tdbgh center b' colspan=3>Comments</td></tr>
+			</table>
 			{$txt}
-		</table>";
+		";
 	}
 	
 	function news_preview($text, $length = NULL){
@@ -296,7 +384,7 @@
 				FROM news_tags_assoc a
 				INNER JOIN news_tags t ON a.tag = t.id
 				WHERE a.post = {$post}
-			", 'id');
+			", 'id', mysql::USE_CACHE);
 		} else {
 			return $sql->getarraybykey("
 				SELECT t.id, t.title, COUNT(*) cnt
@@ -305,7 +393,7 @@
 				GROUP BY t.id
 				ORDER BY cnt DESC
 				".($limit ? "LIMIT {$limit}" : "")."
-			", 'id');
+			", 'id', mysql::USE_CACHE);
 		}
 	}
 	

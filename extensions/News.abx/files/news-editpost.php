@@ -12,6 +12,7 @@
 		news_errorpage("You aren't allowed to edit posts.<br>Click <a href='".actionlink("news.php")."'>here</a> to return to the main page.");	
 	
 	$_GET['id']	= filter_int($_GET['id']);
+	$action = "";
 	$smilies = readsmilies();
 	
 	if (isset($_GET['edit'])){
@@ -35,6 +36,7 @@
 		$_POST['text']      = isset($_POST['text'])      ? $_POST['text']      : $news['text'];
 		$_POST['nosmilies'] = isset($_POST['nosmilies']) ? $_POST['nosmilies'] : $news['nosmilies'];
 		$_POST['nohtml']    = isset($_POST['nohtml'])    ? $_POST['nohtml']    : $news['nohtml'];
+		$_POST['moodid']    = isset($_POST['moodid'])    ? $_POST['moodid']    : $news['moodid'];
 		
 		if (!isset($_POST['tags']))
 			$_POST['tags'] = $sql->getresults("SELECT tag FROM news_tags_assoc WHERE post = {$_GET['id']}");
@@ -71,6 +73,7 @@
 				'text'         => $_POST['text'],
 				'lastedituser' => $loguser['id'],
 				'lasteditdate' => ctime(),
+				'moodid'       => $_POST['moodid'],
 			);
 			$sql->queryp("UPDATE news SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
 			
@@ -80,7 +83,8 @@
 				$sql->execute($inassoc, [$tagid]);
 			}
 			// Remove de-selected
-			$sql->query("DELETE FROM news_tags_assoc WHERE post = {$_GET['id']} AND tag NOT IN (".implode(',', $_POST['tags']).")");
+			$keeptags = implode(',', $_POST['tags']);
+			$sql->query("DELETE FROM news_tags_assoc WHERE post = {$_GET['id']}".($keeptags ? " AND tag NOT IN ({$keeptags})" : ""));
 			
 			$sql->commit();
 			
@@ -96,39 +100,33 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			[$xconf['page-title'] , "news.php"],
+			[$xconf['page-title'] , actionlink("news.php")],
 			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		
+		$userid = $news['user'];
 		
 		print $barlinks;
 		
 		if (isset($_POST['preview'])) { 
-			$preview = array(
-				'id'           => $_GET['id'],
-				'user'         => $news['user'],
-				'date'         => $news['date'],
-				'userdata'     => $news,
-				'lastedituser' => $loguser['id'],
-				'lasteditdate' => ctime(),
-				'edituserdata' => $loguser,
-				'deleted'      => 0,
-				'comments'     => $sql->resultq("SELECT COUNT(*) FROM news_comments WHERE pid = {$_GET['id']}"),
-				'tags'         => array(), // TODO: Make tags work in the preview
-				'text'         => $_POST['text'],
-				'title'        => $_POST['title'],
-				'nosmilies'    => $_POST['nosmilies'],
-				'nohtml'       => $_POST['nohtml'],
-			);
-			?>
-			<table class='table'>
-				<tr><td class='tdbgh center b'>Message preview</td></tr>
-				<tr><td class='tdbg1'><?= news_format($preview) ?></td></tr>
-			</table>
-			<br>
-			<?php		
+			print news_post_preview([
+				'id'        => $_GET['id'],
+				'user'      => $news['user'],
+				'date'      => $news['date'],
+				'userdata'  => $news,
+				'tags'      => $_POST['tags'],
+				'newtags'   => $_POST['customtags'],
+				'text'      => $_POST['text'],
+				'title'     => $_POST['title'],
+				'nosmilies' => $_POST['nosmilies'],
+				'nohtml'    => $_POST['nohtml'],
+				'moodid'    => $_POST['moodid'],
+			]);		
 		} 		
+		
+		$action = "&edit";
+		
 	}
 	else if (isset($_GET['new'])){
 		// ACTION : New news
@@ -140,6 +138,7 @@
 		
 		$_POST['nosmilies']  = filter_int($_POST['nosmilies']);
 		$_POST['nohtml']     = filter_int($_POST['nohtml']);
+		$_POST['moodid']     = filter_int($_POST['moodid']);
 		
 		if (isset($_POST['submit'])){
 			check_token($_POST['auth']);
@@ -168,10 +167,11 @@
 				
 			// Create the post
 			$values = array(
-				'title' => $_POST['title'],
-				'text'  => $_POST['text'],
-				'user'  => $loguser['id'],
-				'date'  => ctime(),
+				'title'  => $_POST['title'],
+				'text'   => $_POST['text'],
+				'user'   => $loguser['id'],
+				'date'   => ctime(),
+				'moodid' => $_POST['moodid'],
 			);
 			$sql->queryp("INSERT INTO news SET ".mysql::setplaceholders($values), $values);
 			$id = $sql->insert_id();
@@ -195,36 +195,33 @@
 		news_header($windowtitle);
 		
 		$links = array(
-			[$xconf['page-title'] , "news.php"],
+			[$xconf['page-title'] , actionlink("news.php")],
 			[$windowtitle         , NULL],
 		);
 		$barlinks = dobreadcrumbs($links); 
 		
+		$userid = $loguser['id'];
 		
 		print $barlinks;
 		
 		if (isset($_POST['preview'])) { 
-			$preview = array(
+		
+			// Save ourselves a query if we're (somehow) not needing the picture link
+			print news_post_preview([
 				'id'        => 0,
 				'user'      => $loguser['id'],
-				'date'      => ctime(),
 				'userdata'  => $loguser,
-				'deleted'   => 0,
-				'comments'  => 0,
-				'tags'      => array(), // TODO: Make tags work in the preview
+				'tags'      => $_POST['tags'],
+				'newtags'   => $_POST['customtags'],
 				'text'      => $_POST['text'],
 				'title'     => $_POST['title'],
 				'nosmilies' => $_POST['nosmilies'],
 				'nohtml'    => $_POST['nohtml'],
-			);
-			?>
-			<table class='table'>
-				<tr><td class='tdbgh center b'>Message preview</td></tr>
-				<tr><td class='tdbg1'><?= news_format($preview) ?></td></tr>
-			</table>
-			<br>
-			<?php		
-		} 
+				'moodid'    => $_POST['moodid'],
+			]);	
+		}
+		
+		$action = "&new";
 	}
 	else if (isset($_GET['del'])){
 		// ACTION: Hide/Unhide from normal users and guests
@@ -290,36 +287,40 @@
 	
 ?>
 	<center>
-	<form method='POST' action="<?=actionlink("news-editpost.php?id={$_GET['id']}&new")?>">
+	<form method='POST' action="<?=actionlink("news-editpost.php?id={$_GET['id']}{$action}")?>">
 	
 	<table class='table'>
-		<tr><td class='tdbgh center b' colspan='2'>Create post</td></tr>		
+		<tr><td class='tdbgh center b' colspan='3'>Create post</td></tr>		
 		<tr>
-			<td class='tdbg1 center b'>Title:</td>
-			<td class='tdbg2'>
+			<td class='tdbg1 center b' style="width: 150px">Title:</td>
+			<td class='tdbg2' colspan="2">
 				<input type='text' name='title' style='width: 580px' value="<?= htmlspecialchars($_POST['title']) ?>">
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Message:</td>
-			<td class='tdbg2' id='msgtd'>
-				<textarea id='msgtxt' name='text' rows='21' cols='80' width='800px' style='resize:both' wrap='virtual'><?= htmlspecialchars($_POST['text']) ?></textarea>
+			<td class="tdbg2 vatop" id='msgtd'>
+				<textarea id='msgtxt' name='text' rows='21' class="w" style='resize:both' wrap='virtual' autofocus><?= htmlspecialchars($_POST['text']) ?></textarea>
+			</td>
+			<td class="tdbg2">
+				<?=mood_layout(0, $userid, $_POST['moodid'])?>
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Tags:</b><div class="fonts">hold CTRL to select multiple</div></td>
-			<td class='tdbg2'><?= tag_select($_POST['tags'], $_POST['customtags']) ?></td>
+			<td class='tdbg2' colspan="2"><?= tag_select($_POST['tags'], $_POST['customtags']) ?></td>
 		</tr>	
 		<tr>
 			<td class='tdbg1 center b'>Options:</td>
-			<td class='tdbg2'>
+			<td class='tdbg2' colspan="2">
 				<label><input type="checkbox" name="nosmilies" value=1 <?= $nosmilies_chk ?>> Disable smilies</label> &nbsp;
 				<label><input type="checkbox" name="nohtml" value=1 <?= $nohtml_chk ?>> Disable HTML</label>
+				<?=mood_layout(1, $userid, $_POST['moodid'])?>
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1'></td>
-			<td class='tdbg2'>
+			<td class='tdbg2' colspan="2">
 				<input type='submit' name='submit' value='Submit post'> &nbsp; 
 				<input type='submit' name='preview' value='Preview post'><?= auth_tag() ?>
 			</td>

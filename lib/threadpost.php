@@ -38,30 +38,8 @@
 			
 			
 			$set['location'] = filter_string($post['location']) ? "<br>From: ". htmlspecialchars($post['location']) : ""; 
-
-			if ($config['allow-avatar-storage']) {
-				if ($post['piclink']) {
-					$set['picture'] = escape_attribute($post['piclink']);
-					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
-				} else if (file_exists(avatar_path($post['uid'], $post['moodid']))) {
-					$set['picture'] = avatar_path($post['uid'], $post['moodid']);
-					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">"; 
-				} else {
-					$set['picture'] = $set['userpic'] = "";
-				}
-				
-			} else {
-				// $set['picture'] doesn't seem to be used...
-				if ($post['moodid'] && $post['moodurl']) { // mood avatar
-					$set['picture'] = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
-					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
-				} else if (isset($post['picture'])) { // default avatar
-					$set['picture'] = escape_attribute($post['picture']);
-					$set['userpic'] = "<img class='avatar' src=\"{$set['picture']}\">";
-				} else { // null
-					$set['userpic'] = $set['picture'] = "";
-				}
-			}
+			
+			prepare_avatar($post, $set['picture'], $set['userpic']);
 
 			if ($post['signtext']) {
 				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
@@ -295,12 +273,7 @@
 		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
 		$ppost['new']           = filter_bool($data['new']);
-		// Save ourselves a query if we're (somehow) not needing the picture link
-		if ($config['allow-avatar-storage']) {
-			$ppost['piclink']   = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user['id']} AND file = {$data['moodid']}");
-		} else {
-			$ppost['piclink']   = "";
-		}
+		$ppost['piclink']       = get_weblink($user['id'], $data['moodid']);
 		
 		// Attachment preview stuff / edit marker
 		if ($flags == PREVIEW_EDITED) {

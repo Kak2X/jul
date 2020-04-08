@@ -97,19 +97,20 @@
 	
 	
 	// Get the posts we need
-	$news = $sql->queryp("
-		SELECT 	n.id, n.user, n.date, n.title, n.text, n.lastedituser, n.lasteditdate, n.deleted, n.nosmilies, n.nohtml,
-				".set_userfields('u1').", ".set_userfields('u2').", COUNT(c.id) comments
+	$news = $sql->queryp(set_avatars_sql("
+		SELECT 	n.id, n.user, n.date, n.title, n.text, n.lastedituser, n.lasteditdate, n.deleted, n.nosmilies, n.nohtml, n.moodid,
+				".set_userfields('u1')." {%AVFIELD%}, u1.id uid, ".set_userfields('u2').", COUNT(c.id) comments
 		FROM news n
 		LEFT JOIN users           u1 ON n.user         = u1.id
 		LEFT JOIN users           u2 ON n.lastedituser = u2.id
 		LEFT JOIN news_comments    c ON n.id           = c.pid AND c.deleted = 0
 		{$joins}
+		{%AVJOIN%}
 		{$q_where}{$tagfilter}
 		GROUP BY n.id
 		ORDER BY n.date ".($_GET['ord'] ? "ASC" : "DESC")."
 		LIMIT {$min}, {$ppp}
-	", $vals);
+	", 'n'), $vals);
 	
 	// Tags have to be loaded separately
 	$tagsq = $sql->queryp("
@@ -155,8 +156,10 @@
 					$post['userdata']     = get_userfields($post, 'u1');
 					$post['edituserdata'] = get_userfields($post, 'u2');
 					print news_format($post, !$_GET['id'], $_GET['pin'])."<br>";
-					if ($_GET['id'])
+					if ($_GET['id']) {
 						print news_comments($_GET['id'], $post['user'], $_GET['edit']);
+						replytoolbar('nwedit', readsmilies());
+					}
 				}
 				print $pagelist;
 			}

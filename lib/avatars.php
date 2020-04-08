@@ -106,6 +106,38 @@ function get_avatars($user, $flags = 0) {
 	}
 }
 
+// for threadpost & derivates
+function prepare_avatar($post, &$picture, &$userpic) {
+	global $config;
+	if ($config['allow-avatar-storage']) {
+		if ($post['piclink']) {
+			$picture = escape_attribute($post['piclink']);
+			$userpic = "<img class='avatar' src=\"{$picture}\">"; 
+		} else if (file_exists(avatar_path($post['uid'], $post['moodid']))) {
+			$picture = avatar_path($post['uid'], $post['moodid']);
+			$userpic = "<img class='avatar' src=\"{$picture}\">"; 
+		} else {
+			$picture = $userpic = "";
+		}
+	} else {
+		// $picture doesn't seem to be used...
+		if ($post['moodid'] && $post['moodurl']) { // mood avatar
+			$picture = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
+			$userpic = "<img class='avatar' src=\"{$picture}\">";
+		} else if (isset($post['picture'])) { // default avatar
+			$picture = escape_attribute($post['picture']);
+			$userpic = "<img class='avatar' src=\"{$picture}\">";
+		} else { // null
+			$picture = $userpic = "";
+		}
+	}
+}
+
+function get_weblink($user, $mood) {
+	global $sql, $config;
+	return $config['allow-avatar-storage'] ? $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$user} AND file = {$mood}") : "";
+}
+
 function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape_attribute($weblink) : "userpic/{$user}_{$file_id}";}
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"".escape_attribute($moodurl)."\")</script>"; }
@@ -204,14 +236,14 @@ function mood_list($user, $sel = 0, $return = false) {
 	return include_js('avatars.js').$ret;
 }
 
-function set_avatars_sql($query) {
+function set_avatars_sql($query, $a = 'p') {
 	global $config;
 	if (!$config['allow-avatar-storage']) {
 		$query = str_replace("{%AVFIELD%}", ", NULL piclink", $query);
 		$query = str_replace("{%AVJOIN%}", "", $query);
 	} else {
 		$query = str_replace("{%AVFIELD%}", ",v.weblink piclink", $query);
-		$query = str_replace("{%AVJOIN%}", "LEFT JOIN users_avatars v ON p.moodid = v.file AND v.user = p.user", $query);
+		$query = str_replace("{%AVJOIN%}", "LEFT JOIN users_avatars v ON {$a}.moodid = v.file AND v.user = {$a}.user", $query);
 	}
 	return $query;
 }

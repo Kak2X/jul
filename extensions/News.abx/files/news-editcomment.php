@@ -32,7 +32,9 @@
 		if (isset($_POST['submit']) && $_GET['post']){
 			check_token($_POST['auth']);
 			
-			$_POST['text'] = filter_string($_POST['text']);
+			$_POST['text']   = filter_string($_POST['text']);
+			$_POST['moodid'] = filter_int($_POST['moodid']);
+			
 			if (!trim($_POST['text'])) 
 				news_errorpage("Your comment was blank!");
 			if (!$sql->resultq("SELECT COUNT(*) FROM news WHERE id = {$_GET['post']}")) 
@@ -42,10 +44,17 @@
 			if (ctime() - $lastcomment < 10) 
 				news_errorpage("You are commenting too fast!");
 			
-			$sql->queryp("INSERT INTO news_comments (pid, user, text, date) VALUES (?,?,?,?)",
-			[$_GET['post'], $loguser['id'], $_POST['text'], ctime()]);
+			$values = [
+				'pid'    => $_GET['post'],
+				'user'   => $loguser['id'],
+				'text'   => $_POST['text'],
+				'moodid' => $_POST['moodid'],
+				'date'   => ctime(),
+			];
+			$sql->queryp("INSERT INTO news_comments SET ".mysql::setplaceholders($values), $values);
 			
 			$id = $sql->insert_id();
+			
 			return header("Location: news.php?id={$_GET['post']}#$id");
 			
 		} else {
@@ -60,18 +69,20 @@
 			check_token($_POST['auth']);
 			
 			$_POST['text'] = filter_string($_POST['text']);
+			$_POST['moodid'] = filter_int($_POST['moodid']);
+			
 			if (!trim($_POST['text'])) 
 				news_errorpage("Your comment was blank!");
 			if (!$sql->resultq("SELECT COUNT(*) FROM news_comments WHERE id = {$_GET['id']}")) 
 				news_errorpage("You can't edit a nonexisting comment!");
 			
-			$sql->queryp("
-				UPDATE news_comments SET
-					text         = ?,
-					lastedituser = ?,
-					lasteditdate = ?
-				WHERE id = {$_GET['id']}",
-			[$_POST['text'], $loguser['id'], ctime()]);
+			$values = [
+				'text'         => $_POST['text'],
+				'moodid'       => $_POST['moodid'],
+				'lastedituser' => $loguser['id'],
+				'lasteditdate' => ctime(),
+			];
+			$sql->queryp("UPDATE news_comments SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
 			
 			return header("Location: news.php?id={$c['pid']}#{$_GET['id']}");
 		} else {

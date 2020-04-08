@@ -1,8 +1,8 @@
 {
 	"name":"News Engine",
 	"description":"Allows posting of news on a separate blog-like page.",
-	"version":"0.5",
+	"version":"0.6",
 	"author":"Kak",
-	"date":"04/04/2020",
+	"date":"09/04/2020",
 	"image" : "icon.png"
 }

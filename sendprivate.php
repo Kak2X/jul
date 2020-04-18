@@ -101,7 +101,7 @@ if ($_GET['id']) {
 	/*
 		Previous posts in the conversation
 	*/
-	$postlist = thread_history($_GET['id'], $ppp + 1, true);	
+	$postlist = thread_history($_GET['id'], $ppp + 1);	
 	
 	/*
 		Quoting something?

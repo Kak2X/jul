@@ -320,10 +320,10 @@
 	<br>";
 	}
 	
-function thread_history($thread, $num, $pm = false) {
+function thread_history($thread, $num, $forum = 0) {
 	global $sql, $userfields;
 	
-	if ($pm) {
+	if (!$forum) {
 		$table = "pm_posts";
 		$link  = "showprivate";
 		$nf    = "0 ";
@@ -362,7 +362,7 @@ function thread_history($thread, $num, $pm = false) {
 			if ($num-- > 0){
 				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
 				$userlink = getuserlink($post);
-				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(doreplace2($post['text'], $post['options']), $thread['forum']);
+				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(doreplace2($post['text'], $post['options']), $forum);
 				$postlist .=
 					"<tr>
 						<td class='tdbg$bg' valign=top>

@@ -155,7 +155,7 @@
 	
 	$ppp      = get_ppp();	
 	$smilies  = readsmilies();
-	$postlist = thread_history($_GET['id'], $ppp + 1);
+	$postlist = thread_history($_GET['id'], $ppp + 1, $forum['id']);
 	
 	// Post preview (it must be after the page header, otherwise bar images aren't initialized)
 	if (!$error && isset($_POST['preview'])) {

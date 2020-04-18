@@ -315,7 +315,7 @@
 			<td class='tdbg2' colspan="2">
 				<label><input type="checkbox" name="nosmilies" value=1 <?= $nosmilies_chk ?>> Disable smilies</label> &nbsp;
 				<label><input type="checkbox" name="nohtml" value=1 <?= $nohtml_chk ?>> Disable HTML</label>
-				<?=mood_layout(1, $userid, $_POST['moodid'])?>
+				| <?=mood_layout(1, $userid, $_POST['moodid'])?>
 			</td>
 		</tr>
 		<tr>

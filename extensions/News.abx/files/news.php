@@ -1,7 +1,7 @@
 <?php
 
 	/*
-		News Engine v0.4c -- 16/03/20
+		News Engine
 		
 		DESCRIPTION:
 		A news engine with customizable settings.
@@ -24,7 +24,8 @@
 	$_GET['user']       = filter_int($_GET['user']);
 	$_GET['pin']        = filter_int($_GET['pin']); // Peek post ID
 	$_GET['edit']       = filter_int($_GET['edit']); // Edit comment ID
-
+	$_GET['cpin']       = filter_int($_GET['cpin']); // Peek comment ID
+	
 	// Tag filter
 	$_GET['tag']        = filter_int($_GET['tag']);
 	
@@ -157,8 +158,11 @@
 					$post['edituserdata'] = get_userfields($post, 'u2');
 					print news_format($post, !$_GET['id'], $_GET['pin'])."<br>";
 					if ($_GET['id']) {
-						print news_comments($_GET['id'], $post['user'], $_GET['edit']);
-						replytoolbar('nwedit', readsmilies());
+						if ($loguser['id']) {
+							print news_comment_editor(null, $_GET['id'])."<br>";
+							replytoolbar('nwedit', readsmilies());
+						}
+						print news_comments($_GET['id'], $post['user'], $_GET['edit'], $_GET['cqid'], $_GET['cpin']);
 					}
 				}
 				print $pagelist;

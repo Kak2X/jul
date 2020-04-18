@@ -1,6 +1,7 @@
 <?php
 	
-	const NEWS_VERSION = "v0.6 -- 09/04/20";
+	const NEWS_VERSION = "v0.9 -- 19/04/20";
+	const COMMENT_AVATAR_SIZE = 100;
 	
 	// Load "permissions"
 	if ($banned) $loguser['id'] = 0; // oh dear
@@ -91,23 +92,9 @@
 			$theme = "";
 		}
 		
-		$text_shrunk = false;
-		if ($preview) {
-			// Get message length to shrink it if it's a preview
-			$charcount = strlen($post['text']);
-			if ($charcount > $xconf['max-preview-length']){
-				$post['text'] = news_preview($post['text'], $charcount)."...";
-				$text_shrunk = true;
-			}
-		}
-		
-		$editlink = $lastedit = $viewfull = "";
-		// Preview to view full post
-		if ($text_shrunk)
-			$viewfull = "<tr><td class='tdbg2 fonts'>To read the full text, click <a href='".actionlink("news.php?id={$post['id']}")."'>here</a>.</td></tr>";
-		
+		$editlink = $lastedit = "";
+
 		// Post controls
-		
 		if ($post['id']) {
 			if ($ismod || $loguser['id'] == $post['user']) {
 				$editlink = "<a href='".actionlink("news-editpost.php?id={$post['id']}&edit")."'>Edit</a>";
@@ -129,9 +116,32 @@
 		if ($hideondel) {
 			$post['text'] = "<i>(post deleted)</i>";
 			//$post['title'] = "<s>{$post['title']}</s>";
+			$viewfull = $avimg = "";
+			// $userpic = "";
+		} else {
+			prepare_avatar($post, $picture, $userpic);
+			$avimg = "<img src=\"{$picture}\" style='float:right'>";
+			
+			// moved here since it's useless to do for deleted posts
+			//--
+			// Get message length to shrink it if it's a preview
+			$text_shrunk = false;
+			$viewfull    = "";
+			if ($preview) {
+				$charcount = strlen($post['text']);
+				if ($charcount > $xconf['max-preview-length']){
+					$post['text'] = news_preview($post['text'], $charcount)."...";
+					$text_shrunk = true;
+				}
+			}
+			// Preview to view full post
+			if ($text_shrunk)
+				$viewfull = "<tr><td class='tdbg2 fonts'>To read the full text, click <a href='".actionlink("news.php?id={$post['id']}")."'>here</a>.</td></tr>";
+			//--
+			
 		}
 		
-		prepare_avatar($post, $picture, $userpic);
+		
 		
 		return "
 		<input type='hidden' name='id' value={$post['id']}>
@@ -165,7 +175,7 @@
 			*/"
 			<tr>
 				<td class='tdbg2 vatop' style='padding-bottom: 12px' colspan='2'>
-					<img src=\"{$picture}\" style='float:right'>
+					{$avimg}
 					".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."
 				</td>
 			</tr>
@@ -227,9 +237,11 @@
 	}
 	
 	// Display the comment section for any given post
-	function news_comments($post, $author, $edit = 0) {
+	function news_comments($postid, $userid, $edit = 0, $quoteid = 0, $sel = 0) {
 		global $sql, $config, $loguser, $ismod, $sysadmin, $userfields;
-		$token = generate_token(TOKEN_MGET);
+		
+		$_POST['text']   = filter_string($_POST['text']);
+		$_POST['moodid'] = filter_int($_POST['moodid']);
 		
 		$comments = $sql->query(set_avatars_sql("
 			SELECT c.*, ".set_userfields('u1').", u1.id uid {%AVFIELD%}, ".set_userfields('u2')."
@@ -237,100 +249,168 @@
 			LEFT JOIN users u1 ON c.user         = u1.id
 			LEFT JOIN users u2 ON c.lastedituser = u2.id
 			{%AVJOIN%}
-			WHERE c.pid = {$post} ".($ismod ? "" : "AND c.deleted = 0")."
+			WHERE c.pid = {$postid} ".($ismod ? "" : "AND c.deleted = 0")."
 			ORDER BY c.id DESC
 		", 'c'));
 		
 		$txt = "";
-		while ($x = $sql->fetch($comments)){
-			// Check if we are editing this comment (and if we can do so)
-			$editlink = $lastedit = $editcomment = "";
-			if ($ismod || $loguser['id'] == $x['user']) {
-				$editlink = "<a href='".actionlink("news.php?id={$post}&edit={$x['id']}#{$x['id']}")."'>Edit</a> - ".
-							"<a href='".actionlink("news-editcomment.php?act=del&id={$x['id']}&auth={$token}")."'>".($x['deleted'] ? "Und" : "D")."elete</a>";
-				$editcomment = ($edit == $x['id']);
+		$quotetext = "";
+		
+		while ($comment = $sql->fetch($comments)) {
+			$comment['userdata'] = get_userfields($comment, 'u1');
+			if ($comment['lastedituser'])
+				$comment['lastedituserdata'] = get_userfields($comment, 'u2');
+		
+			$txt .= news_comment_format($comment, $postid, $userid, $sel)."<div style='height:5px'></div>";
+		}
+		
+		return "
+		<table class='table small-shadow'>
+			<tr><td class='tdbgh center b'>&lt;&lt; Comments &gt;&gt;</td></tr>
+		</table><br>
+		{$txt}
+		";
+	}
+	
+	function news_comment_preview($data) {
+		global $loguser;
+		
+		$out = array(
+			'id'       => $data['id'],
+			'text'     => $data['text'],
+			'moodid'   => $data['moodid'],
+			'deleted'  => 0,
+		);
+		if ($data['id']) {
+			$out['userdata']         = $data['userdata'];
+			$out['user']             = $data['userdata']['id'];
+			$out['date']             = $data['date'];
+			$out['lastedituserdata'] = $loguser;
+			$out['lastedituser']     = $loguser['id'];
+			$out['lasteditdate']     = ctime();
+		} else {
+			$out['userdata']         = $loguser;
+			$out['user']             = $loguser['id'];
+			$out['date']             = ctime();
+			$out['lastedituser']     = 0;
+		}
+		// avatar preview support
+		$out['uid']     = $out['user'];
+		$out['piclink'] = get_weblink($out['uid'], $out['moodid']);
+		
+		return 
+		"<table class='table nbdb'><tr><td class='tdbgh center b nbdb'>Preview</td></tr></table>".
+		news_comment_format($out, 0, 0);
+	}
+	
+	function news_comment_format($comment, $postid, $ownerid, $sel = 0) {
+		global $ismod, $sysadmin, $loguser;
+		
+		$quote = $editlink = $lastedit = $editcomment = "";
+		$author = getuserlink($comment['userdata'], $comment['user']);
+		
+		if ($postid) {
+			// Visible permalink and comment quoting support
+			
+			if ($comment['deleted'] && $ismod) {
+				$quote = "<a href=\"".actionlink("news.php?id={$postid}&cpin={$comment['id']}#{$comment['id']}")."\">Peek</a>";
+			} else {
+				$quote = "<a href=\"".actionlink("news.php?id={$postid}#{$comment['id']}")."\">Link</a>";
+				if ($loguser['id'] && !$comment['deleted']) {
+					$quote .= " - <a href='".actionlink("news-editcomment.php?post={$postid}&cqid={$comment['id']}")."'>Quote</a>";
+				}
+			}
+
+			
+			if ($loguser['id'] == $comment['user'] || $ismod) {
+				// Generate token once, only when necessary
+				static $token;
+				if ($token === null) {
+					$token = generate_token(TOKEN_MGET);
+				}
+				//--
+				
+				$editlink  = 
+					" - <a href='".actionlink("news-editcomment.php?act=edit&post={$postid}&id={$comment['id']}#{$comment['id']}")."'>Edit</a>
+					  - <a href='".actionlink("news-editcomment.php?act=del&id={$comment['id']}&auth={$token}")."'>".($comment['deleted'] ? "Und" : "D")."elete</a>";
 			}
 			
 			if ($sysadmin) 
-				$editlink .= " - <a class='danger' href='".actionlink("news-editcomment.php?act=erase&id={$x['id']}")."'>Erase</a>";
-			
-			$author = getuserlink(get_userfields($x, 'u1'), $x['user']);
-			if ($x['deleted'])
-				$author = "<s>{$author}</s>";
-			if ($x['lastedituser'])
-				$lastedit = "<br>(Last edited by ".getuserlink(get_userfields($x, 'u2'), $x['lastedituser'])." at ".printdate($x['lasteditdate']).")";
-			
-			// Display comment info (comments by the post author marked with [S])
-			$txt .= "
-			<table class='table small-shadow'>
-				<tr id='{$x['id']}'>
-					<td class='comment-userbar tdbgh vatop nbdr left nobr'>{$author}".($x['user'] == $author ? " [S]" : "")."</td>
-					<td class='comment-userbar tdbgh vatop nbdl right fonts' colspan='2'>{$editlink} ".printdate($x['date'])."{$lastedit}</td>
-				</tr>";
-				
-			// Display the actual message; print edit textbox instead if in edit mode
-			if ($editcomment) {
-				$txt .= "
-				<form method='POST' action='".actionlink("news-editcomment.php?act=edit&id={$x['id']}")."'>
-				<tr>
-					<td class='tdbg2 vatop' id='nwedittd' colspan='2'>
-						<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical' wrap='virtual'>".htmlspecialchars($x['text'])."</textarea>
-					</td>
-					<td class='tdbg2' style='width: {$config['max-avatar-size-x']}px'>
-						<center>".mood_layout(0, $x['user'], $x['moodid'])."</center>
-					</td>
-				</tr>
-				<tr>
-					<td class='tdbg2' colspan='3'>
-						<input type='submit' name='doedit' value='Edit comment'>".mood_layout(1, $x['user'], $x['moodid'])."
-						".auth_tag()."
-					</td>
-				</tr>
-				</form>
-				";
-			} else {
-				prepare_avatar($x, $picture, $userpic);
-				$txt .= "<tr><td class='tdbg1' style='width: 100px'><img src=\"{$picture}\" style='max-width: 100px; max-height: 100px' /></td><td class='tdbg2 vatop w' colspan='2'>".dofilters(doreplace2($x['text'], "0|0"))."</td></tr>";
-			}
-			$txt .= "</table><div style='height:5px'></div>";
+				$editlink .= " - <a class='danger' href='".actionlink("news-editcomment.php?act=erase&id={$comment['id']}")."'>Erase</a>";
 		}
 		
-
-		// Do not show new comment area if we're editing a comment
-		$newcomment = "";
-		if ($loguser['id'] && !$edit) {
-			$newcomment .= "
-			<form method='POST' action='".actionlink("news-editcomment.php?post={$post}")."'>
-			<table class='table small-shadow'>
-			<tr><td class='tdbgh center b' colspan='2'>New comment</td></tr>
+		
+		if ($comment['deleted'] && (!$ismod || $sel != $comment['id'])) {
+			$ctext = "<i>(comment deleted)</i>";
+			$cimg  = "";
+			//$author = "<s>{$author}</s>";
+		} else {
+			prepare_avatar($comment, $picture, $userpic);
+			$ctext = dofilters(doreplace2($comment['text'], "0|0"));
+			$cimg  = "<img src=\"{$picture}\" style='max-width: ".COMMENT_AVATAR_SIZE."px; max-height: ".COMMENT_AVATAR_SIZE."px' />";
+		}
+		
+		if ($comment['lastedituser'])
+			$lastedit = "<br>(Last edited by ".getuserlink($comment['lastedituserdata'], $comment['lastedituser'])." at ".printdate($comment['lasteditdate']).")";
+		
+		
+		// Display comment info (comments by the post author marked with [S])
+		return "
+		<table class='table small-shadow'>
+			<tr id='{$comment['id']}'>
+				<td class='comment-userbar tdbgh vatop nbdr left nobr'>{$author}".($comment['user'] == $ownerid ? " [S]" : "")."</td>
+				<td class='comment-userbar tdbgh nbdl right fonts'>
+				{$quote}{$editlink}
+				".printdate($comment['date'])."
+				{$lastedit}</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center' style='width: ".(COMMENT_AVATAR_SIZE+4)."px'>{$cimg}</td>
+				<td class='tdbg2 vatop'>{$ctext}</td>
+			</tr>
+		</table>";
+	}
+	
+	function news_comment_editor($comment, $postid) {
+		global $loguser, $config;
+		
+		if (!$comment || !$comment['id']) {
+			$title  = "New comment";
+			$act    = "";
+			$userid = $loguser['id'];
+			if (!$comment) {
+				$comment = array(
+					'text'   => "",
+					'moodid' => 0,
+				);
+			}
+		} else {
+			$title  = "Edit comment";
+			$act    = "&act=edit&id={$comment['id']}";
+			$userid = $comment['userdata']['id'];
+		}
+		return "
+		<form method='POST' action='".actionlink("news-editcomment.php?post={$postid}{$act}")."'>
+		<table class='table small-shadow' id='0'>
+			<tr><td class='tdbgh center b' colspan='2'>{$title}</td></tr>
 			<tr>
 				<td class='tdbg2 vatop' id='nwedittd'>
-					<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical; height: 100%' wrap='virtual'></textarea>
+					<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical' wrap='virtual' autofocus>".htmlspecialchars($comment['text'])."</textarea>
 				</td>
 				<td class='tdbg2' style='width: {$config['max-avatar-size-x']}px'>
-					<center>".mood_layout(0, $loguser['id'], 0)."</center>
+					<center>".mood_layout(0, $userid, $comment['moodid'])."</center>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg2' colspan='2'>
-					<input type='submit' name='submit' value='Submit comment'>".mood_layout(1, $loguser['id'], 0)."
+					<input type='submit' name='submit' value='Submit comment'>
+					<input type='submit' name='preview' value='Preview comment'>
+					| ".mood_layout(1, $userid, $comment['moodid'])."
 					".auth_tag()."
 				</td>
 			</tr>
-			</table>
-			</form>
-			<br/>
-			";
-		}
-		
-		return "
-		
-			{$newcomment}
-		<table class='table small-shadow'>
-			<tr><td class='tdbgh center b' colspan=3>Comments</td></tr>
-			</table>
-			{$txt}
-		";
+		</table>
+		</form>";
 	}
 	
 	function news_preview($text, $length = NULL){

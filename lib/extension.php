@@ -49,7 +49,7 @@ function ext_init() {
 	foreach (ext_get_enabled(false) as $extName) {
 		$extName = rtrim($extName);
 		$xconf = ext_read_config($extName);
-		include_once "extensions/{$extName}.abx/init.php";
+		include_once "extensions/{$extName}.abx/__init__.php";
 		$extConfig[$extName] = $xconf;
 	}
 }
@@ -125,8 +125,8 @@ function ext_write_config($extName) {
 }
 
 function _ext_run_custom($extName, $script) {
-	if (file_exists("extensions/{$extName}.abx/{$script}.php")) // call custom actions
-		include_once "extensions/{$extName}.abx/{$script}.php";
+	if (file_exists("extensions/{$extName}.abx/__{$script}__.php")) // call custom actions
+		include_once "extensions/{$extName}.abx/__{$script}__.php";
 }
 
 // get full ext info

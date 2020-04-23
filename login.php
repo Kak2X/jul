@@ -41,6 +41,10 @@
 				set_board_cookie('loguserid', $userid);
 				set_board_cookie('logverify', $verify);
 
+				// "fix" for uninitialized name colors
+				// may be improved later
+				pageheader();
+				
 				$msg = "You are now logged in as ".getuserlink(null, $userid).".";
 			//} else if (/*$username == "Blaster" || */$username === "tictOrnaria") {
 			//	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Abusive / malicious behavior'");
@@ -148,7 +152,8 @@
 		errorpage("Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.");
 	}	
 
-	pageheader();
+	if (!defined('HEADER_PRINTED'))
+		pageheader();
 	
 	print "<table class='table'>{$txt}</table>";
 	

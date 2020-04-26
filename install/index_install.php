@@ -82,7 +82,7 @@ if (!$error) {
 			<br>You can edit these options later through the <span class='c-info'>Change configuration</span> option (or by editing the config file manually, like it's traditionally done).
 			<br>
 			<br>
-			".get_config_layout();
+			".get_config_main_layout();
 			break;
 			
 		case BASE_STEP + 3:
@@ -164,9 +164,18 @@ if (!$error) {
 			
 			// As the very last thing, write the config
 			$output .= "\nWriting settings to ".CONFIG_PATH."...";
-			$configfile = generate_config();
+			$configfile = setup_generate_config();
 			$res = file_put_contents(CONFIG_PATH, $configfile);
 			$output .= checkres($res);
+			
+			// Write the default extension settings too, to avoid having to parse the settings json on every page
+			$exts = ext_get_all(false);
+			foreach ($exts as $xname) {
+				$output .= "\nWriting extension settings for '{$xname}'...";
+				ext_write_config($xname);
+				$output .= checkres(true);
+			}
+
 			
 			$output .= "\nOperation completed successfully!\n";
 			if (!$_POST['noimport']) {

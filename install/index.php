@@ -63,13 +63,13 @@ if (!$error && $step >= -1) {
 			$output = "
 					You can choose a few options here.
 					<br>					
-					<br><label><input type='radio' name='setup_mode' value='0'".v($opt[0]).(!INSTALLED ? "" : " readonly disabled")."> New installation</label>
+					<br><label><input type='radio' name='setup_mode' value='0'".__($opt[0]).(!INSTALLED ? "" : " readonly disabled")."> New installation</label>
 					<br><span class='fonts'>Perform a fresh install of the board database and write a new configuration file.</span>
 					<br>
-					<br><label><input type='radio' name='setup_mode' value='1'".v($opt[1]).(INSTALLED && updates_available() ? "" : " readonly disabled")."> Perform upgrade</label>
+					<br><label><input type='radio' name='setup_mode' value='1'".__($opt[1]).(INSTALLED && updates_available() ? "" : " readonly disabled")."> Perform upgrade</label>
 					<br><span class='fonts'>Performs an upgrade of the database configuration to the newest version.<br>Only available when new update scripts are found in the update folder.</span>
 					<br>
-					<br><label><input type='radio' name='setup_mode' value='2'".v($opt[2]).(INSTALLED && !updates_available() ? "" : " readonly disabled")."> Change configuration</label>
+					<br><label><input type='radio' name='setup_mode' value='2'".__($opt[2]).(INSTALLED && !updates_available() ? "" : " readonly disabled")."> Change configuration</label>
 					<br><span class='fonts'>Only updates the configuration file. Available when the board is already installed and updated.</span>";
 			break;
 		default:

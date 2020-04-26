@@ -59,6 +59,14 @@ if (!$error) {
 			// Buffer everything so we can have it appended to $output
 			ob_start();
 			
+			// Get all of the available extensions, in the format $ext[extName] = extName for convenience
+			$exts = ext_get_all();
+			// build the extconfig list, which will be changed in the update scripts
+			$extConfig = [];
+			foreach ($exts as $name) {
+				$extConfig[$name] = ext_read_config($name);
+			}
+			
 			for ($i = CURRENT_VERSION + 1; $i <= AVAILABLE_VERSION; ++$i) {
 				print "<br><b>Revision {$i}</b>";
 				reset_update_step();
@@ -72,8 +80,15 @@ if (!$error) {
 			ob_end_clean();
 			
 			// Overwrite the config file				
-			$configfile = generate_config(true); 
+			$configfile = setup_generate_config(true); 
 			$res = file_put_contents(CONFIG_PATH, $configfile);
+			
+			// Overwrite the extra config files
+			foreach ($extConfig as $name => $x) {
+				$xconf = $x;
+				ext_update_config($name);
+				//unset($exts[$name]);
+			}
 			
 			// Save the version info
 			$res2 = file_put_contents(DBVER_PATH, AVAILABLE_VERSION);

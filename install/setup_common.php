@@ -9,6 +9,8 @@
 	require "lib/defines.php";
 	require "lib/classes/mysql.php";
 	require "install/mysql_setup.php";
+	require "lib/schema.php";
+	require "lib/extension.php";
 	
 	if (INSTALLED) {
 		require "lib/config.php";

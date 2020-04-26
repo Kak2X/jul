@@ -6,7 +6,7 @@
 
 function filter_int(&$x) { return (int)$x; }
 function filter_string(&$x) { return (string)$x; }
-function v(&$x) { return $x; }
+function __(&$x) { return $x; }
 
 function save_vars($arr, $nested = "") {
 	$out = "";

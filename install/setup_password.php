@@ -10,7 +10,7 @@ do {
 	
 	// Cookie verification
 	$loguserid = filter_int($_POST['setupid']);
-	$logverify 	= v($_POST['setupverify']);
+	$logverify 	= __($_POST['setupverify']);
 
 	if ($loguserid && $logverify) {
 		$loguser    = $sql->fetchq("SELECT powerlevel, password FROM `users` WHERE `id` = $loguserid");

@@ -225,41 +225,6 @@
 				"width":100
 			}
 		},
-		"File uploader":{
-			"allow-uploader":{
-				"title":"Enable file uploader",
-				"desc":"Allows users to upload files in the board uploader and manage their own folders.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"uploader-all-origin":{
-				"title":"Allow global hotlinking",
-				"desc":"This allows hotlinking uploads from outside the board. If disabled, hotlinking will be only allowed from inside the board.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"uploader-max-file-size":{
-				"title":"Max upload size",
-				"desc":"Maximum size for a file in the uploader. You should make sure this value is equal or lower to what's defined in the web server configuration.",
-				"input":"text",
-				"type":"int",
-				"default":10485760,
-				"desc_sfx":"bytes",
-				"width":100
-			},
-			"uploader-allow-file-edit":{
-				"title":"Allow file editing",
-				"desc":"Allows normal users to edit their own uploads. If disabled, only administrators can perform this action.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			}
-		},
 		"Avatars":{
 			"allow-avatar-storage":{
 				"title":"Enable avatar upload",
@@ -450,56 +415,6 @@
 					"#ytest"
 				],
 				"width":470
-			}
-		},
-		"News engine":{
-			"enable-news":{
-				"title":"Enable news",
-				"desc":"Enables the news functionality, which can be used as a \"front-page\".",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"news-name":{
-				"title":"News page name",
-				"desc":"Title of the news page, which is visible in the page title and the breadcrumbs.",
-				"input":"text",
-				"type":"string",
-				"default":"News",
-				"width":300
-			},
-			"news-title":{
-				"title":"News header HTML",
-				"desc":"The header used in the news page, which can be an image. Clicking on it will redirect to the main news page.",
-				"input":"text",
-				"type":"string",
-				"default":"News page",
-				"width":500
-			},
-			"max-preview-length":{
-				"title":"Character limit in preview",
-				"desc":"Maximum amount of characters shown for entries in the main news page.",
-				"input":"text",
-				"type":"int",
-				"default":500,
-				"width":40
-			},
-			"news-write-perm":{
-				"title":"Powerlevel required to add news",
-				"desc":"Minimum power required to post in the news section.",
-				"input":"select",
-				"type":"int",
-				"default":1,
-				"special":"powerlevel"
-			},
-			"news-admin-perm":{
-				"title":"Powerlevel required to moderate news",
-				"desc":"Minimum power required to edit and delete other users' posts and comments in the news section.",
-				"input":"select",
-				"type":"int",
-				"default":3,
-				"special":"powerlevel"
 			}
 		},
 		"Advanced":{

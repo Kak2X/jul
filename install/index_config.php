@@ -27,7 +27,7 @@ if (!$error) {
 			".get_config_sql_layout()."
 			<br>
 			<br>
-			".get_config_layout();
+			".get_config_main_layout();
 			break;
 			
 		case BASE_STEP + 1:
@@ -65,7 +65,7 @@ if (!$error) {
 			$btn &= ~BTN_NEXT;
 						
 			$output .= "\nWriting settings to ".CONFIG_PATH."...";
-			$configfile = generate_config();
+			$configfile = setup_generate_config();
 			$res = file_put_contents(CONFIG_PATH, $configfile);
 			$output .= checkres($res);
 			

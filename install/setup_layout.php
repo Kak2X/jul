@@ -46,7 +46,7 @@ function setupfooter($buttons = 0) {
 		</tr>
 		<tr>
 			<td class="tdbgh center b">
-				Acmlmboard Installer 2.0 (30-11-2019)
+				Acmlmboard Installer 2.1 (26-04-2020)
 			</td>
 		</tr>
 <?php if (SETUP_DEBUG) { ?>

@@ -1,13 +1,7 @@
 <?php
 
 /*
-	TODO TODO TODO
-	This currently a copy of install/schema.php but a bit more generic
-	
-	eventually the installer part should have its own functions implemented as wrappers to these 
-	(ie: install_generate_config() in installer/schema.php will call generate_config() here with the install-specific schema)
-	The "// EDITED" comments mark the functions made more generic
-	
+	config.php schema utilities (+ universal config layout generator)
 */
 
 function _get_input($inpt, $varname, $key, $data, $semicolon = false) {
@@ -29,7 +23,6 @@ function _get_input($inpt, $varname, $key, $data, $semicolon = false) {
 	die("Unrecognized type in schema: {$data['type']} (key: {$key})");
 }
 
-// EDITED
 function input($varname, $key, $data, $value) {
 	$input = $attrib = "";
 	
@@ -116,7 +109,6 @@ function input($varname, $key, $data, $value) {
 	return $input;
 }
 
-// EDITED
 function input_section($var_name, $section, $inputfunc) {
 	$out = "";
 	foreach ($section as $cat_label => $fields) {
@@ -133,7 +125,6 @@ function input_section($var_name, $section, $inputfunc) {
 	return $out;
 }
 
-// EDITED
 function get_config_layout($schema, $inputfunc) {
 	$out = "<table class='table' style='margin: auto'>";
 	foreach ($schema as $var_name => $section) {
@@ -143,7 +134,6 @@ function get_config_layout($schema, $inputfunc) {
 	return $out;
 }
 
-// EDITED
 function generate_config($schema, $inputfunc) {
 	$out    = "";
 	$direct = "";

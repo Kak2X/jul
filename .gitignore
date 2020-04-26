@@ -20,6 +20,7 @@ lib/dbsver.dat
 backups/*.zip
 develop.sql
 test/
+*.cmd
 
 # Attachments
 attachments/*
@@ -42,6 +43,9 @@ sidebars/*
 !sidebars/index.html
 !sidebars/.htaccess
 
+# Extensions
+extensions/*.abx/config.php
+extensions/*.abx/user.json
 
 # Never cache the temp folder
 temp/*

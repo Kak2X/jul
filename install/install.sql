@@ -1042,10 +1042,11 @@ CREATE TABLE `news` (
   `lasteditdate` int(10) unsigned NOT NULL DEFAULT '0',
   `nosmilies` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `nohtml` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `moodid` tinyint(3) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `user` (`user`),
   KEY `deleted` (`deleted`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Used by the external "plugin" news.php';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1073,6 +1074,7 @@ CREATE TABLE `news_comments` (
   `text` text NOT NULL,
   `lastedituser` smallint(5) unsigned NOT NULL DEFAULT '0',
   `lasteditdate` int(10) unsigned NOT NULL DEFAULT '0',
+  `moodid` tinyint(3) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `pid` (`pid`),
   KEY `user` (`user`)

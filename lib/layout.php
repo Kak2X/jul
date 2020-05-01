@@ -69,39 +69,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	}
 
 	/*
-		Board title (and sub titles)
+		Board title
 	*/
 	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . htmlspecialchars($windowtitle) : "");
-	
-	// Admin-only info
-	// in_array($loguserid,array(1,5,2100))
-	if ($sysadmin) {
-		if (file_exists("{$config['backup-folder']}/".date("Ymd").".zip") && date('Gi') < 100){ // Give this warning message for an hour
-			$config['board-title']	.=  "<br><a href='admin-backup.php'><span class='font b' style='color: #f00'>Please download the nightly backup.</span></a>";			
-		}
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `ip`, `banflags` FROM `minilog` ORDER BY `time` DESC LIMIT 1");
-			$config['board-title']	.= "<br><a href='shitbugs.php'><span class='font' style='color: #f00'><b>". $xminilog['count'] ."</b> suspicious request(s) logged, last at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ." (". $xminilogip['banflags'] .")</b></span></a>";
-		}
-		
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`date`) as date FROM `pendingusers`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `name`, `ip` FROM `pendingusers` ORDER BY `date` DESC LIMIT 1");
-			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>{$xminilog['count']}</b> pending user(s), last <b>'{$xminilogip['name']}'</b> at <b>". printdate($xminilog['date']) ."</b> by <b>{$xminilogip['ip']}</b></span></a>";
-		}
-	}
-	
-	/*
-		Make me a local mod!
-	*/
-	if ($loguser['id']) {
-		$lolz = $sql->resultq("SELECT powl_dest FROM powerups WHERE user = {$loguser['id']}");
-		if ($lolz) {
-			$config['board-title'].= "<br><a href='powerup.php'>Make me a {$pwlnames[$lolz]}!</a>";
-		}
-	}
-	
 	
 	/*
 		Header links at the top of every page
@@ -333,9 +303,35 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	$config['board-title'] = xssfilters($config['board-title']);
 	
+	/*
+		Extra title rows (for admin info)
+	*/
 	if ($schemepre) {
 		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". htmlspecialchars($schemerow['name']) ."</b>\"</span>";
 	}
+	
+	// Admin-only info
+	// in_array($loguserid,array(1,5,2100))
+	if ($sysadmin) {
+		if (file_exists("{$config['backup-folder']}/".date("Ymd").".zip") && date('Gi') < 100){ // Give this warning message for an hour
+			$config['board-title']	.=  "<br><a href='admin-backup.php'><span class='font b' style='color: #f00'>Please download the nightly backup.</span></a>";			
+		}
+		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
+		if ($xminilog['count']) {
+			$xminilogip	= $sql->fetchq("SELECT `ip`, `banflags` FROM `minilog` ORDER BY `time` DESC LIMIT 1");
+			$config['board-title']	.= "<br><a href='shitbugs.php'><span class='font' style='color: #f00'><b>". $xminilog['count'] ."</b> suspicious request(s) logged, last at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ." (". $xminilogip['banflags'] .")</b></span></a>";
+		}
+		
+		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`date`) as date FROM `pendingusers`");
+		if ($xminilog['count']) {
+			$xminilogip	= $sql->fetchq("SELECT `name`, `ip` FROM `pendingusers` ORDER BY `date` DESC LIMIT 1");
+			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>{$xminilog['count']}</b> pending user(s), last <b>'{$xminilogip['name']}'</b> at <b>". printdate($xminilog['date']) ."</b> by <b>{$xminilogip['ip']}</b></span></a>";
+		}
+	}
+	
+	// Additional options
+	$config['board-title'] .= print_hook('header-title-rows');
+	
 	// Default bar image definition
 	$barimg = array(
 		0 => "images/bar/{$numdir}barleft.png",
@@ -343,6 +339,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		2 => "images/bar/{$numdir}bar-off.png",
 		3 => "images/bar/{$numdir}barright.png",
 	);
+	
+	
 
 	//$config['board-title'] = "<a href='./'><img src=\"images/christmas-banner-blackroseII.png\" title=\"Not even Christmas in July, no. It's May.\"></a>";
 

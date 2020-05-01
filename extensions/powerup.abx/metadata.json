@@ -1,0 +1,9 @@
+{
+	"name":"Powerup",
+	"description":"Make me a local mod!",
+	"version":"1.0",
+	"author":"Kak",
+	"date":"01/05/2020",
+	"image": "icon.png",
+	"noconfig": true
+}

@@ -1,4 +1,7 @@
 <?php
+
+	const LOADER_DEBUG = false;
+	
 	// Generic page loader
 	require "lib/routing.php";
 
@@ -43,7 +46,7 @@
 		}
 	} while (false);
 		
-	if (isset($_GET['debug'])) {
+	if (LOADER_DEBUG) {
 		print "<pre>";
 		print "\nRoot: {$root}\nBoard Url: {$boardurl}";
 		print "\nURL: {$url}\nExtPos: {$extPos}\nParamPos: {$paramPos}";
@@ -71,6 +74,10 @@
 			require_once($loadPath);
 			die;
 		}
+	}
+	
+	if (LOADER_DEBUG) {
+		die("Page loading failed!");
 	}
 	
 	// If we got here, something failed.

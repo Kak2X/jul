@@ -1,0 +1,2 @@
+# no direct access to php files
+RedirectMatch 404 /*.php

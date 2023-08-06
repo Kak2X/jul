@@ -2125,7 +2125,6 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 		'Configuration' => array(
 			'admin-editresources.php' => "Edit Resources",
 			'admin-editfilters.php'   => "Edit Filters",
-			'admin-editratings.php'   => "Edit Post Ratings",
 			'admin-editforums.php'    => "Edit Forum List",
 			'admin-editmods.php'      => "Edit Forum Moderators",
 			'admin-forumbans.php'     => "Edit Forum Bans",
@@ -2374,7 +2373,6 @@ require 'lib/attachments.php';
 require 'lib/threadpost.php';
 require 'lib/thread.php';
 require 'lib/pm.php';
-require 'lib/ratings.php';
 require 'lib/schema.php';
 
 // New reply toolbar loader

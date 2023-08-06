@@ -236,14 +236,17 @@ function mood_list($user, $sel = 0, $return = false) {
 	return include_js('avatars.js').$ret;
 }
 
-function set_avatars_sql($query, $a = 'p') {
+function set_avatars_sql($query, $a = 'p', $mfix = false) {
 	global $config;
 	if (!$config['allow-avatar-storage']) {
 		$query = str_replace("{%AVFIELD%}", ", NULL piclink", $query);
 		$query = str_replace("{%AVJOIN%}", "", $query);
-	} else {
+	} else if (!$mfix) {
 		$query = str_replace("{%AVFIELD%}", ",v.weblink piclink", $query);
 		$query = str_replace("{%AVJOIN%}", "LEFT JOIN users_avatars v ON {$a}.moodid = v.file AND v.user = {$a}.user", $query);
+	} else {
+		$query = str_replace("{%AVFIELD%}", ",v.weblink piclink", $query);
+		$query = str_replace("{%AVJOIN%}", "LEFT JOIN users_avatars v ON 0 = v.file AND v.user = {$a}.user", $query);
 	}
 	return $query;
 }

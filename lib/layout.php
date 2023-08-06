@@ -358,7 +358,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$bgimage = '';
 	
-	$custombase = filter_string($meta['baserel']);
+	$customstyle = filter_string($meta['baserel']) . print_hook('header-css');
 
 	if ($nullscheme) {
 		// special "null" scheme.
@@ -366,7 +366,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	} else if ($schemetype == 1) {
 		// External CSS
 		$css = "
-		<link rel='stylesheet' href='schemes/base.css' type='text/css'>$custombase
+		<link rel='stylesheet' href='schemes/base.css' type='text/css'>$customstyle
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
 		
@@ -377,7 +377,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>$custombase
+		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>$customstyle
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }

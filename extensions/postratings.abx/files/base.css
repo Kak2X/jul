@@ -1,0 +1,28 @@
+/* Post ratings */
+.rating-container {	width: 100%; }
+.icon-rating { opacity: 0.5 }
+.icon-rating:hover,.icon-rated { opacity: 1 }
+.rate-total {
+	white-space: nowrap;
+}
+/* Hide text to attempt preserving screen space */
+@media(max-width: 800px) {
+	.text-rating { display: none; }
+}
+
+/* icon sizes */
+.icon-rating-image {
+	max-width: 16px;
+	max-height: 16px;
+}
+.icon-rating-image.lg {
+	width: 32px;
+	max-width: unset;
+	max-height: 32px;
+}
+.user-rating-thumbnail {
+	width: 64px;
+	/*height: 32px;*/
+	vertical-align: middle;
+	image-rendering: auto;
+}

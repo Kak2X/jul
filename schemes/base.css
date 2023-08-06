@@ -58,6 +58,9 @@ img { border:none; }
 /* Small font setup */
 .fonts,.fontt,div.lastpost{font-size:10px !important}
 
+/* For use with elements with title tags */
+.underline {	text-decoration: underline dotted }
+
 /* Used to display buttons with the look of a link */
 .buttonlink {
 	border:      none !important;
@@ -146,7 +149,6 @@ input[type=radio] {
 	overflow:		hidden;
 }
 
-
 /* Attachments */
 .attachment-box, .attachment-box-addnew{
 	float: left;
@@ -174,15 +176,6 @@ input[type=radio] {
 .attachment-box-controls {
 	vertical-align: bottom;
 	height: 100%;
-}
-
-/* Post ratings */
-.rating-container {	width: 100%; }
-.icon-rating { opacity: 0.5 }
-.icon-rating:hover,.icon-rated { opacity: 1 }
-/* Hide text to attempt preserving screen space */
-@media(max-width: 800px) {
-	.text-rating { display: none; }
 }
 
 /* Post toolbar */

@@ -1,0 +1,9 @@
+{
+	"name":"Post Ratings",
+	"description":"XenForo-like post ratings.<!-- Enables users to assign islamic content ratings to posts. -->",
+	"version":"0.95",
+	"author":"Kak",
+	"date":"??/??/2020",
+	"image" : "icon.png",
+	"configpage": true
+}

@@ -341,7 +341,7 @@
 			$txt .= "
 			<tr id='i{$x['id']}'>
 				<td class='tdbg{$cell} center vatop'>
-					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>".htmlspecialchars($x['title'])."</a>
+					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>".xssfilters($x['title'])."</a>
 					<br>{$editlink}
 					".($x['date'] ? "<div class='fonts'>(".printdate($x['date'], true).")</div>" : "")."
 				</td>
@@ -349,8 +349,8 @@
 					<div>".nl2br(xssfilters($x['description']))."</div>
 					".($_COOKIE['verAll'] || $x['id'] == $_GET['id'] ? "
 					<br>
-					<div>".
-						preg_replace_callback(
+					<div>".nl2br(str_replace("  ", "&nbsp;&nbsp;", xssfilters($x['features'])))
+						/*preg_replace_callback(
 							"'(^|<br>)( +)?-'si",
 							function ($x) use ($nest) {
 								// Automatically generate <ul> and <li> based on indentation
@@ -367,7 +367,7 @@
 								return $x[1].$x[2]."<li>";
 							},
 							xssfilters($x['features'])
-						)."</div>
+						)*/."</div>
 					" : "")."
 				</td>
 				<td class='tdbg{$cell} center vatop'>

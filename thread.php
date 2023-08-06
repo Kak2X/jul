@@ -194,10 +194,11 @@
 		{$forum_error}
 	";
 
-	$links = array(
-		[$forum['title']   , "forum.php?id={$forum['id']}"],
-		[$thread['title']  , NULL],
-	);
+	$links = [];
+	if ($forum['title']) // Doesn't always exist, so avoid a blank link
+		$links[] = [$forum['title'], "forum.php?id={$forum['id']}"];
+	$links[] = [$thread['title']  , NULL];
+	
 	// New Reply / Thread / Poll links
 	$newxlinks = "";
 	if ($_GET['id'] && $forum['id']) {
@@ -263,9 +264,7 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postrange);
 	}
-	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $postrange);
-	}
+	load_hook('post-extra-db', $searchon, $postrange);
 	
 	$controls['ip'] = "";
 	$bg = 0;
@@ -333,12 +332,8 @@
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
 		}
-		if ($config['enable-post-ratings']) {
-			$post['showratings'] = true;
-			if (isset($ratings[$post['id']])) {
-				$post['rating'] = $ratings[$post['id']];
-			}
-		}
+		load_hook_ref('post-extra-fields', $post);
+		
 		// Logged in users get the "new" indicator for individual posts
 		if ($loguser['id']) {
 			if ($_GET['id']) {

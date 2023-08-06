@@ -1,5 +1,5 @@
 <?php
-  function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
+  function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire,\'\' sidebar';}
 
   function postcode($post,$set){
     global $controls,$tableborder,$tablebg2,$tableheadtext,$numdir,$barimg;

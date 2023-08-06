@@ -204,9 +204,7 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postrange, MODE_PM);
 	}
-	if ($config['enable-post-ratings']) {
-		$ratings = load_ratings($searchon, $postrange, MODE_PM);
-	}
+	load_hook('pm-extra-db', $searchon, $postrange);
 	//--
 	
 	$controls['ip'] = "";
@@ -256,12 +254,7 @@
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
 		}
-		if ($config['enable-post-ratings']) {
-			$post['showratings'] = true;
-			if (isset($ratings[$post['id']])) {
-				$post['rating'] = $ratings[$post['id']];
-			}	
-		}
+		load_hook_ref('pm-extra-fields', $post);
 		
 		$post['act']     = filter_int($act[$post['user']]);	
 		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";

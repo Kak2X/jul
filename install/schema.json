@@ -138,14 +138,6 @@
 				"default":0,
 				"special":"yesno"
 			},
-			"enable-post-ratings":{
-				"title":"Enable post ratings",
-				"desc":"Enables users to assign <!-- islamic content -->ratings to posts. Each rating has its own score, and the total given/received are shown in the users' profiles.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
 			"onlineusers-on-thread":{
 				"title":"Online users bar detail",
 				"desc":"Determines what to show in the online users bar when viewing a thread. If set to 'Thread', it will show users reading the thread (AB2.064 behaviour), otherwise it will show all users in the forum (original behaviour, as shown in the forum page).",

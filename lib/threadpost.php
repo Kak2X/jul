@@ -25,7 +25,8 @@
 			$post['text'] = "(Post deleted)";
 			$set['userrank'] = $set['location'] = "";
 			$set['picture']  = $set['userpic']  = "";
-			$set['attach']   = $set['rating']   = "";
+			$set['attach']   = "";
+			//load_hook_ref('threadpost-deleted', $set, $post, $mode);
 		} else {
 		
 			$set['userrank'] = getrank(
@@ -52,11 +53,7 @@
 				$set['attach'] = "";
 			}
 			
-			if (filter_bool($post['showratings'])) { // Ratings are opt-in
-				$set['rating'] = ratings_html($post['id'], filter_array($post['rating']), $mode);
-			} else {
-				$set['rating'] = "";
-			}
+			//load_hook_ref('threadpost', $set, $post, $mode);
 			
 			$post['text'] = doreplace2($post['text'], $post['options']);
 		}
@@ -93,6 +90,7 @@
 		}
 		
 		$set['new'] = __($post['new']) ? "{$statusicons['new']} | " : "";
+		$set['mode'] = $mode;
 			
 		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
 		
@@ -468,4 +466,77 @@ function syndrome($num, $double=false, $bar=true) {
 	}
 
 	return $syn;
+}
+
+//--
+// postcode extension specific functions
+
+const TOPBAR_RIGHT = 0;
+const TOPBAR_LEFT = 1;
+const OPTION_ROW_TOP = 2;
+const OPTION_ROW_BOTTOM = 3;
+
+function add_option_row($html, $dir = OPTION_ROW_BOTTOM, $rowspan = 1) {
+	if ($dir === OPTION_ROW_BOTTOM) {
+		global $tloptrows;
+		$tloptrows[] = [$html, $rowspan];
+	} else {
+		global $tloptrowst;
+		$tloptrowst[] = [$html, $rowspan];
+	}
+}
+
+function add_topbar_entry($html, $dir) {
+	if ($dir === TOPBAR_RIGHT) {
+		global $tltopr;
+		$tltopr .= $html;
+	} else {
+		global $tltopl;
+		$tltopl .= $html;
+	}
+}
+
+function get_tlayout_opts($key, &$set, $post, $data) {
+	// initialize/reset *all* of the threadpost extension variables
+	global $tloptrows, $tloptrowst, $tltopr, $tltopl;
+	$tloptrows = $tloptrowst = [];
+	$tltopr = $tltopl = "";
+	
+	load_hook("tlayout-{$key}", $set, $post, $data);
+	
+	$out = new tlayout_ext_option($data);
+	$out->top_left  = $tltopl;
+	$out->top_right = $tltopr;
+	
+	// option rows
+	foreach ($tloptrows as $opt) {
+		$out->option_rows_bottom .= $opt[0];
+		$out->rowspan            += $opt[1];
+	}
+	// option rows (top variant)
+	foreach ($tloptrowst as $opt) {
+		$out->option_rows_top    .= $opt[0];
+		$out->rowspan            += $opt[1];
+	}
+	
+	return $out;
+}
+
+class tlayout_ext_option {
+	public $option_rows_bottom = "";
+	public $option_rows_top = "";
+	public $rowspan = 0;
+	
+	public $top_left = "";
+	public $top_right = "";
+	
+    function __construct($inpt) { // tlayout_ext_input
+        $this->rowspan = $inpt->rowspan;
+    }
+}
+
+class tlayout_ext_input {
+	public $csskey;
+	public $sidebar_one_cell;
+	public $rowspan;
 }

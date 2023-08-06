@@ -79,23 +79,14 @@ function postcode($post,$set){
 	if ($sidebartype == 2 && !file_exists("sidebars/{$post['uid']}.php"))
 		$sidebartype = 0;
 	
+	//--
+	$data = new tlayout_ext_input();
+	$data->csskey           = $csskey;
+	$data->sidebar_one_cell = $sidebaronecell;
 	// Keep count of the cell size (for single column mode)
-	$rowspan   = 2;
-	
-	// Rating icons
-	$optionrow = "";
-	if ($set['rating']) {
-		if ($sidebaronecell) {
-			$ratingside = "";
-			++$rowspan;
-		} else {
-			$ratingside = "<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>";
-		}
-		$optionrow .= "<tr>
-			{$ratingside}
-			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='height: 1px; width: 80%'>{$set['rating']}</td>
-		</tr>"; // &nbsp;<b>Post ratings:</b>
-	}
+	$data->rowspan          = 2;
+	//--
+	$opt = get_tlayout_opts('regular', $set, $post, $data);
 	
 //	if (true) {
 	
@@ -123,7 +114,7 @@ function postcode($post,$set){
 			if (!isset($tokenstr)) $tokenstr = "&auth=".generate_token(TOKEN_MGET);
 			
 			$un_b = $post['blockedlayout'] ? "Unb" : "B";
-			$optionrow .= "
+			$opt->option_rows_bottom .= "
 			<tr>
 				<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'><b>Status</b>: {$status}</td>
 				<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>&nbsp;<b>Options</b>:
@@ -240,8 +231,8 @@ function postcode($post,$set){
 		if ($sidebaronecell) {
 			// Single cell sidebar
 			$topbar1 = "
-			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' rowspan={$rowspan} valign=top>
-				{$noobspan}{$set['userlink']}</span>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' rowspan={$opt->rowspan} valign=top>
+				{$noobspan}{$set['userlink']}</span>{$opt->top_left}
 				<br>{$sidebar}
 				<img src='images/_.gif' width=200 height=1>
 			</td>";
@@ -250,7 +241,7 @@ function postcode($post,$set){
 			// Normal
 			$topbar1 = "
 			<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
-				{$noobspan}{$set['userlink']}</span>
+				{$noobspan}{$set['userlink']}</span>{$opt->top_left}
 			</td>";
 			$sidebar = "
 			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' valign=top>
@@ -275,10 +266,12 @@ function postcode($post,$set){
 								<td class='nobr' style='width: 255px'>
 									{$controls['quote']}{$controls['edit']}{$controls['ip']}
 								</td>
+								{$opt->top_right}
 							</tr>
 						</table>
 					</td>
 				</tr>
+				{$opt->option_rows_top}
 				<tr>
 					{$sidebar}
 					<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} w' valign=top height={$height} id='post{$post['id']}'>
@@ -288,7 +281,7 @@ function postcode($post,$set){
 						{$post['signtext']}
 					</td>
 				</tr>
-				{$optionrow}
+				{$opt->option_rows_bottom}
 			</table>
 		";
 //	}

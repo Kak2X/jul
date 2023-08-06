@@ -1,5 +1,5 @@
 <?php
-function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
+function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire,\'\' sidebar';}
 
 function postcode($post,$set) {
 	global $tzoff, $smallfont, $controls; //ip,$quote,$edit;
@@ -23,19 +23,17 @@ function postcode($post,$set) {
 	
 	$csskey = getcsskey($post);
 	
-	$optionrow = "";
-	if ($set['rating']) {
-		$optionrow .= "<tr>
-			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
-			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts'>{$set['rating']}</td>
-		</tr>"; // &nbsp;<b>Post ratings:</b>
-	}
+	//--
+	$data = new tlayout_ext_input();
+	$data->csskey           = $csskey;
+	//--
+	$opt = get_tlayout_opts('ezboard', $set, $post, $data);
 	
 	return "
 <table class='table post tlayout-ezboard contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop' style='width: 200px'>
-			{$noobspan}{$set['userlink']}</span>
+			{$noobspan}{$set['userlink']}</span>{$opt->top_left}
 			<span class='fonts'>
 				<br>
 				<b>{$set['userrank']}</b><br>
@@ -47,12 +45,14 @@ function postcode($post,$set) {
 				{$set['userpic']}
 			</span>
 		</td>
+		{$opt->option_rows_top}
 		<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} vatop' id='post{$post['id']}'>
 			{$post['headtext']}
 			{$post['text']}
 			{$set['attach']}
 			{$post['signtext']}
 		</td>
+		{$opt->option_rows_bottom}
 	</tr>
 	{$optionrow}
 </table>";

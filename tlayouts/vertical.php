@@ -1,6 +1,6 @@
 <?php
 	
-function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire';}
+function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire,\'\' sidebar';}
 
 function postcode($post,$set){
     global $loguser,$controls,$tlayout,$textcolor,$numdir,$numfil,$barimg;

@@ -116,11 +116,14 @@
 						? '<button type="submit" name="action" value="disable">Disable</button>'
 						: '<button type="submit" name="action" value="enable">Enable</button>'
 						?>
-<?php if (!filter_bool($ext['noconfig'])) { ?>
 						<div class="settingsCtrl">
+<?php if (filter_bool($ext['configpage'])) { ?>
+							<a href="<?=$ext['file']?>/config" class="button">Configure</a>
+<?php }
+      if (!filter_bool($ext['noconfig'])) { ?>
 							<input type="submit" name="settings" value="Settings">
-						</div>
 <?php } ?>
+						</div>
 					</span>
 					
 					<?= $ext['description'] ?><br>

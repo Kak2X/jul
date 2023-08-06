@@ -6,29 +6,63 @@
 $_hooks = [];
 
 function add_hook($key, $var) {
-	global $_hooks;
-	$_hooks[$key][] = $var;
+	global $_hooks, $extName;
+	$_hooks[$key][] = [$var, $extName];
 }
 
 function load_hook($key) {
-	global $_hooks;
+	global $_hooks, $extName, $extConfig, $xconf;
 	if (!isset($_hooks[$key])) 
 		return;
+	// save the current extName for later
+	$oname = $extName;
+	$oconf = $xconf;
 	$args = func_get_args();
 	foreach ($_hooks[$key] as $callback) {
-		$callback(...$args);
+		// restore the $extName used when the hook was created
+		// this guarantees the correct behaviour for things like actionlink outside of ext-specific pages
+		$extName = $callback[1];
+		$xconf   = $extConfig[$extName];
+		// execute the callback
+		$callback[0](...$args);
 	}
+	// and restore the original
+	$extName = $oname;
+	$xconf   = $oconf;
+}
+
+function load_hook_ref($key, &$var) {
+	global $_hooks, $extName, $extConfig, $xconf;
+	if (!isset($_hooks[$key])) 
+		return;
+	$oname = $extName;
+	$oconf = $xconf;
+	$args = func_get_args();
+	foreach ($_hooks[$key] as $callback) {
+		$extName = $callback[1];
+		$xconf   = $extConfig[$extName];
+		$callback[0](...$args);
+	}
+	$var = $args[1];
+	$extName = $oname;
+	$xconf   = $oconf;
 }
 
 function print_hook($key) {
-	global $_hooks;
+	global $_hooks, $extName, $extConfig, $xconf;
 	if (!isset($_hooks[$key])) 
 		return "";
+	$oname = $extName;
+	$oconf = $xconf;
 	$args = func_get_args();
 	$out = "";
 	foreach ($_hooks[$key] as $callback) {
-		$out .= $callback(...$args);
+		$extName = $callback[1];
+		$xconf   = $extConfig[$extName];
+		$out .= $callback[0](...$args);
 	}
+	$extName = $oname;
+	$xconf   = $oconf;
 	return $out;
 }
 
@@ -45,13 +79,16 @@ function actionlink($url = null, $args = "") {
 // extension system
 
 function ext_init() {
-	global $extConfig;
+	global $extConfig, $extName;
+	// needs to be the global variable so add_hook can save the proper $extName
+	$oname = $extName;
 	foreach (ext_get_enabled(false) as $extName) {
 		$extName = rtrim($extName);
 		$xconf = ext_read_config($extName);
 		include_once "extensions/{$extName}.abx/__init__.php";
 		$extConfig[$extName] = $xconf;
 	}
+	$extName = $oname;
 }
 // Get the enabled extensions
 function ext_get_enabled($assoc = true) {

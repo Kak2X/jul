@@ -199,13 +199,13 @@
 	}
 
 	$items	= $sql->query("
-		SELECT `items`.*, `users`.`id` as uid, `users`.`sex` as usex, `users`.`powerlevel` as upow, `users`.`namecolor` as unc, `users`.`name` as uname
-		FROM `items`
-		LEFT JOIN `users` ON `users`.`id` = `items`.`user`
-		WHERE `cat` = '$cat'". ($_GET['type'] ? "
-		AND `type` = '". $_GET['type'] ."' " : "") .
-		($hiddeneditok ? "" : " AND `hidden` = '0'") ."
-		ORDER BY `type` ASC, `coins` ASC, `gcoins` ASC
+		SELECT i.*, ".set_userfields("u")."
+		FROM items i
+		LEFT JOIN users u ON u.id = i.user
+		WHERE i.cat = {$cat}
+		".($_GET['type'] ? "AND i.type = {$_GET['type']}" : "")."
+		".($hiddeneditok ? "" : "AND i.hidden = 0")."
+		ORDER BY i.type ASC, i.coins ASC, i.gcoins ASC
 	");
 	
 	?>
@@ -240,9 +240,9 @@
 			$tc2	= "2";
 			$tc1	= "1";
 		}
-
+		
 		if ($item['hidden']) {
-			$item['name']	= "<img src='images/dot4.gif' align='absmiddle'> ". $item['name'];
+			$item['name']	= "<img src='images/dot4.gif' align='absmiddle'> ".htmlspecialchars($item['name']);
 		}
 
 /*
@@ -250,11 +250,7 @@
 			$item['name']	= "<a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><font ". getnamecolor($item['usex'], $item['upow']) .">". $item['uname'] ."'s</font></a> ". $item['name'];
 		}
 */
-		if ($item['uname']) {
-			$item['uname']	= "<nobr><a href=\"profile.php?id=". $item['uid'] ."\" class=\"fonts\"><span style='color: #". getnamecolor($item['usex'], $item['upow'], $item['unc']) ."'>". htmlspecialchars($item['uname']) ."</span></a></nobr>";
-		} else {
-			$item['uname']	= "";
-		}
+		$item['uname']	= getuserlink(get_userfields($item, 'u'));
 
 		if ($item['desc']) {
 			$item['name']	.= " <span class=\"fonts\" style=\"color: #88f;\">- ". htmlspecialchars($item['desc']) ."</span>";
@@ -262,11 +258,11 @@
 
 		$typerow[$item['type']] .= "<tr>
 				<td class='tdbg1 fonts center'><a href=\"?cat=$cat&id=". $item['id'] . ($_GET['type'] ? "&type=". $_GET['type'] : "") ."\">Edit</a></td>
-				<td class='tdbg{$tc2} center'>". htmlspecialchars($item['uname']) ."</td><td class='tdbg{$tc2}'>". htmlspecialchars($item['name']) ."</td>";
+				<td class='tdbg{$tc2} center'>{$item['uname']}</td><td class='tdbg{$tc2}'>{$item['name']}</td>";
 
 		$val	= 0;
 		foreach($stats as $n => $stat) {
-			$num	= ($stype[$n] == "m" ? vsprintf('%1.2fx',$item[$stat]/100) : $item[$stat]);
+			$num	= ($stype[$n] == "m" ? vsprintf('%1.2fx', [$item[$stat]/100]) : $item[$stat]);
 			if ($item[$stat] > 0 && $stype[$n] != "m") $num = "+". $num;
 			if ($item[$stat] == 0 && $stype[$n] != "m") $num = "";
 
@@ -352,11 +348,11 @@
 
 			return $r ."</table><br>";
 		} else {
-
+	
 			$r	= "<select name=\"$name\">";
 
 			foreach($links as $link => $name) {
-				$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">$name</option>";
+				$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">".htmlspecialchars($name)."</option>";
 			}
 
 			return $r ."</select>";

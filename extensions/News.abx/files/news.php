@@ -162,7 +162,7 @@
 							print news_comment_editor(null, $_GET['id'])."<br>";
 							replytoolbar('nwedit', readsmilies());
 						}
-						print news_comments($_GET['id'], $post['user'], $_GET['edit'], $_GET['cqid'], $_GET['cpin']);
+						print news_comments($_GET['id'], $post['user'], $_GET['edit'], 0, $_GET['cpin']);
 					}
 				}
 				print $pagelist;

@@ -280,7 +280,7 @@ function load_pm_thread($id) {
 	$allow_self - if false, the current user should not be present in the list
 	$error      - contains the error text
 */
-function valid_pm_acl($userlist, $allow_self = false, &$error) {
+function valid_pm_acl($userlist, $allow_self, &$error) {
 	global $config, $loguser;
 	// Increase the limit to account ourselves
 	$limit = ($allow_self && $config['pmthread-dest-limit'] > 0) ? $config['pmthread-dest-limit'] + 1 : $config['pmthread-dest-limit'];

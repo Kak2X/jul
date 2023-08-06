@@ -501,6 +501,8 @@
 		
 		// Same for the picture
 		$weblink = $sql->resultq("SELECT weblink FROM users_avatars WHERE user = {$id} AND file = 0");
+		if (!$weblink) $weblink = "";
+		
 		$picture = "
 			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-avatar-size-bytes']}'>
 			<input name='picture' type='file'>
@@ -519,7 +521,7 @@
 			$regdate = datetofields($userdata['regdate'], 'reg', DTF_DATE | DTF_TIME);
 			
 			// Hours left before the user is unbanned
-			$ban_hours = ban_hours('ban_hours', $userdata['ban_expire'], ($userdata['powerlevel'] == -1))." (has effect only for Banned users)";
+			$ban_hours = ban_select('ban_hours', $userdata['ban_expire'])." (has effect only for Banned users)";
 		}
 		
 		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;

@@ -464,8 +464,9 @@
 	if ($ipbanned) {
 		if ($loguser['title'] == "Banned; account hijacked. Contact admin via PM to change it.") {
 			$reason	= "Your account was hijacked; please contact {$config['admin-name']} to reset your password and unban your account.";
-		} elseif ($loguser['title']) {
-			$reason	= "Ban reason: ".xssfilters($loguser['title'])."<br>If you think have been banned in error, please contact {$config['admin-name']}.";
+		// causes problems when getting ip banned while logged in
+		//} elseif ($loguser['title']) {
+		//	$reason	= "Ban reason: ".xssfilters($loguser['title'])."<br>If you think have been banned in error, please contact {$config['admin-name']}.";
 		} else {
 			$reason	= $sql->resultq("SELECT `reason` FROM ipbans WHERE $checkips");
 			$reason	= ($reason ? "Reason: ".xssfilters($reason) : "<i>(No reason given)</i>");
@@ -634,7 +635,7 @@ function readpostread($userid) {
 }
 
 function replace_tags($msg, $tags) {
-	if ($tags) {
+	if ($tags && $msg) {
 		$msg	= strtr($msg, $tags);
 	}
 	return $msg;
@@ -711,6 +712,8 @@ function escape_codeblock($text) {
 
 function doreplace2($msg, $options='0|0', $nosbr = false){
 	global $hacks;
+	
+	if (!$msg) return $msg;
 	
 	// options will contain smiliesoff|htmloff
 	$options     = explode("|", $options);
@@ -1381,8 +1384,7 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		$id = $u['id'];
 	}
 	
-	$akafield		= htmlspecialchars($u['aka']);
-	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: {$akafield}\"" : '';
+	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: ".htmlspecialchars($u['aka'])."\"" : '';
 	
 	$username       = htmlspecialchars($u['name'], ENT_NOQUOTES);
 	
@@ -1434,7 +1436,7 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 				// RAINBOW MULTIPLIER
 				$stime = gettimeofday();
 				// slowed down 5x
-				$h = (($stime['usec']/25) % 600);
+				$h = ((int)($stime['usec']/25) % 600);
 				if ($h<100) {
 					$r=255;
 					$g=155+$h;
@@ -2316,6 +2318,8 @@ function xssfilters($data, $validate = false){
 	
 }
 function dofilters($p, $f = 0, $multiforum = false){
+	if (!$p) return $p;
+	
 	global $sql, $hacks;
 	//static $filters;
 	
@@ -2624,7 +2628,7 @@ function set_userfields($alias, $fixed_data = NULL) {
 	// If so, set it up (and use PDO named placeholders)
 	if ($fixed_data !== NULL) {
 		foreach ($userfields_array as $field) {
-			$tag = "{$alias}{$field}";
+			$tag = "{$alias}_{$field}";
 			if (isset($fixed_data[$tag])) {
 				$txt .= ($c ? ", " : "").":{$tag} {$alias}_{$field}";
 				$c = true;
@@ -2790,36 +2794,6 @@ function ban_select($name, $time = 0) {
 		$out = "";
 		foreach ($selector as $i => $x) {
 			$out .= "<option value='$i'>$x</option>";
-		}
-		return "<select name='{$name}'>{$out}</select>";
-}
-
-function ban_hours($name, $time = 0, $condition = true) {
-		trigger_error("Use ban_select() instead", E_USER_DEPRECATED);
-		$val = ($condition && $time) ? ceil(($time - ctime()) / 3600) : 0;
-		$selector = array(
-			$val     => $val > 0 ? timeunits2($val*3600) : "*** Keep Expired ***",
-			0        => "*** Permanent ***",
-			1        => "1 hour",
-			3        => "3 hours",
-			6        => "6 hours",
-			24       => "1 day",
-			72       => "3 days",
-			168      => "1 week",
-			336      => "2 weeks",
-			774      => "1 month",
-			1488     => "2 months",
-			4464     => "6 months",
-			89280    => "SA Ban",
-		);
-		ksort($selector); // Place the $val entry in the correct position
-		
-		$sel[$val] = " selected";
-		
-		// Fill out the select box
-		$out = "";
-		foreach($selector as $i => $x){
-			$out .= "<option value=$i".filter_string($sel[$i]).">$x</option>";
 		}
 		return "<select name='{$name}'>{$out}</select>";
 }

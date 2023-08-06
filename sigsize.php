@@ -29,7 +29,7 @@ print "
 	$last = $max = NULL;
 	for ($i = 1; $u = $sql->fetch($users); ++$i) {
 		if (!$u['tsize']) break;
-		if ($last['tsize'] != $u['tsize']) $r = $i;
+		if (!$last || $last['tsize'] != $u['tsize']) $r = $i;
 		$last	= $u;
 		$max	= max($u['tsize'], $max);
 

@@ -10,8 +10,15 @@
 	pageheader("IRC Chat");
 	
 	// Pick a server, 0 to show server selection
-	$_GET['server'] = filter_int($_GET['server']);
-	if (!isset($config['irc-servers'][$_GET['server']])) $_GET['server'] = 0;
+	$show_server = isset($_GET['server']);
+	
+	if (!$show_server) {
+		$_GET['server'] = -1;
+	} else {
+		$_GET['server'] = filter_int($_GET['server']);
+		if (!isset($config['irc-servers'][$_GET['server']])) errorpage("Server not found.");
+	}
+
 
 
 ?>	<table class='table'>
@@ -24,20 +31,20 @@
 <?php
 	foreach ($config['irc-servers'] as $num => $name) {
 
-		if ($num != 1) 	print " | ";
+		if ($num != 0) 	print " | ";
 		if ($_GET['server'] == $num) print "<u>";
 		print "<a href='irc.php?server={$num}'>{$name}</a>";
 		if ($_GET['server'] == $num) print "</u>";
-		if ($num == 1) print " (preferred)";
+		if ($num == 0) print " (preferred)";
 
 	}
 ?>			</td>
 		</tr>
 		<tr>
-			<td class='tdbg2 center' <?= $_GET['server'] ? "style=\"background: #FFF\"" : "" ?>>
+			<td class='tdbg2 center' <?= $show_server ? "style=\"background: #FFF\"" : "" ?>>
 <?php
 
-	if ($_GET['server']) {
+	if ($show_server) {
 
 		$badchars = array("~", "&", "@", "?", "!", ".", ",", "=", "+", "%", "*");
 

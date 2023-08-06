@@ -72,14 +72,17 @@
 		$total = $sql->num_rows($users);
 	}
 	
-	for($i = 0; $i < $totalranks; ++$i) {
+	for ($i = 0; $i < $totalranks; ++$i) {
+		// Fetch next rank, to determine the upper bound of the current $rank
 		$rankn = $sql->fetch($ranks);
-		if(!$rankn['num']) $rankn['num'] = 8388607;
+		// If we reached the end of the ranks, use an extremely high post limit
+		if (!$rankn) $rankn = ['num' => 8388607];
 
+		// Continue fetching users from the ordered list until we reach the upper bound
 		$userarray = array();
 		$inactive  = 0;
 
-		for($u = 0; $user && $user['posts'] < $rankn['num']; ++$u){
+		for ($u = 0; $user && $user['posts'] < $rankn['num']; ++$u) {
 			if (max($user['lastactivity'], $user['lastposttime']) > $btime) {
 				$userarray[$user['name']] = getuserlink($user);
 			} else {
@@ -87,8 +90,9 @@
 			}
 			$user = $sql->fetch($users);
 		}
-
-		@ksort($userarray);
+		
+		// Sort them alphabetically
+		ksort($userarray);
 		$userlisting = implode(", ", $userarray);
 
 		if ($inactive) 		$userlisting .= ($userlisting?', ':'')."$inactive inactive";

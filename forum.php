@@ -281,17 +281,19 @@
 			'u1_powerlevel' => $userdata['powerlevel'],
 			'u1_aka'        => $userdata['aka'],
 			'u1_birthday'   => $userdata['birthday'],
-			'u1_namecolor'  => $userdata['namecolor']
+			'u1_minipic'    => $userdata['minipic'],
+			'u1_namecolor'  => $userdata['namecolor'],
+			'u1_id'         => $userdata['id'],
 		];
 		$threads = $sql->queryp("
 			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid, f.login,
 			        ".set_userfields('u1', $vals).", 
-			        ".set_userfields('u')."
+			        ".set_userfields('u2')."
 					$q_trval
 			
 			FROM threads t
-			LEFT JOIN users  u ON t.lastposter = u.id
-			LEFT JOIN forums f ON t.forum      = f.id
+			LEFT JOIN users  u2 ON t.lastposter = u2.id
+			LEFT JOIN forums  f ON t.forum      = f.id
 			$q_trjoin
 			
 			WHERE t.user = {$_GET['user']}

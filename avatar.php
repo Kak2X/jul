@@ -71,7 +71,7 @@ if ($me && $moods) {
 			$_GET['start'] = 1;
 		}
 		
-		$moodurl  = $me['moodurl']);
+		$moodurl  = $me['moodurl'];
 		$startimg = str_replace('$', $_GET['start'], $moodurl);
 		print set_mood_url_js($moodurl);
 		

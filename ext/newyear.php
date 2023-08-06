@@ -1,16 +1,30 @@
 <?php
-	error_reporting(0);
+	//error_reporting(0);
 //	die("D'oh");
 	header("Cache-Control: no-cache");
 
 	if (isset($_GET['z'])) {
-		die( "<body bgcolor=#111122><META HTTP-EQUIV=REFRESH CONTENT=1;URL=newyear.php?z=". rand(0,9999) ."><center><br><br><br><br><img src=newyear.php width=100%>");
+?><style>
+	body { background: #111122; } 
+	img { image-rendering: -moz-crisp-edges; width: 100% }
+	table, td { vertical-align: middle; height: 100%; width: 100% }
+</style>
+<META HTTP-EQUIV=REFRESH CONTENT=1;URL="?z=<?=rand(0,9999)?>"><table><td><img src="newyear.php">
+<?php
+		
+		die;
 	}
+	
+	$hour_offset = 3600 * (isset($_GET['to']) ? (int)$_GET['to'] : 0);
 
 //	require "lib/function.php";
 
-	$bombday		= mktime(0, 0,  0,  1, 1, 2010);
-	$time			= microtime(true) + (3600 * $_GET['to']);
+	// Autopick next year, unless we're on Jan 1st
+	$current_date = getdate(time() + $hour_offset);
+	$year = $current_date['year'] + ($current_date['mday'] == 1 && $current_date['mon'] == 1 ? 0 : 1);
+
+	$bombday		= mktime(0, 0,  0,  1, 1, $year);
+	$time			= microtime(true) + $hour_offset;
 	$left			= $bombday - $time;
 	$left			= max(0, $left);
 //	$left			= rand(0, 86400);
@@ -21,7 +35,7 @@
 	$mins			= str_pad(floor(($left) / 60), 3, "o", STR_PAD_LEFT);
 	$secs			= floor(($left - floor($left / 60) * 60) * 100) / 100;
 	$secs			= explode(".", $secs);
-	$secs			= implode("\"", array(str_pad($secs[0], 2, "0", STR_PAD_LEFT), str_pad($secs[1], 2, "0", STR_PAD_RIGHT)));
+	$secs			= implode("\"", array(str_pad($secs[0], 2, "0", STR_PAD_LEFT), str_pad(count($secs) < 2 ? 0: $secs[1], 2, "0", STR_PAD_RIGHT)));
 
 	$teststring		= "$mins'$secs";
 

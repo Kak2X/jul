@@ -64,11 +64,12 @@
 			}
 
 			if ($i >= 0 && $i <= 99) {
+				// Four different gradients for the four sections
 				if ($i <= 24) {
 					$cx	= ($i) / 25 * 255;
 					$cc	= imagecolorallocate($image, 255, $cx, 0);
 				} elseif ($i <= 49) {
-					$cx	= ($i - 75) / 25 * 127;
+					$cx	= ($i - 25) / 25 * 127;
 					$cc	= imagecolorallocate($image, 255 - $cx, 255 - $cx, $cx);
 				} elseif ($i <= 74) {
 					$cx	= ($i - 50) / 25 * 31;
@@ -187,7 +188,7 @@
 	function digits($x, $y, $n, $l = 4, $d = 2, $overlay = false) {
 		global $image;
 
-		$numimage	= imagecreatefrompng("digits4.png");
+		$numimage	= imagecreatefrompng("images/digits4.png");
 		$n			= number_format($n, $d);
 		$n			= str_replace(",", "", $n);
 		$n2			= explode(".", $n);
@@ -196,7 +197,7 @@
 		$len		= strlen($big);
 
 		for($o = 0; $o < $len; $o++) {
-			$chrpos	= ord($big{$o}) - 48;
+			$chrpos	= ord($big[$o]) - 48;
 			imagecopy($image, $numimage, $x + ($o * 8), $y, $chrpos * 9, 0, 8, 14);
 		}
 
@@ -204,7 +205,7 @@
 		$slen		= strlen($small) + $o - 1;
 		for(; $o <= $slen; $o++) {
 			$lp		= $o - $len;
-			imagecopy($image, $numimage, $x + $o * 8, $y, $small{$lp} * 9, 14, 8, 14);
+			imagecopy($image, $numimage, $x + $o * 8, $y, $small[$lp] * 9, 14, 8, 14);
 		}
 
 		$maxlen		= strlen($big) + strlen($small);

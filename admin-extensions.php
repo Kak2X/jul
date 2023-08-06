@@ -1,5 +1,5 @@
 <?php
-	if (isset($_POST['settings'])) {
+	if (isset($_GET['extfile'])) {
 		require "admin-settings.php";
 		die;
 	}
@@ -121,7 +121,7 @@
 							<a href="<?=$ext['file']?>/config" class="button">Configure</a>
 <?php }
       if (!filter_bool($ext['noconfig'])) { ?>
-							<input type="submit" name="settings" value="Settings">
+							<a href="?extfile=<?=$ext['file']?>" class="button">Settings</a>
 <?php } ?>
 						</div>
 					</span>

@@ -1,595 +1,625 @@
 {
-	"__sql":{
-		"SQL connection options":{
-			"sqlhost":{
-				"title":"Server address",
-				"desc":"",
-				"input":"text",
-				"type":"string",
-				"default":"",
-				"direct":true
-			},
-			"sqluser":{
-				"title":"Username",
-				"desc":"",
-				"input":"text",
-				"type":"string",
-				"default":"",
-				"direct":true
-			},
-			"sqlpass":{
-				"title":"Password",
-				"desc":"",
-				"input":"password",
-				"type":"string",
-				"default":"",
-				"direct":true
-			},
-			"dbname":{
-				"title":"Database name",
-				"desc":"",
-				"input":"text",
-				"type":"string",
-				"default":"",
-				"direct":true
+	"sqlconfig": [
+		{
+			"title":"SQL connection options",
+			"fields":{
+				"sqlhost":{
+					"title":"Server address",
+					"desc":"",
+					"input":"text",
+					"type":"string"
+				},
+				"sqluser":{
+					"title":"Username",
+					"desc":"",
+					"input":"text",
+					"type":"string",
+					"default":""
+				},
+				"sqlpass":{
+					"title":"Password",
+					"desc":"",
+					"input":"password",
+					"type":"string",
+					"default":""
+				},
+				"dbname":{
+					"title":"Database name",
+					"desc":"",
+					"input":"text",
+					"type":"string",
+					"default":""
+				}
 			}
 		}
-	},
-	"config":{
-		"Layout options":{
-			"board-name":{
-				"title":"Board name",
-				"desc":"The board's title. This will be visible in the title bar and in the breadcrumbs.",
-				"input":"text",
-				"type":"string",
-				"default":"Not Jul"
-			},
-			"board-title":{
-				"title":"Header HTML",
-				"desc":"The board's header, which is usually an image. Clicking on it will redirect to the index.",
-				"input":"text",
-				"type":"string",
-				"default":"<img src='images\/pointlessbannerv2.png' title='The testboard experience'>",
-				"width":550
-			},
-			"title-submessage":{
-				"title":"Staff submessage",
-				"desc":"Staff-only message shown below the board header.",
-				"input":"text",
-				"type":"string",
-				"default":"",
-				"width":550
-			},
-			"board-url":{
-				"title":"Header link",
-				"desc":"Path to the board without the last backslash. The origin check depends on this.",
-				"input":"text",
-				"type":"string",
-				"default":"http:\/\/localhost\/board",
-				"width":350
-			},
-			"footer-title":{
-				"title":"Footer text",
-				"desc":"This will be shown above the footer. Should describe what it links to (see below).",
-				"input":"text",
-				"type":"string",
-				"default":"The Internet"
-			},
-			"footer-url":{
-				"title":"Footer link",
-				"desc":"The URL linked by the footer text. Usually it directs to the root page on the website.",
-				"input":"text",
-				"type":"string",
-				"default":"http:\/\/localhost",
-				"width":350
-			},
-			"admin-name":{
-				"title":"Admin name",
-				"desc":"The board owner's email, which appears in the IP ban message.",
-				"input":"text",
-				"type":"string",
-				"default":"(admin name)"
-			},
-			"admin-email":{
-				"title":"Support email",
-				"desc":"Support email, shown to IP banned users.",
-				"input":"text",
-				"type":"string",
-				"default":"herp@derp.welp"
-			},
-			"show-ikachan":{
-				"title":"Show Ikachan",
-				"desc":"Ika-chaaaannn~",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"affiliate-links":{
-				"title":"Affiliates (HTML)",
-				"desc":"HTML option tags for the affiliate box, which is shown in the footer. If blank, the box will be hidden.",
-				"input":"textarea",
-				"type":"string",
-				"default":"<optgroup label=\"Forum affiliates\">\r\n\t<option value=\"about:blank\" selected=\"\">something<\/option>\r\n<\/optgroup>\r\n<optgroup label=\"Other Acmlmboards\">\r\n\t<option value=\"about:blank\">just so you know<\/option>\r\n\t<option value=\"about:blank\">usually there are<\/option>\r\n\t<option value=\"about:blank\">no affiliates<\/option>\r\n\t<option value=\"about:blank\">so you can remove this<\/option>\r\n<\/optgroup>"
+	],
+	"config":[
+		{
+			"title":"Layout options",
+			"fields":{
+				"board-name":{
+					"title":"Board name",
+					"desc":"The board's title. This will be visible in the title bar and in the breadcrumbs.",
+					"input":"text",
+					"type":"string",
+					"default":"Not Jul"
+				},
+				"board-title":{
+					"title":"Header HTML",
+					"desc":"The board's header, which is usually an image. Clicking on it will redirect to the index.",
+					"input":"text",
+					"type":"string",
+					"default":"<img src='images\/pointlessbannerv2.png' title='The testboard experience'>",
+					"width":"550px"
+				},
+				"title-submessage":{
+					"title":"Staff submessage",
+					"desc":"Staff-only message shown below the board header.",
+					"input":"text",
+					"type":"string",
+					"default":"",
+					"width":"550px"
+				},
+				"board-url":{
+					"title":"Header link",
+					"desc":"Path to the board without the last backslash. The origin check depends on this.",
+					"input":"text",
+					"type":"string",
+					"default":"http:\/\/localhost\/board",
+					"width":"350px"
+				},
+				"footer-title":{
+					"title":"Footer text",
+					"desc":"This will be shown above the footer. Should describe what it links to (see below).",
+					"input":"text",
+					"type":"string",
+					"default":"The Internet"
+				},
+				"footer-url":{
+					"title":"Footer link",
+					"desc":"The URL linked by the footer text. Usually it directs to the root page on the website.",
+					"input":"text",
+					"type":"string",
+					"default":"http:\/\/localhost",
+					"width":"350px"
+				},
+				"admin-name":{
+					"title":"Admin name",
+					"desc":"The board owner's email, which appears in the IP ban message.",
+					"input":"text",
+					"type":"string",
+					"default":"(admin name)"
+				},
+				"admin-email":{
+					"title":"Support email",
+					"desc":"Support email, shown to IP banned users.",
+					"input":"text",
+					"type":"string",
+					"default":"herp@derp.welp"
+				},
+				"show-ikachan":{
+					"title":"Show Ikachan",
+					"desc":"Ika-chaaaannn~",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"affiliate-links":{
+					"title":"Affiliates (HTML)",
+					"desc":"HTML option tags for the affiliate box, which is shown in the footer. If blank, the box will be hidden.",
+					"input":"textarea",
+					"type":"string",
+					"default":"<optgroup label=\"Forum affiliates\">\r\n\t<option value=\"about:blank\" selected=\"\">something<\/option>\r\n<\/optgroup>\r\n<optgroup label=\"Other Acmlmboards\">\r\n\t<option value=\"about:blank\">just so you know<\/option>\r\n\t<option value=\"about:blank\">usually there are<\/option>\r\n\t<option value=\"about:blank\">no affiliates<\/option>\r\n\t<option value=\"about:blank\">so you can remove this<\/option>\r\n<\/optgroup>"
+				}
 			}
 		},
-		"Board options":{
-			"allow-thread-deletion":{
-				"title":"Allow thread deletion",
-				"desc":"Allows super-admins to permanently delete threads (old-style deletion). Recommended to keep disabled.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"allow-post-deletion":{
-				"title":"Allow post deletion",
-				"desc":"Allows super-admins to permanently delete posts (old-style deletion). Recommended to keep disabled.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"enable-ratings":{
-				"title":"Enable user ratings",
-				"desc":"Enables users to rate others from a scale of 0 to 10. The vote's weight increases with the user's level.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"onlineusers-on-thread":{
-				"title":"Online users bar detail",
-				"desc":"Determines what to show in the online users bar when viewing a thread. If set to 'Thread', it will show users reading the thread (AB2.064 behaviour), otherwise it will show all users in the forum (original behaviour, as shown in the forum page).",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"options":[
-					"Forum",
-					"Thread"
-				]
-			},
-			"allow-pmthread-edit":{
-				"title":"Allow PM editing",
-				"desc":"Allows normal users to edit or delete their posts in private conversations. By default, only admins are allowed to do so.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"pmthread-dest-limit":{
-				"title":"Max partecipants\/conv.",
-				"desc":"Limits the amount of the partecipants in a PM conversation. This does not include the user who starts the conversation. Enter 0 to disable this limit.",
-				"input":"text",
-				"type":"int",
-				"default":4,
-				"width":50
-			},
-			"pmthread-folder-limit":{
-				"title":"Max PM folders\/user",
-				"desc":"Limits the amount of custom folders for private conversations an user can create. Enter 0 to disable.",
-				"input":"text",
-				"type":"int",
-				"default":20,
-				"width":50
-			},
-			"view-super-minpower":{
-				"title":"Powerlevel required to view Normal+ users",
-				"desc":"Mostly an holdover from the original Jul code, where only Normal+ users or above can see who is part of the group. Can be set to the lowest level if this group is used for other purposes (ie: 'Local Moderator', 'Developer')",
-				"input":"select",
-				"type":"int",
-				"default":1,
-				"special":"powerlevel"
+		{
+			"title":"Board options",
+			"fields":{
+				"allow-thread-deletion":{
+					"title":"Allow thread deletion",
+					"desc":"Allows super-admins to permanently delete threads (old-style deletion). Recommended to keep disabled.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"allow-post-deletion":{
+					"title":"Allow post deletion",
+					"desc":"Allows super-admins to permanently delete posts (old-style deletion). Recommended to keep disabled.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"enable-ratings":{
+					"title":"Enable user ratings",
+					"desc":"Enables users to rate others from a scale of 0 to 10. The vote's weight increases with the user's level.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"onlineusers-on-thread":{
+					"title":"Online users bar detail",
+					"desc":"Determines what to show in the online users bar when viewing a thread. If set to 'Thread', it will show users reading the thread (AB2.064 behaviour), otherwise it will show all users in the forum (original behaviour, as shown in the forum page).",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"options":[
+						"Forum",
+						"Thread"
+					]
+				},
+				"allow-pmthread-edit":{
+					"title":"Allow PM editing",
+					"desc":"Allows normal users to edit or delete their posts in private conversations. By default, only admins are allowed to do so.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"pmthread-dest-limit":{
+					"title":"Max partecipants\/conv.",
+					"desc":"Limits the amount of the partecipants in a PM conversation. This does not include the user who starts the conversation. Enter 0 to disable this limit.",
+					"input":"text",
+					"type":"int",
+					"default":4,
+					"width":"50px"
+				},
+				"pmthread-folder-limit":{
+					"title":"Max PM folders\/user",
+					"desc":"Limits the amount of custom folders for private conversations an user can create. Enter 0 to disable.",
+					"input":"text",
+					"type":"int",
+					"default":20,
+					"width":"50px"
+				},
+				"view-super-minpower":{
+					"title":"Powerlevel required to view Normal+ users",
+					"desc":"Mostly an holdover from the original Jul code, where only Normal+ users or above can see who is part of the group. Can be set to the lowest level if this group is used for other purposes (ie: 'Local Moderator', 'Developer')",
+					"input":"select",
+					"type":"int",
+					"default":1,
+					"special":"powerlevel"
+				}
 			}
 		},
-		"Attachments":{
-			"allow-attachments":{
-				"title":"Enable attachments",
-				"desc":"Allows users to upload attachments to posts and private messages.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"attachments-all-origin":{
-				"title":"Allow global hotlinking",
-				"desc":"This allows hotlinking attachments from outside the board. If disabled, hotlinking will be only allowed from inside the board.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"hide-attachments":{
-				"title":"Hide attachments",
-				"desc":"When attachments are disabled, this determines whether to show any existing attachments or not. This only hides them from threads, but does NOT prevent access to them.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"attach-max-size":{
-				"title":"Max attachment size",
-				"desc":"Limits the total size for the attachments assigned to a single post.",
-				"input":"text",
-				"type":"int",
-				"default":2097152,
-				"desc_sfx":"bytes",
-				"width":100
+		{
+			"title":"Attachments",
+			"fields":{
+				"allow-attachments":{
+					"title":"Enable attachments",
+					"desc":"Allows users to upload attachments to posts and private messages.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"attachments-all-origin":{
+					"title":"Allow global hotlinking",
+					"desc":"This allows hotlinking attachments from outside the board. If disabled, hotlinking will be only allowed from inside the board.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"hide-attachments":{
+					"title":"Hide attachments",
+					"desc":"When attachments are disabled, this determines whether to show any existing attachments or not. This only hides them from threads, but does NOT prevent access to them.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"attach-max-size":{
+					"title":"Max attachment size",
+					"desc":"Limits the total size for the attachments assigned to a single post.",
+					"input":"text",
+					"type":"int",
+					"default":2097152,
+					"desc_sfx":"bytes",
+					"width":"100px"
+				}
 			}
 		},
-		"Avatars":{
-			"allow-avatar-storage":{
-				"title":"Enable avatar upload",
-				"desc":"Enables avatars to be stored locally. This also allows users to define a custom amount of avatars. If disabled, the original avatar system will be used and the following options will have no effect.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"avatar-limit":{
-				"title":"Avatar limit\/user",
-				"desc":"Limits the amount of avatars each user can define. Enter 0 to disable this limit.",
-				"input":"text",
-				"type":"int",
-				"default":50,
-				"width":50
-			},
-			"max-minipic-size-x":{
-				"title":"Minipic max width",
-				"desc":"Maximum width for the small picture which appears next to the user's name.",
-				"input":"text",
-				"type":"int",
-				"default":16,
-				"desc_sfx":"px",
-				"width":50
-			},
-			"max-minipic-size-y":{
-				"title":"Minipic max height",
-				"desc":"Maximum height for the small picture which appears next to the user's name.",
-				"input":"text",
-				"type":"int",
-				"default":16,
-				"desc_sfx":"px",
-				"width":50
-			},
-			"max-minipic-size-bytes":{
-				"title":"Max minipic size",
-				"desc":"Maximum allowed file size for uploaded minipics.",
-				"input":"text",
-				"type":"int",
-				"default":20480,
-				"desc_sfx":"bytes",
-				"width":100
-			},
-			"max-avatar-size-x":{
-				"title":"Max avatar width",
-				"desc":"Maximum width for user avatars, which are shown in post sidebars.",
-				"input":"text",
-				"type":"int",
-				"default":200,
-				"desc_sfx":"px",
-				"width":50
-			},
-			"max-avatar-size-y":{
-				"title":"Max avatar height",
-				"desc":"Maximum height for user avatars, which are shown in post sidebars.",
-				"input":"text",
-				"type":"int",
-				"default":200,
-				"desc_sfx":"px",
-				"width":50
-			},
-			"max-avatar-size-bytes":{
-				"title":"Max avatar size",
-				"desc":"Maximum allowed file size for uploaded avatars.",
-				"input":"text",
-				"type":"int",
-				"default":307200,
-				"desc_sfx":"bytes",
-				"width":100
+		{
+			"title":"Avatars",
+			"fields":{
+				"allow-avatar-storage":{
+					"title":"Enable avatar upload",
+					"desc":"Enables avatars to be stored locally. This also allows users to define a custom amount of avatars. If disabled, the original avatar system will be used and the following options will have no effect.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"avatar-limit":{
+					"title":"Avatar limit\/user",
+					"desc":"Limits the amount of avatars each user can define. Enter 0 to disable this limit.",
+					"input":"text",
+					"type":"int",
+					"default":50,
+					"width":"50px"
+				},
+				"max-minipic-size-x":{
+					"title":"Minipic max width",
+					"desc":"Maximum width for the small picture which appears next to the user's name.",
+					"input":"text",
+					"type":"int",
+					"default":16,
+					"desc_sfx":"px",
+					"width":"50px"
+				},
+				"max-minipic-size-y":{
+					"title":"Minipic max height",
+					"desc":"Maximum height for the small picture which appears next to the user's name.",
+					"input":"text",
+					"type":"int",
+					"default":16,
+					"desc_sfx":"px",
+					"width":"50px"
+				},
+				"max-minipic-size-bytes":{
+					"title":"Max minipic size",
+					"desc":"Maximum allowed file size for uploaded minipics.",
+					"input":"text",
+					"type":"int",
+					"default":20480,
+					"desc_sfx":"bytes",
+					"width":"100px"
+				},
+				"max-avatar-size-x":{
+					"title":"Max avatar width",
+					"desc":"Maximum width for user avatars, which are shown in post sidebars.",
+					"input":"text",
+					"type":"int",
+					"default":200,
+					"desc_sfx":"px",
+					"width":"50px"
+				},
+				"max-avatar-size-y":{
+					"title":"Max avatar height",
+					"desc":"Maximum height for user avatars, which are shown in post sidebars.",
+					"input":"text",
+					"type":"int",
+					"default":200,
+					"desc_sfx":"px",
+					"width":"50px"
+				},
+				"max-avatar-size-bytes":{
+					"title":"Max avatar size",
+					"desc":"Maximum allowed file size for uploaded avatars.",
+					"input":"text",
+					"type":"int",
+					"default":307200,
+					"desc_sfx":"bytes",
+					"width":"100px"
+				}
 			}
 		},
-		"Defaults":{
-			"server-time-offset":{
-				"title":"Server time offset",
-				"desc":"The time offset added to all of the dates. Only useful if the board domain changes to one in a different time zone.",
-				"input":"text",
-				"type":"int",
-				"default":0,
-				"desc_sfx":"seconds",
-				"width":150,
-				"special":"dateformat"
-			},
-			"default-dateformat":{
-				"title":"Default date format",
-				"desc":"Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting.",
-				"input":"text",
-				"type":"string",
-				"default":"m-d-y h:i:s A",
-				"width":150,
-				"special":"dateformat"
-			},
-			"default-dateshort":{
-				"title":"Default short date format",
-				"desc":"Change how abbreviated dates are displayed. Uses the same formatting.",
-				"input":"text",
-				"type":"string",
-				"default":"m-d-y",
-				"width":150
-			},
-			"default-ppp":{
-				"title":"Default posts per page",
-				"desc":"The default maximum number of posts you want to be shown in a page in threads.",
-				"input":"text",
-				"type":"int",
-				"default":20,
-				"desc_sfx":"posts",
-				"width":50
-			},
-			"default-tpp":{
-				"title":"Default threads per page",
-				"desc":"The default maximum number of threads you want to be shown in a page in forums.",
-				"input":"text",
-				"type":"int",
-				"default":50,
-				"desc_sfx":"threads",
-				"width":50
+		{
+			"title":"Defaults",
+			"fields":{
+				"server-time-offset":{
+					"title":"Server time offset",
+					"desc":"The time offset added to all of the dates. Only useful if the board domain changes to one in a different time zone.",
+					"input":"text",
+					"type":"int",
+					"default":0,
+					"desc_sfx":"seconds",
+					"width":"150px"
+				},
+				"default-dateformat":{
+					"title":"Default date format",
+					"desc":"Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting.",
+					"input":"text",
+					"type":"string",
+					"default":"m-d-y h:i:s A",
+					"width":"150px",
+					"special":"dateformat"
+				},
+				"default-dateshort":{
+					"title":"Default short date format",
+					"desc":"Change how abbreviated dates are displayed. Uses the same formatting.",
+					"input":"text",
+					"type":"string",
+					"default":"m-d-y",
+					"width":"150px",
+					"special":"dateshort"
+				},
+				"default-ppp":{
+					"title":"Default posts per page",
+					"desc":"The default maximum number of posts you want to be shown in a page in threads.",
+					"input":"text",
+					"type":"int",
+					"default":20,
+					"desc_sfx":"posts",
+					"width":"50px"
+				},
+				"default-tpp":{
+					"title":"Default threads per page",
+					"desc":"The default maximum number of threads you want to be shown in a page in forums.",
+					"input":"text",
+					"type":"int",
+					"default":50,
+					"desc_sfx":"threads",
+					"width":"50px"
+				}
 			}
 		},
-		"Security":{
-			"enable-firewall":{
-				"title":"Enable firewall",
-				"desc":"Enables the firewall, if you provide one.",
-				"input":"radio",
-				"type":"bool",
-				"default":1,
-				"special":"yesno"
-			},
-			"salt-string":{
-				"title":"Salt string",
-				"desc":"Primary salt text for CSRF tokens. Write anything you like as you shouldn't remember this.",
-				"input":"text",
-				"type":"string",
-				"default":"change me!",
-				"width":175
-			},
-			"force-lastip-match":{
-				"title":"Force /32 IP verification",
-				"desc":"Forces a log out whenever any part of the IP changes, and removes the other IP verification options at login. This is similar behaviour to BoardC.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"no-curl":{
-				"title":"Bypass proxy checks",
-				"desc":"Disables the proxy check during registration. This should be set to 'Yes' if the board is being run on a free host, as it most likely restricts access to the functions used for this.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
+		{
+			"title":"Security",
+			"fields":{
+				"enable-firewall":{
+					"title":"Enable firewall",
+					"desc":"Enables the firewall, if you provide one.",
+					"input":"radio",
+					"type":"bool",
+					"default":1,
+					"special":"yesno"
+				},
+				"salt-string":{
+					"title":"Salt string",
+					"desc":"Primary salt text for CSRF tokens. Write anything you like as you shouldn't remember this.",
+					"input":"text",
+					"type":"string",
+					"default":"change me!",
+					"width":"175px"
+				},
+				"force-lastip-match":{
+					"title":"Force /32 IP verification",
+					"desc":"Forces a log out whenever any part of the IP changes, and removes the other IP verification options at login. This is similar behaviour to BoardC.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"no-curl":{
+					"title":"Bypass proxy checks",
+					"desc":"Disables the proxy check during registration. This should be set to 'Yes' if the board is being run on a free host, as it most likely restricts access to the functions used for this.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
 			}
 		},
-		"IRC settings":{
-			"irc-reporting":{
-				"title":"Enable IRC reporting",
-				"desc":"Enables preprocessing for IRC messages. Note you need to specify your own code for an IRC reporting (search for the 'xk_ircsend' function)",
-				"input":"radio",
-				"type":"bool",
-				"default":1,
-				"special":"yesno"
-			},
-			"irc-server-title":{
-				"title":"IRC Server title",
-				"desc":"Shown in the title of the IRC page.",
-				"input":"text",
-				"type":"string",
-				"default":"A sample IRC server"
-			},
-			"irc-servers":{
-				"title":"IRC Servers",
-				"desc":"List of IRC servers in the IRC page. Separated by ;",
-				"input":"text",
-				"type":"array",
-				"default":[
-					"irc.sample.net",
-					"irc.test.com"
-				],
-				"width":470
-			},
-			"irc-channels":{
-				"title":"IRC channel list",
-				"desc":"Channels to auto-join when connecting in the IRC page. Separated by ;",
-				"input":"text",
-				"type":"array",
-				"default":[
-					"#xtest",
-					"#ytest"
-				],
-				"width":470
+		{
+			"title":"IRC settings",
+			"fields":{
+				"irc-reporting":{
+					"title":"Enable IRC reporting",
+					"desc":"Enables preprocessing for IRC messages. Note you need to specify your own code for an IRC reporting (search for the 'xk_ircsend' function)",
+					"input":"radio",
+					"type":"bool",
+					"default":1,
+					"special":"yesno"
+				},
+				"irc-server-title":{
+					"title":"IRC Server title",
+					"desc":"Shown in the title of the IRC page.",
+					"input":"text",
+					"type":"string",
+					"default":"A sample IRC server"
+				},
+				"irc-servers":{
+					"title":"IRC Servers",
+					"desc":"List of IRC servers in the IRC page. Separated by ;",
+					"input":"text",
+					"type":"array",
+					"default":[
+						"irc.sample.net",
+						"irc.test.com"
+					],
+					"width":"470px"
+				},
+				"irc-channels":{
+					"title":"IRC channel list",
+					"desc":"Channels to auto-join when connecting in the IRC page. Separated by ;",
+					"input":"text",
+					"type":"array",
+					"default":[
+						"#xtest",
+						"#ytest"
+					],
+					"width":"470px"
+				}
 			}
 		},
-		"Advanced":{
-			"trash-forum":{
-				"title":"Trash forum ID",
-				"desc":"Trashing threads will move them to this forum. Generally this shouldn't be changed.",
-				"input":"text",
-				"type":"int",
-				"default":3,
-				"width":50
-			},
-			"announcement-forum":{
-				"title":"Announcement forum ID",
-				"desc":"The announcements list will look for threads in this forum. Generally this shouldn't be changed.",
-				"input":"text",
-				"type":"int",
-				"default":4,
-				"width":50
-			},
-			"deleted-user-id":{
-				"title":"Deleted user ID",
-				"desc":"When an user is deleted all posts/PMs/etc will be reassigned to this user. Generally this shouldn't be changed.",
-				"input":"text",
-				"type":"int",
-				"default":2,
-				"width":50
-			},
-			"backup-folder":{
-				"title":"Backup folder",
-				"desc":"Backups created with the backup utility will be stored here. Change it if you want to specify a different folder. Note the folder has to exist and it's recommended to not be accessible by users.",
-				"input":"text",
-				"type":"string",
-				"default":"backups"
-			},
-			"backup-threshold":{
-				"title":"Backup \"New\" threshold",
-				"desc":"Days until a backup is considered to be \"old\".",
-				"input":"text",
-				"type":"int",
-				"default":15,
-				"desc_sfx":"days",
-				"width":50
+		{
+			"title":"Advanced",
+			"fields":{
+				"trash-forum":{
+					"title":"Trash forum ID",
+					"desc":"Trashing threads will move them to this forum. Generally this shouldn't be changed.",
+					"input":"text",
+					"type":"int",
+					"default":3,
+					"width":"50px"
+				},
+				"announcement-forum":{
+					"title":"Announcement forum ID",
+					"desc":"The announcements list will look for threads in this forum. Generally this shouldn't be changed.",
+					"input":"text",
+					"type":"int",
+					"default":4,
+					"width":"50px"
+				},
+				"deleted-user-id":{
+					"title":"Deleted user ID",
+					"desc":"When an user is deleted all posts/PMs/etc will be reassigned to this user. Generally this shouldn't be changed.",
+					"input":"text",
+					"type":"int",
+					"default":2,
+					"width":"50px"
+				},
+				"backup-folder":{
+					"title":"Backup folder",
+					"desc":"Backups created with the backup utility will be stored here. Change it if you want to specify a different folder. Note the folder has to exist and it's recommended to not be accessible by users.",
+					"input":"text",
+					"type":"string",
+					"default":"backups"
+				},
+				"backup-threshold":{
+					"title":"Backup \"New\" threshold",
+					"desc":"Days until a backup is considered to be \"old\".",
+					"input":"text",
+					"type":"int",
+					"default":15,
+					"desc_sfx":"days",
+					"width":"50px"
+				}
 			}
 		},
-		"Development Options":{
-			"always-show-debug":{
-				"title":"Always enable debuggers",
-				"desc":"Enables debug mode and the SQL debugger to all users.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"sqldebuggers":{
-				"title":"SQL Debuggers",
-				"desc":"List of IP addresses allowed to use the SQL debugger, when the global debugging option is disabled. Separated by ;",
-				"input":"text",
-				"type":"array",
-				"default":[
-					"127.0.0.1"
-				],
-				"direct":true
-			},
-			"allow-debug-dump":{
-				"title":"Allow mysqldump",
-				"desc":"If enabled, allows usage of the dbdump tool to quickly download the SQL dump of the entire database. Note the \"ext/dbdump.php\" script needs to point to the mysqldump program to work.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"force-user-id":{
-				"title":"Force user ID",
-				"desc":"The logged in user will always be this. Enter 0 to disable.",
-				"input":"text",
-				"type":"int",
-				"default":0,
-				"width":60
-			},
-			"allow-rereggie":{
-				"title":"Allow re-registrations",
-				"desc":"Allow non-admins to re-register multiple accounts.<!-- if you enable this to accomodate certain users you're a damn dumbass. do not ever enable this outside of testboards -->",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"no-redirects":{
-				"title":"Disable META redirects",
-				"desc":"Disable all non-instant redirects.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"compat-test":{
-				"title":"Enable compatibility layer",
-				"desc":"Some level of support for older pages. Not necessary for normal use.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
+		{
+			"title":"Development Options",
+			"fields":{
+				"always-show-debug":{
+					"title":"Always enable debuggers",
+					"desc":"Enables debug mode and the SQL debugger to all users.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"sqldebuggers":{
+					"title":"SQL Debuggers",
+					"desc":"List of IP addresses allowed to use the SQL debugger, when the global debugging option is disabled. Separated by ;",
+					"input":"text",
+					"type":"array",
+					"default":[
+						"127.0.0.1"
+					]
+				},
+				"allow-debug-dump":{
+					"title":"Allow mysqldump",
+					"desc":"If enabled, allows usage of the dbdump tool to quickly download the SQL dump of the entire database. Note the \"ext/dbdump.php\" script needs to point to the mysqldump program to work.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"force-user-id":{
+					"title":"Force user ID",
+					"desc":"The logged in user will always be this. Enter 0 to disable.",
+					"input":"text",
+					"type":"int",
+					"default":0,
+					"width":"60px"
+				},
+				"allow-rereggie":{
+					"title":"Allow re-registrations",
+					"desc":"Allow non-admins to re-register multiple accounts.<!-- if you enable this to accomodate certain users you're a damn dumbass. do not ever enable this outside of testboards -->",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"no-redirects":{
+					"title":"Disable META redirects",
+					"desc":"Disable all non-instant redirects.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"compat-test":{
+					"title":"Enable compatibility layer",
+					"desc":"Some level of support for older pages. Not necessary for normal use.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
 			}
 		}
-	},
-	"hacks":{
-		"General Hack Set / Conditionals #1":{
-			"comments":{
-				"title":"Always show HTML comments",
-				"desc":"If enabled here, HTML comments will be always shown. If not, they will be enabled only with the proper equipment.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"noposts":{
-				"title":"Hide postcounts (partially)",
-				"desc":"This functionality was partially broken and it isn't yet fixed.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"password_compatibility":{
-				"title":"Auto-convert MD5 password",
-				"desc":"Holdover from the original Jul code for converting passwords to the new system. Partially disabled.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
+	],
+	"hacks":[
+		{
+			"title":"General Hack Set / Conditionals #1",
+			"fields":{
+				"comments":{
+					"title":"Always show HTML comments",
+					"desc":"If enabled here, HTML comments will be always shown. If not, they will be enabled only with the proper equipment.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"noposts":{
+					"title":"Hide postcounts (partially)",
+					"desc":"This functionality was partially broken and it isn't yet fixed.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"password_compatibility":{
+					"title":"Auto-convert MD5 password",
+					"desc":"Holdover from the original Jul code for converting passwords to the new system. Partially disabled.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
 			}
 		}
-	},
-	"x_hacks":{
-		"Xkeeper Hack Set / Conditionals #2":{
-			"host":{
-				"title":"Alternate board mode",
-				"desc":"Holdover from Jul's multiple boards support using the same code. Do not enable.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"adminip":{
-				"title":"Sysadmin IP",
-				"desc":"The IP entered here is automatically sysadminned.",
-				"input":"text",
-				"type":"string",
-				"default":"127.0.0.1",
-				"width":150
-			},
-			"mmdeath":{
-				"title":"Doom timer",
-				"desc":"Sets the expiration date for the Doom Timer. This won't have any effect as the timer setup code was disabled.",
-				"input":"text",
-				"type":"string",
-				"default":"-1",
-				"width":150
-			},
-			"rainbownames":{
-				"title":"Always use rainbow usernames",
-				"desc":"Always uses the rainbow name color effect for user names. Not really meant to be set directly, as it's meant to be used conditionally.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"superadmin":{
-				"title":"Super Admin",
-				"desc":"Do not enable. Meant to be used conditionally.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"smallbrowse":{
-				"title":"Force mobile mode",
-				"desc":"Do not enable. Meant to be set conditionally after detecting a mobile browser.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
+	],
+	"x_hacks":[
+		{
+			"title":"Xkeeper Hack Set / Conditionals #2",
+			"fields":{
+				"host":{
+					"title":"Alternate board mode",
+					"desc":"Holdover from Jul's multiple boards support using the same code. Do not enable.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"adminip":{
+					"title":"Sysadmin IP",
+					"desc":"The IP entered here is automatically sysadminned.",
+					"input":"text",
+					"type":"string",
+					"default":"127.0.0.1",
+					"width":"150px"
+				},
+				"mmdeath":{
+					"title":"Doom timer",
+					"desc":"Sets the expiration date for the Doom Timer. This won't have any effect as the timer setup code was disabled.",
+					"input":"text",
+					"type":"string",
+					"default":"-1",
+					"width":"150px"
+				},
+				"rainbownames":{
+					"title":"Always use rainbow usernames",
+					"desc":"Always uses the rainbow name color effect for user names. Not really meant to be set directly, as it's meant to be used conditionally.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"superadmin":{
+					"title":"Super Admin",
+					"desc":"Do not enable. Meant to be used conditionally.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"smallbrowse":{
+					"title":"Force mobile mode",
+					"desc":"Do not enable. Meant to be set conditionally after detecting a mobile browser.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
 			}
 		}
-	}
+	]
 }

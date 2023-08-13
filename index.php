@@ -33,7 +33,7 @@
 	}
 */
 
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	if (isset($_GET['wtf'])) {
 		$loguser['splitcat'] = 1 - $loguser['splitcat'];

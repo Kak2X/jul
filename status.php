@@ -1,7 +1,7 @@
 <?php
 	$meta['notrack'] = true;
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$u  = filter_int($_GET['u']);	// User ID
 	$it = filter_int($_GET['it']);	// Extra item (for item previews)

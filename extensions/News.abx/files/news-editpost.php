@@ -5,7 +5,7 @@
 		Edits the contents in the news table
 	*/
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	require "lib/news_function.php";
 	
 	if (!$canwrite)

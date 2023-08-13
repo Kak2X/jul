@@ -4,7 +4,7 @@ if (!defined('INSTALL_FILE')) die;
 $_POST['noimport'] = filter_int($_POST['noimport']);
 
 if ($step >= BASE_STEP + 1) {
-	$dbinfo = $_POST['config']['__sql'];
+	$dbinfo = $_POST['config']['sqlconfig'];
 	$sql = new mysql_setup();
 	// Attempt connection to the SQL server
 	// this should not fail
@@ -48,7 +48,7 @@ if (!$error) {
 			<br>Warning: the data in the database you choose will be deleted.
 			<br>
 			<br>
-			".get_config_sql_layout();
+			".setup_get_config_layout(GCL_SQL);
 			break;
 			
 		case BASE_STEP + 1:
@@ -82,7 +82,7 @@ if (!$error) {
 			<br>You can edit these options later through the <span class='c-info'>Change configuration</span> option (or by editing the config file manually, like it's traditionally done).
 			<br>
 			<br>
-			".get_config_main_layout();
+			".setup_get_config_layout(GCL_CONFIG);
 			break;
 			
 		case BASE_STEP + 3:
@@ -169,10 +169,11 @@ if (!$error) {
 			$output .= checkres($res);
 			
 			// Write the default extension settings too, to avoid having to parse the settings json on every page
-			$exts = ext_get_all(false);
+			$exts = ext_get_all_names();
 			foreach ($exts as $xname) {
 				$output .= "\nWriting extension settings for '{$xname}'...";
-				ext_write_config($xname);
+				$xconf = ext_read_config($xname, true); // required for setup_generate_ext_config
+				setup_generate_ext_config($xname);
 				$output .= checkres(true);
 			}
 

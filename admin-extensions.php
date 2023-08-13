@@ -4,7 +4,9 @@
 		die;
 	}
 
-	require "lib/function.php";
+	require "lib/common.php";
+	require "lib/extension_mgmt.php";
+	
 	admincheck();
 	
 	if (isset($_POST['action'])) {
@@ -18,11 +20,11 @@
 			$redirtext = "the extension management";
 			switch ($_POST['action']) {
 				case "disable":
-					$res = ext_disable($_POST['extfile']);
+					$res = ext_disable($_POST['extfile'], false);
 					errorpage("Extension '{$_POST['extfile']}' disabled.".($res > 1 ? "<br/>Other ".($res-1)." extensions were disabled due to dependencies." : ""), "admin-extensions.php", $redirtext);
 
 				case "enable":
-					if (($res = ext_enable($_POST['extfile'])) !== -1)
+					if (($res = ext_enable($_POST['extfile'], false)) !== -1)
 						$message = "The extension '{$_POST['extfile']}' has been enabled.";
 					else
 						$message = "Failed to enable the extension '{$_POST['extfile']}'.<br>Chances are, the required dependencies are missing.";
@@ -60,7 +62,7 @@
 	$barlinks = dobreadcrumbs($links); 
 
 	// Get all extensions installed, including disabled ones
-	$extensions = ext_list();
+	$extensions = ext_get_all_metadata();
 
 ?>
 	<style>
@@ -129,7 +131,7 @@
 					<?= $ext['description'] ?><br>
 					<br>
 					<span class="fonts">
-						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: {$ext['enableDate']}" : "") ?><br/>
+						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: {$ext['enableDate']}" : "") . ($ext['installed'] ? "<br/>Installed on: {$ext['installDate']}" : "") ?><br/>
 						Version: <?=$ext['version']?> (<?=$ext['date']?>)
 					</span>
 				</td>

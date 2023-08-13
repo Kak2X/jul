@@ -4,10 +4,10 @@
 	const INSTALL_FILE = true;
 	
 	// lockout after first install
-	const INSTALL_LOCK = true;
+	const INSTALL_LOCK = false;
 	
 	// enables logout / unban links
-	const SETUP_DEBUG = false;
+	const SETUP_DEBUG = true;
 	
 	// requires a valid SQL connection to use the installer when the board is already installed.
 	const INSTALL_VALID_CONN = true;
@@ -25,6 +25,7 @@
 	const BASE_STEP = 2;
 	
 	// constants for the navigation buttons
+	const BTN_NONE = 0;
 	const BTN_NEXT = 0b1;
 	const BTN_PREV = 0b10;
 	

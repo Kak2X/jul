@@ -1,7 +1,7 @@
 <?php
 
 	chdir("..");
-	require "lib/function.php";
+	require "lib/common.php";
 
 	$img	= imagecreate(45, 37);
 	$bg		= imagecolorallocate($img, 100, 100, 100);

@@ -1,6 +1,6 @@
 <?php
 	// (fat catgirl here)
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	// Stop this insanity.  Never index editpost...
 	$meta['noindex'] = true;

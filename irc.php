@@ -1,6 +1,6 @@
 <?php
 
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	if (!$config['irc-servers'] || !$config['irc-channels']) {
 		header("Location: index.php");

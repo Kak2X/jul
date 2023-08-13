@@ -1,63 +1,69 @@
 {
-	"xconf":{
-		"Layout options":{
-			"page-title":{
-				"title":"News page name",
-				"desc":"Title of the news page, which is visible in the page title and the breadcrumbs.",
-				"input":"text",
-				"type":"string",
-				"default":"News",
-				"width":300
-			},
-			"page-header":{
-				"title":"News header HTML",
-				"desc":"The header used in the news page, which can be an image. Clicking on it will redirect to the main news page.",
-				"input":"text",
-				"type":"string",
-				"default":"News page",
-				"width":500
-			},
-			"show-special-header":{
-				"title":"Use custom header",
-				"desc":"If disabled, the standard page header and footer will be used instead of the custom ones.",
-				"input":"radio",
-				"type":"bool",
-				"default":1,
-				"special":"yesno"
-			},
-			"header-links":{
-				"title":"Header links",
-				"desc":"Specify the clickable links shown in the header.",
-				"input":"textarea",
-				"type":"string",
-				"default":"<a href='index.php'>board</a> - \n<a href='/'>the index</a>"
-			},
-			"max-preview-length":{
-				"title":"Character limit in preview",
-				"desc":"Maximum amount of characters shown for entries in the main news page.",
-				"input":"text",
-				"type":"int",
-				"default":500,
-				"width":40
+	"xconf": [
+		{
+			"title":"Layout options",
+			"fields":{
+				"page-title":{
+					"title":"News page name",
+					"desc":"Title of the news page, which is visible in the page title and the breadcrumbs.",
+					"input":"text",
+					"type":"string",
+					"default":"News",
+					"width":"300px"
+				},
+				"page-header":{
+					"title":"News header HTML",
+					"desc":"The header used in the news page, which can be an image. Clicking on it will redirect to the main news page.",
+					"input":"text",
+					"type":"string",
+					"default":"News page",
+					"width":"500px"
+				},
+				"show-special-header":{
+					"title":"Use custom header",
+					"desc":"If disabled, the standard page header and footer will be used instead of the custom ones.",
+					"input":"radio",
+					"type":"bool",
+					"default":1,
+					"special":"yesno"
+				},
+				"header-links":{
+					"title":"Header links",
+					"desc":"Specify the clickable links shown in the header.",
+					"input":"textarea",
+					"type":"string",
+					"default":"<a href='index.php'>board</a> - \n<a href='/'>the index</a>"
+				},
+				"max-preview-length":{
+					"title":"Character limit in preview",
+					"desc":"Maximum amount of characters shown for entries in the main news page.",
+					"input":"text",
+					"type":"int",
+					"default":500,
+					"width":"40px"
+				}
 			}
 		},
-		"Permissions":{
-			"write-perm":{
-				"title":"Powerlevel required to add news",
-				"desc":"Minimum power required to post in the news section.",
-				"input":"select",
-				"type":"int",
-				"default":1,
-				"special":"powerlevel"
-			},
-			"admin-perm":{
-				"title":"Powerlevel required to moderate news",
-				"desc":"Minimum power required to edit and delete other users' posts and comments in the news section.",
-				"input":"select",
-				"type":"int",
-				"default":3,
-				"special":"powerlevel"
+		{
+			"title":"Permissions",
+			"fields":{
+				"write-perm":{
+					"title":"Powerlevel required to add news",
+					"desc":"Minimum power required to post in the news section.",
+					"input":"select",
+					"type":"int",
+					"default":1,
+					"special":"powerlevel"
+				},
+				"admin-perm":{
+					"title":"Powerlevel required to moderate news",
+					"desc":"Minimum power required to edit and delete other users' posts and comments in the news section.",
+					"input":"select",
+					"type":"int",
+					"default":3,
+					"special":"powerlevel"
+				}
 			}
 		}
-	}
+	]
 }

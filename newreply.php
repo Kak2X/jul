@@ -4,7 +4,7 @@
 	// Just in case, allow caching to return safely without losing anything.
 	$meta['cache'] = true;
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	// Stop this insanity.  Never index newreply.
 	$meta['noindex'] = true;

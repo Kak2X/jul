@@ -15,7 +15,7 @@
 	const BOX_Y = 10;
 	const BOX_W = 143;
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	// Get the first registration date (without time info)
 	$regdate    = $sql->resultq("SELECT MIN(`regdate`) FROM users");

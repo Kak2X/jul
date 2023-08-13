@@ -83,3 +83,7 @@
 		'Administrator',
 		'Sysadmin'
 	);
+	
+	// Will be merged
+	const DATE_FORMATS = array('','m-d-y','d-m-y','y-m-d','Y-m-d','m/d/Y','d.m.y','M j Y','D jS M Y');
+	const TIME_FORMATS  = array('','h:i A','h:i:s A','H:i','H:i:s');

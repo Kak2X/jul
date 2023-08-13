@@ -2,7 +2,7 @@
 	const _POST_LIMIT    = 5000;
 	const _PROJECT_LIMIT = true;
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['page']   = filter_int($_GET['page']);
@@ -415,7 +415,7 @@
 			<?=$shoplist?>
 		</table>
 		<br>
-		<?= print_hook('profile-table-mini', $user) ?>
+		<?= hook_print('profile-table-mini', $user) ?>
 	</td>
 </table>
 <br>

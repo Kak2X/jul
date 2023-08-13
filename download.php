@@ -1,6 +1,6 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	if (!$config['attachments-all-origin'] && !SAME_ORIGIN) {
 		print "<title>{$config['board-name']}</title>";

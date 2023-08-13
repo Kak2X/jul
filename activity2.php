@@ -11,7 +11,7 @@
 	
 	const USER_COUNT = 10; // Number of users to show
 	
-	require 'lib/function.php';
+	require "lib/common.php";
  	
 	// Get the first real registration date (cut down to days)
 	$regdate = $sql->resultq("SELECT MIN(regdate) FROM users WHERE regdate > 0") or die("No users registered.");

@@ -60,7 +60,7 @@ if (!$error) {
 			ob_start();
 			
 			// Get all of the available extensions, in the format $ext[extName] = extName for convenience
-			$exts = ext_get_all();
+			$exts = ext_get_all_names();
 			// build the extconfig list, which will be changed in the update scripts
 			$extConfig = [];
 			foreach ($exts as $name) {
@@ -80,13 +80,13 @@ if (!$error) {
 			ob_end_clean();
 			
 			// Overwrite the config file				
-			$configfile = setup_generate_config(true); 
+			$configfile = setup_generate_config();  // (true);
 			$res = file_put_contents(CONFIG_PATH, $configfile);
 			
 			// Overwrite the extra config files
 			foreach ($extConfig as $name => $x) {
-				$xconf = $x;
-				ext_update_config($name);
+				$xconf = $x; // required for setup_generate_ext_config
+				setup_generate_ext_config($name);
 				//unset($exts[$name]);
 			}
 			

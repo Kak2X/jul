@@ -1,31 +1,34 @@
 {
-	"xconf":{
-		"File uploader":{
-			"all-origin":{
-				"title":"Allow global hotlinking",
-				"desc":"This allows hotlinking uploads from outside the board. If disabled, hotlinking will be only allowed from inside the board.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
-			},
-			"max-file-size":{
-				"title":"Max upload size",
-				"desc":"Maximum size for a file in the uploader. You should make sure this value is equal or lower to what's defined in the web server configuration.",
-				"input":"text",
-				"type":"int",
-				"default":10485760,
-				"desc_sfx":"bytes",
-				"width":100
-			},
-			"allow-file-edit":{
-				"title":"Allow file editing",
-				"desc":"Allows normal users to edit their own uploads. If disabled, only administrators can perform this action.",
-				"input":"radio",
-				"type":"bool",
-				"default":0,
-				"special":"yesno"
+	"xconf": [
+		{
+			"title":"File uploader",
+			"fields":{
+				"all-origin":{
+					"title":"Allow global hotlinking",
+					"desc":"This allows hotlinking uploads from outside the board. If disabled, hotlinking will be only allowed from inside the board.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"max-file-size":{
+					"title":"Max upload size",
+					"desc":"Maximum size for a file in the uploader. You should make sure this value is equal or lower to what's defined in the web server configuration.",
+					"input":"text",
+					"type":"int",
+					"default":10485760,
+					"desc_sfx":"bytes",
+					"width":"100px"
+				},
+				"allow-file-edit":{
+					"title":"Allow file editing",
+					"desc":"Allows normal users to edit their own uploads. If disabled, only administrators can perform this action.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
 			}
 		}
-	}
+	]
 }

@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	pageheader("Hexadecimal color chart", NULL, NULL, true); // Small header
 ?>

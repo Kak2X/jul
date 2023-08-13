@@ -1,6 +1,6 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
 	require "lib/uploader_function.php";
 	
 	// Definitions for the min allowed permissions.

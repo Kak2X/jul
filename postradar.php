@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	if (!$loguser['id']) {
 		errorpage("You must be logged in to edit your post radar.",'index.php','return to the board',0);

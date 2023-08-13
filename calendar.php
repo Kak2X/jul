@@ -1,6 +1,6 @@
 <?php
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	const _MONTH_NAMES = [1=>'January','February','March','April','May','June','July','August','September','October','November','December'];
 

@@ -1,17 +1,12 @@
 <?php
 	chdir("..");
-	
 	require "install/setup_function.php";
-	require "install/setup_tempfunc.php";
-	require "install/setup_defines.php";
-	require "install/setup_layout.php";
-	require "install/schema.php";
-	require "lib/defines.php";
-	require "lib/classes/mysql.php";
-	require "install/mysql_setup.php";
-	require "lib/schema.php";
-	require "lib/extension.php";
 	
+	$errors = [];
+	set_error_handler('error_reporter');
+	set_exception_handler('exception_reporter');
+	
+	// Detect IP bans if the board is already installed, we don't want assholes trying to force themselves in.
 	if (INSTALLED) {
 		require "lib/config.php";
 		$sql = new mysql;
@@ -38,7 +33,7 @@
 		}
 	}	
 	
-	// Get the current step number
+	// Get the current step number and remove it out of the request (so it won't get saved/duplicated on submit)
 	$step = filter_int($_POST['step']);
 	unset($_POST['step']);
 	

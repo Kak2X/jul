@@ -1,6 +1,6 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
 	admincheck();
 	
 	$_GET['id']     = filter_int($_GET['id']);

@@ -1,6 +1,6 @@
 <?php
 
-require 'lib/function.php';
+require "lib/common.php";
 
 pageheader("EZ Ban Hammer");
 echo "<div style='white-space:pre;'>";

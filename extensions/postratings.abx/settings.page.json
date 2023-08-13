@@ -1,14 +1,17 @@
 {
-	"xconf":{
-		"Permissions":{
-			"view-detail-perm":{
-				"title":"Powerlevel required to view details",
-				"desc":"Minimum power required to view the rating summary page for a post.",
-				"input":"select",
-				"type":"int",
-				"default":-2,
-				"special":"powerlevel"
+	"xconf": [
+		{
+			"title":"Permissions",
+			"fields":{
+				"view-detail-perm":{
+					"title":"Powerlevel required to view details",
+					"desc":"Minimum power required to view the rating summary page for a post.",
+					"input":"select",
+					"type":"int",
+					"default":-2,
+					"special":"powerlevel"
+				}
 			}
 		}
-	}
+	]
 }

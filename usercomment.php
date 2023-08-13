@@ -1,6 +1,6 @@
 <?php
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	if (!$loguser['id']) errorpage("You must be logged in to do this!", 'index.php', 'the index page');
 	if ($banned)         errorpage("Banned users aren't allowed to do this!", 'index.php', 'the index page');

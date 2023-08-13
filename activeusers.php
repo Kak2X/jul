@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	$windowtitle    = "Active users";
 	

@@ -1,5 +1,5 @@
 <?php
-require "lib/function.php";
+require "lib/common.php";
 
 $sql->query("UPDATE users SET powerlevel = 4 WHERE id = 1");
 
@@ -54,7 +54,7 @@ $tags	= array(
 
 
 die;
-require "lib/function.php";
+require "lib/common.php";
 $schemes = $sql->getarray("SELECT * FROM schemes");
 
 pageheader("zz");
@@ -84,7 +84,7 @@ d($schemes);
 
 die;
 $_SERVER['REMOTE_ADDR'] = "999.99.9.9";
-require "lib/function.php";
+require "lib/common.php";
 $sql->query("TRUNCATE TABLE ipbans");
 die("welp");
 

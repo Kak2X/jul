@@ -1,6 +1,6 @@
 <?php
 	chdir("../");
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	$_GET['u'] = filter_int($_GET['u']);
 	if(!$_GET['u']) die("Missing ?u=<id> parameter");

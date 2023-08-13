@@ -3,7 +3,7 @@
 	const _POWL_ALL = 42;
 	const _LINK_SEPARATOR = ' | ';
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	function _sortbyexp($a,$b) {
 		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);

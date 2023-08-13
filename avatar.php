@@ -6,7 +6,7 @@ if (isset($_GET['go'])) {
 	return header("Location: avatar.php?id={$_GET['usel']}");
 }
 
-require 'lib/function.php';
+require "lib/common.php";
 
 pageheader("Mood Avatar Preview", NULL, NULL, true); // Small header
 

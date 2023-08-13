@@ -5,7 +5,7 @@
 	// TODO: Allow direct file upload of plugin images
 	// these should be stored in a special subdirectory (/extensions/postratings.abx/files/img/uploaded/)
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	admincheck();
 	
 	$_GET['id']     = filter_int($_GET['id']);

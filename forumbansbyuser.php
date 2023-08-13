@@ -1,6 +1,6 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
 
 	$_GET['id'] = filter_int($_GET['id']);
 	

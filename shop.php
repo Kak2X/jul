@@ -5,7 +5,7 @@
 		return header("Location: shoph.php");
 	}
 	*/
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$id		= filter_int($_GET['id']);
 	$cat 	= filter_int($_GET['cat']);

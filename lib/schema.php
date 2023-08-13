@@ -4,163 +4,321 @@
 	config.php schema utilities (+ universal config layout generator)
 */
 
-function _get_input($inpt, $varname, $key, $data, $semicolon = false) {
-	switch ($data['type']) {
-		case 'string':
-			return "\"".str_replace("\"", "\\\"", $inpt)."\"";
-		case 'int':
-			$inpt = (int)$inpt;
-			return "{$inpt}";
-		case 'bool':
-			return $inpt ? "true" : "false";
-		case 'array':
-			$sntz = str_replace("\"", "\\\"", $inpt);
-			$ardata = $semicolon 
-				? str_replace(";", "\",\"", $sntz)
-				: implode("\",\"", $sntz);
-			return "array(\"{$ardata}\")";
-	}
-	die("Unrecognized type in schema: {$data['type']} (key: {$key})");
-}
+class schema {
+	
+	// Variables applied to the schema
+	public $vars;
+	public $vars_fallback;
+	
+	
+	public $schema;
+	public $parent_name;
 
-function input($varname, $key, $data, $value) {
-	$input = $attrib = "";
 	
-	//--
-	// Default field
-	$default = $value !== null ? $value : $data['default'];
+	// Padding for array keys in file
+	const KEY_PAD = 30;
 	
-	//--
-	// Style options
-	$style = "";
-	
-	if (isset($data['width']))
-		$style .= "width: {$data['width']}px;";
-	else if ($data['input'] == 'text' || $data['input'] == 'password') 
-		$style .= "width: 250px;";
-	else if ($data['input'] == 'textarea')
-		$style .= "width: 100%;";
-
-	if ($style)
-		$attrib .= " style=\"{$style}\"";
-	//--
-	
-	//--
-	// Special overrides
-	
-	if (isset($data['special'])) {
-		switch ($data['special']) {
-			case 'yesno':
-				$data['options'] = [1 => "Yes", 0 => "No"];
-				break;
-			case 'powerlevel':
-				$data['options'] = $GLOBALS['pwlnames'];
-				break;
-			case 'dateformat':
-				$data['desc_sfx'] = __($data['desc_sfx']) . "<!-- select list with defaults goes here -->";
-		}
+	public function __construct($parent_name, $schema_path) {
+		// Open schema file as an array
+		$this->schema = json_decode(file_get_contents($schema_path), true);
+		$this->parent_name = $parent_name;
+	}
+	// Lazy functions for use only in setup, for the special case with the SQL Connection category
+	public function include_var($var_name) {
+		$this->schema = [$var_name => $this->schema[$var_name]];
+	}
+	public function exclude_var($var_name) {
+		unset($this->schema[$var_name]);
 	}
 	
-	//--
-	// Common attributes
-	
-	//--
-	// TODO: List add / removal
-	if ($data['type'] == 'array') {
-		$attrib .= " type=\"{$data['input']}\" name=\"config[{$varname}][{$key}]\"";
-	} else {
-		$attrib .= " type=\"{$data['input']}\" name=\"config[{$varname}][{$key}]\"";
-	}
-	
-	// Temporary
-	if (is_array($default)) {
-		$default = implode(";", $default);
-	}
-
-	//--
-	// Input option
-	switch ($data['input']) {
-		case 'password':
-			$input .= "<input style='display:none' type='text'><input style='display:none' type='password'>";
-		case 'text':
-			$input .= "<input {$attrib} value=\"".htmlspecialchars($default)."\">";
-			break;
-		case 'textarea':
-			$input = "<textarea {$attrib}>".htmlspecialchars($default)."</textarea>";
-			break;
-		case 'radio':
-			$input 	= "";
-			foreach ($data['options'] as $id => $label)
-				$input .= "<input {$attrib} value=\"{$id}\"".($default == $id ? " checked" : "").">&nbsp;{$label} ";
-			break;
-		case 'select':
-			$input = "<select {$attrib}>";
-			foreach ($data['options'] as $id => $label)
-				$input .= "<option value='{$id}' ".($default == $id ? "selected" : "").">{$label}</option>";
-			$input .= "</select>";
-			break;
-	}
-	
-	//--
-	// Suffix text
-	if (isset($data['desc_sfx']))
-		$input .= " {$data['desc_sfx']}";
-	
-	return $input;
-}
-
-function input_section($var_name, $section, $inputfunc) {
-	$out = "";
-	foreach ($section as $cat_label => $fields) {
-		$out .= "<tr><td class='tdbgh center b' colspan='3'>{$cat_label}</td></tr>";
-		foreach ($fields as $key => $data) {
-			$out .= "
-			<tr>
-				<td class='tdbg1 center b'>{$data['title']}:</td>
-				<td class='tdbg2 fonts'>{$data['desc']}</td>
-				<td class='tdbg2'>".$inputfunc($var_name, $key, $data)."</td>
-			</tr>";
-		}
-	}
-	return $out;
-}
-
-function get_config_layout($schema, $inputfunc) {
-	$out = "<table class='table' style='margin: auto'>";
-	foreach ($schema as $var_name => $section) {
-		$out .= input_section($var_name, $section, $inputfunc);
-	}
-	$out .= "</table>";
-	return $out;
-}
-
-function generate_config($schema, $inputfunc) {
-	$out    = "";
-	$direct = "";
-	
-	foreach ($schema as $var_name => $section) {
-		$skip = ($var_name[0] == "_");
-		if (!$skip) {
-			$out .= "$".$var_name." = array(\r\n";
-		}
-		foreach ($section as $cat_label => $fields) {
-			if (!$skip) {
-				$out .= "//\r\n// {$cat_label}\r\n//\r\n";
+	// Generate PHP file
+	public function make_php() {
+		$out = "";
+		
+		// For each variable name (array)
+		// $var_name SHOULD NEVER COME FROM USER INPUT.
+		foreach ($this->schema as $var_name => $sections) {
+			$out .= "\${$var_name} = [\r\n";
+			
+			// For each category
+			foreach ($sections as $section) {
+				$out .= "//\r\n// {$section['title']}\r\n//\r\n";
+				
+				// For each key in the array schema
+				foreach ($section['fields'] as $key => $data) {
+					$value = $this->php_escape_value($var_name, $key, $data['type']);
+					$comment = $data['desc'] ? "// {$data['desc']}" : "";
+					$out .= "\t".str_pad("'{$key}'", self::KEY_PAD)." => {$value}, {$comment}\r\n";
+				}
 			}
-			foreach ($fields as $key => $data) {
-				$value = $inputfunc($var_name, $key, $data);
-				$comment = $data['desc'] ? "// {$data['desc']}" : "";
-				if (__($data['direct'])) {
-					$direct .= "$".str_pad($key, 10)." = {$value}; {$comment}\r\n";
-				} else {
-					$out .= "\t".str_pad("'{$key}'", 30)." => {$value}, {$comment}\r\n";
+			$out .= "];\r\n";
+		}
+		return $out;
+	}
+	
+	private function get_var($var_name, $key) {
+		if (isset($this->vars[$var_name][$key]))
+			return $this->vars[$var_name][$key];
+		// There's only one fallback, we don't need more
+		if (isset($this->vars_fallback[$var_name][$key]))
+			return $this->vars_fallback[$var_name][$key];
+		// Use the schema default
+		return null;
+	}
+	
+	// Escape schema values for writing into a PHP file
+	private function php_escape_value($var_name, $key, $type) {
+		// Some entries may have presets. If one is used, it overrides the custom value.
+		$inpt = isset($this->vars[$var_name][$key."-preset"]) ? $this->vars[$var_name][$key."-preset"] : null;
+		if (!$inpt)
+			$inpt = $this->get_var($var_name, $key);
+		if ($inpt === null)
+			return "null";
+				
+		switch ($type) {
+			case 'string':
+				// Escape double quotes.
+				return '"'.str_replace('"', '\\"', $inpt).'"';
+			case 'int':
+				return (int)$inpt;
+			case 'bool':
+				return $inpt ? "true" : "false";
+			case 'array':
+				// Escape double quotes. $inpt can also be an array.
+				$sntz = str_replace('"', '\\"', $inpt);
+				// Quote the in-between elements, converting the array if needed.
+				$ardata = is_array($inpt)				
+					? implode('","', $sntz)
+					: str_replace(";", '","', $sntz);
+				// Quote the outside elements
+				return "[\"{$ardata}\"]";
+			default:
+				throw new Exception("Unrecognized type in schema: {$type} (key: {$key})");
+		}
+	}
+	
+	public function make_config_html() {
+		$out = "<table class='table' style='margin: auto'>";
+		foreach ($this->schema as $var_name => $sections) {
+			foreach ($sections as $section) {
+				$out .= "<tr><td class='tdbgh center b' colspan='3'>{$section['title']}</td></tr>";
+				foreach ($section['fields'] as $key => $data) {
+					$preset = isset($this->vars[$var_name][$key."-preset"]) ? $this->vars[$var_name][$key."-preset"] : null;
+					$out .= "
+					<tr>
+						<td class='tdbg1 center b'>{$data['title']}:</td>
+						<td class='tdbg2 fonts'>{$data['desc']}</td>
+						<td class='tdbg2'>".input_html("{$this->parent_name}[{$var_name}][{$key}]", $this->get_var($var_name, $key), $data, "{$this->parent_name}[{$var_name}][{$key}-preset]", $preset)."</td>
+					</tr>";
 				}
 			}
 		}
-		if (!$skip) {
-			$out .= ");\r\n\r\n";
-		}
+		$out .= "</table>";
+		return $out;
 	}
 	
-	return $direct."\r\n".$out;
+
 }
+
+	// Generic input helper.
+	// Mostly intended for the schema but can be reused elsewhere.
+	function input_html($field_name, $source_val, $data, $preset_name = "", $preset_val = null) {
+		$input = $attrib = $preset = "";
+		$datalist = false;
+		
+		//--
+		// Default field
+		$value = $source_val !== null ? $source_val : (isset($data['default']) ? $data['default'] : "");
+		
+		//--
+		// Style options (optional)
+		$style = "";
+		
+		if (isset($data['style']))
+			$style .= "{$data['style']};";
+		
+		// Width rules
+		if (isset($data['width']))
+			$style .= "width: {$data['width']};";
+		else if ($data['input'] == 'text' || $data['input'] == 'password') 
+			$style .= "width: 250px;";
+		else if ($data['input'] == 'textarea')
+			$style .= "width: 100%;";
+
+		if ($style)
+			$attrib .= " style=\"{$style}\"";
+
+		//--
+		
+		//--
+		// Special overrides
+		
+		if (isset($data['special'])) {
+			switch ($data['special']) {
+				case 'yesno':
+					$data['options'] = [1 => "Yes", 0 => "No"];
+					break;
+				case 'powerlevel':
+					$data['options'] = $GLOBALS['pwlnames'];
+					break;
+				case 'dateformat':
+					$data['desc_sfx'] = __($data['desc_sfx']);
+					$data['preset'] = input_date_presets();
+					//$datalist = true;
+					break;
+				case 'dateshort':
+					$data['desc_sfx'] = __($data['desc_sfx']);
+					$data['preset'] = input_date_short_presets();
+					//$datalist = true;
+					break;
+			}
+		}
+		//--
+		
+		// Extra datalist if enabled
+		if ($datalist && isset($data['options'])) {
+			$listid = "o-{$field_name}";
+			$attrib .= " list=\"{$listid}\"";
+			
+			$input .= "<datalist id=\"{$listid}\">";
+			foreach ($data['options'] as $id => $label)
+				$input .= "<option value='{$id}'>{$label}</option>";
+			$input .= "</datalist>";
+		}
+		
+		//--
+		// Common attributes
+		$attrib .= " type=\"{$data['input']}\" name=\"{$field_name}\"";
+		
+		
+		if (is_array($value)) {
+			$value = implode(";", $value);
+		}
+		
+		switch ($data['input']) {
+			case 'password':
+				$input .= "<input style='display:none' type='text'><input style='display:none' type='password'>";
+			case 'text':
+			case 'color':
+				$input .= "<input {$attrib} name=\"{$field_name}\" value=\"".htmlspecialchars($value)."\">";
+				break;
+			case 'textarea':
+				$input = "<textarea {$attrib} name=\"{$field_name}\">".htmlspecialchars($value)."</textarea>";
+				break;
+			case 'radio':
+				$input 	= "";
+				foreach ($data['options'] as $id => $label)
+					$input .= "<input {$attrib} name=\"{$field_name}\" value=\"{$id}\"".($value == $id ? " checked" : "").">&nbsp;{$label} ";
+				break;
+			case 'select':
+				$input = "<select {$attrib} name=\"{$field_name}\">";
+				foreach ($data['options'] as $id => $label)
+					$input .= "<option value='{$id}' ".($value == $id ? "selected" : "").">{$label}</option>";
+				$input .= "</select>";
+				break;
+		}
+		//--
+		// Suffix text
+		if (isset($data['desc_sfx']))
+			$input .= " {$data['desc_sfx']}";
+		
+		// These work by having a separate field with the same name but "-preset" appended to the key.
+		if (isset($data['preset'])) {
+			$input .= " - or a preset: <select name=\"{$preset_name}\"><option></option>";
+			foreach ($data['preset'] as $id => $label)
+				$input .= "<option value='{$id}' ".($preset_val == $id ? "selected" : "").">{$label}</option>";
+			$input .= "</select>";
+		}
+		
+		/*
+		
+			
+			// TODO: Add the add/remove buttons for this, but I can't think of sane a way of doing it without JS
+			// Since NoScript compatibility has priority, this one is on hold, so for now we we're "CSV"'ing it
+			
+			$attrib .= " type=\"{$data['input']}\"";
+			_inpt(0, $value);
+			
+			//$attrib .= " type=\"{$data['input']}\" name=\"{$field_name}[]\"";
+			//
+			//foreach ($value as $i => $v) {
+			//	$input .= "<div id='{$field_name}-{$i}'>"._inpt($i, $v, true)."</div>";
+			//}
+		} else {
+			$attrib .= " type=\"{$data['input']}\" name=\"{$field_name}\"";
+			_inpt(0, $value);
+		}
+		*/
+
+		
+		return $input;
+		
+		
+		/*function _inpt($i, $v, $removebtn = false) {
+			$array_idx = ""; //($data['type'] == 'array' ? "[{$i}]" : "");
+			$attrib .= " type=\"{$data['input']}\"";
+			
+			switch ($data['input']) {
+				case 'password':
+					$input .= "<input style='display:none' type='text'><input style='display:none' type='password'>";
+				case 'text':
+				case 'color':
+					$input .= "<input {$attrib} name=\"{$field_name}{$array_idx}\" value=\"".htmlspecialchars($v)."\">";
+					break;
+				case 'textarea':
+					$input = "<textarea {$attrib} name=\"{$field_name}{$array_idx}\">".htmlspecialchars($v)."</textarea>";
+					break;
+				case 'radio':
+					$input 	= "";
+					foreach ($data['options'] as $id => $label)
+						$input .= "<input {$attrib} name=\"{$field_name}{$array_idx}\" value=\"{$id}\"".($v == $id ? " checked" : "").">&nbsp;{$label} ";
+					break;
+				case 'select':
+					$input = "<select {$attrib} name=\"{$field_name}{$array_idx}\">";
+					foreach ($data['options'] as $id => $label)
+						$input .= "<option value='{$id}' ".($v == $id ? "selected" : "").">{$label}</option>";
+					$input .= "</select>";
+					break;
+			}
+			//--
+			// Suffix text
+			if (isset($data['desc_sfx']))
+				$input .= " {$data['desc_sfx']}";
+			
+			// These work by having a separate field with the same name but "-preset" appended to the key.
+			if (isset($data['preset'])) {
+				$input .= " - or a preset: <select name=\"{$preset_name}{$array_idx}\"><option></option>";
+				foreach ($data['options'] as $id => $label)
+					$input .= "<option value='{$id}' ".($v == $id ? "selected" : "").">{$label}</option>";
+				$input .= "</select>";
+			}
+			
+			//if ($removebtn) {
+			//	$input .= " - <button type='submit' name='inpt_remove' value=''>Remove</button>";
+			//}
+		}*/
+	}
+	
+
+	function input_date_presets() {
+		static $p;
+		if ($p == null) {
+			$p = [];
+			$time = time();
+			foreach (DATE_FORMATS as $x)
+			foreach (TIME_FORMATS as $y)
+				$p["$x $y"] = "$x $y (" . date("$x $y", $time) .")";
+		}	
+		return $p;
+	}
+	
+	function input_date_short_presets() {
+		static $p;
+		if ($p == null) {
+			$p = [];
+			$time = time();
+			foreach (DATE_FORMATS as $x)
+				$p[$x] = "$x (" . date($x, $time). ")";
+		}	
+		return $p;
+	}

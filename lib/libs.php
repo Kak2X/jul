@@ -1,5 +1,5 @@
 <?php
-	require "lib/function.php";
+	require "lib/common.php";
 	if ($config['compat-test']) {
 		require "lib/abcompat.php";
 	} else {

@@ -11,15 +11,16 @@ if (INSTALLED && INSTALL_LOCK && INSTALL_VALID_CONN && $sql === null) {
 	die("Could not connect to the MySQL server.");
 }
 
-// Disable password prompt
+// Disable password prompt if the board isn't installed
 if (!INSTALLED && $step < 0) {
 	$step = 0;
 }
-// don't bother asking for a superadmin password if the SQL credentials are invalid or no superadmin account exists
-if (INSTALLED && INSTALL_LOCK && $sql != null && $step >= 0) {
+// Enable password prompt if the board is installed and the password is enabled. 
+// Don't bother if the SQL credentials are invalid or no superadmin account exists.
+else if (INSTALLED && INSTALL_LOCK && $sql != null && $step >= 0) {
 	$usercount = $sql->resultq("SELECT * FROM users WHERE powerlevel >= ".PWL_SYSADMIN."");
 	if ($usercount > 0) {
-		require "install/setup_password.php";
+		verify_password();
 	}
 }
 

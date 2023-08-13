@@ -2,7 +2,7 @@
 	$meta['noindex'] = true;
 	
 	// silly companion file to the "Make me a local mod!" link
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	if (!$loguser['id']) {
 		errorpage("You aren't allowed to do this.");

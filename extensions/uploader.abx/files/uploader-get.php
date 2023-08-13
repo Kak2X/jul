@@ -1,7 +1,7 @@
 <?php
 	$meta['noparams'] = true;
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	require "lib/uploader_function.php";
 	
 	if (!$xconf['all-origin'] && !SAME_ORIGIN) {

@@ -1,7 +1,7 @@
 <?php
 
-require "lib/function.php";
-require "lib/classes/TreeView.php";
+require "lib/common.php";
+require "lib/TreeView.php";
 
 admincheck();	
 

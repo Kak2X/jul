@@ -1,6 +1,6 @@
 <?php
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	// Change how descriptions are shown
 	if (isset($_GET['all'])) {
@@ -13,7 +13,7 @@
 		return header("Location: ?{$redirStr}");
 	}
 	
-	require "lib/classes/TreeView.php";
+	require "lib/TreeView.php";
 	
 	$windowtitle = "Version history";
 	

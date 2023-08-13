@@ -1,6 +1,6 @@
 <?php
 
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	$_GET['bio'] = filter_bool($_GET['bio']);
 

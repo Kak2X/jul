@@ -10,7 +10,7 @@
 		Settings can be configured from the extension manager.
 	*/
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	// Toggle the forced scheme?
 	if (toggle_board_cookie($_GET['tglschrep'], 'news-noschrep')) {

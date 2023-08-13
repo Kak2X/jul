@@ -7,7 +7,7 @@
 	//const _NUKE_DEFAULT_MESSAGE       = "YOUR LAYOUT HAS BEEN NUKED FOR BEING <font color=ff8080>EXTREMELY BAD</font>. PLEASE READ THE <a href='announcement.php'>ANNOUNCEMENTS</a> BEFORE CREATING ANOTHER ATROCITY, OR YOU <i><font color=ff8080>WILL BE BANNED</font></i>.";
 	
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	if (!$loguser['id']) {
 		errorpage("You need to be logged in to block layouts.", 'login.php', 'log in (then try again)');

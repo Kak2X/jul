@@ -3,7 +3,7 @@
 // TODO: Something similar to the error handling in newthread / newreply?
 $meta['cache'] = true;
 	
-require 'lib/function.php';
+require "lib/common.php";
 
 $meta['noindex'] = true;
 if (!$loguser['id']) {

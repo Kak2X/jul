@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	// Bots don't need to be on this page
 	$meta['noindex'] = true;

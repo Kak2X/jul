@@ -2,7 +2,7 @@
 	// WELCOME TO THE PORTING WORLD
 	// PORTING AND MORE PORTING AND MORE PORTING AND MORE PORTING
 
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	if (!$config['enable-ratings']) {
 		errorpage("User ratings are disabled.", 'index.php', 'the index page');

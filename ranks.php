@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$_GET['set'] 		= filter_int($_GET['set']);
 	$_GET['showall'] 	= filter_int($_GET['showall']);

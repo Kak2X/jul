@@ -1,5 +1,5 @@
 <?php
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	// This file felt completely neglected (for obvious reasons)
 	
@@ -91,7 +91,7 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postids, MODE_ANNOUNCEMENT);
 	}
-	load_hook('annc-extra-db', $searchon, $postids);
+	hook_use('annc-extra-db', $searchon, $postids);
 	//--
 	
 	$pagelinks = pagelist("?".($forumannc ? "f={$_GET['f']}&" : "")."ppp={$ppp}", $annctotal, $ppp);
@@ -119,7 +119,7 @@
 			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
 			if ($isadmin) $controls['ip'] = " | IP: ".htmlspecialchars($annc['ip']);
 		}
-		load_hook_ref('annc-extra-fields', $annc);
+		hook_use_ref('annc-extra-fields', $annc);
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";

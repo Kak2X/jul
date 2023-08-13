@@ -107,7 +107,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>
 		- <a href="forum.php?fav=1">Favorites</a>
-		- <a href="blocklayout.php">Blocked layouts</a>'.print_hook('header-links');
+		- <a href="blocklayout.php">Blocked layouts</a>'.hook_print('header-links');
 		
 		// Page-specific addendums
 		switch ($scriptname) {
@@ -154,7 +154,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
 		- <a href='online.php'>Online users</a>
 		- <a href='forum.php?feat=1'>Featured threads archive</a>
-		".print_hook('header-links-2')."
+		".hook_print('header-links-2')."
 		<br>
 		<a href='ranks.php'>Ranks</a>
 		- <a href='faq.php'>Rules/FAQ</a>
@@ -330,7 +330,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	}
 	
 	// Additional options
-	$config['board-title'] .= print_hook('header-title-rows');
+	$config['board-title'] .= hook_print('header-title-rows');
 	
 	// Default bar image definition
 	$barimg = array(
@@ -358,7 +358,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	else 
 		$bgimage = '';
 	
-	$customstyle = filter_string($meta['baserel']) . print_hook('header-css');
+	$customstyle = filter_string($meta['baserel']) . hook_print('header-css');
 
 	if ($nullscheme) {
 		// special "null" scheme.

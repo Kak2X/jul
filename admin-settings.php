@@ -1,6 +1,7 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
+	require "lib/extension_mgmt.php";
 	admincheck();
 
 	// Prepare the extension name

@@ -5,7 +5,7 @@ if (isset($_POST['dodel']) && !isset($_POST['delcheck'])) {
 	return header("Location: ?{$_SERVER['QUERY_STRING']}");
 }
 
-require "lib/function.php";
+require "lib/common.php";
 $meta['noindex'] = true;
 
 if (!$loguser['id']) {

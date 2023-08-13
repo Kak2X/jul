@@ -1,6 +1,6 @@
 <?php
 
-	require_once 'lib/function.php';
+	require_once "lib/common.php";
 
 	
 	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
@@ -264,7 +264,7 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postrange);
 	}
-	load_hook('post-extra-db', $searchon, $postrange);
+	hook_use('post-extra-db', $searchon, $postrange);
 	
 	$controls['ip'] = "";
 	$bg = 0;
@@ -332,7 +332,7 @@
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
 		}
-		load_hook_ref('post-extra-fields', $post);
+		hook_use_ref('post-extra-fields', $post);
 		
 		// Logged in users get the "new" indicator for individual posts
 		if ($loguser['id']) {

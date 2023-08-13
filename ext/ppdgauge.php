@@ -1,6 +1,6 @@
 <?php
 	chdir("..");
-	require "lib/function.php";
+	require "lib/common.php";
 	//$sql->selectdb("sonicret_s2bivb");
 
 	if ($_GET['s']) $size = $_GET['s'];

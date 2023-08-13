@@ -1,6 +1,6 @@
 <?php
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$meta['noindex'] = true;
 	if (!$loguser['id']) {
@@ -204,7 +204,7 @@
 	if ($showattachments) {
 		$attachments = load_attachments($searchon, $postrange, MODE_PM);
 	}
-	load_hook('pm-extra-db', $searchon, $postrange);
+	hook_use('pm-extra-db', $searchon, $postrange);
 	//--
 	
 	$controls['ip'] = "";
@@ -254,7 +254,7 @@
 		if ($showattachments && isset($attachments[$post['id']])) {
 			$post['attach'] = $attachments[$post['id']];
 		}
-		load_hook_ref('pm-extra-fields', $post);
+		hook_use_ref('pm-extra-fields', $post);
 		
 		$post['act']     = filter_int($act[$post['user']]);	
 		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";

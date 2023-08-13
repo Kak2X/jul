@@ -1,7 +1,7 @@
 <?php
 
 //	die();
-	require "lib/function.php";
+	require "lib/common.php";
 
 	const IMAGE_X = 622; // Obligatory image def
 	const IMAGE_Y = 22;

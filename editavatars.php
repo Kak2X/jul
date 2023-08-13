@@ -1,6 +1,6 @@
 <?php
 
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	if (!$config['allow-avatar-storage']) errorpage("The avatar storage is disabled.<br/>To edit your avatars, use the <a href='editprofile.php'>edit profile</a> page.");
 	if (!$loguser['id'])                  errorpage("You need to be logged in to edit your avatars.");

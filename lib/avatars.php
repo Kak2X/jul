@@ -124,7 +124,7 @@ function prepare_avatar($post, &$picture, &$userpic) {
 		if ($post['moodid'] && $post['moodurl']) { // mood avatar
 			$picture = str_replace('$', $post['moodid'], escape_attribute($post['moodurl']));
 			$userpic = "<img class='avatar' src=\"{$picture}\">";
-		} else if (isset($post['picture'])) { // default avatar
+		} else if (isset($post['picture']) && $post['picture']) { // default avatar
 			$picture = escape_attribute($post['picture']);
 			$userpic = "<img class='avatar' src=\"{$picture}\">";
 		} else { // null

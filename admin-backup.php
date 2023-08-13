@@ -4,7 +4,7 @@
 		Works in conjunction with the backup script at 'ext/backup.php'
 	*/
 	
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	$windowtitle = "Board Backups";
 	

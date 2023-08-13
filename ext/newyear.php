@@ -17,7 +17,7 @@
 	
 	$hour_offset = 3600 * (isset($_GET['to']) ? (int)$_GET['to'] : 0);
 
-//	require "lib/function.php";
+//	require "lib/common.php";
 
 	// Autopick next year, unless we're on Jan 1st
 	$current_date = getdate(time() + $hour_offset);

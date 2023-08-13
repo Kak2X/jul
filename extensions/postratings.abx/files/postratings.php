@@ -1,5 +1,5 @@
 <?php
-	require "lib/function.php";
+	require "lib/common.php";
 	
 	if (isset($_GET['view'])) {
 		set_board_cookie('ratingViewMode', $_GET['view'] == 2);		

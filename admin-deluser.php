@@ -1,6 +1,6 @@
 <?php
 
-	require 'lib/function.php';
+	require "lib/common.php";
 
 	$allowedusers	= array(
 		$x_hacks['adminip'],		// Xkeeper

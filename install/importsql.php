@@ -4,10 +4,7 @@ if (substr(php_sapi_name(), 0, 3) != 'cli')
 
 chdir("..");
 
-require "install/setup_defines.php";
-require "lib/defines.php";
-require "lib/classes/mysql.php";
-require "install/mysql_setup.php";
+require "install/setup_function.php";
 
 if (!INSTALLED)
 	die("This script requires the board to be installed.");

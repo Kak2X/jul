@@ -1,6 +1,6 @@
 <?php
 
-require 'lib/function.php';
+require "lib/common.php";
 
 $_GET['forum'] 		= filter_int($_GET['forum']);
 $_GET['edit'] 		= filter_int($_GET['edit']);

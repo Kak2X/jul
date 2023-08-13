@@ -2,7 +2,7 @@
 
 	chdir("../");
 //	require 'lib/config.php';
-	require 'lib/function.php';
+	require "lib/common.php";
 //	require 'lib/config.php';
 	header("Content-type: text/plain");
 

@@ -2,7 +2,7 @@
 
 	const _NUKE_ON_CHANGE = true;
 	
-	require 'lib/function.php';
+	require "lib/common.php";
 	
 	$meta['noindex'] = true;
 	

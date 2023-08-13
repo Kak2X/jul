@@ -1,20 +1,20 @@
 <?php
 require_once "files/lib/ratings.php";
 
-add_hook('adminlinkbar', function() use ($extName) {
+hook_add('adminlinkbar', function() use ($extName) {
 	adminlinkbar_add('Configuration', array(
 		"{$extName}/admin-editratings.php" => "Edit Post Ratings",
 	));
 });
 
-add_hook('header-css', function() use ($extName) {
+hook_add('header-css', function() use ($extName) {
 	return "<link rel='stylesheet' href='{$extName}/base.css' type='text/css'>";
 });
 
 /*
 	Post ratings overview in profile page.
 */
-add_hook('profile-table-mini', function($_, $user) use ($extName) {
+hook_add('profile-table-mini', function($_, $user) use ($extName) {
 	global $isadmin;
 	$ratings  = get_ratings(true);
 	$ratedata = get_user_post_ratings($user['id']);
@@ -54,15 +54,15 @@ add_hook('profile-table-mini', function($_, $user) use ($extName) {
 });
 
 // Post rating fetch query
-add_hook('annc-extra-db', function($_, $searchon, $postids) {
+hook_add('annc-extra-db', function($_, $searchon, $postids) {
 	global $_pr_ratings, $_pr_mine;
 	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_ANNOUNCEMENT);
 });
-add_hook('pm-extra-db', function($_, $searchon, $postids) {
+hook_add('pm-extra-db', function($_, $searchon, $postids) {
 	global $_pr_ratings, $_pr_mine;
 	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_PM);
 });
-add_hook('post-extra-db', function($_, $searchon, $postids) {
+hook_add('post-extra-db', function($_, $searchon, $postids) {
 	global $_pr_ratings, $_pr_mine;
 	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_POST);
 });
@@ -73,15 +73,15 @@ $postfieldset = function($_, &$post) {
 	$post['rating']      = isset($_pr_ratings[$post['id']]) ? $_pr_ratings[$post['id']] : [];
 	$post['myratings']   = isset($_pr_mine[$post['id']]) ? $_pr_mine[$post['id']] : [];
 };
-add_hook('annc-extra-fields', $postfieldset);
-add_hook('pm-extra-fields', $postfieldset);
-add_hook('post-extra-fields', $postfieldset);
+hook_add('annc-extra-fields', $postfieldset);
+hook_add('pm-extra-fields', $postfieldset);
+hook_add('post-extra-fields', $postfieldset);
 /*
 // inside threadpost
-add_hook('threadpost', function($_, &$set, $post, $mode) {
+hook_add('threadpost', function($_, &$set, $post, $mode) {
 	$set['rating'] = $post['id'] ? ratings_html($post['id'], $post['rating'], $post['myratings'], $mode) : "";
 });
-add_hook('threadpost-deleted', function($_, &$set, $post, $mode) {
+hook_add('threadpost-deleted', function($_, &$set, $post, $mode) {
 	$set['rating'] = "";
 });*/
 
@@ -91,7 +91,7 @@ $tly_def = function ($_, $set, $post, $data) {
 	add_topbar_entry($set['rating'], TOPBAR_RIGHT);
 };
 
-add_hook('tlayout-regular', function($_, $set, $post, $data) {
+hook_add('tlayout-regular', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	if ($data->sidebar_one_cell) {
 		$ratingside = "";
@@ -105,11 +105,11 @@ add_hook('tlayout-regular', function($_, $set, $post, $data) {
 		</td>
 	</tr>"); // &nbsp;<b>Post ratings:</b>
 });
-add_hook('tlayout-compact', function ($_, $set, $post, $data) {
+hook_add('tlayout-compact', function ($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	add_option_row("<tr><td class='tdbg{$set['bg']}' colspan='2'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_TOP);
 });
-add_hook('tlayout-ezboard', function($_, $set, $post, $data) {
+hook_add('tlayout-ezboard', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	add_option_row("<tr>
 			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$data->csskey}_opt fonts'></td>

@@ -46,7 +46,7 @@ function setupfooter($buttons = 0) {
 		</tr>
 		<tr>
 			<td class="tdbgh center b">
-				Acmlmboard Installer 2.1 (26-04-2020)
+				Acmlmboard Installer 2.2 (??-??-????)
 			</td>
 		</tr>
 <?php if (SETUP_DEBUG) { ?>
@@ -58,6 +58,8 @@ function setupfooter($buttons = 0) {
 <?php } ?>
 	</table>
 	</form>
+	
+	<?= error_printer(true, SETUP_DEBUG, $GLOBALS['errors']) ?>
 <!--	<script type="text/javascript" src="installer.js"></script> -->
 	</body>
 </html>

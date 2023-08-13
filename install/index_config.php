@@ -24,17 +24,14 @@ if (!$error) {
 			<br>You can edit these options later through the <span class='c-info'>Change configuration</span> option (or by editing the config file manually, like it's traditionally done).
 			<br>
 			<br>
-			".get_config_sql_layout()."
-			<br>
-			<br>
-			".get_config_main_layout();
+			".setup_get_config_layout();
 			break;
 			
 		case BASE_STEP + 1:
 			// Verify the validity of the SQL connection options before continuing
 			// after this, we don't need it anymore, so we can close it manually
 			$sql = new mysql();
-			$dbinfo = $_POST['config']['__sql'];
+			$dbinfo = $_POST['config']['sqlconfig'];
 			$validconn = $sql->connect($dbinfo['sqlhost'], $dbinfo['sqluser'], $dbinfo['sqlpass'], $dbinfo['dbname']);
 			
 			$output = "

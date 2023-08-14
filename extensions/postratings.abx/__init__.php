@@ -14,7 +14,7 @@ hook_add('header-css', function() use ($extName) {
 /*
 	Post ratings overview in profile page.
 */
-hook_add('profile-table-mini', function($_, $user) use ($extName) {
+hook_add('profile-table-mini', function($_, $__, $user) use ($extName) {
 	global $isadmin;
 	$ratings  = get_ratings(true);
 	$ratedata = get_user_post_ratings($user['id']);

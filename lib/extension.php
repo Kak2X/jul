@@ -74,10 +74,10 @@ function hook_use_ref($key, &$var) {
 	$xconf   = $oconf;
 }
 
-function hook_print($key) {
+function hook_print($key, $default = "") {
 	global $_hooks, $extName, $extConfig, $xconf;
 	if (!isset($_hooks[$key])) 
-		return "";
+		return $default;
 	$oname = $extName;
 	$oconf = $xconf;
 	$args = func_get_args();

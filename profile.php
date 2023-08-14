@@ -415,7 +415,7 @@
 			<?=$shoplist?>
 		</table>
 		<br>
-		<?= hook_print('profile-table-mini', $user) ?>
+		<?= hook_print('profile-table-mini', "", $user) ?>
 	</td>
 </table>
 <br>

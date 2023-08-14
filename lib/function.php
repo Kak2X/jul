@@ -2256,13 +2256,6 @@ function mime_select($name, $sel = "") {
 	return $out;
 }
 
-function actionlink($url = null, $args = "") {
-	global $scriptpath, $extName;
-	if ($url !== null)
-		return "{$extName}/{$url}";
-	return $scriptpath.$args;
-}
-
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;
 

@@ -131,3 +131,10 @@ function ext_read_config($extName, $forceDefault = false) {
 function ext_read_schema($name, $extName) {
 	return new schema($name, "extensions/{$extName}.abx/settings.page.json");
 }
+
+function actionlink($url = null, $args = "") {
+	global $scriptpath, $extName;
+	if ($url !== null)
+		return "{$extName}/{$url}";
+	return $scriptpath.$args;
+}

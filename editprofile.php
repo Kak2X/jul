@@ -554,11 +554,11 @@
 				if (!$data[0]) { // text box
 					if (!isset($data[3])) $data[3] = 60;
 					if (!isset($data[4])) $data[4] = 100;
-					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".htmlspecialchars($userdata[$data[1]])."\">";
+					$input = "<input type='text' name='$data[1]' size={$data[3]} maxlength={$data[4]} value=\"".(isset($userdata[$data[1]]) ? htmlspecialchars($userdata[$data[1]]) : "")."\">";
 				}
 				else if ($data[0] == 1) { // large
 					if (!isset($data[3])) $data[3] = 8; // Rows
-					$input = "<textarea name='$data[1]' rows={$data[3]} style='width: 100%' wrap='virtual'>".htmlspecialchars($userdata[$data[1]])."</textarea>";
+					$input = "<textarea name='$data[1]' rows={$data[3]} style='width: 100%' wrap='virtual'>".(isset($userdata[$data[1]]) ? htmlspecialchars($userdata[$data[1]]) : "")."</textarea>";
 				}
 				else if ($data[0] == 2){ // radio
 					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]

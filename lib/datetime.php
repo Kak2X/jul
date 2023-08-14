@@ -47,7 +47,7 @@ function printdate($timestamp = NULL, $short = false) {
 	if (!$timestamp) $timestamp = ctime();
 	return date(
 		$short ? $loguser['dateshort'] : $loguser['dateformat'],
-		$timestamp + $loguser['tzoff']
+		(int)$timestamp + $loguser['tzoff']
 	);
 }
 

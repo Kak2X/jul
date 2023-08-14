@@ -32,7 +32,7 @@
 	
 	pageheader("Extra fields");
 	
-	$fields = json_decode($user['extrafields'], true);
+	$fields = $user['extrafields'] ? json_decode($user['extrafields'], true) : null;
 	if (!is_array($fields))
 		$fields = [];
 	

@@ -316,11 +316,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		if (file_exists("{$config['backup-folder']}/".date("Ymd").".zip") && date('Gi') < 100){ // Give this warning message for an hour
 			$config['board-title']	.=  "<br><a href='admin-backup.php'><span class='font b' style='color: #f00'>Please download the nightly backup.</span></a>";			
 		}
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`time`) as time FROM `minilog`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `ip`, `banflags` FROM `minilog` ORDER BY `time` DESC LIMIT 1");
-			$config['board-title']	.= "<br><a href='shitbugs.php'><span class='font' style='color: #f00'><b>". $xminilog['count'] ."</b> suspicious request(s) logged, last at <b>". printdate($xminilog['time']) ."</b> by <b>". $xminilogip['ip'] ." (". $xminilogip['banflags'] .")</b></span></a>";
-		}
 		
 		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`date`) as date FROM `pendingusers`");
 		if ($xminilog['count']) {

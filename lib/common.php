@@ -44,7 +44,7 @@
 	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
 		if (toggle_board_cookie($_GET['debugsql'], 'debugsql')) {
 			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
-			die(header("Location: {$scriptname}?{$params}"));
+			die(header("Location: ?{$params}"));
 		}
 		
 		if (filter_int($_COOKIE['debugsql']))
@@ -114,10 +114,8 @@
 	
 	ext_init();
 	
-	function do404() {
-		header("HTTP/1.1 404 Not Found");
-		die;
-	}
+	// Execute anything to do as soon as the extension system loads
+	hook_use('init');
 	
 	// Delete expired bans
 	$sql->query("

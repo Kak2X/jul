@@ -2393,6 +2393,11 @@ function gethttpheaders() {
 
 	return $ret;
 }
+	
+function do404() {
+	header("HTTP/1.1 404 Not Found");
+	die;
+}
 
 function set_board_cookie($name, $value, $expire = 2147483647) {
 	global $root;

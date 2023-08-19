@@ -29,10 +29,10 @@ attachments/*
 !attachments/f/.htaccess
 
 # Uploads
-uploads/*
-!uploads/index.html
-!uploads/t/.htaccess
-!uploads/f/.htaccess
+extensions/uploader.abx/uploads/*
+!extensions/uploader.abx/uploads/index.html
+!extensions/uploader.abx/uploads/t/.htaccess
+!extensions/uploader.abx/uploads/f/.htaccess
 
 #Userpics
 userpic/*

@@ -433,7 +433,8 @@ function uploads_encode_hash($hash) {
 }
 
 function uploads_name($file, $thumb = false) {
-	return "uploads/".($thumb ? "t/{$file}.png" : "f/{$file}");
+	global $extName;
+	return "extensions/{$extName}.abx/uploads/".($thumb ? "t/{$file}.png" : "f/{$file}");
 }
 
 function uploader_base_params($as_input = false) {

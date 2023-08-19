@@ -6,7 +6,7 @@
 	
 	if (!$xconf['all-origin'] && !SAME_ORIGIN) {
 		print "<title>{$config['board-name']}</title>";
-		print "To continue to the file, click <a href='".actionlink(null, "?{$_SERVER['QUERY_STRING']}")."'>here</a>.";
+		print "To continue to the file, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
 		die;
 	}
 	
@@ -21,7 +21,8 @@
 		WHERE f.hash = ?
 	", [$_GET['f']]);
 	
-	if (!$file || !can_read_category(['user' => $file['cuser'], 'minpowerread' => $file['minpowerread']]) || (!can_manage_category(['user' => $file['cuser']]) && !can_read_file($file)) || !file_exists("uploads/f/{$_GET['f']}")) {
+	$path = uploads_name($_GET['f']);
+	if (!$file || !can_read_category(['user' => $file['cuser'], 'minpowerread' => $file['minpowerread']]) || (!can_manage_category(['user' => $file['cuser']]) && !can_read_file($file)) || !file_exists($path)) {
 		header("HTTP/1.1 404 Not Found");
 		die("File not found.");
 	}
@@ -53,6 +54,6 @@
 	header("Content-Length: {$file['size']}");
 	header("Content-type: {$file['mime']}");
 
-	readfile("uploads/f/{$_GET['f']}");
+	readfile($path);
 
 	die;

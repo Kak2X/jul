@@ -53,18 +53,18 @@
 			$sql->query("UPDATE archive_cat SET `count` = `count` + '{$offset}' WHERE id = {$_POST['mergeid']}");
 			$sql->query("UPDATE archive_items SET cat = {$_POST['mergeid']} WHERE cat = {$_GET['cat']}");
 			$sql->commit();
-			errorpage("Category deleted!", "?", 'the category index');
+			errorpage("Category deleted!", actionlink(), 'the category index');
 		}
 		
 		$categories = $sql->getresultsbykey("SELECT id, title FROM archive_cat WHERE id != {$_GET['cat']}");
 		$title   = "Delete Category";
 		$message = "
 			Are you sure you want to <b>DELETE</b> this category?<br><br>
-			The items will be moved into this category: ".field_select('mergeid', $categories, 0, 'Select a category...');
-		$form_link = "?action=catdelete&cat={$_GET['cat']}";
+			The items will be moved into this category: ".int_select('mergeid', $categories, 0, 'Select a category...');
+		$form_link = actionlink(null, "?action=catdelete&cat={$_GET['cat']}");
 		$buttons       = array(
 			[BTN_SUBMIT, "Yes"],
-			[BTN_URL   , "No", "?"]
+			[BTN_URL   , "No", actionlink()]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	} else if ($_GET['action'] == 'catedit') {
@@ -72,7 +72,7 @@
 		if (isset($_POST['submit']) || isset($_POST['submit2'])) {
 			check_token($_POST['auth']);
 			if ($_GET['cat'] != -1 && !$sql->resultq("SELECT COUNT(*) FROM archive_cat WHERE id = {$_GET['cat']}"))
-				errorpage("This category does not exist.", "?", 'the category index');
+				errorpage("This category does not exist.", actionlink(), 'the category index');
 			
 			$values = array(
 				'title'       => filter_string($_POST['title']),
@@ -117,7 +117,7 @@
 		}
 		
 ?>
-		<form method="POST" action="?cat=<?= $_GET['cat'] ?>&action=catedit">
+		<form method="POST" action="<?= actionlink("?cat={$_GET['cat']}&action=catedit") ?>">
 		<table class="table">
 			<tr><td class="tdbgh center b" colspan="2">Editing <?= $what ?></td></tr>
 			<tr>
@@ -163,15 +163,15 @@
 			$sql->query("UPDATE `archive_cat` SET `count` = `count` - 1 WHERE id = (SELECT `cat` FROM `archive_items` WHERE `id` = '{$_GET['id']}')");
 			$sql->query("DELETE FROM `archive_items` WHERE `id` = '{$_GET['id']}'");
 			$sql->commit();
-			errorpage("Item deleted!", "?cat={$_GET['cat']}", 'the category');
+			errorpage("Item deleted!", actionlink(null, "?cat={$_GET['cat']}"), 'the category');
 		}
 		
 		$title   = "Warning";
 		$message = "Are you sure you want to <b>DELETE</b> this item?";
-		$form_link = "?action=delete&cat={$_GET['cat']}&id={$_GET['id']}";
+		$form_link = actionlink(null, "?action=delete&cat={$_GET['cat']}&id={$_GET['id']}");
 		$buttons       = array(
 			[BTN_SUBMIT, "Yes"],
-			[BTN_URL   , "No", "?cat={$_GET['cat']}"]
+			[BTN_URL   , "No", actionlink(null, "?cat={$_GET['cat']}")]
 		);
 		
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
@@ -181,7 +181,7 @@
 			check_token($_POST['auth']);
 			
 			if ($_GET['id'] != -1 && !($prev = $sql->fetchq("SELECT id, cat FROM archive_items WHERE id = {$_GET['id']}")))
-				errorpage("This item does not exist.", "?cat={$_GET['cat']}", 'the category');
+				errorpage("This item does not exist.", actionlink(null, "?cat={$_GET['cat']}"), 'the category');
 			
 			$values = array(
 				'title'       => filter_string($_POST['title']),
@@ -241,7 +241,7 @@
 		
 ?>
 		<style>.lh {height: 26px }</style>
-		<form method="POST" action="?cat=<?= $_GET['cat'] ?>&id=<?= $_GET['id'] ?>&action=edit">
+		<form method="POST" action="<?= actionlink("?cat={$_GET['cat']}&id={$_GET['id']}&action=edit") ?>">
 		<table class="table">
 			<tr><td class="tdbgh center b" colspan="4">Editing <?= $what ?></td></tr>
 			<tr>
@@ -259,7 +259,7 @@
 			</tr>
 			<tr>
 				<td class="tdbg1 center b lh">Category:</td>
-				<td class="tdbg2"><?= field_select('cat', $categories, $item['cat'], "Select a category...") ?></td>
+				<td class="tdbg2"><?= int_select('cat', $categories, $item['cat'], "Select a category...") ?></td>
 			</tr>
 			<tr>
 				<td class="tdbg1 center b"></td>
@@ -316,7 +316,7 @@
 		
 		
 		if (!isset($catlist[$_GET['cat']])) {
-			errorpage("Sorry, but you can't access this category. Either it doesn't exist or you don't have access to it.", 'versions.php', 'the versions page');
+			errorpage("Sorry, but you can't access this category. Either it doesn't exist or you don't have access to it.", actionlink(), 'the versions page');
 		}
 		$cattitle = $catlist[$_GET['cat']];
 		
@@ -336,12 +336,12 @@
 			else
 				$cell = ($i%2)+1;
 			
-			$editlink = ($isadmin ? "<span class='fonts'><a href='?cat={$_GET['cat']}&id={$x['id']}&action=edit'>Edit</a> - <a href='?cat={$_GET['cat']}&id={$x['id']}&action=delete'>Delete</a></span>" : "");
+			$editlink = ($isadmin ? "<span class='fonts'><a href='".actionlink(null, "?cat={$_GET['cat']}&id={$x['id']}&action=edit")."'>Edit</a> - <a href='".actionlink(null, "?cat={$_GET['cat']}&id={$x['id']}&action=delete")."'>Delete</a></span>" : "");
 			
 			$txt .= "
 			<tr id='i{$x['id']}'>
 				<td class='tdbg{$cell} center vatop'>
-					<a href='?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}'>".xssfilters($x['title'])."</a>
+					<a href='".actionlink(null, "?cat={$_GET['cat']}&id={$x['id']}#i{$x['id']}")."'>".xssfilters($x['title'])."</a>
 					<br>{$editlink}
 					".($x['date'] ? "<div class='fonts'>(".printdate($x['date'], true).")</div>" : "")."
 				</td>
@@ -377,7 +377,7 @@
 		}
 		
 		if ($isadmin) {
-			$txt = "<tr><td class='tdbgc center b' colspan='3'><a href='?cat={$_GET['cat']}&id=-1&action=edit'>&lt; Add a new item &gt;</a></td></tr>{$txt}";
+			$txt = "<tr><td class='tdbgc center b' colspan='3'><a href='".actionlink(null, "?cat={$_GET['cat']}&id=-1&action=edit")."'>&lt; Add a new item &gt;</a></td></tr>{$txt}";
 		}
 		
 		//if ($txt) {
@@ -393,14 +393,14 @@
 			
 			// Now uses a breadcrumbs bar to save on space
 			$links = array(
-				[$windowtitle, "?"],
-				[$cattitle, "?cat={$_GET['cat']}"],
+				[$windowtitle, actionlink()],
+				[$cattitle, actionlink(null, "?cat={$_GET['cat']}")],
 			);
-			$right = "Show description: <{$wa} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=1'>All</{$wa}> - <{$wo} href='?cat={$_GET['cat']}&id={$_GET['id']}&all=0'>Only selected</{$wo}>";
+			$right = "Show description: <{$wa} href='".actionlink(null, "?cat={$_GET['cat']}&id={$_GET['id']}&all=1")."'>All</{$wa}> - <{$wo} href='".actionlink(null, "?cat={$_GET['cat']}&id={$_GET['id']}&all=0")."'>Only selected</{$wo}>";
 			$barlinks = dobreadcrumbs($links, $right); 
 			
 			// Sidebar selection code (to save vertical space when a category is selected)
-			$urlformat = "?cat=";
+			$urlformat = actionlink(null, "?cat=");
 			$sidebar = new TreeView("Categories", TreeView::ParseSubmenu($catlist, $urlformat)); 
 			
 ?>
@@ -436,11 +436,11 @@
 			} else {
 				$cell = (++$i%2)+1;
 			}
-			$editlink = ($isadmin ? "<div class='fonts'><a href='?cat={$x['id']}&action=catedit'>Edit</a> - <a href='?cat={$x['id']}&action=catdelete'>Delete</a></div>" : "");
+			$editlink = ($isadmin ? "<div class='fonts'><a href='".actionlink(null, "?cat={$x['id']}&action=catedit")."'>Edit</a> - <a href='".actionlink(null, "?cat={$x['id']}&action=catdelete")."'>Delete</a></div>" : "");
 			
 			$txt .= "
 			<tr>
-				<td class='tdbg{$cell} center'><a href='?cat={$x['id']}'>View</a>{$editlink}</td>
+				<td class='tdbg{$cell} center'><a href='".actionlink(null, "?cat={$x['id']}")."'>View</a>{$editlink}</td>
 				<td class='tdbg{$cell}'>
 					<b>".htmlspecialchars($x['title'])."</b>
 					<div class='fonts'>".xssfilters($x['description'])."</div>
@@ -450,7 +450,7 @@
 		}
 		
 		if ($isadmin) {
-			$txt .= "<tr><td class='tdbgc center b' colspan='3'><a href='?cat=-1&action=catedit'>&lt; Add a new category &gt;</a></td></tr>";
+			$txt .= "<tr><td class='tdbgc center b' colspan='3'><a href='".actionlink(null, "?cat=-1&action=catedit")."'>&lt; Add a new category &gt;</a></td></tr>";
 		}
 		
 		$links = array(
@@ -475,11 +475,3 @@
 	}
 	
 	pagefooter();
-	
-function field_select($name, $arr, $sel = 0, $def = "") {
-	$txt = ($def ? "<option value='0'>".htmlspecialchars($def)."</option>\n" : "");
-	foreach ($arr as $key => $val) {
-		$txt .= "<option value='{$key}'".($key == $sel ? " selected" : "").">".htmlspecialchars($val)."</option>\n";
-	}
-	return "<select name='{$name}'>{$txt}</select>";
-}

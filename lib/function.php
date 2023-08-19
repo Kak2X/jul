@@ -2256,6 +2256,14 @@ function mime_select($name, $sel = "") {
 	return $out;
 }
 
+function int_select($name, $arr, $sel = 0, $def = "") {
+	$txt = ($def ? "<option value=''>".htmlspecialchars($def)."</option>\n" : "");
+	foreach ($arr as $key => $val) {
+		$txt .= "<option value='{$key}'".($key == $sel ? " selected" : "").">".htmlspecialchars($val)."</option>\n";
+	}
+	return "<select name='{$name}'>{$txt}</select>";
+}
+
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;
 

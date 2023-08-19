@@ -726,7 +726,7 @@ piwikTracker.enableLinkTracking();
 				<td><?= $poweredbypic ?></td>
 				<td>
 					<span class='fonts'>
-						Acmlmboard - <?= file_get_contents('version.txt') ?><br>
+						Acmlmboard - <?= hook_print("boardinfo-ver", file_get_contents('version.txt')) ?><br>
 						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al. 
 					</span>
 				</td>

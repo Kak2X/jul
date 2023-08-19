@@ -2400,12 +2400,12 @@ function do404() {
 }
 
 function set_board_cookie($name, $value, $expire = 2147483647) {
-	global $root;
-	setcookie($name, $value, $expire, $root, $_SERVER['SERVER_NAME'], false, true);
+	global $boardurl;
+	setcookie($name, $value, $expire, $boardurl, $_SERVER['SERVER_NAME'], false, true);
 }
 function remove_board_cookie($name) {
-	global $root;
-	setcookie($name, '', time() - 3600, $root, $_SERVER['SERVER_NAME'], false, true);
+	global $boardurl;
+	setcookie($name, '', time() - 3600, $boardurl, $_SERVER['SERVER_NAME'], false, true);
 }
 function toggle_board_cookie(&$signal, $key, $expire = 2147483647) {
 	return toggle_board_cookie_man($signal, $key, $_COOKIE[$key], $expire);
@@ -2414,7 +2414,7 @@ function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) 
 	if (!$signal) {
 		return false;
 	}
-	global $root;
-	setcookie($key, !$value, $expire, $root, $_SERVER['SERVER_NAME'], false, true);
+	global $boardurl;
+	setcookie($key, !$value, $expire, $boardurl, $_SERVER['SERVER_NAME'], false, true);
 	return true;
 }

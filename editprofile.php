@@ -148,6 +148,10 @@
 		if (!can_select_scheme($scheme))
 			errorpage("'Inspect element' doesn't cut it here. Thanks for trying though.");
 		
+		$fontsize = filter_int($_POST['fontsize']);
+		if (!$fontsize) 
+			$fontsize = null;
+		
 		$sql->beginTransaction();
 		
 		// Editprofile fields
@@ -192,6 +196,7 @@
 			'layout' 			=> $tlayout,
 			'signsep' 			=> numrange(filter_int($_POST['signsep']), 0, 3),
 			'scheme' 			=> $scheme,
+			'fontsize'			=> $fontsize,
 			'hideactivity' 		=> filter_int($_POST['hideactivity']),
 			'splitcat' 			=> filter_int($_POST['splitcat']),
 			'schemesort' 		=> filter_int($_POST['schemesort']),
@@ -422,6 +427,7 @@
 			"Signature separator"			=> [4, "signsep", "You can choose from a few signature separators here."],
 			"Color scheme / layout"	 		=> [4, "scheme", "You can select from a few color schemes here."],
 			"Scheme sorting mode"	 		=> [2, "schemesort", "Determines how scheme lists are sorted.", "Normal|Alphabetical"],
+			"Font size"	 					=> [4, "fontsize", "Change the default font size of the forum."],
 			"Hide activity"			 		=> [2, "hideactivity", "You can choose to hide your online status.", "Show|Hide"],
 			"Profile comments"			 	=> [2, "comments", "You can disable them here.", "Disable|Enable"],
 		));
@@ -526,6 +532,7 @@
 		
 		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;
 		$scheme = doschemelist($userdata['scheme'], 'scheme', $schflags);
+		$fontsize = "<input type='text' name='fontsize' size=5 maxlength=5 value=\"".__($userdata['fontsize'])."\">%";
 		// listbox with <name> <used>
 		$layout   = _queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = _queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');

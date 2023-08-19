@@ -1,6 +1,5 @@
 body {
 	font-family: 	"Verdana", sans-serif;
-	font-size: 		10px;
 	color:			#e0e0ff;
 	background: 	#000020 url("rha2/bg.png");
 }
@@ -17,7 +16,6 @@ a:hover		{color: #ffe090}
 
 .tdbg1, .tdbg2, .tdbgc, .tdbgh {
 	color:				#c0c0ee;
-	font-size:			11px;
 	border-top:			1px solid #181848;
 	border-left:		1px solid #181848;
 	border-right:		1px solid #303090;

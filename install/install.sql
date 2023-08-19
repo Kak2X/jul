@@ -428,7 +428,8 @@ CREATE TABLE `delusers` (
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `extrafields` text COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `extrafields` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fontsize` tinyint(3) unsigned DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2430,6 +2431,7 @@ CREATE TABLE `users` (
   `schemesort` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comments` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `extrafields` TEXT NULL DEFAULT NULL,
+  `fontsize` tinyint(3) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `posts` (`posts`),
   KEY `name` (`name`),

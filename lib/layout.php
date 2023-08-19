@@ -238,11 +238,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	if ($miscdata['scheme'] !== NULL)
 		$forcescheme = $miscdata['scheme'];
 	
-	
 	$schemepre	= false;
 
 	// Just skip all of this if we've forced a scheme
-	if (!$forcescheme) {
+	if ($forcescheme === null) {
 	
 		// Force Xmas scheme (cue whining, as always)
 		if (false && $isChristmas && !$x_hacks['host']) {
@@ -380,15 +379,15 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 			a:hover,.buttonlink:hover 	    { color: #$linkcolor4; }
 			body {
 				color: #$textcolor;
-				font:13px $font;
+				font-family: $font;
 				background: #$bgcolor$bgimage;
 			}
-			div.lastpost { font: 10px $font2 !important; white-space: nowrap; }
-			div.lastpost:first-line { font: 13px $font !important; }
-			.font 	{font:13px $font}
-			.fonth	{font:13px $font;color:#$tableheadtext}
-			.fonts	{font:10px $font2}
-			.fontt	{font:10px $font3}
+			div.lastpost { font: 75% $font2 !important; white-space: nowrap; }
+			div.lastpost:first-line { font: 100% $font !important; }
+			.font 	{font:100% $font}
+			.fonth	{font:100% $font;color:#$tableheadtext}
+			.fonts	{font:75% $font2}
+			.fontt	{font:75% $font3}
 			.tdbg1	{background:#$tablebg1}
 			.tdbg2	{background:#$tablebg2}
 			.tdbgc	{background:#$categorybg}
@@ -397,7 +396,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 					 border-top:	#$tableborder 1px solid;
 					 border-left:	#$tableborder 1px solid;
 					 border-spacing: 0px;
-					 font:13px 		 $font;}
+					 font-family: 		 $font;}
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#$tableborder 1px solid;
 					 border-bottom:	#$tableborder 1px solid}
@@ -487,20 +486,20 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		  border:	#$inputborder solid 1px;
 		  background:#000000;
 		  color:	#$formtextcolor;
-		  font:	10pt $font;}
+		  font:	100% $font;}
 		textarea:focus {
 		  border:	#$inputborder solid 1px;
 		  background:#000000;
 		  color:	#$formtextcolor;
-		  font:	10pt $font;}
+		  font:	100% $font;}
 		input[type=radio]{
 		  border:	none;
 		  background:none;
 		  color:	#$formtextcolor;
-		  font:	10pt $font;}
+		  font:	100% $font;}
 		input[type=submit],input[type=button],button,.button{
 		  border:	#$inputborder solid 2px;
-		  font:	10pt $font;}
+		  font:	100% $font;}
 		.button{color: #$formtextcolor !important;}
 		";
 	} else if (!$usebtn) {
@@ -533,6 +532,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	// 10/18/08 - hydrapheetz: added a small hack for "extra" css goodies.
 	if (isset($css_extra)) {
 		$css .= $css_extra . "\n";
+	}
+	
+	if ($loguser['fontsize']) {
+		$css .= "body { font-size: {$loguser['fontsize']}% }\n"; 
 	}
 	$css .= '</style>';
 
@@ -709,24 +712,24 @@ piwikTracker.enableLinkTracking();
 		<br>
 	
 		<span class='fonts'>
-		<br>
-		<br>
-		<a href='<?=$config['footer-url']?>'><?=$config['footer-title']?></a>
-		<br>
+			<br>
+			<br>
+			<a href='<?=$config['footer-url']?>'><?=$config['footer-title']?></a>
+			<br>
+		</span>
 		<?=$affiliatelinks?>
-		<br>
-		
-		<table cellpadding=0 border=0 cellspacing=2>
-			<tr>
-				<td><?= $poweredbypic ?></td>
-				<td>
-					<span class='fonts'>
+		<span class='fonts'>
+			<br>
+			
+			<table cellpadding=0 border=0 cellspacing=2>
+				<tr>
+					<td><?= $poweredbypic ?></td>
+					<td>
 						Acmlmboard - <?= hook_print("boardinfo-ver", file_get_contents('version.txt')) ?><br>
 						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al. 
-					</span>
-				</td>
-			</tr>
-		</table>	
+					</td>
+				</tr>
+			</table>	
 		<?php
 	}
 	
@@ -748,11 +751,11 @@ piwikTracker.enableLinkTracking();
 	$cache   = mysql::$cachehits;
 
 	if (isset($_GET['oldfooter'])) {
-		print "<br><font class='fonts'>Page rendered in {$tseconds} seconds; used {$curmem} (max {$maxmem})</font><br>";
+		print "<br><font>Page rendered in {$tseconds} seconds; used {$curmem} (max {$maxmem})</font><br>";
 	} else {
 		print "<br>
-			<span class='fonts'>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
-			<table class='fonts' style='border-spacing: 0px'>
+			<span>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
+			<table style='border-spacing: 0px'>
 				<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
 				<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
 				<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
@@ -760,6 +763,8 @@ piwikTracker.enableLinkTracking();
 			</table>";
 	}
 		
+	print "</span>";
+	
 	// Print errors locally
 	print error_printer(true, ($loguser['powerlevel'] == 4 || $config['always-show-debug']), $GLOBALS['errors']);
 

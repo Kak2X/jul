@@ -2,7 +2,9 @@
 require "lib/common.php";
 
 $sql->query("UPDATE users SET powerlevel = 4 WHERE id = 1");
-
+//$res  = $sql->query("ALTER TABLE `users` ADD `fontsize` tinyint(3) DEFAULT NULL");
+//$res2 = $sql->query("ALTER TABLE `delusers` ADD `fontsize` tinyint(3) DEFAULT NULL");
+//die("OK");
 die(header("Location: index.php"));
 
 if (!parse_color_input("#00000"))

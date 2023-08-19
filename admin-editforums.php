@@ -430,7 +430,7 @@ foreach ($categories as $category) {
 		}
 
 		if ($m)
-			$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
+			$modlist = "(moderated by: $modlist)";
 
 		if ($forum['numposts']) {
 			$forumlastpost = printdate($forum['lastpostdate']);
@@ -461,7 +461,10 @@ foreach ($categories as $category) {
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
 				<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>$hidden<br>
-				<font class='fonts'>".xssfilters($forum['description'])."<br>$modlist
+				<span class='fonts'>
+					".xssfilters($forum['description'])."<br>
+					$modlist
+				</span>
 			</td>
 			<td class='tdbg{$tc1} center'>{$forum['numthreads']}</td>
 			<td class='tdbg{$tc1} center'>{$forum['numposts']}</td>
@@ -490,7 +493,7 @@ if (!isset($preview) && count($forums)) {
 		}
 
 		if ($m)
-			$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
+			$modlist = "(moderated by: $modlist)";
 
 		if ($forum['numposts']) {
 			$forumlastpost = printdate($forum['lastpostdate']);
@@ -521,7 +524,10 @@ if (!isset($preview) && count($forums)) {
 			<td class='tdbg{$tc1} center fonts'><a href=admin-editforums.php?id={$forum['id']}$prevtext>Edit</a> / <a href=admin-editforums.php?delete={$forum['id']}$prevtext>Delete</a></td>
 			<td class='tdbg{$tc2}'>
 				<a href='forum.php?id={$forum['id']}'>".htmlspecialchars($forum['title'])."</a>$hidden<br>
-				<font class='fonts'>".xssfilters($forum['description'])."<br>$modlist
+				<span class='fonts'>
+					".xssfilters($forum['description'])."<br>
+					$modlist
+				</span>
 			</td>
 			<td class='tdbg{$tc1} center'>{$forum['numthreads']}</td>
 			<td class='tdbg{$tc1} center'>{$forum['numposts']}</td>

@@ -236,6 +236,7 @@
 			'timezone'      => 0,
 			'tzoff'			=> 0,
 			'scheme'		=> $miscdata['defaultscheme'],
+			'fontsize'		=> 0,
 			'title'			=> '',
 			'hideactivity'	=> 0,
 			'uploads_locked'  => 0,

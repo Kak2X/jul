@@ -97,12 +97,14 @@
 	$blist	= "";
 	
 	for ($numbd = 0; $user = $sql->fetch($users1); ++$numbd) {
-		$blist = $numbd ? ", " : "<tr><td class='tdbg2 center's colspan=5>Birthdays for ".date('F j', ctime() + $loguser['tzoff']).': ';
+		$blist = $numbd ? ", " : "<tr><td class='tdbg2 center fonts' colspan='2'>Birthdays for ".date('F j', ctime() + $loguser['tzoff']).': ';
 		
 		$y = date('Y', ctime()) - date('Y', $user['birthday']);
 		$userurl = getuserlink($user);
 		$blist .= "$userurl ($y)"; 
 	}
+	if ($blist)
+		$blist .= "</td></tr>";
 	
 	// Do not move this below the records updates
 	$onlineusers = onlineusers();
@@ -175,12 +177,12 @@
 		<table class='table'>
 			<tr>
 				<td class='tdbg1 fonts center'>
-					<table width=100%>
+					<table class='w'>
 						<tr>
-							<td class='fonts'>
+							<td>
 								<?=$logmsg?>
 							</td>
-							<td align=right class='fonts'>
+							<td class='right'>
 								<?=$count['u']?> registered users<br>
 								Latest registered user: <?=$lastuserurl?>
 							</td>
@@ -189,7 +191,6 @@
 				</td>
 			</tr>
 			<?=$blist?>
-			</tr>
 			<tr>
 				<td class='tdbg2 fonts center'>
 					<?=$count['t']?> threads and <?=$count['p']?> posts in the board | <?=$statsblip?>
@@ -468,7 +469,7 @@
 			}
 
 			if ($modlist)
-				$modlist = "<span class='fonts'>(moderated by: $modlist)</span>";
+				$modlist = "(moderated by: $modlist)";
 
 			
 			

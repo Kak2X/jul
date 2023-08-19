@@ -1,8 +1,8 @@
 /* Global CSS styles across every theme */
 
-/* Set up global font  */
-body,.table,.font,.fonth,div.lastpost:first-line{
-	font: 13px verdana, geneva, sans-serif;
+/* Set up base multiplier for global font */
+html {
+	font-size: 83%;
 }
 
 /* Limit the max page width so the page won't stretch too much */
@@ -55,8 +55,12 @@ img { border:none; }
 /* Make sure the last post text only stays in two lines*/
 .nobr,div.lastpost {white-space:nowrap}
 
+
+/* Force tables to inherit the parent font's size (not particularly obvious) */
+table { font-size: 100% }
+
 /* Small font setup */
-.fonts,.fontt,div.lastpost{font-size:10px !important}
+.fonts,.fontt,div.lastpost{font-size:75%}
 
 /* For use with elements with title tags */
 .underline {	text-decoration: underline dotted }

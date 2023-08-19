@@ -149,8 +149,10 @@
 		background: #$bgcolor linear-gradient(to bottom, rgb({$grad_r1},{$grad_g1},{$grad_b1}) 0vh,rgb({$grad_r2},{$grad_g2},{$grad_b2}) 100vh) fixed;
 		background-repeat:	repeat-x;
 		background-positon: bottom center;
-		/*margin:  0 0 0 0;
-		padding: 0 0 0 0;*/
+		/* effect incompatible with auto-margin */
+		margin:  0 0 0 0;
+		padding: 0 0 0 0;
+		max-width: unset;
 	}
 	.table	{
 		empty-cells:	show;

@@ -33,7 +33,7 @@
 	
 	$css_extra     = "
 	.table {
-		box-shadow: 5px 7px 0px #000;
+		box-shadow: 5px 5px 0px #000;
 		margin-bottom: 8px;
 	}";
 		

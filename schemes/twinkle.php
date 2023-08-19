@@ -9,7 +9,7 @@
   $fontsize = 2;
   
   //$config['board-title'] = '<img src="schemes/twinkle/twinklestarr.png" align=left><font class=font style=font-size:30px>Acmlm\'s Board</font>';
-  $config['board-title'] = '<img src="schemes/twinkle/twinklestarr.png" style="float: left"><font class=font style=font-size:30px>'.$config['board-name'].'</font><img src="schemes/twinkle/twinklestarr.png" style="float: right">';
+  $config['board-title'] = '<img src="schemes/twinkle/twinklestarr.png" style="float: left"><font class=font style=font-size:30px>'.$config['board-name'].'</font>';
   
   $newthreadpic = 'New Thread';
   $newreplypic  = 'New Reply';

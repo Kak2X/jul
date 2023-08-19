@@ -161,17 +161,17 @@ function print_args($args) {
 	$res = "";
 	foreach ($args as $val) {
 		if (is_object($val)) {
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[class ".get_class($val)."]</span>";
+			$res .= ($res !== "" ? "," : "")."[class ".get_class($val)."]";
 		} else if (is_resource($val)) {
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[Resource]</span>";
+			$res .= ($res !== "" ? "," : "")."[Resource]";
 		} else if (is_array($val)) {
 			//$tmp = print_args($val);
 			//$res .= ($res !== "" ? "," : "")."<span class='fonts'>[{$tmp}]</span>";
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>[Array]</span>";
+			$res .= ($res !== "" ? "," : "")."[Array]";
 		} else if ($val === null) {
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>null</span>";
+			$res .= ($res !== "" ? "," : "")."null";
 		} else {
-			$res .= ($res !== "" ? "," : "")."<span class='fonts'>'".htmlspecialchars($val)."'</span>";
+			$res .= ($res !== "" ? "," : "")."'".htmlspecialchars($val)."'";
 		}
 	}
 	return $res;

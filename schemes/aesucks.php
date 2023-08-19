@@ -1,11 +1,11 @@
 <?php
   $config['board-title']="
 	Ninja AE is a moron!
-	<embed src='schemes/aesucks/css-auth.mid' autostart=true loop=true autoplay=true hidden=true style='display: none'>
 	<br>a special gift to you from acmlm and xkeeper
-	<script>window.alert(\"The whole point of this great color scheme is to point out that Ninja AE sucks. Enjoy!\");</script>
 	<br>YOU ARE DOOMED!! FEAR THE -8388608 ...
   ";
+  $body_extra = "<embed src='schemes/aesucks/css-auth.mid' autostart=true loop=true autoplay=true hidden=true style='display: none'>
+  <script>window.alert(\"The whole point of this great color scheme is to point out that Ninja AE sucks. Enjoy!\");</script>";
   $schemedir     = "schemes/aesucks/";
   $numdir        = 'num3/';
   $numfil        = 'numnes';

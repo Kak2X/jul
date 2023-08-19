@@ -14,13 +14,13 @@ if ($pagetitle === NULL) $pagetitle = $title;
 			a:hover,.buttonlink:hover 	    { color: #CECAFE; }
 			body {
 				color: #DDDDDD;
-				font:13px verdana;
+				font-family: verdana;
 				background: #000F1F url('schemes/night/starsbg.png');
 			}
-			.font 	{font:13px verdana}
-			.fonth	{font:13px verdana;color:FFEEFF}
-			.fonts	{font:10px verdana}
-			.fontt	{font:10px tahoma}
+			.font 	{font:100% verdana}
+			.fonth	{font:100% verdana;color:FFEEFF}
+			.fonts	{font:75% verdana}
+			.fontt	{font:75% tahoma}
 			.tdbg1	{background:#111133}
 			.tdbg2	{background:#11112B}
 			.tdbgc	{background:#2F2F5F}
@@ -29,7 +29,7 @@ if ($pagetitle === NULL) $pagetitle = $title;
 					 border-top:	#000000 1px solid;
 					 border-left:	#000000 1px solid;
 					 border-spacing: 0px;
-					 font:13px 		 verdana;}
+					 font-family: verdana;}
 			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
 					 border-right:	#000000 1px solid;
 					 border-bottom:	#000000 1px solid}
@@ -38,20 +38,20 @@ if ($pagetitle === NULL) $pagetitle = $title;
 			  border:	#663399 solid 1px;
 			  background:#000000;
 			  color:	#DDDDDD;
-			  font:	10pt verdana;}
+			  font:	100% verdana;}
 			textarea:focus {
 			  border:	#663399 solid 1px;
 			  background:#000000;
 			  color:	#DDDDDD;
-			  font:	10pt verdana;}
+			  font:	100 verdana;}
 			.radio{
 			  border:	none;
 			  background:none;
 			  color:	#DDDDDD;
-			  font:	10pt verdana;}
+			  font:	100 verdana;}
 			.submit{
 			  border:	#663399 solid 2px;
-			  font:	10pt verdana;}
+			  font:	100 verdana;}
 			body, #w {
 				padding: 0px !important;
 				margin: 0px !important;
@@ -70,7 +70,7 @@ if ($pagetitle === NULL) $pagetitle = $title;
 	<body>
 		<div id='w'>
 		<center>
-			<div class="fonts" style="position: fixed; width: 600px; margin-left: -300px; top: 30%; left: 50%;">
+			<div style="position: fixed; width: 600px; margin-left: -300px; top: 30%; left: 50%;">
 				<table class="table">
 					<tr>
 						<td class='tdbgh center b' style="padding: 3px;">

@@ -144,14 +144,14 @@
 		global $sql;
 		$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
 		[
-			'time'	=> ctime(),
+			'time'	=> time(),
 			'user' 	=> $_POST['user'],
 			'pass' 	=> $_POST['pass'],
 			'ip'	=> $_SERVER['REMOTE_ADDR'],
 		]);
-		$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (ctime() - 1800) ."'");
+		$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
 		if ($fails >= 5) {
-			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Send e-mail for password recovery'");
+			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail for password recovery'");
 			return true;
 		}
 		return false;

@@ -6,7 +6,7 @@
 	if(!$_GET['u']) die("Missing ?u=<id> parameter");
 	$user = $sql->fetchq("SELECT name,posts,regdate,users_rpg.* FROM users,users_rpg WHERE id='{$_GET['u']}' AND uid=id") or die("User doesn't exist");
 	$p = $user['posts'];
-	$d = (ctime()-$user['regdate'])/86400;
+	$d = (time()-$user['regdate'])/86400;
 	
 	$u  = filter_int($_GET['u']);	// User ID
 	$it = filter_int($_GET['it']);	// Extra item (for item previews)

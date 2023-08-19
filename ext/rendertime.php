@@ -6,10 +6,10 @@
 	set_time_limit(0);
 	ini_set("memory_limit", "256M");
 
-	$mintime	= ctime() - (($_GET['d'] ? min($_GET['d'], 14) : 7) * 24 * 3600);
+	$mintime	= time() - (($_GET['d'] ? min($_GET['d'], 14) : 7) * 24 * 3600);
 //	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes`"));
 	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes` WHERE `time` > $mintime"));
-	$num		= ceil(ctime() / 3600) - $rangemin;
+	$num		= ceil(time() / 3600) - $rangemin;
 
 	$image			= imagecreatetruecolor(1100, $num * 10);
 	$col['bg']		= imagecolorallocate($image,   0,   0,   0);

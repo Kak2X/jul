@@ -218,7 +218,7 @@
 			}
 		}
 		
-		$currenttime    = ctime();
+		$currenttime    = time();
 		$numdays		= ($currenttime - $user['regdate']) / 86400;
 		
 		if ($flags == PREVIEW_EDITED) {
@@ -269,7 +269,7 @@
 		$ppost['deleted']       = 0;
 		$ppost['revision']      = 0;
 		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
-		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." AND user = {$user['id']}");
+		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(time() - 86400)." AND user = {$user['id']}");
 		$ppost['new']           = filter_bool($data['new']);
 		$ppost['piclink']       = get_weblink($user['id'], $data['moodid']);
 		
@@ -407,7 +407,7 @@ function get_complete_numdir() {
 
 function load_syndromes() {
 	global $sql;
-	return $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(ctime() - 86400)." GROUP BY user");
+	return $sql->getresultsbykey("SELECT user, COUNT(*) num FROM posts WHERE date > ".(time() - 86400)." GROUP BY user");
 }
 
 function read_syndromes($all = false) {

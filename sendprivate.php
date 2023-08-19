@@ -55,7 +55,7 @@ if ($_GET['id']) {
 		$error = NULL;
 		if (!$_POST['message'])
 			$error	= "You didn't enter anything in the post.";
-		else if ($loguser['lastpmtime'] > (ctime()-4))
+		else if ($loguser['lastpmtime'] > (time()-4))
 			$error	= "You are posting too fast.";
 		
 		if ($error) { // This redirect is so fucking annoying
@@ -262,7 +262,7 @@ else {
 			$error = "You haven't entered a message.";
 		} else if (!$_POST['subject']) {
 			$error = "You haven't entered a subject.";
-		} else if ($loguser['lastpmtime'] > (ctime()-30)) {
+		} else if ($loguser['lastpmtime'] > (time()-30)) {
 			$error	= "You are trying to post too rapidly.";
 		} else if (!valid_pm_folder($_POST['folder'], $loguser['id'])) {
 			$error = "You have selected a nonexisting folder.";

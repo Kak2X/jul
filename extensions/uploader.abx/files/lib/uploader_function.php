@@ -291,7 +291,7 @@ function upload_file($file, $user, $opt) {
 		
 		'mime'         => mime_content_type($file['tmp_name']),
 		'size'         => $file['size'],
-		'date'         => ctime(),
+		'date'         => time(),
 		'downloads'    => 0,
 		
 		'width'        => (int) $width,
@@ -300,7 +300,7 @@ function upload_file($file, $user, $opt) {
 	];
 	
 	$sql->beginTransaction();
-	$sql->query("UPDATE uploader_cat SET files = files + 1, lastfiledate = '".ctime()."', lastfileuser = '{$user['id']}' WHERE id = {$opt['cat']}");
+	$sql->query("UPDATE uploader_cat SET files = files + 1, lastfiledate = '".time()."', lastfileuser = '{$user['id']}' WHERE id = {$opt['cat']}");
 	$sql->queryp("INSERT INTO uploader_files SET ".mysql::setplaceholders($sqldata), $sqldata);
 	
 	// Now that we know the file id, create the file hash
@@ -370,7 +370,7 @@ function reupload_file($file, $orig_file, $user, $opt) {
 
 	// "this was edited" metadata
 	$sqldata['lastedituser'] = $user['id'];
-	$sqldata['lasteditdate'] = ctime();
+	$sqldata['lasteditdate'] = time();
 	// Edited fields
 	$sqldata['description']  = $opt['desc'];
 	$sqldata['private']      = $opt['private'];

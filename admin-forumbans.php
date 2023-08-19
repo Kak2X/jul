@@ -148,7 +148,7 @@ if (!$_GET['forum']) {
 		$qsearch .= " AND f.user = {$_POST['searchuser']}";
 	}
 	if (!$_POST['showexpired']) {
-		$qsearch .= " AND (!f.expire OR f.expire > ".ctime().")";
+		$qsearch .= " AND (!f.expire OR f.expire > ".time().")";
 	}
 	//--
 	

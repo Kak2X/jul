@@ -31,7 +31,7 @@
 
 	if ($_GET['time']) {
 		$when = " over the past ".timeunits2($_GET['time']);
-		$timequery = ' AND p.date > ' . (ctime()-$_GET['time']);
+		$timequery = ' AND p.date > ' . (time()-$_GET['time']);
 	} else {
 		$timequery = $when = '';
 	}

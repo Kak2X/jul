@@ -31,7 +31,7 @@
 	$dcclouds2      = array(  20,  20,  20 );
 	
 	// Retrieve time information...
-	$curtime    = getdate(ctime() + $loguser['tzoff']);
+	$curtime    = getdate(time() + $loguser['tzoff']);
 	$min        = $curtime['hours'] * 60 + $curtime['minutes'];
 	if (isset($_GET['testtime']))
 		$min = (int)$_GET['testtime'];

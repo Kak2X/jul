@@ -134,7 +134,7 @@ function rate_post($post, $rating, $mode = MODE_POST) {
 	} else if ($data['voted']) {
 		delete_post_rating($loguser['id'], $post, $rating, $mode);
 	} else {
-		$sql->query("INSERT INTO {$joinpf}_ratings (user, post, rating, `date`) VALUES ({$loguser['id']}, {$post}, {$rating}, ".ctime().")");
+		$sql->query("INSERT INTO {$joinpf}_ratings (user, post, rating, `date`) VALUES ({$loguser['id']}, {$post}, {$rating}, ".time().")");
 		// User cache update
 		
 		$res = $sql->query("

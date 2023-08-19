@@ -72,7 +72,7 @@
 				'title'        => $_POST['title'],
 				'text'         => $_POST['text'],
 				'lastedituser' => $loguser['id'],
-				'lasteditdate' => ctime(),
+				'lasteditdate' => time(),
 				'moodid'       => $_POST['moodid'],
 			);
 			$sql->queryp("UPDATE news SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
@@ -170,7 +170,7 @@
 				'title'  => $_POST['title'],
 				'text'   => $_POST['text'],
 				'user'   => $loguser['id'],
-				'date'   => ctime(),
+				'date'   => time(),
 				'moodid' => $_POST['moodid'],
 			);
 			$sql->queryp("INSERT INTO news SET ".mysql::setplaceholders($values), $values);

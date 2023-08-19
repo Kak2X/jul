@@ -22,7 +22,7 @@
 	$regday_ts  = $regday * 86400;         // Day timestamp
 	// $regday_ts2 = $regday_ts + 86400 // ?
 
-	$days = ceil((ctime() - $regday_ts) / 86400); // Days the board has been opened
+	$days = ceil((time() - $regday_ts) / 86400); // Days the board has been opened
 	
 	
 	$max   = ceil(($sql->resultq("SELECT COUNT(*) FROM `posts`") + 1) / THRESHOLD) * THRESHOLD;

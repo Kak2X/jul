@@ -18,7 +18,7 @@
 	$regday     = floor($regdate / 86400);
 	$regdate_ts = $regday * 86400; // Remove hour/min/sec info
 	
-	$days = floor((ctime() - $regdate_ts) / 86400); // Days the board has been opened
+	$days = floor((time() - $regdate_ts) / 86400); // Days the board has been opened
 
 	// Base the maximum
 	$max = ceil(($sql->resultq("SELECT MAX(posts) FROM users") + 1) / SECTOR_H) * SECTOR_H;

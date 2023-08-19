@@ -132,9 +132,9 @@ function ext_enable($extName, $install, &$extensions = NULL, &$enabled = null, &
 	
 	// Set timestamp in internal bookkeeping
 	$usermeta[$extName] = ext_read_userdata($extName);
-	$usermeta[$extName]['enableTime'] = ctime();
+	$usermeta[$extName]['enableTime'] = time();
 	if ($install)
-		$usermeta[$extName]['installTime'] = ctime();
+		$usermeta[$extName]['installTime'] = time();
 	
 	// Only at the very end, after all required extensions are enabled, we save the changes
 	if (isset($first)) {

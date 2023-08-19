@@ -100,7 +100,7 @@
 				}
 				
 				if (($message == "COCKS" || $head == "COCKS" || $sign == "COCKS") || ($message == $head && $head == $sign)) {
-					$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."'");
+					$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."'");
 					errorpage("NO BONUS");
 				}
 				*/				
@@ -115,7 +115,7 @@
 				$pdata = array(
 					'options'	=> $nosmilies . "|" . $nohtml,
 					'edited'	=> $edited,
-					'editdate' 	=> ctime(),
+					'editdate' 	=> time(),
 					'moodid'	=> $moodid,
 				);
 				

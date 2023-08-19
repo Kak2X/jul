@@ -35,13 +35,13 @@
 						FROM `pm_access` 
 						WHERE `user` = '{$loguser['id']}' AND `folder` = '{$_GET['dir']}'
 					)");
-				$sql->query("REPLACE INTO pm_foldersread (user, folder, readdate) VALUES ({$loguser['id']}, {$_GET['dir']}, ".ctime().')');
+				$sql->query("REPLACE INTO pm_foldersread (user, folder, readdate) VALUES ({$loguser['id']}, {$_GET['dir']}, ".time().')');
 				break;
 			case 'markallfoldersread':
 				$sql->query("DELETE FROM pm_threadsread WHERE uid = {$loguser['id']}");
 				$sql->query("
 					REPLACE INTO pm_foldersread (user, folder, readdate) 
-						SELECT {$loguser['id']}, folder, ".ctime()."
+						SELECT {$loguser['id']}, folder, ".time()."
 						FROM pm_access 
 						WHERE user = {$loguser['id']}
 					");

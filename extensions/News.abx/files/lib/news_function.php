@@ -209,7 +209,7 @@
 		$preview = array(
 			'id'        => $data['id'],
 			'user'      => $data['user'],
-			'date'      => isset($data['date']) ? $data['date'] : ctime(),
+			'date'      => isset($data['date']) ? $data['date'] : time(),
 			'userdata'  => $data['userdata'],
 			'deleted'   => 0,
 			'comments'  => 0,
@@ -225,7 +225,7 @@
 		if ($data['id']) {
 			$preview['comments']     = $sql->resultq("SELECT COUNT(*) FROM news_comments WHERE pid = {$data['id']}");
 			$preview['lastedituser'] = $loguser['id'];
-			$preview['lasteditdate'] = ctime();
+			$preview['lasteditdate'] = time();
 			$preview['edituserdata'] = $loguser;
 		}
 		
@@ -287,11 +287,11 @@
 			$out['date']             = $data['date'];
 			$out['lastedituserdata'] = $loguser;
 			$out['lastedituser']     = $loguser['id'];
-			$out['lasteditdate']     = ctime();
+			$out['lasteditdate']     = time();
 		} else {
 			$out['userdata']         = $loguser;
 			$out['user']             = $loguser['id'];
-			$out['date']             = ctime();
+			$out['date']             = time();
 			$out['lastedituser']     = 0;
 		}
 		// avatar preview support

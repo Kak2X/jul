@@ -49,7 +49,7 @@
 		'forum'   => 0,
 		'ip'      => $_SERVER['REMOTE_ADDR'],
 	//	'num'     => 0,
-		'date'    => ctime(),
+		'date'    => time(),
 		'new'     => true,
 		// (mod) Options
 		'nosmilies' => 0,

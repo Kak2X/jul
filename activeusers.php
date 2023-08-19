@@ -24,7 +24,7 @@
 	}
 	
 	// Time boundary
-	$qtime  = ctime() - $_GET['time'];
+	$qtime  = time() - $_GET['time'];
 	
 	$query 	= "SELECT $userfields, u.regdate, COUNT(*) AS cnt FROM users u";
 	$endp   = "GROUP BY u.id ORDER BY cnt DESC";

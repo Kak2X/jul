@@ -13,7 +13,7 @@ if (!parse_color_input("#00000"))
 die("ok");
 $tags	= array(
 			'/me '			=> "*<b>". $user['username'] ."</b> ",
-			'&date&'		=> date($loguser['dateformat'], ctime() + $loguser['tzoff']),
+			'&date&'		=> date($loguser['dateformat'], time() + $loguser['tzoff']),
 			'&numdays&'		=> floor($user['days']),
 
 			'&numposts&'	=> $user['posts'],
@@ -96,7 +96,7 @@ for ($i = 10; $i < 50; ++$i) {
 	$sql->execute($a, array(
 		'userfrom' => 2, 
 		'userto' => 1,
-		'date' => ctime(),
+		'date' => time(),
 		'text' => "test message {$i}",
 	));
 }

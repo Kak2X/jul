@@ -8,7 +8,7 @@ function postcode($post,$set){
 	global $config, $controls, $tlayout, $textcolor, $numfil, $hacks, $x_hacks, $loguser, $barimg;
 	static $numdir;
 	
-	$exp		= calcexp($post['posts'],(ctime()-$post['regdate']) / 86400);
+	$exp		= calcexp($post['posts'],(time()-$post['regdate']) / 86400);
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
 	
@@ -48,11 +48,11 @@ function postcode($post,$set){
 	
 	// Other stats
 	if ($post['lastposttime']) {
-		$sincelastpost	= 'Since last post: '.timeunits(ctime()-$post['lastposttime']);
+		$sincelastpost	= 'Since last post: '.timeunits(time()-$post['lastposttime']);
 	} else {
 		$sincelastpost = "";
 	}
-	$lastactivity	= 'Last activity: '.timeunits(ctime()-$post['lastactivity']);
+	$lastactivity	= 'Last activity: '.timeunits(time()-$post['lastactivity']);
 	$since			= 'Since: '.printdate($post['regdate'], true);
 	$postdate		= printdate($post['date']);
 	
@@ -102,7 +102,7 @@ function postcode($post,$set){
 				$imood = "<img src='http://www.imood.com/query.cgi?email={$post['imood']}&type=1&fg={$textcolor}&trans=1' style='height: 15px' align=absbottom>";
 			}
 			
-			$statustime = ctime() - 300;
+			$statustime = time() - 300;
 			if ($post['lastactivity'] < $statustime) {
 				$status = htmlspecialchars($post['name'])." is <span class='b' style='color: #FF0000'>Offline</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 			} elseif($post['lastactivity'] > $statustime) {
@@ -184,7 +184,7 @@ function postcode($post,$set){
 					'&totallevelexp&' => totallvlexp($lvl),
 
 					// Dates
-					'&lastactivity&'  => timeunits(ctime()-$post['lastactivity']),
+					'&lastactivity&'  => timeunits(time()-$post['lastactivity']),
 					'&since&'         => printdate($post['regdate'], true),
 					'&location&'      => $set['location'],
 					

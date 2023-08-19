@@ -39,12 +39,12 @@ function timeunits2($sec, $no_blank = false) {
 
 function is_birthday($timestamp) {
 	global $loguser; 
-	return (date('m-d', $timestamp) == date('m-d',ctime() + $loguser['tzoff']));
+	return (date('m-d', $timestamp) == date('m-d',time() + $loguser['tzoff']));
 }
 
 function printdate($timestamp = NULL, $short = false) {
 	global $loguser;
-	if (!$timestamp) $timestamp = ctime();
+	if (!$timestamp) $timestamp = time();
 	return date(
 		$short ? $loguser['dateshort'] : $loguser['dateformat'],
 		(int)$timestamp + $loguser['tzoff']

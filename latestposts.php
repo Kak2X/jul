@@ -21,7 +21,7 @@
 		".($loguser['id'] ? "LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']} " : "")."
 		
 		WHERE 	".can_view_forum_query()."
-				AND p.date >= ".($maxtime ? (ctime()-$maxtime) : (ctime()-86400*7)) // time limit here
+				AND p.date >= ".($maxtime ? (time()-$maxtime) : (time()-86400*7)) // time limit here
 				.($_GET['lastid'] ? "AND p.id > {$_GET['lastid']} ":"")."
 				AND ($ismod OR !ISNULL(f.id))
 		ORDER BY `id` DESC
@@ -49,7 +49,7 @@
 					<td class='tdbg2 center'{$strike}><a href='forum.php?id={$in['fid']}'>". htmlspecialchars($in['ftitle']) ."</a></td>
 					<td class='tdbg1'{$strike}>{$newpost}<a href='thread.php?pid={$in['id']}&r=1#{$in['id']}'>". htmlspecialchars($in['title']) ."</a></td>
 					<td class='tdbg1 center'>".getuserlink($in, $in['user'])."</td>
-					<td class='tdbg2 center'>". timeunits(ctime() - $in['date']) ."</td>
+					<td class='tdbg2 center'>". timeunits(time() - $in['date']) ."</td>
 				</tr>";
 		}
 		
@@ -83,7 +83,7 @@
 		
 		$output = array(
 				'tzoff'		=> $tzoff,
-				'localtime' => ctime(),
+				'localtime' => time(),
 				'posts'		=> array(), //$sql->fetchAll($data, PDO::FETCH_ASSOC)
 			);
 		

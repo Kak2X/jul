@@ -133,7 +133,7 @@
 	$users = array();
 	$userids = array();
 	for ($i = 0; $user = $sql->fetch($users1); ++$i) {
-		$user['days'] = (ctime()-$user['regdate'])/86400;
+		$user['days'] = (time()-$user['regdate'])/86400;
 		$user['exp']  = calcexp($user['posts'],$user['days']);
 		$user['lvl']  = calclvl($user['exp']);
 		$user['rating'] = null;
@@ -173,7 +173,7 @@
 				// Cache previous calculations when possible
 				if (!isset($tempdb[$x['userfrom']]['lvl'])) {
 					$unlist[] = $x['userfrom'];
-					$tdays = (ctime() - $x['regdate']) / 86400;
+					$tdays = (time() - $x['regdate']) / 86400;
 					$texp  = calcexp($x['posts'], $tdays);
 					$tempdb[$x['userfrom']]['lvl']  = calclvl($texp);
 				}
@@ -350,8 +350,8 @@ print "
 
 		if (!$_GET['rpg']) {
 			$ulist .= "
-				<td class='tdbg2 center'><span title='". timeunits2(ctime() - $user['regdate'], true) ." ago'>".printdate($user['regdate'])."</span></td>
-				<td class='tdbg2 center'><span title='". timeunits2(ctime() - $user['lastactivity'], true) ." ago'>".printdate($user['lastactivity'])."</span></td>
+				<td class='tdbg2 center'><span title='". timeunits2(time() - $user['regdate'], true) ." ago'>".printdate($user['regdate'])."</span></td>
+				<td class='tdbg2 center'><span title='". timeunits2(time() - $user['lastactivity'], true) ." ago'>".printdate($user['lastactivity'])."</span></td>
 				<td class='tdbg1 center'>{$user['posts']}</td>
 				<td class='tdbg1 center'>{$user['lvl']}</td>
 				<td class='tdbg1 center'>{$user['exp']}</td>

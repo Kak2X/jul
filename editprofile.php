@@ -26,7 +26,7 @@
 		
 		// Custom title requirements
 		if		($loguser['titleoption']==0) $titleopt=0;
-		else if ($loguser['titleoption']==1) $titleopt=($issuper || $loguser['posts']>=500 || ($loguser['posts']>=250 && (ctime()-$loguser['regdate'])>=100*86400));
+		else if ($loguser['titleoption']==1) $titleopt=($issuper || $loguser['posts']>=500 || ($loguser['posts']>=250 && (time()-$loguser['regdate'])>=100*86400));
 		else if ($loguser['titleoption']==2) $titleopt=1;
 		else 								 $titleopt=0;
 		
@@ -285,7 +285,7 @@
 				'uploader_locked'	=> filter_int($_POST['uploader_locked']),
 				'rating_locked'		=> filter_int($_POST['rating_locked']),
 				'titleoption'		=> filter_int($_POST['titleoption']),
-				'ban_expire'		=> ($_POST['powerlevel'] == -1 && filter_int($_POST['ban_hours']) > 0) ? (ctime() + filter_int($_POST['ban_hours']) * 3600) : 0,
+				'ban_expire'		=> ($_POST['powerlevel'] == -1 && filter_int($_POST['ban_hours']) > 0) ? (time() + filter_int($_POST['ban_hours']) * 3600) : 0,
 			);
 	
 			$adminset = mysql::setplaceholders($adminval).",";
@@ -415,7 +415,7 @@
 		_table_format("Options", array(
 			"Custom date format" 			=> [0, "dateformat", "Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting. Leave blank to use the default.", 16, 32],
 			"Custom short date format" 		=> [0, "dateshort", "Change how abbreviated dates are displayed. Uses the same formatting. Leave blank to reset.", 8, 16],
-			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],ctime()).").", 5, 5],
+			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],time()).").", 5, 5],
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
 			"Use post toolbar" 				=> [2, "posttool", "You can disable it here, which can make thread pages smaller and load faster.", "Disabled|Enabled"],

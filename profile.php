@@ -27,7 +27,7 @@
 	
 	pageheader($windowtitle);
 	
-	$numdays = (ctime() - $user['regdate']) / 86400;
+	$numdays = (time() - $user['regdate']) / 86400;
 	$userlink = getuserlink($user, 0, '', true);	// With minipic
 
 	// Also known as
@@ -39,7 +39,7 @@
 	
 	// Banned until
 	if ($user['powerlevel'] == -1 && $user['ban_expire']) {
-		$bantime = printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-ctime())." remaining)";
+		$bantime = printdate($user['ban_expire'])." (".timeunits2($user['ban_expire']-time())." remaining)";
 	} else {
 		$bantime = NULL;
 	}
@@ -55,9 +55,9 @@
 	if ($user['posts']) {
 		$topposts = _POST_LIMIT * (_PROJECT_LIMIT ? 1 : ceil($user['posts'] / _POST_LIMIT));
 		// regtime * remaining posts / posts
-		$projdate = ctime() + (ctime() - $user['regdate']) * ($topposts - $user['posts']) / ($user['posts']);
+		$projdate = time() + (time() - $user['regdate']) * ($topposts - $user['posts']) / ($user['posts']);
 		if (
-			$projdate > ctime() && 
+			$projdate > time() && 
 			$projdate < 2000000000 && 
 			(!_PROJECT_LIMIT || $user['posts'] < _POST_LIMIT)
 		) {
@@ -99,10 +99,10 @@
 		");
 		$numvotes   = $sql->num_rows($ratings);
 		while ($x = $sql->fetch($ratings)) {
-			if ($x['posts'] < 0 || $x['regdate'] > ctime()) {
+			if ($x['posts'] < 0 || $x['regdate'] > time()) {
 				$level = 1;
 			} else {
-				$level = calclvl(calcexp($x['posts'], (ctime() - $x['regdate']) / 86400));
+				$level = calclvl(calcexp($x['posts'], (time() - $x['regdate']) / 86400));
 			}
 			$ratescore += $x['rating'] * $level;
 			$ratetotal += $level;
@@ -180,12 +180,12 @@
 	//Timezone offset
 	$tzoffset = $user['timezone'];
 	$tzoffrel = $tzoffset - $loguser['timezone'];
-	$tzdate   = date($loguser['dateformat'], ctime() + $tzoffset * 3600);
+	$tzdate   = date($loguser['dateformat'], time() + $tzoffset * 3600);
 	
 	// Birthday
 	if ($user['birthday']) {
 		$birthday = date("l, F j, Y", $user['birthday']);
-		$age = "(".floor((ctime()-$user['birthday'])/86400/365.2425)." years old)";
+		$age = "(".floor((time()-$user['birthday'])/86400/365.2425)." years old)";
 	} else {
 		$birthday = $age = "";
 	}

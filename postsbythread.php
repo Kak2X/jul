@@ -18,7 +18,7 @@
 		$_GET['posttime'] = 2592000;
 
 	if ($_GET['posttime']) {
-		$qstrings[] = "p.date > ".(ctime()-$_GET['posttime']);
+		$qstrings[] = "p.date > ".(time()-$_GET['posttime']);
 		$during = ' during the last '.timeunits2($_GET['posttime']);
 	} else {
 		$during = "";

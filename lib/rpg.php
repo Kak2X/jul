@@ -35,7 +35,7 @@ function getstats($user, $items = array(), $class = array()){
 	global $stat;
 	
 	$posts = $user['posts'];
-	$days  = (ctime() - $user['regdate']) / 86400;
+	$days  = (time() - $user['regdate']) / 86400;
 	$m     = array_fill(0, 9, 1); // initialize multipliers to *1
 	$a     = array_fill(0, 9, 0); // initialize additions to +0
 	

@@ -11,7 +11,7 @@
 		reset the date to today.
 	*/
 	if (!$_GET['cday'] || !$timestamp = fieldstotimestamp('o', '_GET')) {
-		$timestamp = ctime();
+		$timestamp = time();
 	}
 	
 	$m  = date("m", $timestamp);

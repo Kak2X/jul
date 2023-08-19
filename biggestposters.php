@@ -9,7 +9,7 @@
 	else                            { $sort	= "waste";   $headertext = 'by post size'; }
 
 	// Time for an update?
-	if ($sql->resultq("SELECT bigpostersupdate FROM misc") <= ctime()-(3600 * 8)) {
+	if ($sql->resultq("SELECT bigpostersupdate FROM misc") <= time()-(3600 * 8)) {
 		$sql->query("TRUNCATE biggestposters");
 		/*$sql->query(" "
 		." "
@@ -27,7 +27,7 @@
 				GROUP BY p.user
 		");
 		$sql->query("UPDATE biggestposters SET average = waste / posts");
-		$sql->query("UPDATE misc SET bigpostersupdate = ".ctime());
+		$sql->query("UPDATE misc SET bigpostersupdate = ".time());
 	}
 	$posters = $sql->query("
 		SELECT bp.*, $userfields x, u.regdate

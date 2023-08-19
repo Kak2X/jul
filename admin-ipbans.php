@@ -114,7 +114,7 @@
 		$outres[] = "i.ip LIKE :searchip";
 	}
 	if (!$_POST['showexpired']) {
-		$outres[] = "(i.expire = 0 OR i.expire > ".ctime().")";
+		$outres[] = "(i.expire = 0 OR i.expire > ".time().")";
 	}
 	if ($_POST['hideautomatic']) {
 		$outres[] = "i.banner != 0";

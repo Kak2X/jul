@@ -21,7 +21,7 @@
 			errorpage("This user doesn't exist!", 'index.php', 'the index page');
 		if (!$_POST['text'])
 			errorpage("Your comment was blank.", "profile.php?id={$_GET['id']}", "the user's profile");	
-		if (ctime() - $lastcomment < 15) 
+		if (time() - $lastcomment < 15) 
 			errorpage("You are commenting too fast!"); // No redirect, to allow refreshing
 		if (!$cancomment)
 			errorpage("This user has profile comments disabled!", 'index.php', 'the index page');
@@ -29,7 +29,7 @@
 		$vals = array(
 			'userfrom' => $loguser['id'], 
 			'userto'   => $_GET['id'],
-			'date'     => ctime(),
+			'date'     => time(),
 			'text'     => $_POST['text'],
 		);
 		$sql->queryp("INSERT INTO users_comments SET ".mysql::setplaceholders($vals), $vals);		

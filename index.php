@@ -60,12 +60,12 @@
 				$id = filter_int($_GET['forumid']);
 				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']} AND forum = $id");
 				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']} AND tid IN (SELECT `id` FROM `threads` WHERE `forum` = $id)");
-				$sql->query("INSERT INTO forumread (user, forum, readdate) VALUES ({$loguser['id']}, $id, ".ctime().')');
+				$sql->query("INSERT INTO forumread (user, forum, readdate) VALUES ({$loguser['id']}, $id, ".time().')');
 				break;
 			case 'markallforumsread':
 				$sql->query("DELETE FROM forumread WHERE user = {$loguser['id']}");
 				$sql->query("DELETE FROM threadsread WHERE uid = {$loguser['id']}");
-				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$loguser['id']}, id, ".ctime()." FROM forums");
+				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$loguser['id']}, id, ".time()." FROM forums");
 				break;
 		}
 		
@@ -90,16 +90,16 @@
 
 	$users1 = $sql->query("
 		SELECT $userfields FROM users u
-		WHERE birthday AND FROM_UNIXTIME(birthday, '%m-%d') = '".date('m-d',ctime() + $loguser['tzoff'])."'
+		WHERE birthday AND FROM_UNIXTIME(birthday, '%m-%d') = '".date('m-d',time() + $loguser['tzoff'])."'
 		ORDER BY name
 	");
 	
 	$blist	= "";
 	
 	for ($numbd = 0; $user = $sql->fetch($users1); ++$numbd) {
-		$blist = $numbd ? ", " : "<tr><td class='tdbg2 center fonts' colspan='2'>Birthdays for ".date('F j', ctime() + $loguser['tzoff']).': ';
+		$blist = $numbd ? ", " : "<tr><td class='tdbg2 center fonts' colspan='2'>Birthdays for ".date('F j', time() + $loguser['tzoff']).': ';
 		
-		$y = date('Y', ctime()) - date('Y', $user['birthday']);
+		$y = date('Y', time()) - date('Y', $user['birthday']);
 		$userurl = getuserlink($user);
 		$blist .= "$userurl ($y)"; 
 	}
@@ -127,8 +127,8 @@
 	
 
 	$posts = $sql->fetchq('
-		SELECT 	(SELECT COUNT(*) FROM posts WHERE date>'.(ctime()-3600).')  AS h, 
-				(SELECT COUNT(*) FROM posts WHERE date>'.(ctime()-86400).') AS d');
+		SELECT 	(SELECT COUNT(*) FROM posts WHERE date>'.(time()-3600).')  AS h, 
+				(SELECT COUNT(*) FROM posts WHERE date>'.(time()-86400).') AS d');
 
 	$count = $sql->fetchq('
 		SELECT 	(SELECT COUNT(*) FROM users)   AS u,
@@ -138,14 +138,14 @@
 	$misc = $sql->fetchq('SELECT maxpostsday, maxpostshour, maxusers FROM misc');
 	
 	// Have we set a new record?
-	if ($posts['d'] > $misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday  = {$posts['d']}, maxpostsdaydate  = ".ctime());
-	if ($posts['h'] > $misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour = {$posts['h']}, maxpostshourdate = ".ctime());
+	if ($posts['d'] > $misc['maxpostsday'])  $sql->query("UPDATE misc SET maxpostsday  = {$posts['d']}, maxpostsdaydate  = ".time());
+	if ($posts['h'] > $misc['maxpostshour']) $sql->query("UPDATE misc SET maxpostshour = {$posts['h']}, maxpostshourdate = ".time());
 	// $numon is currently thrown out by onlineusers() as a global variable
 	if ($numon  > $misc['maxusers']) {
 		$sql->queryp("UPDATE misc SET maxusers = :num, maxusersdate = :date, maxuserstext = :text",
 			[
 				'num'	=> $numon,
-				'date'	=> ctime(),
+				'date'	=> time(),
 				'text'	=> $onlineusers,
 			]);
 	}
@@ -166,8 +166,8 @@
 	if (filter_bool($_GET['oldcounter']))
 		$statsblip	= "{$posts['d']} posts during the last day, {$posts['h']} posts during the last hour.";
 	else {
-		$nthreads = $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `lastpostdate` > '". (ctime() - 86400) ."'");
-		$nusers   = $sql->resultq("SELECT COUNT(*) FROM `users`   WHERE `lastposttime` > '". (ctime() - 86400) ."'");
+		$nthreads = $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `lastpostdate` > '". (time() - 86400) ."'");
+		$nusers   = $sql->resultq("SELECT COUNT(*) FROM `users`   WHERE `lastposttime` > '". (time() - 86400) ."'");
 		$tthreads = ($nthreads === 1) ? "thread" : "threads";
 		$tusers   = ($nusers   === 1) ? "user" : "users";
 		$statsblip	= "$nusers $tusers active in $nthreads $tthreads during the last day.";
@@ -494,7 +494,7 @@
 					$new = $statusicons['new'] ."<br>". generatenumbergfx((int)$forumnew[$forum['id']]);
 				}
 				// If not, mark posts made in the last hour as new
-				else if (!$loguser['id'] && $forum['lastpostdate'] > ctime() - 3600) {
+				else if (!$loguser['id'] && $forum['lastpostdate'] > time() - 3600) {
 					$new = $statusicons['new'];
 				}
 			}
@@ -503,7 +503,7 @@
 		$newcount	= $sql->resultq("SELECT COUNT(*) FROM `threads` WHERE `id` NOT IN (SELECT `tid` FROM `threadsread` WHERE `uid` = '$loguser[id]' AND `read` = 1) AND `lastpostdate` > '". $postread[$forum['id']] ."' AND `forum` = '$forum[id]'");
 			}
 
-			if ((($forum['lastpostdate'] > $postread[$forum['id']] and $log) or (!$log and $forum['lastpostdate']>ctime()-3600)) and $forum['numposts']) {
+			if ((($forum['lastpostdate'] > $postread[$forum['id']] and $log) or (!$log and $forum['lastpostdate']>time()-3600)) and $forum['numposts']) {
 				$new = $statusicons['new'] ."<br>". generatenumbergfx($newcount);
 			}
 */

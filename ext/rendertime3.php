@@ -6,10 +6,10 @@
 	set_time_limit(0);
 	ini_set("memory_limit", "256M");
 
-	$mintime	= ctime() - (86400 * 30);
+	$mintime	= time() - (86400 * 30);
 
 	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes`". ($_GET['all'] ? "" : "WHERE `time` > $mintime ")));
-	$num		= ceil(ctime() / 3600) - $rangemin;
+	$num		= ceil(time() / 3600) - $rangemin;
 
 	$maxy			= 500;
 	$scaley			= $maxy / 25;

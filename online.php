@@ -56,7 +56,7 @@
 	$posters = $sql->query("
 		SELECT $userfields, u.posts, lastactivity, lastip, lastposttime, lasturl, hideactivity
 		FROM users u
-		WHERE lastactivity > ".(ctime()-$time)." AND ($ismod OR !hideactivity)
+		WHERE lastactivity > ".(time()-$time)." AND ($ismod OR !hideactivity)
 		ORDER BY ".(isset($ipsort) ? 'lastip' : 'lastactivity DESC')
 	);
 
@@ -120,7 +120,7 @@
 		</tr>
 	</table>
 		<?php
-	//WHERE date>'.(ctime()-$time).'
+	//WHERE date>'.(time()-$time).'
 	$guests = $sql->query('
 		SELECT *, (SELECT COUNT(`ip`) FROM `ipbans` WHERE `ip` = `guests`.`ip`) AS banned
 		FROM guests

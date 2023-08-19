@@ -302,18 +302,17 @@
 		{
 			"title":"Defaults",
 			"fields":{
-				"server-time-offset":{
-					"title":"Server time offset",
-					"desc":"The time offset added to all of the dates. Only useful if the board domain changes to one in a different time zone.",
+				"timezone":{
+					"title":"Time zone",
+					"desc":"If specified, allows to override PHP's default time zone. See <a target='_blank' href='https://www.php.net/manual/en/timezones.php'>here</a> for the allowed values. Only useful if the board is moved to a server in a different time zone.",
 					"input":"text",
-					"type":"int",
-					"default":0,
-					"desc_sfx":"seconds",
-					"width":"150px"
+					"type":"string",
+					"default":"",
+					"width":"250px"
 				},
 				"default-dateformat":{
 					"title":"Default date format",
-					"desc":"Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting.",
+					"desc":"Change how dates are displayed. Uses <a target='_blank' href='http://php.net/manual/en/function.date.php'>date()</a> formatting.",
 					"input":"text",
 					"type":"string",
 					"default":"m-d-y h:i:s A",

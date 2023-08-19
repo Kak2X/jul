@@ -57,7 +57,7 @@
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".($thread['firstpostdate']++)."', `read` = '1'");
 		}
 		
-		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, {$_GET['f']}, ".ctime().") 
+		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, {$_GET['f']}, ".time().") 
 		ON DUPLICATE KEY UPDATE readdate = VALUES(readdate)");
 	}
 	

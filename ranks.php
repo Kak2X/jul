@@ -58,7 +58,7 @@
 
 	// Print
 	$useranks = ($_GET['showall'] ? '' : "AND useranks={$_GET['set']}");
-	$btime = ctime()-86400*30; // 30 days without browsing = Marked as inactive
+	$btime = time()-86400*30; // 30 days without browsing = Marked as inactive
 
 	$ranks = $sql->query("SELECT * FROM ranks WHERE rset = {$_GET['set']} ORDER BY num");
 	$totalranks = $sql->num_rows($ranks);

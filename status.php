@@ -13,7 +13,7 @@
 
 	$user = $sql->fetchq("SELECT u.name,u.posts,u.regdate,r.* FROM users u INNER JOIN users_rpg r ON u.id = r.uid WHERE id = $u");
 	$p = $user['posts'];
-	$d = (ctime()-$user['regdate'])/86400;
+	$d = (time()-$user['regdate'])/86400;
 
 	if(!$it)
 		$it=0;

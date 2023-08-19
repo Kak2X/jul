@@ -10,7 +10,7 @@
 	$xk		= $sql -> fetchq("SELECT * FROM `users` WHERE `id` = '1'");
 	$thread	= $sql -> resultq("SELECT COUNT(`id`) FROM `threads` WHERE `user` = '1'");
 
-	$exp	= calcexp($xk['posts'], (ctime() - $xk['regdate']) / 86400);
+	$exp	= calcexp($xk['posts'], (time() - $xk['regdate']) / 86400);
 	$level	= calclvl($exp);
 	$expt	= totallvlexp($level);
 	$expl	= $expt - calcexpleft($exp);

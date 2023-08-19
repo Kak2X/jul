@@ -397,7 +397,7 @@
 				$user = filter_int($user['id']);
 				if (!$user) return 0;
 			}
-			$currenttime = ctime();
+			$currenttime = time();
 			
 			// Insert thread
 			$vals = array(
@@ -457,7 +457,7 @@
 			$signid = getpostlayoutid($user['signature']);
 			$cssid  = getpostlayoutid($user['css']);
 		}
-		$currenttime = ctime();
+		$currenttime = time();
 		
 		// Update posts & stats
 		$vals = array(
@@ -633,7 +633,7 @@
 		if ($change) 
 			$sql->query("UPDATE threads SET featured = 1 WHERE id = {$id}");
 		if ($archive) 
-			$sql->query("INSERT INTO threads_featured (thread, date, enabled) VALUES ({$id}, ".ctime().", 1) ON DUPLICATE KEY UPDATE date = VALUES(date), enabled = 1");
+			$sql->query("INSERT INTO threads_featured (thread, date, enabled) VALUES ({$id}, ".time().", 1) ON DUPLICATE KEY UPDATE date = VALUES(date), enabled = 1");
 	}
 	
 	function unfeature_thread($id, $change = true, $archive = true, $hard = false) {

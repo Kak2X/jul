@@ -108,7 +108,7 @@
 					$reply_error .= "You haven't entered a message.<br>";
 				if (!$_POST['subject'])    
 					$reply_error .= "You haven't entered a subject.<br>";
-				if ($user['lastposttime'] > (ctime()-30))
+				if ($user['lastposttime'] > (time()-30))
 					$reply_error .= "You are trying to post too rapidly.<br>";	
 			}
 		}
@@ -117,7 +117,7 @@
 		// lol i'm eminem
 		if (strpos($_POST['message'] , '[Verse ') !== FALSE) {
 			$error = "You aren't allowed to post in this forum.";
-			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". ctime() ."', `reason` = 'Listen to some good music for a change.'");
+			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Listen to some good music for a change.'");
 			if ($userid != -1) //if ($_COOKIE['loguserid'] > 0)
 				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$userid}");
 			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");

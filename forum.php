@@ -385,10 +385,10 @@
 			$newpostt		= ($thread['treadtime'] ? $thread['treadtime'] : filter_int($postread[$thread['forumid']]));
 		}
 		// Not logged in
-		elseif (!$loguser['id'] && $thread['lastpostdate'] > ctime() - 3600) {
+		elseif (!$loguser['id'] && $thread['lastpostdate'] > time() - 3600) {
 			$threadstatus	.= "new";
 			$newpost		= true;
-			$newpostt		= ctime() - 3600;	// Mark as new posts made in the last hour
+			$newpostt		= time() - 3600;	// Mark as new posts made in the last hour
 		}
 
 		if ($thread['replies'] >= $hotcount) 	$threadstatus .= "hot";

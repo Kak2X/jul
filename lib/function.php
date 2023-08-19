@@ -63,7 +63,7 @@ function get_tags($data, $repl = null) {
 	} else if (!empty($data)) {
 		// when passed an array of the base data to generate tags
 		$tagdata['posts']       = isset($repl['posts']) ? $repl['posts'] : $data['posts'];
-		$tagdata['days']        = (ctime() - $data['regdate']) / 86400;
+		$tagdata['days']        = (time() - $data['regdate']) / 86400;
 		$tagdata['exp']         = calcexp($tagdata['posts'], $tagdata['days']);
 		$tagdata['level']       = calclvl($tagdata['exp']);
 		$tagdata['expdone']     = $tagdata['exp'] - calclvlexp($tagdata['level']);
@@ -72,7 +72,7 @@ function get_tags($data, $repl = null) {
 		
 		$tags = array(
 			'/me '          => "*<b>". $data['name'] ."</b> ",
-			'&date&'        => date($loguser['dateformat'], ctime() + $loguser['tzoff']),
+			'&date&'        => date($loguser['dateformat'], time() + $loguser['tzoff']),
 			'&numdays&'     => floor($tagdata['days']),
 			'&mood&'        => filter_int($repl['mood']),
 
@@ -577,9 +577,6 @@ function row_display($headers, $values, $strings, $sel = NULL, $page = 0, $limit
 	</table>";
 }
 
-function ctime(){global $config; return time() + $config['server-time-offset'];}
-function cmicrotime(){global $config; return microtime(true) + $config['server-time-offset'];}
-
 function getrank($rankset, $title, $posts, $powl, $bandate = NULL){
 	global $hacks, $sql;
 	$rank	= "";
@@ -636,7 +633,7 @@ function getrank($rankset, $title, $posts, $powl, $bandate = NULL){
 		
 	// *LIVE* ban expiration date
 	if ($bandate && $powl == -1) {
-		$rank .= "<br>Banned until ".printdate($bandate)."<br>Expires in ".timeunits2($bandate-ctime());
+		$rank .= "<br>Banned until ".printdate($bandate)."<br>Expires in ".timeunits2($bandate-time());
 	}
 
 	return $rank;
@@ -880,7 +877,7 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 				$output = str_pad(dechex($nc), 6, "0", STR_PAD_LEFT);
 				break;
 			case 'time':
-				$z 	= max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - ctime()));
+				$z 	= max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - time()));
 				$c 	= 127 + max(floor($z / 32400 * 127), 0);
 				$cz	= str_pad(dechex(256 - $c), 2, "0", STR_PAD_LEFT);
 				$output = str_pad(dechex($c), 2, "0", STR_PAD_LEFT) . $cz . $cz;
@@ -906,7 +903,7 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 			$namecolor .= "ffffff"; break;
 			
 		case 5:
-			$z = max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - ctime()));
+			$z = max(0, 32400 - (mktime(22, 0, 0, 3, 7, 2008) - time()));
 			$c = 127 + max(floor($z / 32400 * 127), 0);
 			$cz	= str_pad(dechex(256 - $c), 2, "0", STR_PAD_LEFT);
 			$output = str_pad(dechex($c), 2, "0", STR_PAD_LEFT) . $cz . $cz;
@@ -961,7 +958,7 @@ function getnamecolor($sex, $powl, $namecolor = ''){
 function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expire = 0, $banner = 0) {
 	global $sql;
 	if ($expire > 0) {
-		$expire = ctime() + 3600 * $expire;
+		$expire = time() + 3600 * $expire;
 	}
 	$sql->queryp("
 		INSERT INTO `ipbans` (`ip`,`reason`,`date`,`banner`,`expire`) 
@@ -971,7 +968,7 @@ function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expir
 			`date`   = VALUES(`date`),
 			`banner` = VALUES(`banner`),
 			`expire` = VALUES(`expire`)
-		", [$ip, $reason, ctime(), $banner, $expire]);
+		", [$ip, $reason, time(), $banner, $expire]);
 	if ($ircreason !== NULL) {
 		xk_ircsend("{$destchannel}|{$ircreason}");
 	}
@@ -986,7 +983,7 @@ function ipban_edit($sourceip, $ip, $reason, $ircreason = NULL, $destchannel = I
 		'banner' => $banner,
 	);
 	if ($expire >= 0) { // Ignore expired bans
-		$values['expire'] = $expire ? ctime() + 3600 * $expire : 0;	
+		$values['expire'] = $expire ? time() + 3600 * $expire : 0;	
 	}
 	$phs = mysql::setplaceholders($values);
 	
@@ -1007,7 +1004,7 @@ function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permane
 	global $sql;
 	
 	$new_powl		= $permanent ? -2 : -1;
-	$expire         = $expire ? ctime() + 3600 * $expire : 0;
+	$expire         = $expire ? time() + 3600 * $expire : 0;
 			
 	$res = $sql->queryp("
 		UPDATE users SET 
@@ -1026,12 +1023,12 @@ function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel =
 	global $sql;
 	
 	if ($expire > 0) {
-		$expire = ctime() + 3600 * $expire;
+		$expire = time() + 3600 * $expire;
 	}
 			
 	$sql->queryp("
 		INSERT INTO forumbans (user, forum, date, banner, expire, reason)
-		VALUES(?,?,?,?,?,?)", [$user, $forum, ctime(), $banner, $expire, $reason]);
+		VALUES(?,?,?,?,?,?)", [$user, $forum, time(), $banner, $expire, $reason]);
 		
 	if ($ircreason !== NULL){
 		xk_ircsend("{$destchannel}|{$ircreason}");
@@ -1046,7 +1043,7 @@ function forumban_edit($source, $forum, $user, $reason = "", $ircreason = NULL, 
 		'reason' => $reason,
 	);
 	if ($expire >= 0) {
-		$values['expire'] = $expire ? ctime() + 3600 * $expire : 0;	
+		$values['expire'] = $expire ? time() + 3600 * $expire : 0;	
 	}
 	$sql->queryp("UPDATE forumbans SET ".mysql::setplaceholders($values)." WHERE id = {$source}", $values);
 	
@@ -1069,7 +1066,7 @@ function is_banned($forum, $user) {
 		SELECT f.id, f.banner, f.expire, f.reason, $userfields uid
 		FROM forumbans f
 		LEFT JOIN users u ON f.banner = u.id
-		WHERE f.user = {$user} AND f.forum = {$forum} AND (!f.expire OR f.expire > ".ctime().")
+		WHERE f.user = {$user} AND f.forum = {$forum} AND (!f.expire OR f.expire > ".time().")
 	");
 }
 
@@ -1077,7 +1074,7 @@ function print_ban_time($ban) {
 	if (!$ban['expire']) {
 		return "Permanent";
 	} else {
-		return ($ban['expire'] < ctime() ? "Expired" : timeunits2($ban['expire'] - ctime()))
+		return ($ban['expire'] < time() ? "Expired" : timeunits2($ban['expire'] - time()))
 		       ."<br><small>(".printdate($ban['expire'])/*." - ".timeunits2($ban['expire'] - $ban['date'])*/.")</small>";
 	}
 }
@@ -1117,7 +1114,7 @@ function onlineusers($forum = NULL, $thread = NULL){
 		$sql->query("UPDATE guests SET {$update} WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 	}
 	
-	$onlinetime		= ctime() - 300; // 5 minutes
+	$onlinetime		= time() - 300; // 5 minutes
 	$onusers		= $sql->query("
 		SELECT $userfields, hideactivity, (lastactivity <= $onlinetime) nologpost
 		FROM users u
@@ -1663,7 +1660,7 @@ function nuke_js($before, $after) {
 			`ip`       = :ipaddr,
 			`text`     = :source,
 			`url`      = :url,
-			`time`     = ".ctime().",
+			`time`     = ".time().",
 			`filtered` = :filtered",
 		[
 		 ':ipaddr'   => $_SERVER['REMOTE_ADDR'], 
@@ -2191,7 +2188,7 @@ function ban_select($name, $time = 0) {
 		if (!$time) {
 			unset($selector[-1]);
 		} else {
-			$selector[-1] = "*** ".($time < ctime() ? "Keep expired" : "Keep unchanged (".timeunits2($time-ctime()).")")." ***";
+			$selector[-1] = "*** ".($time < time() ? "Keep expired" : "Keep unchanged (".timeunits2($time-time()).")")." ***";
 		}
 
 		// Fill out the select box

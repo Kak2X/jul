@@ -368,7 +368,7 @@
 		// nice shortcut as we don't have something like postsread, so we can't really track the read status for specific posts
 		// of course this won't work when viewing posts from newest to oldest
 		if ($post['new']) {
-			$targetdate = $post['date'] == $thread['lastpostdate'] ? ctime() : $post['date'];
+			$targetdate = $post['date'] == $thread['lastpostdate'] ? time() : $post['date'];
 			
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '{$targetdate}', `read` = '1'");
 			

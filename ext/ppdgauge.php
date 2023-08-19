@@ -10,7 +10,7 @@
 
 	$size			= 255;
 	$classt			= 500;
-	$class			= $sql->resultq("SELECT COUNT(`id`) FROM `posts` WHERE `date` > ". (ctime() - 86400));
+	$class			= $sql->resultq("SELECT COUNT(`id`) FROM `posts` WHERE `date` > ". (time() - 86400));
 
 	if ($_GET['s']) $size = numrange((int)$_GET['s'], 80, 1024);
 	if ($_GET['t']) $classt = numrange((int)$_GET['t'], 10, 1000);

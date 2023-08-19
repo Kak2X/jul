@@ -74,7 +74,7 @@
 					
 					'options'	=> $nosmilies . "|" . $nohtml,
 					'edited'	=> $edited,
-					'editdate' 	=> ctime(),
+					'editdate' 	=> time(),
 					
 					'headid'	=> $headid,
 					'signid'	=> $signid,

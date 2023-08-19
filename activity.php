@@ -8,7 +8,7 @@
 	$regday     = floor($regdate / 86400); // Day number
 	$regdate_ts = $regday * 86400;         // Day timestamp
 	
-	$days = floor((ctime()-$regdate)/86400); // Account age (in days)
+	$days = floor((time()-$regdate)/86400); // Account age (in days)
 	if (!$days) die("Account age too low.");
 	
 	// A faster (?) way to group them; by using the day number instead of getting a date string

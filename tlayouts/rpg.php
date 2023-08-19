@@ -4,7 +4,7 @@
   function postcode($post,$set){
     global $controls,$tableborder,$tablebg2,$tableheadtext,$numdir,$barimg;
 			
-	$numdays    = (ctime() - $post['regdate']) / 86400;
+	$numdays    = (time() - $post['regdate']) / 86400;
 	$exp		= calcexp($post['posts'], $numdays);
 	$mp         = calcexpgainpost($post['posts'], $numdays);
 	$lvl		= calclvl($exp);

@@ -51,7 +51,7 @@
 				news_errorpage("You can't comment to a nonexisting post!");
 			
 			$lastcomment = $sql->resultq("SELECT date FROM news_comments WHERE user = {$loguser['id']} ORDER BY id DESC");
-			if (ctime() - $lastcomment < 10) 
+			if (time() - $lastcomment < 10) 
 				news_errorpage("You are commenting too fast!");
 			
 			$values = [
@@ -59,7 +59,7 @@
 				'user'   => $loguser['id'],
 				'text'   => $_POST['text'],
 				'moodid' => $_POST['moodid'],
-				'date'   => ctime(),
+				'date'   => time(),
 			];
 			$sql->queryp("INSERT INTO news_comments SET ".mysql::setplaceholders($values), $values);
 			
@@ -121,7 +121,7 @@
 					'text'         => $_POST['text'],
 					'moodid'       => $_POST['moodid'],
 					'lastedituser' => $loguser['id'],
-					'lasteditdate' => ctime(),
+					'lasteditdate' => time(),
 				];
 				$sql->queryp("UPDATE news_comments SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
 				

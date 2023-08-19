@@ -351,7 +351,7 @@ function create_pm_thread($user, $title, $description, $posticon, $closed = 0) {
 		$user = filter_int($user['id']);
 		if (!$user) return 0;
 	}
-	$currenttime = ctime();
+	$currenttime = time();
 		
 	// Insert thread
 	$vals = array(
@@ -386,7 +386,7 @@ function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies =
 	$tags             = get_tags($user, $gtopt);
 	$message          = replace_tags($message, $tags);
 	$tagval           = json_encode($tags);
-	$currenttime      = ctime();
+	$currenttime      = time();
 	
 	if ($nolayout) {
 		$headid = 0;

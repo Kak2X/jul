@@ -56,7 +56,7 @@
 		// Unread posts count
 		$readdate = (int) $sql->resultq("SELECT `readdate` FROM `pm_foldersread` WHERE `user` = '{$loguser['id']}' AND folder = {$access['folder']}");
 		if ($thread['lastpostdate'] > $readdate) {
-			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".ctime()."', `read` = '1'");
+			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".time()."', `read` = '1'");
 		}	
 		// See if it's possible to merge in the folderread
 		$unreadthreads = $sql->resultq("
@@ -69,7 +69,7 @@
 			  AND t.lastpostdate > {$readdate} 
 		");
 		if (!$unreadthreads) { // All threads in the folder have been read; we can merge
-			$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".ctime().")");
+			$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".time().")");
 		}
 	}
 

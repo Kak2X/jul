@@ -87,7 +87,7 @@
 			}
 			if (!trim($_POST['message']))
 				$reply_error .= "You didn't enter anything in the post.<br>";
-			if ($user['lastposttime'] > (ctime()-4))
+			if ($user['lastposttime'] > (time()-4))
 				$reply_error .= "You are posting too fast.<br>";
 		}
 		

@@ -16,7 +16,7 @@
 				$sql->query("DELETE FROM failedlogins WHERE ip = '{$_SERVER['REMOTE_ADDR']}'");
 				die(header("Location: ?"));
 			}
-			$banned = $sql->fetchq("SELECT ip, reason FROM ipbans WHERE INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1 AND (expire = 0 OR expire > ".ctime().")");
+			$banned = $sql->fetchq("SELECT ip, reason FROM ipbans WHERE INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1 AND (expire = 0 OR expire > ".time().")");
 			if ($banned) {
 				setupheader("Banned");
 				print "

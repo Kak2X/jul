@@ -30,6 +30,10 @@
 	}
 	require 'lib/config.php';
 	
+	if ($config['timezone']) {
+		date_default_timezone_set($config['timezone']);
+	}
+	
 	$scriptname = basename($_SERVER['PHP_SELF']);
 	// If not previously defined, calculate the root page and script path.
 	if (!isset($root)) {
@@ -124,7 +128,7 @@
 		    `powerlevel` = powerlevel_prev
 		WHERE `ban_expire` != 0 AND 
 		      `powerlevel` = '-1' AND
-		      `ban_expire` < ".ctime()
+		      `ban_expire` < ".time()
 	);
 	$loguser = array();
 
@@ -329,7 +333,7 @@
 					  $checkips  = "INSTR('{$_SERVER['REMOTE_ADDR']}',ip) = 1";
 	if ($forwardedip) $checkips .= " OR INSTR('$forwardedip',ip) = 1";
 	if ($clientip)    $checkips .= " OR INSTR('$clientip',ip) = 1";
-	$checkips .= " AND (expire = 0 OR expire > ".ctime().")";
+	$checkips .= " AND (expire = 0 OR expire > ".time().")";
 
 	$baninfo = $sql->fetchq("SELECT ip, expire FROM ipbans WHERE $checkips");
 	if($baninfo) $ipbanned = 1;
@@ -377,20 +381,20 @@
 	if ($origin && !SAME_ORIGIN) {
 		$sql->queryp("INSERT INTO referer (time, url, ref, ip) VALUES (:time,:url,:ref,:ip)",
 		[
-			'time' => ctime(),
+			'time' => time(),
 			'url'	=> $url,
 			'ref'	=> $_SERVER['HTTP_REFERER'],
 			'ip'	=> $_SERVER['REMOTE_ADDR']
 		]);
 	}
 
-	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(ctime() - 300));
+	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(time() - 300));
 	
 	if($loguser['id']) {
 			
 		if ($loguser['powerlevel'] <= 5 && !IS_AJAX_REQUEST) {
 			
-			$influencelv = calclvl(calcexp($loguser['posts'], (ctime() - $loguser['regdate']) / 86400));
+			$influencelv = calclvl(calcexp($loguser['posts'], (time() - $loguser['regdate']) / 86400));
 
 			// Alart #defcon?
 			if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
@@ -433,7 +437,7 @@
 					SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
 					WHERE id = {$loguser['id']}",
 					[
-						'lastactivity' 	=> ctime(),
+						'lastactivity' 	=> time(),
 						'lastip' 		=> $_SERVER['REMOTE_ADDR'],
 						'lasturl' 		=> $url,
 						'lastforum'		=> 0,
@@ -447,7 +451,7 @@
 			INSERT INTO guests (ip, date, useragent, lasturl, lastforum, flags) VALUES (:ip, :date, :useragent, :lasturl, :lastforum, :flags)",
 			[
 				'ip'			=> $_SERVER['REMOTE_ADDR'],
-				'date'			=> ctime(),
+				'date'			=> time(),
 				'useragent'		=> $_SERVER['HTTP_USER_AGENT'],
 				'lasturl'		=> $url,
 				'lastforum'		=> 0,
@@ -469,7 +473,7 @@
 		
 		$expiration = (
 			$baninfo['expire']
-			? " until ".printdate($baninfo['expire']).".<br>That's ".timeunits2($baninfo['expire'] - ctime())." from now"
+			? " until ".printdate($baninfo['expire']).".<br>That's ".timeunits2($baninfo['expire'] - time())." from now"
 			: ""
 		);
 		
@@ -504,7 +508,7 @@
 		
 		// Log hits close to a milestone
 		if($views%10000000>9999000 || $views%10000000<1000) {
-			$sql->query("INSERT INTO hits VALUES ($views ,{$loguser['id']}, '{$_SERVER['REMOTE_ADDR']}', ".ctime().")");
+			$sql->query("INSERT INTO hits VALUES ($views ,{$loguser['id']}, '{$_SERVER['REMOTE_ADDR']}', ".time().")");
 		}
 		
 		// Print out a message to IRC whenever a 10-million-view milestone is hit
@@ -521,7 +525,7 @@
 
 	// Dailystats update in one query
 	$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
-	             "VALUES ('".date('m-d-y',ctime())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
+	             "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
 	             "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
 	
 
@@ -558,7 +562,7 @@
 
 	// When a post milestone is reached, everybody gets rainbow colors for a day
 	if (!$x_hacks['rainbownames']) {
-		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > ctime()-86400);
+		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > time()-86400);
 	}
 	
 	// Private board option

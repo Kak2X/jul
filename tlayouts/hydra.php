@@ -5,7 +5,7 @@ function postcode($post,$set){
 	global  $controls, $tlayout, $textcolor, $numdir, $numfil, $hacks, $x_hacks, $loguser;
 
 	
-	$exp     = calcexp($post['posts'],(ctime()-$post['regdate'])/86400);
+	$exp     = calcexp($post['posts'],(time()-$post['regdate'])/86400);
 	$lvl     = calclvl($exp);
 	$expleft = calcexpleft($exp);
 

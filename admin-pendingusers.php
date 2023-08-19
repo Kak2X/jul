@@ -28,7 +28,7 @@ if (isset($_POST['act'])){
 		$sql->execute($newuser, [$data['name'], $data['password'], $data['ip'], $data['date'], $config['default-ppp'], $config['default-tpp'], $miscdata['defaultscheme']]);
 		$newuserid	= $sql->insert_id();
 		$sql->query("DELETE FROM pendingusers WHERE id = {$_GET['id']}");
-		$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, ".ctime()." FROM forums");
+		$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, ".time()." FROM forums");
 		$sql->query("INSERT INTO users_rpg (uid) VALUES ({$newuserid})");
 		$sql->commit();
 		

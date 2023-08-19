@@ -41,7 +41,7 @@
 				//--
 				$sql->commit();
 				$id = 0; // Don't display edit window
-				die(header("Location: ".actionlink()));
+				die(header("Location: ?"));
 			}
 			
 			// Warn before doing potentially bad stuff

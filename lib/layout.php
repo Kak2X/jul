@@ -550,25 +550,6 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		Page overlays
 	*/
 	$overlay = '';
-	if ($config['show-ikachan']) { // Ikachan! :D!
-		//$ikachan = 'images/ikachan/vikingikachan.png';
-		//$ikachan = 'images/sankachan.png';
-		//$ikachan = 'images/ikamad.png';
-		$ikachan = 'images/squid.png';
-
-		$ikaquote = 'Capturing turf before it was cool';
-		//$ikaquote = 'Someone stole my hat!';
-		//$ikaquote = 'If you don\'t like Christmas music, well... it\'s time to break out the earplugs.';
-		//$ikaquote = 'This viking helmet is stuck on my head!';
-		//$ikaquote = 'Searching for hats to wear!  If you find any, please let me know...';
-		//$ikaquote = 'What idiot thought celebrating a holiday five months late was a good idea?';
-		//$ikaquote = 'Back to being a fixture now, please stop bitching.';
-		//$ikaquote = 'I just want to let you know that you are getting coal this year. You deserve it.';
-
-		$overlay = "<img id='f_ikachan' src='$ikachan' style='z-index: 999999; position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;' title=\"$ikaquote\">";
-	}
-	
-
 	if (filter_bool($_GET['w'])) {
 		$overlay	= "<img src=images/wave/squid.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"Ikachaaaan!\">";
 		$overlay	.= "<img src=images/wave/cheepcheep.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"cheep tricks\">";
@@ -676,6 +657,31 @@ function pagefooter($showfooter = true) {
 		$affiliatelinks = "<form><select onchange='window.open(this.options[this.selectedIndex].value)'>{$config['affiliate-links']}</select></form>";
 	}
 	
+	$ikachan_text = '';
+	if ($config['show-ikachan']) { // Ikachan! :D!
+		//$ikachan = 'images/ikachan/vikingikachan.png';
+		//$ikachan = 'images/sankachan.png';
+		//$ikachan = 'images/ikamad.png';
+		$ikachan = 'images/squid.png';
+
+		$ikaquote = 'Capturing turf before it was cool';
+		//$ikaquote = 'Someone stole my hat!';
+		//$ikaquote = 'If you don\'t like Christmas music, well... it\'s time to break out the earplugs.';
+		//$ikaquote = 'This viking helmet is stuck on my head!';
+		//$ikaquote = 'Searching for hats to wear!  If you find any, please let me know...';
+		//$ikaquote = 'What idiot thought celebrating a holiday five months late was a good idea?';
+		//$ikaquote = 'Back to being a fixture now, please stop bitching.';
+		//$ikaquote = 'I just want to let you know that you are getting coal this year. You deserve it.';
+		
+		// Enables people to disable the floating squid if they want, or re-enable it later
+		// Saved browser-side rather than being yet another silly config option
+		if (isset($_COOKIE['ikachan']) && $_COOKIE['ikachan'] === "hidden") {
+			$ikachan_text = "<a href='javascript:void();' onclick=\"document.cookie='ikachan=shown;max-age=0;path=/';alert('Floating Ikachan re-enabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style='vertical-align: middle;' title=\"$ikaquote (click to re-enable random floating position)\"></a>";
+		} else {
+			$ikachan_text = "<a href='javascript:void();' onclick=\"javascript:document.cookie='ikachan=hidden;max-age=31536000;path=/';alert('Floating Ikachan disabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style=\"z-index: 999999; position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"$ikaquote (click to hide in future page loads)\"></a>";
+		}
+	}
+	
 	$doomnum = ($x_hacks['mmdeath'] >= 0) ? "<div style='position: absolute; top: -100px; left: -100px;'>Hidden preloader for doom numbers:
 	<img src='numgfx/death/0.png'> <img src='numgfx/death/1.png'> <img src='numgfx/death/2.png'> <img src='numgfx/death/3.png'> <img src='numgfx/death/4.png'> <img src='numgfx/death/5.png'> <img src='numgfx/death/6.png'> <img src='numgfx/death/7.png'> <img src='numgfx/death/8.png'> <img src='numgfx/death/9.png'></div>" : "";
 
@@ -726,11 +732,13 @@ piwikTracker.enableLinkTracking();
 					<td><?= $poweredbypic ?></td>
 					<td>
 						Acmlmboard - <?= hook_print("boardinfo-ver", file_get_contents('version.txt')) ?><br>
-						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al. 
+						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al.<?= $ikachan_text ?>
 					</td>
 				</tr>
 			</table>	
 		<?php
+	} else {
+		print $ikachan_text;
 	}
 	
 	print $doomnum;

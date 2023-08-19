@@ -234,7 +234,7 @@
 			'layout'        => 1, // Regular
 			'powerlevel' 	=> 0,
 			'postsperpage'  => 20,
-			'signsep'		=> 0,
+			'signsep'		=> 1,
 			'dateformat'	=> $config['default-dateformat'],
 			'dateshort'		=> $config['default-dateshort'],
 			'timezone'      => 0,

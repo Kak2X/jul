@@ -1335,10 +1335,10 @@ function squot($t, &$src){
 }*/
 function sbr($t, &$src) {
 	if (!$src)
-		return $src;
-	if (!$t)
-		return str_replace("\n", '<br>', $src); // 0
-	return str_replace('<br>', "\n", $src); // 1
+		return;
+	$src = $t 
+		? str_replace('<br>', "\n", $src) // 1
+		: str_replace("\n", '<br>', $src); // 0
 }
 /*
 function mysql_get($query){

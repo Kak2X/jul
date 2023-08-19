@@ -244,7 +244,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	if ($forcescheme === null) {
 	
 		// Force Xmas scheme (cue whining, as always)
-		if (false && $isChristmas && !$x_hacks['host']) {
+		if ($isChristmas && !$x_hacks['host'] && $config['enable-christmas']) {
 			$scheme = 3;
 			$x_hacks['rainbownames'] = true;
 		}
@@ -886,8 +886,9 @@ piwikTracker.enableLinkTracking();
 		}
 	}
 	
-
-	if (!$x_hacks['host']) {
+	// Logging of rendering times. Used back when DreamHost was being trash.
+	// Not that it ever stopped, but it hasn't really been an issue
+	if (!$x_hacks['host'] && $config['log-rendertimes']) {
 		$pages	= array(
 			"index.php",
 			"thread.php",

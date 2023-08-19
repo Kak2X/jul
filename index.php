@@ -204,7 +204,6 @@
 	<?php
 
 	// Displays total PMs along with unread unlike layout.php
-	$privatebox = '';
 	if ($loguser['id']) {
 		$new     = '&nbsp;';
 		$lastmsg = "";
@@ -358,8 +357,53 @@
 		}
 ?>
 		</table>
+		
 <?php
 	}
+	
+	// Display recent active threads
+	// Part of this was lifted from latestposts.php and tweaked to show threads instead of posts
+	$data	= $sql->query("
+		SELECT
+			t.id as id,
+			t.lastposter,
+			t.lastpostdate as date,
+			f.title as ftitle,
+			t.forum as fid,
+			t.title as title,
+			$userfields uid
+		FROM `threads` t
+		LEFT JOIN `forums` f ON t.forum = f.id
+		LEFT JOIN `users` u ON t.lastposter = u.id
+		WHERE f.minpower <= '{$loguser['powerlevel']}' AND f.hidden = 0
+		ORDER BY t.lastpostdate DESC
+		LIMIT 5
+		");
+	
+?>
+		<br/>
+		<table class='table'>
+			<tr><td class='tdbgc center' colspan='4'><a href='latestposts.php'>Recently active threads</a></tr>
+			<tr>
+				<td class='tdbgh center' width='25%'>Forum</td>
+				<td class='tdbgh center' width='45%'>Thread</td>
+				<td class='tdbgh center' width='20%'>User</td>
+				<td class='tdbgh center' width='10%'>Time</td>
+			</tr>
+<?php	
+	foreach ($data as $in) { 
+?>
+			<tr>
+				<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
+				<td class='tdbg1'><?= $statusicons['new'] ?> <a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
+				<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
+				<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
+			</tr>
+<?php	
+	} 
+?>
+		</table><br>
+<?php
 
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumheaders ="

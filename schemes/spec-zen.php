@@ -4,7 +4,7 @@
 	
 	$config['board-title'] = '<img src="schemes/spec-zen/zentitle.png">';
 	
-	$bgcolor   = '010';
+	$bgcolor   = '010 linear-gradient(45deg, #001100 40%, #001600 40%, #001600 50%, #001100 50%, #001100 90%, #001600 90%, #001600 100%); background-size: 35.36px 35.36px';
 	$textcolor = 'DDDDDD';
 
 	$linkcolor  = 'BEFEBA';

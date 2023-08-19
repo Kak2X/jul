@@ -75,7 +75,7 @@ body > table[width='100%'] td[align='right'] a:hover, body > table[width='100%']
 
 .tdbgc, .tdbgh { padding: 3px; font-weight: bold; font-size: 11px; }
 
-textarea,input,select,button,.button{
+textarea,textarea:focus,input,select,button,.button{
 	border: #000 solid 1px;
 	background: #2e3f68;
 	color: #bfcef2;

@@ -105,6 +105,14 @@
 					"default":0,
 					"special":"yesno"
 				},
+				"enable-christmas":{
+					"title":"Enable Christmas override",
+					"desc":"If enabled, the Christmas theme will be forced in December.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
 				"affiliate-links":{
 					"title":"Affiliates (HTML)",
 					"desc":"HTML option tags for the affiliate box, which is shown in the footer. If blank, the box will be hidden.",
@@ -511,6 +519,14 @@
 				"allow-rereggie":{
 					"title":"Allow re-registrations",
 					"desc":"Allow non-admins to re-register multiple accounts.<!-- if you enable this to accomodate certain users you're a damn dumbass. do not ever enable this outside of testboards -->",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"log-rendertime":{
+					"title":"Log render times",
+					"desc":"Logs the rendering times for the index page and a few others.",
 					"input":"radio",
 					"type":"bool",
 					"default":0,

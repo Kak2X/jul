@@ -178,6 +178,10 @@
 		    <td class='tdbg2'>&amp;lvllen&amp;</td>
 		    <td class='tdbg1'>EXP needed to go through the current level</td>
 		  </tr>
+		  <tr>
+		    <td class='tdbg2'>&amp;mood&amp;</td>
+		    <td class='tdbg1'>Selected mood number for this post (default: 0)</td>
+		  </tr>
 		</table>
 	");
 

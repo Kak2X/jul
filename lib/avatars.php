@@ -203,7 +203,7 @@ function mood_list($user, $sel = 0, $return = false) {
 			$txt .= 
 			"<option value='{$file}'". filter_string($c[$file]) ."{$jsclick}>".
 				htmlspecialchars($data['title']).
-			"</option>\r\n";
+			" ({$file})</option>\r\n";
 		}
 		
 		$ret = "
@@ -225,7 +225,7 @@ function mood_list($user, $sel = 0, $return = false) {
 		
 		foreach ($moods as $num => $data) {
 			$jsclick = ($user && $moodurl) ? " onclick='avatarpreview({$user},{$num})'" : "";
-			$txt .= "<option value='{$num}'". filter_string($c[$num]) ."{$jsclick}>{$data['title']}</option>\r\n";
+			$txt .= "<option value='{$num}'". filter_string($c[$num]) ."{$jsclick}>{$data['title']} ({$num})</option>\r\n";
 		}
 		$ret = "Avatar: <select name='moodid'>
 			{$txt}

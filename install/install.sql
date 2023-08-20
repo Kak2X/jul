@@ -513,6 +513,7 @@ CREATE TABLE `failedregs` (
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `regcode` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `time` (`time`,`username`(191),`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1152,6 +1153,7 @@ CREATE TABLE `pendingusers` (
   `password` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
   `date` int(11) unsigned NOT NULL,
+  `email` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `time` (`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

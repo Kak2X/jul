@@ -18,7 +18,7 @@
 		0 - Normal
 		1 - Disabled
 		2 - Pending users
-		3 - regcode
+		3 - Regcode
 	*/
 	
 	if (!$isadmin && $regmode == 1)
@@ -26,25 +26,44 @@
 	
 
 	$action 	= filter_string($_POST['action']);
+	$error		= false;
+	$regerrors 	= [
+		'main' => "",
+		'name' => "",
+		'pass' => "",
+		'pass2' => "",
+		'code' => "",
+	];
 	
-	if($_POST['action']=='Register') {
+	if ($_POST['action'] == 'Register') {
+		
+		if (isset($_POST['homepage']) && $_POST['homepage']) {
+			// If someone submits the form with the fake homepage field filled,
+			// just do nothing and send them off elsewhere to spam
+			die(header("Location: http://127.0.0.1"));
+		}
 		 
 		check_token($_POST['auth'], TOKEN_REGISTER);
 		
-		$name = filter_string($_POST['name']);
-		$pass  = filter_string($_POST['pass']);
-		$pass2 = filter_string($_POST['pass2']);
+		$_POST['name']	= filter_string($_POST['name']);
+		$_POST['pass']	= filter_string($_POST['pass']);
+		$_POST['pass2']	= filter_string($_POST['pass2']);
+		$_POST['email']	= filter_string($_POST['email']);
 		
 
-		/*
-		if ($name == "Blaster") {
-			$sql -> query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Idiot'");
-			@xk_ircsend("1|". xk(7) ."Auto-IP banned Blaster with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration.");
-			die("<td class='tdbg1 center'>Thank you, $username, for registering your account.<br>".redirect('index.php','the board',0).$footer);
-		}
+		
+		/* 
+			Round of validations starts here 
 		*/
 
-		/* do curl here */
+		/*
+		if ($_POST['name'] == "Blaster") {
+			$sql -> query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Idiot'");
+			@xk_ircsend("1|". xk(7) ."Auto-IP banned Blaster with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration.");
+			die("<td class='tdbg1 center'>Thank you, $_POST['name'], for registering your account.<br>".redirect('index.php','the board',0).$footer);
+		}
+		*/
+		
 		// TODO: Change how this is done
 		if (!$config['no-curl']) {
 			$ch = curl_init();
@@ -64,6 +83,7 @@
 				|| stristr($file_contents, "panel")
 				) {
 
+				/*
 				$adjectives	= array(
 					"shitlord",
 					"shitheel",
@@ -80,86 +100,109 @@
 				shuffle($adjectives);
 
 				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Reregistering fuckwit'");
-				@xk_ircsend("1|". xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $name)");
-				errorpage("Thank you, $name, for registering your account.", 'index.php', 'the board', 0);
+				@xk_ircsend("1|". xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $_POST['name'])");
+				errorpage("Thank you, $_POST['name'], for registering your account.", 'index.php', 'the board', 0);
+				*/
+				$regerrors['main'] .= "<li>It appears you're trying to register through some proxy service or other anonymizing tool.
+				<br>These have often been abused to get around bans, so we don't allow registering using these.
+				<br>Try disabling it and registering again, or contact an administrator for help.</li>";
+				$error = true;
 			}
 		}
 		
+		/*
 		// You asked for it
 		if (isset($_POST['homepage']) && $_POST['homepage']) {
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Automatic spambot protection'");
-			@xk_ircsend("1|". xk(7) ."Auto-IP banned user with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for filling in the dummy registration field. (Tried to register with username $name)");
-			errorpage("Thank you, $name, for registering your account.", 'index.php', 'the board', 0);
-		}
+			@xk_ircsend("1|". xk(7) ."Auto-IP banned user with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for filling in the dummy registration field. (Tried to register with username $_POST['name'])");
+			errorpage("Thank you, $_POST['name'], for registering your account.", 'index.php', 'the board', 0);
+		}*/
 
 		
-		$badcode = false;
-		
+		/*
+			Registration code check.
+		*/
 		if ($regmode == 3) {
-			$checkcode 	= filter_string($_POST['regcode']);
+			$_POST['regcode'] 	= filter_string($_POST['regcode']);
 			$realcode 	= $sql->resultq("SELECT regcode FROM misc");
 			
-			if ($checkcode != $realcode) {
+			if ($_POST['regcode'] != $realcode) {
 
 				// No infinite retries allowed in a short time span
 				$sql->queryp("INSERT INTO `failedregs` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip, `regcode` = :code",
 				[
 					'time'	=> time(),
-					'user' 	=> $name,
-					'pass' 	=> $pass,
+					'user' 	=> $_POST['name'],
+					'pass' 	=> $_POST['pass'],
+					'email' => $_POST['email'],
 					'ip'	=> $_SERVER['REMOTE_ADDR'],
-					'code'	=> $checkcode,
+					'code'	=> $_POST['regcode'],
 				]);
 				
-				//$name 		= stripslashes($name);
-				//$checkcode 	= stripslashes($checkcode);
-				
 				$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedregs` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
-				
-				@xk_ircsend("102|". xk(14) ."Failed attempt". xk(8) ." #$fails ". xk(14) ."to register using the wrong code ". xk(8) . $checkcode . xk(14) ." by IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(14) .".");
+				@xk_ircsend("102|". xk(14) ."Failed attempt". xk(8) ." #$fails ". xk(14) ."to register using the wrong code ". xk(8) . $_POST['regcode'] . xk(14) ." by IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(14) .".");
 
 				if ($fails >= 5) {
 					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail to re-request the registration code'");
 					@xk_ircsend("102|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for this.");
 					@xk_ircsend("1|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for repeated failed registration attempts.");
+					die(header("Location: ?"));
 				}
-				$badcode = true;
+				
+				$regerrors['main'] .= "<li>You have entered a bad registration code.</li>";
+				$regerrors['code'] .= "<li>Bad code</li>";
+				$error = true;
 			}
 		}
 
+		// Restrict username to 25 chars (only now so previous logging logs it in full)
+		$_POST['name'] = substr(trim($_POST['name']), 0, 25);
 		
-		// Check for duplicate names
-		$users = $sql->query('SELECT name FROM users');
-		
-		$username  = substr(trim($name),0,25);
-		$username2 = str_replace(' ','',$username);
-		$username2 = preg_replace("'&nbsp;?'si",'',$username2);
-		//$username2 = stripslashes($username2);
-		
-		
-		$samename = NULL;
-		
-		while ($user = $sql->fetch($users)) {
-			$user['name'] = str_replace(' ','',$user['name']);
-			if (strcasecmp($user['name'], $username2) == 0) $samename = $user['name'];
+		if (!$_POST['name']) {
+			$regerrors['name'] .= "<li>No username specified.</li>";
+			$error = true;
+		}
+		if (!$_POST['pass']) {
+			$regerrors['pass'] .= "<li>No password specified.</li>";
+			$error = true;
+		} 
+			
+		if (!$error) {
+			if (strlen($_POST['pass']) < 8 && !$isadmin) {
+				$regerrors['pass'] .= "<li>The password is too short.</li>";
+				$error = true;
+			}
+			if ($_POST['pass'] != $_POST['pass2']) {
+				$regerrors['pass2'] .= "<li>The passwords don't match. Re-type it correctly.</li>";
+				$error = true;
+			}
 		}
 		
+		if (!$error) {
+			if ($userid = $sql->resultp("SELECT id FROM users WHERE LOWER(REPLACE(name, ' ', '')) = ?", [strtolower(str_replace(' ', '', $_POST['name']))])) {
+				$regerrors['main'] .= "<li>The username '". htmlspecialchars($_POST['name']) ."' is already <a href='profile.php?id={$userid}'>in use</a></li>";
+				$regerrors['name'] .= "<li>In use</li>";
+				$error = true;
+			}
+			if (!$isadmin && !$config['allow-rereggie'] && ($nomultis = $sql->resultq("SELECT $userfields FROM users u WHERE lastip = '{$_SERVER['REMOTE_ADDR']}'"))) {
+				$regerrors['main'] .= "<li>You may have an account already as ".getuserlink($nomultis)."<br>If this is incorrect, please contact an administrator.</li>";
+				$error = true;
+			}
+		}
 		
-		if ($isadmin || $config['allow-rereggie']) 
-			$nomultis = false;
-		else 
-			$nomultis = $sql->resultq("SELECT id FROM `users` WHERE `lastip` = '{$_SERVER['REMOTE_ADDR']}'");
-		
-		
-		$shortpass = (strlen($pass) < 8 && !$isadmin); 
-		$retyped   = ($pass == $pass2);
-		
-		// Making sure
-		if (!$samename && $retyped && $pass && $pass != "123" && $username && !$shortpass && !$nomultis && !$badcode) {
+		/*
+			if ($_POST['pass'] == "123") {
+			echo	"<td class='tdbg1 center'>Thank you, $_POST['name'], for registering your account.<img src=cookieban.php width=1 height=1><br>".redirect('index.php','the board',0);
+			mysql_query("INSERT INTO `ipbans` (`ip`, `reason`, `date`) VALUES ('". $_SERVER['REMOTE_ADDR'] ."', 'blocked password of 123', '". time() ."')");
+			die();
+		}
+		*/
+		if (!$error) {
 			
-			// The first user is super admin
-			$userlevel 		= $sql->num_rows($users) ? 0 : 4;
+
 			$newuserid 		= $sql->resultq("SELECT MAX(id) FROM users") + 1;
+			// The first user is super admin
+			$userlevel 		= $newuserid != 1 ? 0 : 4;
 			$makedeluser    = ($config['deleted-user-id'] == $newuserid + 1);
 			$currenttime 	= time();
 			
@@ -167,34 +210,36 @@
 			if (!$x_hacks['host'] && $regmode == 2) { // || $flagged
 				
 				$sql->queryp("
-					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `date` = :date",
+					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `date` = :date, `email` = :email",
 					[
-						'name'		=> $name,
-						'password'	=> getpwhash($pass, $newuserid),
+						'name'		=> $_POST['name'],
+						'password'	=> getpwhash($_POST['pass'], $newuserid),
+						'email'		=> $_POST['email'],
 						'ip'		=> $_SERVER['REMOTE_ADDR'],
 						'date'		=> $currenttime,
 					]);
 
 			//		$sql->query("INSERT INTO `ipbans` SET `ip` = '$ipaddr', `reason` = 'Automagic ban', `banner` = 'Acmlmboard'");
 
-				errorpage("Thank you, $name, for registering your account.",'index.php','the board', 0);
+				errorpage("Thank you, ".htmlspecialchars($_POST['name']).", for registering your account.",'index.php','the board', 0);
 			} else {
 
 				$ircout = array (
 					'id'	=> $newuserid,
-					'name'	=> stripslashes($name),
+					'name'	=> stripslashes($_POST['name']),
 					'ip'	=> $_SERVER['REMOTE_ADDR']
 				);
 				
 				
 				// No longer useful
-				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($pass) ."'");
+				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($_POST['pass']) ."'");
 				$sql->beginTransaction();
 				
 				$data = array(
 					'id'                => $newuserid,
-					'name'              => $name,
-					'password'          => getpwhash($pass, $newuserid),
+					'name'              => $_POST['name'],
+					'password'          => getpwhash($_POST['pass'], $newuserid),
+					'email'             => $_POST['email'],
 					'powerlevel'        => $userlevel,
 					'lastip'            => $_SERVER['REMOTE_ADDR'],
 					'lastactivity'      => $currenttime,
@@ -240,65 +285,25 @@
 				}
 				
 				$sql->commit();
-				errorpage("Thank you, ".htmlspecialchars($username).", for registering your account.", 'index.php', 'the board', 0);
+				errorpage("Thank you, ".htmlspecialchars($_POST['name']).", for registering your account.", 'index.php', 'the board', 0);
 			}
 			
-		} else {
+		}
+		
+	}
 
-		/*	if ($password == "123") {
-			echo	"<td class='tdbg1 center'>Thank you, $username, for registering your account.<img src=cookieban.php width=1 height=1><br>".redirect('index.php','the board',0);
-			mysql_query("INSERT INTO `ipbans` (`ip`, `reason`, `date`) VALUES ('". $_SERVER['REMOTE_ADDR'] ."', 'blocked password of 123', '". time() ."')");
-			die();
-		}
-		*/
-
-			if ($badcode) {
-				$reason = "You have entered a bad registration code.";
-			} elseif ($samename) {
-				$reason = "That username is already in use.";
-			} elseif ($nomultis) {
-				$reason = "You have already registered! (<a href='profile.php?id=$nomultis'>here</a>)";
-			} elseif (!$username || !$pass) {
-				$reason = "You haven't entered a username or password.";
-			} elseif ( (stripos($username, '3112')) === true || (stripos($username, '3776')) === true || (stripos($username, '460')) ) {
-				$reason = "You have entered a banned username";
-			} elseif ($shortpass) {
-				$reason = "That password is too short.";
-			} elseif (!$retyped) {
-				$reason = "That passwords do not match. Re-type it correctly.";
-			} else {
-				$reason = "Unknown reason.";
-			}
-			
-			errorpage("Couldn't register the account. $reason", "index.php", "the board", 0);
-		}
+	pageheader();
 		
-		
-	} else {
-		
-		pageheader();
-		
-		if ($regmode == 3) {
-			$entercode = "
-		<tr>
-			<td class='tdbg1 center'>
-				<b>Regcode:</b>
-				<div class='fonts'>
-					To keep the morons out; contact {$config['admin-name']} for this.
-				</div>
-			</td>
-			<td class='tdbg2'>
-				<input type='regcode' name=regcode SIZE=15 MAXLENGTH=64>
-			</td>
-		</tr>";
-		} else {
-			$entercode = "";
-		}
-?>
+	if ($regerrors['main']) { ?> 
+	<table class='table'>
+		<tr><td class='tdbgh center'>Error registering account</td></tr>
+		<tr><td class='tdbg1 center'><ul><?= $regerrors['main'] ?> </ul></td></tr>
+	</table>
+<?php } ?>
 <form method="POST" action="register.php">
 	<br>
 	<table class='table'>
-		<tr><td class='tdbgh center' colspan=2>Login information</td></tr>
+		<tr><td class='tdbgh center' colspan="2">Login information</td></tr>
 		
 		<tr>
 			<td class='tdbg1 center'>
@@ -308,7 +313,8 @@
 				</div>
 			</td>
 			<td class='tdbg2' style='width: 50%'>
-				<input type='text' autofocus name='name' SIZE=25 MAXLENGTH=25>
+				<input type='text' autofocus name='name' size="25" maxlength="25">
+				<?= _errorformat('name') ?>
 			</td>
 		</tr>
 		
@@ -321,7 +327,8 @@
 				</div>
 			</td>
 			<td class='tdbg2'>
-				<input type='password' name='pass' SIZE=15 MAXLENGTH=64>
+				<input type='password' name='pass' size="15" maxlength="64">
+				<?= _errorformat('pass') ?>
 			</td>
 		</tr>
 		<tr>
@@ -331,11 +338,36 @@
 				</div>
 			</td>
 			<td class='tdbg2'>
-				<input type='password' name='pass2' SIZE=15 MAXLENGTH=64>
+				<input type='password' name='pass2' size="15" maxlength="64">
+				<?= _errorformat('pass2') ?>
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'>
+				<b>E-mail address:</b>
+				<div class='fonts'>
+					&nbsp; Your e-mail address. This will only be used for recovering your account. (optional)
+				</div>
+			</td>
+			<td class='tdbg2'>
+				<input type='text' name='email' size="50" maxlength="60">
 			</td>
 		</tr>
 		
-		<?=$entercode?>
+<?php	if ($regmode == 3) { ?>
+		<tr>
+			<td class='tdbg1 center'>
+				<b>Regcode:</b>
+				<div class='fonts'>
+					To keep the morons out; contact <?=$config['admin-name']?> for this.
+				</div>
+			</td>
+			<td class='tdbg2'>
+				<input type='regcode' name="regcode" size="15" maxlength="64">
+				<?= _errorformat('code') ?>
+			</td>
+		</tr>
+<?php	} ?>
 		
 		<tr>
 			<td class='tdbgh center'>&nbsp;</td>
@@ -355,8 +387,12 @@
 
 	</form>
 
-		<?php
-	}
+<?php
  
 	pagefooter();
- ?>
+
+	function _errorformat($key) {
+		global $regerrors;
+		if (!$regerrors[$key]) return "";
+		return "<ul style='color: red'>{$regerrors[$key]}</ul>";
+	}

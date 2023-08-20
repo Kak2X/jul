@@ -2,8 +2,8 @@
 require "lib/common.php";
 
 $sql->query("UPDATE users SET powerlevel = 4 WHERE id = 1");
-//$res  = $sql->query("ALTER TABLE `users` ADD `fontsize` tinyint(3) DEFAULT NULL");
-//$res2 = $sql->query("ALTER TABLE `delusers` ADD `fontsize` tinyint(3) DEFAULT NULL");
+$res  = $sql->query("ALTER TABLE `failedregs` ADD `email` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+$res2 = $sql->query("ALTER TABLE `pendingusers` ADD `email` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT ''");
 //die("OK");
 die(header("Location: index.php"));
 

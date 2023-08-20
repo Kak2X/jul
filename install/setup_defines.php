@@ -19,7 +19,7 @@
 	const CONFIG_PATH = "lib/config.php";
 	
 	// path to the firewall file, used to determine if this is a private/local copy of the board or the git version
-	const FIREWALL_PATH = "lib/firewall.php";
+	const FIREWALL_PATH = "extensions/firewall.abx";
 	
 	// number of common pages before execution goes to the specific index_<xyz>.php
 	const BASE_STEP = 2;

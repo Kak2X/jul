@@ -110,7 +110,7 @@
 					"desc":"If enabled, the Christmas theme will be forced in December.",
 					"input":"radio",
 					"type":"bool",
-					"default":0,
+					"default":1,
 					"special":"yesno"
 				},
 				"affiliate-links":{
@@ -146,7 +146,7 @@
 					"desc":"Enables users to rate others from a scale of 0 to 10. The vote's weight increases with the user's level.",
 					"input":"radio",
 					"type":"bool",
-					"default":0,
+					"default":1,
 					"special":"yesno"
 				},
 				"onlineusers-on-thread":{
@@ -154,7 +154,7 @@
 					"desc":"Determines what to show in the online users bar when viewing a thread. If set to 'Thread', it will show users reading the thread (AB2.064 behaviour), otherwise it will show all users in the forum (original behaviour, as shown in the forum page).",
 					"input":"radio",
 					"type":"bool",
-					"default":0,
+					"default":1,
 					"options":[
 						"Forum",
 						"Thread"
@@ -202,7 +202,7 @@
 					"desc":"Allows users to upload attachments to posts and private messages.",
 					"input":"radio",
 					"type":"bool",
-					"default":0,
+					"default":1,
 					"special":"yesno"
 				},
 				"attachments-all-origin":{
@@ -240,7 +240,7 @@
 					"desc":"Enables avatars to be stored locally. This also allows users to define a custom amount of avatars. If disabled, the original avatar system will be used and the following options will have no effect.",
 					"input":"radio",
 					"type":"bool",
-					"default":0,
+					"default":1,
 					"special":"yesno"
 				},
 				"avatar-limit":{
@@ -359,14 +359,6 @@
 		{
 			"title":"Security",
 			"fields":{
-				"enable-firewall":{
-					"title":"Enable firewall",
-					"desc":"Enables the firewall, if you provide one.",
-					"input":"radio",
-					"type":"bool",
-					"default":1,
-					"special":"yesno"
-				},
 				"salt-string":{
 					"title":"Salt string",
 					"desc":"Primary salt text for CSRF tokens. Write anything you like as you shouldn't remember this.",

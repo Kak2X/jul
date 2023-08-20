@@ -306,8 +306,7 @@ class schema {
 			$p = [];
 			$time = time();
 			foreach (DATE_FORMATS as $x)
-			foreach (TIME_FORMATS as $y)
-				$p["$x $y"] = "$x $y (" . date("$x $y", $time) .")";
+				$p[$x] = "$x (" . date($x, $time) .")";
 		}	
 		return $p;
 	}
@@ -317,7 +316,7 @@ class schema {
 		if ($p == null) {
 			$p = [];
 			$time = time();
-			foreach (DATE_FORMATS as $x)
+			foreach (DATE_SHORT_FORMATS as $x)
 				$p[$x] = "$x (" . date($x, $time). ")";
 		}	
 		return $p;

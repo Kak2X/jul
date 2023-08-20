@@ -395,7 +395,7 @@
 ?>
 			<tr>
 				<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
-				<td class='tdbg1'><?= $statusicons['new'] ?> <a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
+				<td class='tdbg1'><a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
 				<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
 				<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
 			</tr>

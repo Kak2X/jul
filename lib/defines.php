@@ -85,5 +85,5 @@
 	);
 	
 	// Will be merged
-	const DATE_FORMATS = array('','m-d-y','d-m-y','y-m-d','Y-m-d','m/d/Y','d.m.y','M j Y','D jS M Y');
-	const TIME_FORMATS  = array('','h:i A','h:i:s A','H:i','H:i:s');
+	const DATE_FORMATS = array('m-d-y h:i:s A', 'd/m/Y H:i:s', 'Y-m-d H:i:s');
+	const DATE_SHORT_FORMATS  = array('m-d-y', 'd/m/Y', 'Y-m-d');

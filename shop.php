@@ -48,7 +48,10 @@
 			errorpage("You don't have enough coins to buy this item!");
 		
 		$pitem = $sql->fetchq("SELECT coins FROM items WHERE id=".$user['eq'.$item['cat']]);
+		if (!$pitem)
+			$pitem = ['coins' => 0];
 		$whatever = $item['coins'] - $pitem['coins'] * 0.6;
+		
 		//print "Debug output: Cost: ". $item['coins'] ." - Current item's sell value: ". ($pitem['coins'] * 0.6) ." - Amount to subtract: ". $whatever .". /debug";
 		$sql->query("UPDATE users_rpg SET `eq{$item['cat']}`= $id, `spent` = spent + $whatever, `gcoins` = `gcoins` - {$item['gcoins']} WHERE uid = {$loguser['id']}");
 		errorpage("The ".htmlspecialchars($item['name'])." has been bought and equipped.","shop.php$h_q",'return to the shop',0);		
@@ -112,6 +115,11 @@
 	else if ($action == "items") {
 		$eq 	= $sql->resultq("SELECT eq$cat FROM users_rpg WHERE uid = {$loguser['id']}");
 		$eqitem = $sql->fetchq("SELECT * FROM items WHERE id = $eq");
+		if (!$eqitem) {
+			$eqitem = ['id' => 0, 'stype' => 0];
+			for ($i = 0; $i < 9; ++$i) 
+				$eqitem["s{$stat[$i]}"] = 0;
+		}
 		
 		$token  = generate_token(TOKEN_SHOP);
 ?>
@@ -184,7 +192,7 @@
 			for ($i = 0; $i < 9; ++$i) {
 				$st = $item["s{$stat[$i]}"];
 				if (substr($item['stype'], $i, 1) == 'm') { // * .2 float
-				  $st = vsprintf('x%1.2f',$st/100);
+				  $st = vsprintf('x%1.2f',[$st/100]);
 				  if ($st==100) $st = '&nbsp;';
 				} else {
 				  if ($st>0) $st = "+$st";

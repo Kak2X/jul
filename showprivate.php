@@ -237,7 +237,8 @@
 				}
 				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Undelete</a>";
 			} else {
-				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
+				if ($ismod)
+					$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
 				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Delete</a>";
 			}
 			if ($sysadmin && $config['allow-post-deletion']) {

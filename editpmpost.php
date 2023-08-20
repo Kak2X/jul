@@ -218,7 +218,7 @@
 		replytoolbar('head', $smilies);
 		replytoolbar('sign', $smilies);
 	}
-	else if ($isadmin && $_GET['action'] == 'noob') {
+	else if ($ismod && $_GET['action'] == 'noob') {
 		check_token($_GET['auth'], TOKEN_MGET);
 		$sql->query("UPDATE `pm_posts` SET `noob` = '1' - `noob` WHERE `id` = '{$_GET['id']}'");
 		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);

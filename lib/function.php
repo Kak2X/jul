@@ -2069,11 +2069,27 @@ function deletefolder($directory) {
 	}
 }
 
+function escape_html($str) {
+	if ($str === null) return "";
+	return htmlspecialchars($str);
+}
 function escape_attribute($attr) {
+	if ($attr === null) return "";
 	return str_replace(":", "&colon;", htmlspecialchars($attr, ENT_QUOTES));
 	//return str_replace(array('\'', '<', '>', '"'), array('%27', '%3C', '%3E', '%22'), $attr);
 }
-
+function strn_replace($s, $d, $str) {
+	if ($str === null) return "";
+	if ($s === null) $s = "";
+	if ($d === null) $d = "";
+	return str_replace($s, $d, $str);
+}
+function pregn_replace($s, $d, $str) {
+	if ($str === null) return "";
+	if ($s === null) $s = "";
+	if ($d === null) $d = "";
+	return preg_replace($s, $d, $str);
+}
 // $startrange === true -> print all pages
 function pagelist($url, $elements, $ppp, $startrange = 9, $endrange = 9, $midrange = 4){
 	$page    = filter_int($_GET['page']);

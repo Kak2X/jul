@@ -134,7 +134,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Custom header</b></td>
-			<td class='tdbg2'><textarea wrap=virtual name='specialtitle' ROWS=2 COLS=80 style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($misc['specialtitle'])?></textarea></td>
+			<td class='tdbg2'><textarea wrap=virtual name='specialtitle' ROWS=2 COLS=80 style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($misc['specialtitle'])?></textarea></td>
 		</tr>
 		
 		<tr><td class='tdbgc center' colspan=2>Records</td></tr>

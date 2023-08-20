@@ -382,7 +382,7 @@
 	} else {
 		$comm_new = "
 		<form method='POST' action='usercomment.php?act=add&id={$_GET['id']}'>
-			".getuserlink($loguser).":&nbsp;<input type='text' name='text' class='fonts' style='width: 800px; height: 16px; vertical-align: middle'> <input type='submit' class='fonts' name='add' value='Add comment'>
+			".getuserlink($loguser).":&nbsp;<input type='text' name='text' style='width: 800px; height: 16px; vertical-align: middle'> <input type='submit' class='fonts' name='add' value='Add comment'>
 			".auth_tag()."
 		</form>
 		";

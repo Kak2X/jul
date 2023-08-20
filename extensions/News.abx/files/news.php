@@ -229,7 +229,7 @@
 			<br>
 			<table class='table fonts small-shadow'>
 				<tr><td class='tdbgh center'>Latest comments</td></tr>
-				<tr><td class="tdbg2 comment-list fonts"><?= recentcomments(5) ?></td>
+				<tr><td class="tdbg2 comment-list"><?= recentcomments(5) ?></td>
 				</tr>
 			</table>
 		</div>

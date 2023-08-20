@@ -515,7 +515,7 @@
 		$txt = "";
 		while($x = $sql->fetch($list)){
 			$txt .= "
-				<table class='table fonts' style='border-spacing: 0'>
+				<table class='table' style='border-spacing: 0'>
 					<tr>
 						<td class='tdbgh nbdr'>".getuserlink($x, $x['uid'])."</td>
 						<td class='tdbgh nbdl right'>".printdate($x['date'])."</td>

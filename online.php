@@ -18,11 +18,8 @@
 	}
 */
 
-	$time = filter_int($_GET['time']);
-	if (!$time) $time = 300;
-
 	// FOR THE LOVE OF GOD XKEEPER JUST GIVE ME ~NUKE ACCESS
-	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 /* || $loguser['id'] == 5 || $loguser['id'] == 2100*/);
+	$banorama	= ($_SERVER['REMOTE_ADDR'] == $x_hacks['adminip'] || $loguser['id'] == 1 || $loguser['powerlevel'] >= 4); /* || $loguser['id'] == 5 || $loguser['id'] == 2100*); */
 
 	if ($banorama && filter_string($_GET['banip'])) {
 		check_token($_GET['auth'], TOKEN_BANNER, $_GET['banip']);
@@ -32,14 +29,16 @@
 		return header("Location: online.php"); // ?m=1
 	}
 
-
+	$_GET['time'] = filter_int($_GET['time']);
+	if (!$_GET['time']) $_GET['time'] = 300;
+	
+	$_GET['sort'] = filter_string($_GET['sort']);
+	$ipsort = ($_GET['sort'] == 'IP' && $isadmin);
+	
 	pageheader($windowtitle);
 	
-	// (this disabled the IP sorting, for whatever it's worth)
-	//$sort	= filter_bool($_GET['sort']); 
-	$sort = filter_string($_GET['sort']);
-	if ($sort == 'IP' && $isadmin) $ipsort = true;	// Just check now and don't bother for the rest
-	$lnk 	= ($sort ? "?sort=1&" : '?');
+	// Just check now and don't bother for the rest
+	$lnk 	= ($_GET['sort'] ? "?sort=1&" : '?');
 	?>
 	<div class='fonts'>
 		Show online users during the last:
@@ -49,104 +48,114 @@
 		<a href="online.php<?=$lnk?>time=3600">hour</a> |
 		<a href="online.php<?=$lnk?>time=86400">day</a>
 <?php if ($isadmin) { ?>
-		<br>Admin cruft: <a href="online.php?<?=(isset($ipsort) ? '':'sort=IP&')?>time=<?=$time?>">Sort by <?=(isset($ipsort) ? 'date' : 'IP')?></a>		
-<?php } 
+		<br>Admin cruft: <a href="online.php?<?=($ipsort ? '':'sort=IP&')?>time=<?=$_GET['time']?>">Sort by <?=($ipsort ? 'date' : 'IP')?></a>		
+<?php } ?>
+	</div>
+<?php
 	
 	// Logged in users
 	$posters = $sql->query("
 		SELECT $userfields, u.posts, lastactivity, lastip, lastposttime, lasturl, hideactivity
 		FROM users u
-		WHERE lastactivity > ".(time()-$time)." AND ($ismod OR !hideactivity)
-		ORDER BY ".(isset($ipsort) ? 'lastip' : 'lastactivity DESC')
+		WHERE lastactivity > ".(time()-$_GET['time'])." AND ($ismod OR !hideactivity)
+		ORDER BY ".($ipsort ? 'lastip' : 'lastactivity DESC')
 	);
 
 
-	?><br>
-	<span class='font'> Online users during the last <?=timeunits2($time)?>:</span>
-	<table class='table'>
-		<td class='tdbgh center' width=20>&nbsp;</td>
-		<td class='tdbgh center' width=200>Username</td>
-		<td class='tdbgh center' width=120> Last activity</td>
-		<td class='tdbgh center' width=180> Last post</td>
-		<td class='tdbgh center' width=*>URL</td>
-	<?=($isadmin ? "<td class='tdbgh center' width=120>IP address</td>" : "")?>
-		<td class='tdbgh center' width=60> Posts</td>
-	</tr>
+	?>
+
+	<div>Online users during the last <?=timeunits2($_GET['time'])?>:</div>
+	<table class="table">
+		<tr>
+			<td class="tdbgh center" style="width: 20px">&nbsp;</td>
+			<td class="tdbgh center" style="width: 200px">Username</td>
+			<td class="tdbgh center" style="width: 120px">Last activity</td>
+			<td class="tdbgh center" style="width: 180px">Last post</td>
+			<td class="tdbgh center">URL</td>
+<?php if ($isadmin) { ?>
+			<td class="tdbgh center" style="width: 120px">IP address</td>
+<?php } ?>
+			<td class="tdbgh center" style="width: 60px"> Posts</td>
+		</tr>
 	<?php
 
-	for ($i = 1; $user=$sql->fetch($posters); ++$i) {
+	for ($i = 1; $user = $sql->fetch($posters); ++$i) {
 		$userlink = getuserlink($user);
 		if ($user['hideactivity']) $userlink = "<b>[</b> $userlink <b>]</b>";
-		if (!$user['posts']) $user['lastposttime'] = getblankdate();
-		else                 $user['lastposttime'] = printdate($user['lastposttime']);
+		if (!$user['posts'])       $user['lastposttime'] = getblankdate();
+		else                       $user['lastposttime'] = printdate($user['lastposttime']);
 
-		$user['lastip'] = htmlspecialchars($user['lastip'], ENT_QUOTES);
-		//$user['lasturl']=str_replace('<','&lt;',$user['lasturl']);
-		//$user['lasturl']=str_replace('>','&gt;',$user['lasturl']);
-		//$user['lasturl']=str_replace('%20',' ',$user['lasturl']);
-		$user['lasturl']=str_replace('shop?h&','shop?',$user['lasturl']);
-		$user['lasturl']=preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
-		$user['lasturl']=preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
-		$user['lasturl']=escape_attribute($user['lasturl']);		
-		if (substr($user['lasturl'], -11) =='(IP banned)' || substr($user['lasturl'], -11) =='(Tor proxy)' || substr($user['lasturl'], -5) == '(Bot)') {
+		$user['lastip']  = htmlspecialchars($user['lastip'], ENT_QUOTES);
+		$user['lasturl'] = str_replace('shop?h&','shop?',$user['lasturl']);
+		$user['lasturl'] = preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
+		$user['lasturl'] = preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
+		$user['lasturl'] = escape_attribute($user['lasturl']);
+
+		// TODO: The BPT flags should come from a bitmask in the users table
+		$user['banned'] = substr($user['lasturl'], -11) =='(IP banned)';
+		if ($user['banned'] || substr($user['lasturl'], -11) =='(Tor proxy)' || substr($user['lasturl'], -5) == '(Bot)') {
 			$ptr = strrpos($user['lasturl'], '(', -4);
 			$realurl = substr($user['lasturl'], 0, $ptr-1);
 		} else {
 			$realurl = $user['lasturl'];
 		}
-		
+		//		<td class='tdbg1 right'>". $user['ipmatches'] ." <img src='". ($user['ipmatches'] > 0 ? "images/dot2.gif" : "images/dot5.gif") ."' align='absmiddle'></td>";
 		?>
 		<tr style="height:24px">
-			<td class='tdbg1 center'><?=$i?></td>
-			<td class='tdbg2'><?=$userlink?></td>
-			<td class='tdbg1 center'><?=date('h:i:s A',$user['lastactivity']+$loguser['tzoff'])?></td>
-			<td class='tdbg1 center'><?=$user['lastposttime']?></td>
-			<td class='tdbg2'><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$user['lasturl']?></td>
-		<?php
+			<td class="tdbg1 center"><?=$i?></td>
+			<td class="tdbg2"><?=$userlink?></td>
+			<td class="tdbg1 center"><?=date('h:i:s A',$user['lastactivity']+$loguser['tzoff'])?></td>
+			<td class="tdbg1 center"><?=$user['lastposttime']?></td>
+			<td class="tdbg2"><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$user['lasturl']?></td>
 
-		if ($banorama)
-			$ipban	= "<span class='fonts'><br>[<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=".generate_token(TOKEN_BANNER, $user['lastip'])."'>Ban</a> - <a href='http://google.com/search?q={$user['lastip']}'>G</a>]</span>";
-		else $ipban = "";
-		
-		if($isadmin)
-			print "<td class='tdbg1 center'><a href='admin-ipsearch.php?ip={$user['lastip']}'>{$user['lastip']}</a> $ipban</td>";
-//		<td class='tdbg1 right'>". $user['ipmatches'] ." <img src='". ($user['ipmatches'] > 0 ? "images/dot2.gif" : "images/dot5.gif") ."' align='absmiddle'></td>";
+<?php	if ($isadmin) { 
 
-		?>
-			<td class='tdbg2 center'><?=$user['posts']?></td>
-		<?php
-	}
-		?>
+			if ($banorama && !$user['banned'])
+				$ipban	= "<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=" . generate_token(TOKEN_BANNER, $user['lastip']) ."'>Ban</a> - ";
+			elseif ($user['banned'])
+				$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
+			else
+				$ipban	= "";
+?>
+			<td class="tdbg1 center">
+				<a href="admin-ipsearch.php?ip=<?=$user['lastip']?>"><?=$user['lastip']?></a>
+				<div class="fonts">
+					[<?=$ipban?><a href="http://google.com/search?q=<?=$user['lastip']?>">G</a> - <a href="http://en.wikipedia.org/wiki/User:<?=$user['lastip']?>">W</a>]
+				</div>
+			</td>
+<?php	} ?>
+			<td class="tdbg2 center"><?=$user['posts']?></td>
+<?php }	?>
 		</tr>
 	</table>
-		<?php
-	//WHERE date>'.(time()-$time).'
+<?php
+	
 	$guests = $sql->query('
 		SELECT *, (SELECT COUNT(`ip`) FROM `ipbans` WHERE `ip` = `guests`.`ip`) AS banned
 		FROM guests
-		ORDER BY '.(isset($ipsort) ? 'ip' : 'date').' DESC
+		ORDER BY '.($ipsort ? 'ip' : 'date').' DESC
 	');
 
-	?>
-	<span class='font'><br>Guests online in the past 5 min.:</span>
-	<table class='table'>
+	?><br>
+	<span>Guests online in the past 5 min.:</span>
+	<table class="table">
 		<tr>
-			<td class='tdbgh center' width=20>&nbsp;</td>
-			<td class='tdbgh center' width=300>&nbsp;</td>
-			<td class='tdbgh center' width=120>Last activity</td>
-			<td class='tdbgh center' width=*>URL</td>
-		<?=($isadmin ? "<td class='tdbgh center' width=120> IP address</td>" : "")?>
+			<td class="tdbgh center" style="width: 20px">&nbsp;</td>
+			<td class="tdbgh center" style="width: 300px">&nbsp;</td>
+			<td class="tdbgh center" style="width: 120px">Last activity</td>
+			<td class="tdbgh center">URL</td>
+<?php if ($isadmin) { ?>
+			<td class="tdbgh center" style="width: 120px">IP address</td>
+<?php } ?>
 		</tr>
 	<?php
 
-	for($i=1;$guest=$sql->fetch($guests);++$i){
-		$guest['ip'] = htmlspecialchars($user['ip'], ENT_QUOTES);
-		//$guest['lasturl']=str_replace('<','&lt;',$guest['lasturl']);
-		//$guest['lasturl']=str_replace('>','&gt;',$guest['lasturl']);
-		$guest['lasturl']=str_replace('shop?h&','shop?',$guest['lasturl']);
-		$guest['lasturl']=preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$guest['lasturl']); // let's not give idiots any ideas
-		$guest['lasturl']=preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$guest['lasturl']); // just in case
-		$guest['lasturl']=htmlspecialchars($guest['lasturl'], ENT_QUOTES);
+	for ($i = 1; $guest = $sql->fetch($guests); ++$i){
+		$guest['ip'] = htmlspecialchars($guest['ip'], ENT_QUOTES);
+		$guest['lasturl'] = str_replace('shop?h&','shop?',$guest['lasturl']);
+		$guest['lasturl'] = preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$guest['lasturl']); // let's not give idiots any ideas
+		$guest['lasturl'] = preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$guest['lasturl']); // just in case
+		$guest['lasturl'] = escape_attribute($guest['lasturl']);
 /*		if ($guest['useragent'] == "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.19) Gecko/2010031218 Firefox/3.0.19" && $banorama) {
 //		if (stripos($guest['useragent'], "robot") !== false && $banorama)
 			$marker	= " style='color: #f88;'";
@@ -175,25 +184,29 @@
 
 		?>
 		<tr style="height:40px">
-			<td class='tdbg1 center'<?=$marker?>><?=$i?></td>
-			<td class='tdbg2 fonts center'<?=$marker?>><?=htmlspecialchars($guest['useragent'])?></td>
-			<td class='tdbg1 center'<?=$marker?>><?=date('h:i:s A',$guest['date']+$loguser['tzoff'])?></td>
-			<td class='tdbg2'<?=$marker?>><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$guest['lasturl']?></td>
+			<td class="tdbg1 center"<?=$marker?>><?=$i?></td>
+			<td class="tdbg2 fonts center"<?=$marker?>><?=htmlspecialchars($guest['useragent'])?></td>
+			<td class="tdbg1 center"<?=$marker?>><?=date('h:i:s A',$guest['date']+$loguser['tzoff'])?></td>
+			<td class="tdbg2"<?=$marker?>><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$guest['lasturl']?></td>
 		<?php
 
-
-		if ($banorama && !$guest['banned'])
-			$ipban	= "<a href='?banip={$guest['ip']}&auth=" . generate_token(TOKEN_BANNER, $guest['ip']) ."'>Ban</a> - ";
-		elseif ($guest['banned'])
-		 	$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
-		else
-			$ipban	= "";
-
-		if($isadmin)
-			print "</td><td class='tdbg1 center'$marker>
-			<a href=admin-ipsearch.php?ip={$guest['ip']}>{$guest['ip']}</a><span class='fonts'>
-			<br>[$ipban<a href='http://google.com/search?q={$guest['ip']}'>G</a>-<a href='http://en.wikipedia.org/wiki/User:{$guest['ip']}'>W</a>-<a href='http://{$guest['ip']}/'>H</a>]</a></span>";
-  
+		if ($isadmin) {
+			
+			if ($banorama && !$guest['banned'])
+				$ipban	= "<a href='?banip={$guest['ip']}&auth=" . generate_token(TOKEN_BANNER, $guest['ip']) ."'>Ban</a> - ";
+			elseif ($guest['banned'])
+				$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
+			else
+				$ipban	= "";
+			
+?>		</td>
+		<td class="tdbg1 center" <?=$marker?>>
+			<a href="admin-ipsearch.php?ip=<?=$guest['ip']?>"><?=$guest['ip']?></a>
+			<span class="fonts">
+				<br>
+				[<?=$ipban?><a href="http://google.com/search?q=<?=$guest['ip']?>">G</a> - <a href="http://en.wikipedia.org/wiki/User:<?=$guest['ip']?>">W</a> - <a href="http://<?=$guest['ip']?>/">H</a>]</a></span>
+<?php
+		}
 
 	}
 		?>

@@ -3,6 +3,7 @@
 		Backup script
 		Run this in a cron job at midnight (or manually through admin-backup.php)
 	*/
+	const SINGLE_FILE = true;
 	
 	if (substr(php_sapi_name(), 0, 3) != 'cli') {
 		if (!defined('MANUAL_BACKUP')) die("No."); // If not called from cli or admin-backup, die instantly
@@ -18,10 +19,12 @@
 	
 	
 	$tables = array(
-		'attachments',
+		'actionlog',
+		'announcementread',
+		'announcements',
 		'archive_cat',
 		'archive_items',
-		//'actionlog', # Not used (yet?)
+		'attachments',
 		//'biggestposters',
 		'blockedlayouts',
 		'bots',
@@ -35,33 +38,33 @@
 		'failsupress',
 		'favorites',
 		'filters',
-		'forums',
-		'forummods',
 		'forumbans',
-//		'irc',
-		'items',
-		'itemcateg',
-		'itemtypes',
+		'forummods',
+		'forumread',
+		'forums',
+		'guests',
+		'hits',
 		'ipbans',
+		'itemcateg',
+		'items',
+		'itemtypes',
+		'jstrap',
+		//'log',
+		//'minilog',
 		'misc',
 		'news',
 		'news_comments',
 		'news_tags',
 		'news_tags_assoc',
 		'pendingusers',
-//		'perm_definitions',
-//		'perm_forums',
-//		'perm_forumusers',
-//		'perm_groups',
-//		'perm_types_definitions',
-//		'perm_users',
 		'pm_access',
 		'pm_folders',
 		'pm_foldersread',
 		'pm_posts',
 		'pm_ratings',
 		'pm_threads',
-		'pm_threadsread',		
+		'pm_threadsread',
+		'pmsgs',
 		'poll',
 		'poll_choices',
 		'pollvotes',
@@ -70,15 +73,21 @@
 		'posts',
 		'posts_old',
 		'posts_ratings',
+		'postsday',
+		'powerups',
 		'ranks',
 		'ranksets',
 		'ratings',
+		'ratings_cache',
+		'referer',
+		'rendertimes',
 		'rpg_classes',
 		'rpg_inventory',
 		'schemes',
 		'schemes_cat',
 		'threads',
 		'threads_featured',
+		'threadsread',
 		'tinapoints',
 		'tlayouts',
 		'tor',
@@ -86,14 +95,13 @@
 		'tournaments',
 		'uploader_cat',
 		'uploader_files',
-		//'userpic',
-		//'userpiccateg',
+		'userpic',
+		'userpiccateg',
 		'userratings',
 		'users',
-		'users_rpg',
-//		'users_subgroups',
 		'users_avatars',
-		'users_comments'
+		'users_comments',
+		'users_rpg',
 	);
 	
 	// We don't need everything
@@ -125,6 +133,10 @@
 	// Use unbuffered query in an attempt to speed up the query fetching
 	$sql->connection->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 	
+	if (SINGLE_FILE) {
+		$openfile = "temp/cbak_all";
+		$handle   = fopen($openfile, 'w');
+	}
 	foreach ($tables as $tid => $table) {
 		echo "\n-$table...";
 		
@@ -136,8 +148,11 @@
 		}
 		
 		// Determine field names for this table
-		$openfile = "temp/cbak_{$table}"; //"{$config['backup-folder']}/tmp/$table";
-		$handle   = fopen($openfile, 'w');
+		if (!SINGLE_FILE) {
+			$openfile = "temp/cbak_{$table}"; //"{$config['backup-folder']}/tmp/$table";
+			$handle   = fopen($openfile, 'w');
+		}
+
 		$cols = $sql->fetchq("
 			SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 			WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$table'
@@ -153,25 +168,37 @@
 			for ($i = 0, $out = ''; $i < $cnt; $i++){
 				if (!isset($r[$i])) 			$out .= "NULL,"; // explicitly required by some parts of the board
 				//else if ($r[$i] == '0'.$r[$i])	$out .= $r[$i].","; // Numeric value?
-				else							$out .= "'".str_replace("'", "''", $r[$i])."',"; // String
+				else							$out .= "'".strtr($r[$i], ["'" => "''","\\" => "\\\\"])."',"; // String
 			}
 			$out[strlen($out)-1] = ")"; // Replace the last comma
 			fwrite($handle, "($out,\n");
 		}
 		
 		fseek($handle, -2, SEEK_CUR); // set it before newline and ,
-		fwrite($handle, ";");
-		fclose($handle);
+		fwrite($handle, ";\n");
 		
-		echo $zip->addFile($openfile, "$table.sql") ? "OK!" : "ERROR!";
-
+		if (!SINGLE_FILE) {
+			fclose($handle);
+			echo $zip->addFile($openfile, "$table.sql") ? "OK!" : "ERROR!";
+		}
 	}
-	echo "\n\nFinalizing file...";
+	if (SINGLE_FILE) {
+		echo "\n\nIncluding dump file...";
+		fclose($handle);
+		echo $zip->addFile($openfile, "dump.sql") ? "OK!" : "ERROR!";
+	}
+	
+	echo "\n\nFinalizing zip archive...";
+
 	echo $zip->close() ? "OK!\n\nBackup finished." : "ERROR!";
 	
 	echo "\nRemoving temporary files...\n";
-	foreach($tables as $table){
-		unlink("temp/cbak_{$table}");
+	if (SINGLE_FILE) {
+		unlink("temp/cbak_all");
+	} else {
+		foreach ($tables as $table){
+			unlink("temp/cbak_{$table}");
+		}
 	}
 	
 	print "\nTime taken: ".number_format(microtime(true)-$startingtime, 6)." seconds.";

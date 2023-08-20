@@ -56,6 +56,7 @@
 				include "backup.php"; // will chdir("..");
 ?>						</td>
 					</tr>
+					<tr><td class="tdbg1 center"><a href="?">Click here to return to the main page</a></td></tr>
 				</table>
 <?php			break;
 			case 2: // Delete old backups

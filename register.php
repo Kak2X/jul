@@ -184,7 +184,7 @@
 				$regerrors['name'] .= "<li>In use</li>";
 				$error = true;
 			}
-			if (!$isadmin && !$config['allow-rereggie'] && ($nomultis = $sql->resultq("SELECT $userfields FROM users u WHERE lastip = '{$_SERVER['REMOTE_ADDR']}'"))) {
+			if (!$isadmin && !$config['allow-rereggie'] && ($nomultis = $sql->fetchq("SELECT $userfields FROM users u WHERE lastip = '{$_SERVER['REMOTE_ADDR']}'"))) {
 				$regerrors['main'] .= "<li>You may have an account already as ".getuserlink($nomultis)."<br>If this is incorrect, please contact an administrator.</li>";
 				$error = true;
 			}

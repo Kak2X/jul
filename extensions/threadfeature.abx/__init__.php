@@ -16,19 +16,25 @@ if ($xconf['index-window'] || $xconf['index-force-thread']) {
 		$hidden = filter_int($_COOKIE['hcat'][EXT_WND_FEATURED]);
 		if (!$xconf['index-force-thread'] && $hidden) {
 			// Simpler query if featured threads are disabled
-			$featured = $sql->resultq("
+			$total = $sql->resultq("
 				SELECT COUNT(*) FROM threads t 
 				INNER JOIN forums f ON t.forum = f.id
 				WHERE t.featured = 1 AND ".can_view_forum_query()."
 			");
-			if (!$featured)
+			if (!$total)
 				return "";
+			
+			if ($total > 1) {
+				$title = "Featured threads ($total)";
+			} else {
+				$title = "Featured thread";
+			}
 			
 			ob_start();
 ?>
 			<br/>
 			<table class="table">
-				<tr><td class="tdbgh center fonts">Toggle this box to view a random featured thread<?= _collapse_toggle(EXT_WND_FEATURED, $hidden) ?></td></tr>
+				<tr><td class="tdbgh center fonts"><?= $title . _collapse_toggle(EXT_WND_FEATURED, $hidden) ?></td></tr>
 			</table>
 <?php
 		} else {

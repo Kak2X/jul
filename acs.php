@@ -18,7 +18,7 @@
 	$d  = date("d", $timestamp);
 	$y  = date("y", $timestamp);
 	
-	$daystart = mktime(0,0,0,$m,$d,$y) + $config['server-time-offset'];
+	$daystart = mktime(0,0,0,$m,$d,$y);
 	$dayend   = $daystart + 86400;
 
 	// We can already filter out those who made only 1 post here

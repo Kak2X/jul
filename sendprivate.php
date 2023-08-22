@@ -72,20 +72,33 @@ if ($_GET['id']) {
 				
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
+			
+			// Create post
+			$preq = new create_pm_post_req();
+			$preq->nolayout = $_POST['nolayout'];
+			$preq->vals = array(
+				// Base fields
+				'thread'        => $_GET['id'],
+				'user'          => $loguser,
+				'ip'            => $_SERVER['REMOTE_ADDR'],
+				'text'          => $_POST['message'],
+				// Opt
+				'moodid'        => $_POST['moodid'],
+				// Flags
+				'nosmilies'     => $_POST['nosmilies'],
+				'nohtml'        => $_POST['nohtml'],
+			);
 			if ($isadmin || $mythread) {
-				$modq = array(
+				$preq->threadupdate = array(
 					'closed' => $_POST['close'],
 				);
-			} else {
-				$modq = array();
 			}
-			//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : ""; 
-			$pid = create_pm_post($loguser, $_GET['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
+			$preq->id = create_pm_post($preq) or throw new Exception("Failed to create PM Post");
 			if ($can_attach) {
-				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
+				confirm_attachments($attach_key, $loguser['id'], $preq->id, ATTACH_PM);
 			}
 			$sql->commit();
-			return header("Location: showprivate.php?pid=$pid#$pid");
+			return header("Location: showprivate.php?pid={$preq->id}#{$preq->id}");
 
 		}
 		
@@ -292,21 +305,45 @@ else {
 		if (isset($_POST['submit'])) {
 			check_token($_POST['auth']);
 			
-			if (!$isadmin && !$config['allow-pmthread-edit']) {
-				$_POST['close'] = 0;
-			}
-			
 			$sql->beginTransaction();
-			$tid = create_pm_thread($loguser, $_POST['subject'], $_POST['description'], $posticon, $_POST['close']);
-			$pid = create_pm_post($loguser, $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
-			set_pm_acl($destid, $tid, false, $_POST['folder']); // and add yourself automatically
+			
+			// Create thread
+			$treq = new create_pm_thread_req();
+			$treq->vals = [
+				// Main
+				'user'				=> $loguser,
+				'title'				=> $_POST['subject'],
+				'description'		=> $_POST['description'],
+				'icon'				=> $posticon,
+				// Flags
+				'closed'			=> !$isadmin && !$config['allow-pmthread-edit'] ? 0 : $_POST['close'],
+			];
+			$treq->id = create_pm_thread($treq) or throw new Exception("Failed to create PM Thread");
+			
+			// Create post
+			$preq = new create_pm_post_req();
+			$preq->nolayout = $_POST['nolayout'];
+			$preq->vals = array(
+				// Base fields
+				'thread'        => $treq->id,
+				'user'          => $loguser,
+				'ip'            => $_SERVER['REMOTE_ADDR'],
+				'text'          => $_POST['message'],
+				// Opt
+				'moodid'        => $_POST['moodid'],
+				// Flags
+				'nosmilies'     => $_POST['nosmilies'],
+				'nohtml'        => $_POST['nohtml'],
+			);
+			$preq->id = create_pm_post($preq) or throw new Exception("Failed to create PM Post");
+			set_pm_acl($destid, $treq->id, false, $_POST['folder']); // and add yourself automatically
 			
 			if ($can_attach) {
-				confirm_attachments($attach_key, $loguser['id'], $pid, ATTACH_PM);
+				confirm_attachments($attach_key, $loguser['id'], $preq->id, ATTACH_PM);
 			}
 			$sql->commit();
 			
-			errorpage("Conversation posted successfully!", "showprivate.php?id=$tid", $_POST['subject'], 0);
+			errorpage("Conversation posted successfully!", "showprivate.php?id={$treq->id}", $_POST['subject'], 0);
 			
 		}
 		

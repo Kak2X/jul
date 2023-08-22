@@ -344,89 +344,99 @@ function set_pm_acl($users, $thread, $show_self = false, $self_folder = PMFOLDER
 			
 }
 
-function create_pm_thread($user, $title, $description, $posticon, $closed = 0) {
+function create_pm_thread($treq) {
 	global $sql;
-	// $user consistency support
-	if (is_array($user)) {
-		$user = filter_int($user['id']);
-		if (!$user) return 0;
+	// For consistency with create_post, allow both array and int args
+	if (is_array($treq->vals['user'])) {
+		$treq->vals['user'] = filter_int($treq->vals['user']['id']);
+		if (!$treq->vals['user']) return 0;
 	}
 	$currenttime = time();
 		
-	// Insert thread
-	$vals = array(
-		'user'				=> $user,
-		'closed'			=> $closed,
-		
-		'title'				=> $title,
-		'description'		=> $description,
-		'icon'				=> $posticon,
-		
-		'replies'			=> 0,
-		'firstpostdate'		=> $currenttime,
-		'lastpostdate'		=> $currenttime,
-		'lastposter'		=> $user,
-	);
-	$sql->queryp("INSERT INTO `pm_threads` SET ".mysql::setplaceholders($vals), $vals);
+	// Additional fields
+	$treq->vals['replies']			= 0;
+	$treq->vals['firstpostdate']	= $currenttime;
+	$treq->vals['lastpostdate']		= $currenttime;
+	$treq->vals['lastposter']		= $treq->vals['user'];
+	
+	$sql->queryp("INSERT INTO `pm_threads` SET ".mysql::setplaceholders($treq->vals), $treq->vals);
 	return $sql->insert_id();
 }
 
-function create_pm_post($user, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = array()) {
+function create_pm_post($preq) {
 	global $sql;
 	
 	// $user consistency support
+	$user = $preq->vals['user'];
 	if (!is_array($user)) {
 		$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature, css FROM users WHERE id = {$user}");
 		if (!$user) return 0;
-	}
-	
-	$gtopt = array(
-		'mood' => $moodid,
-	);
-	$tags             = get_tags($user, $gtopt);
-	$message          = replace_tags($message, $tags);
-	$tagval           = json_encode($tags);
-	$currenttime      = time();
-	
-	if ($nolayout) {
-		$headid = 0;
-		$signid = 0;
-		$cssid  = 0;
 	} else {
-		$headid = getpostlayoutid($user['postheader']);
-		$signid = getpostlayoutid($user['signature']);
-		$cssid  = getpostlayoutid($user['css']);
+		// If we're an array, the user id goes in the query
+		$preq->vals['user'] = $user['id'];
 	}
 	
-	$postdata = array(
-		'thread'			=> $thread,
-		'user'				=> $user['id'],
-		'date'				=> $currenttime,
-		'ip'				=> $ip,
-		//'num'				=> $numposts,
-		
-		'headid'			=> $headid,
-		'signid'			=> $signid,
-		'cssid'				=> $cssid,
-		'moodid'			=> $moodid,
-		
-		'text'				=> $message,
-		'tagval'			=> $tagval,
-		'options'			=> $nosmilies . "|" . $nohtml,
-	);
-	$sql->queryp("INSERT INTO `pm_posts` SET ".mysql::setplaceholders($postdata), $postdata);	 
+	// Tag support
+	$tags = get_tags($user, [
+		'mood'     => $preq->vals['moodid'],
+		'numposts' => $user['posts'], // show the current count in PMs
+	]);
+	$preq->vals['text']     = replace_tags($preq->vals['text'], $tags);
+	$preq->vals['tagval']   = json_encode($tags);
+	
+	// Post layout options
+	if ($preq->nolayout) {
+		$preq->vals['headid'] = 0;
+		$preq->vals['signid'] = 0;
+		$preq->vals['cssid']  = 0;
+	} else {
+		$preq->vals['headid'] = getpostlayoutid($user['postheader']);
+		$preq->vals['signid'] = getpostlayoutid($user['signature']);
+		$preq->vals['cssid']  = getpostlayoutid($user['css']);
+	}
+	
+	//--
+	// TEMPORARY HACK BEFORE NUKING 'options'
+	$preq->vals['options'] = $preq->vals['nosmilies'] . "|" . $preq->vals['nohtml'];
+	unset($preq->vals['nosmilies'], $preq->vals['nohtml']);
+	//--
+	
+	// Misc
+	$currenttime = time();
+	$preq->vals['date'] = $currenttime;
+
+
+	$sql->queryp("INSERT INTO `pm_posts` SET ".mysql::setplaceholders($preq->vals), $preq->vals);
 	$pid = $sql->insert_id();
 	
 	// Update statistics
 	$sql->query("UPDATE `users` SET `lastpmtime` = '$currenttime' WHERE `id` = '{$user['id']}'");
 	
-	//$modq = ($isadmin || $mythread) ? "`closed` = {$_POST['close']}," : "";
-	if ($sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$thread}") > 1) {
-		$modq = ($threadupdate ? mysql::setplaceholders($threadupdate)."," : "");
-		$sql->queryp("UPDATE `pm_threads` SET {$modq} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'", $threadupdate);
-		$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
-		$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
+	if ($sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$preq->vals['thread']}") > 1) {
+		$modq = ($preq->threadupdate ? mysql::setplaceholders($preq->threadupdate)."," : "");
+		$sql->queryp("UPDATE `pm_threads` SET {$modq} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $preq->threadupdate);
+		$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
+		$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
 		$sql->query("UPDATE `users` SET `lastpmtime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
 	}
 	return $pid;
+}
+
+// request/response models that can be passed around to extensions
+class create_pm_thread_req {
+	// Query values
+	public $vals;
+	// Created thread ID (return)
+	public $id;
+}
+
+class create_pm_post_req {
+	// Query values
+	public $vals;
+	// Virtual "No layout" option (not a real post flag)
+	public $nolayout;
+	// Fields to update in the threads row, for mod actions
+	public $threadupdate = [];
+	// Created post ID (return)
+	public $id;
 }

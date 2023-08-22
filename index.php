@@ -284,47 +284,56 @@
 	
 	// Display recent active threads
 	// Part of this was lifted from latestposts.php and tweaked to show threads instead of posts
-	$data	= $sql->query("
-		SELECT
-			t.id as id,
-			t.lastposter,
-			t.lastpostdate as date,
-			f.title as ftitle,
-			t.forum as fid,
-			t.title as title,
-			$userfields uid
-		FROM `threads` t
-		LEFT JOIN `forums` f ON t.forum = f.id
-		LEFT JOIN `users` u ON t.lastposter = u.id
-		WHERE f.minpower <= '{$loguser['powerlevel']}' AND f.hidden = 0
-		ORDER BY t.lastpostdate DESC
-		LIMIT 5
-		");
 	
+	const _WND_ACTIVE = -4;
+	$hidden = filter_int($_COOKIE['hcat'][_WND_ACTIVE]);
+	if ($hidden) {
 ?>
 		<br/>
 		<table class='table'>
-			<tr><td class='tdbgc center' colspan='4'><a href='latestposts.php'>Recently active threads</a></tr>
-			<tr>
-				<td class='tdbgh center' width='25%'>Forum</td>
-				<td class='tdbgh center' width='45%'>Thread</td>
-				<td class='tdbgh center' width='20%'>User</td>
-				<td class='tdbgh center' width='10%'>Time</td>
-			</tr>
-<?php	
-	foreach ($data as $in) { 
-?>
-			<tr>
-				<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
-				<td class='tdbg1'><a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
-				<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
-				<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
-			</tr>
-<?php	
-	} 
-?>
-		</table><br>
+			<tr><td class='tdbgc center'><a href='latestposts.php'>Recently active threads<?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></a></tr>
+		</table>
 <?php
+	} else {
+		$data	= $sql->query("
+			SELECT
+				t.id as id,
+				t.lastposter,
+				t.lastpostdate as date,
+				f.title as ftitle,
+				t.forum as fid,
+				t.title as title,
+				$userfields uid
+			FROM `threads` t
+			LEFT JOIN `forums` f ON t.forum = f.id
+			LEFT JOIN `users` u ON t.lastposter = u.id
+			WHERE f.hidden = 0 AND ".can_view_forum_query()."
+			ORDER BY t.lastpostdate DESC
+			LIMIT 5
+			");
+		
+	?>
+			<br/>
+			<table class='table'>
+				<tr><td class='tdbgc center' colspan='4'><a href='latestposts.php'>Recently active threads<?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></a></tr>
+				<tr>
+					<td class='tdbgh center' width='25%'>Forum</td>
+					<td class='tdbgh center' width='45%'>Thread</td>
+					<td class='tdbgh center' width='20%'>User</td>
+					<td class='tdbgh center' width='10%'>Time</td>
+				</tr>
+	<?php		foreach ($data as $in) { ?>
+				<tr>
+					<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
+					<td class='tdbg1'><a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
+					<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
+					<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
+				</tr>
+	<?php		} ?>
+		</table>
+	<?php
+	}
+
 
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumheaders ="
@@ -516,5 +525,5 @@
 	
 
 function _collapse_toggle($cat, $hidden) {
-	return "<div style='float: right'><a href='?cat={$cat}&toggle=1'>[".($hidden ? "+" : "-")."]</a></div>";
+	return "<div style='float: right'><a href='?cat={$cat}&toggle=1' title='Click here to ".($hidden ? "expand this section'>[+" : "collapse this section'>[-")."]</a></div>";
 }

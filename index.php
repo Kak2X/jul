@@ -241,7 +241,6 @@
 					</td>
 				</tr>
 			</table>
-		<br>
 		<?php
 	
 	}
@@ -261,6 +260,7 @@
 	
 	if ($annc) {
 		?>
+		<br/>
 		<table class='table'>
 			<tr>
 				<td colspan=2 class='tdbgh center fonts'>

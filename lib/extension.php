@@ -36,7 +36,7 @@ function hook_add($key, $var) {
 function hook_use($key) {
 	global $_hooks, $extName, $extConfig, $xconf;
 	if (!isset($_hooks[$key])) 
-		return;
+		return [];
 	// Push the current extName for later
 	$oname = $extName;
 	$oconf = $xconf;

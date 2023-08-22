@@ -390,110 +390,83 @@
 		return true;
 	}
 	
-	function create_thread($user, $forum, $title, $description, $posticon, $pollid = 0, $closed = 0, $sticky = 0, $announcement = 0, $featured = 0) {
+	function create_thread($treq) { 
 		global $sql;
-			// $user consistency support
-			if (is_array($user)) {
-				$user = filter_int($user['id']);
-				if (!$user) return 0;
-			}
-			$currenttime = time();
-			
-			// Insert thread
-			$vals = array(
-				'forum'             => $forum,
-				'user'              => $user,
-				
-				'closed'            => $closed,
-				'sticky'            => $sticky,
-				'announcement'      => $announcement,
-				'featured'          => $featured,
-				
-				'poll'              => $pollid,
-				
-				'title'             => $title,
-				'description'       => $description,
-				'icon'              => $posticon,
-				
-				'views'             => 0,
-				'replies'           => 0,
-				'firstpostdate'     => $currenttime,
-				'lastpostdate'      => $currenttime,
-				'lastposter'        => $user,
-			);
-			$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($vals), $vals);
-			$tid = $sql->insert_id();
-			$sql->query("UPDATE `forums` SET `numthreads` = `numthreads` + 1 WHERE id = {$forum}");
-			if ($featured) {
-				feature_thread($thread, false, true);
-			}
-			return $tid;
-	}
-	
-	function create_post($user, $forum, $thread, $message, $ip, $moodid = 0, $nosmilies = 0, $nohtml = 0, $nolayout = 0, $threadupdate = array()) {
-		global $sql;
-		
-		// $user consistency support
-		if (!is_array($user)) {
-			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature, css FROM users WHERE id = {$user}");
-			if (!$user) return 0;
-		}
-		
-		$numposts       = $user['posts'] + 1;
-		$gtopt = array(
-			'mood'     => $moodid,
-			'numposts' => $numposts,
-		);
-		$tags           = get_tags($user, $gtopt);
-		$message        = replace_tags($message, $tags);
-		$tagval         = json_encode($tags);
-		
-		if ($nolayout) {
-			$headid = 0;
-			$signid = 0;
-			$cssid  = 0;
-		} else {
-			$headid = getpostlayoutid($user['postheader']);
-			$signid = getpostlayoutid($user['signature']);
-			$cssid  = getpostlayoutid($user['css']);
+		// For consistency with create_post, allow both array and int args
+		if (is_array($treq->vals['user'])) {
+			$treq->vals['user'] = filter_int($treq->vals['user']['id']);
+			if (!$treq->vals['user']) return 0;
 		}
 		$currenttime = time();
 		
-		// Update posts & stats
-		$vals = array(
-			'thread'        => $thread,
-			'user'          => $user['id'],
-			'date'          => $currenttime,
-			'ip'            => $ip,
-			'num'           => $numposts,
-			
-			'headid'        => $headid,
-			'signid'        => $signid,
-			'cssid'         => $cssid,
-			'moodid'        => $moodid,
-			
-			'text'          => $message,
-			'tagval'        => $tagval,
-			'options'       => $nosmilies . "|" . $nohtml,
-		);
-		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($vals), $vals);
+		// Additional fields for bookkeeping
+		$treq->vals['views'] = 0;
+		$treq->vals['replies'] = 0;
+		$treq->vals['firstpostdate'] = $currenttime;
+		$treq->vals['lastpostdate'] = $currenttime;
+		$treq->vals['lastposter'] = $treq->vals['user'];
+		
+		$sql->queryp("INSERT INTO `threads` SET ".mysql::setplaceholders($treq->vals), $treq->vals);
+		$tid = $sql->insert_id();
+		
+		$sql->query("UPDATE `forums` SET `numthreads` = `numthreads` + 1 WHERE id = {$treq->vals['forum']}");
+		return $tid;
+	}
+	
+	function create_post($preq) {
+		global $sql;
+		
+		// $user consistency support
+		$user = $preq->vals['user'];
+		if (!is_array($user)) {
+			$user = $sql->fetchq("SELECT id, posts, regdate, postheader, signature, css FROM users WHERE id = {$user}");
+			if (!$user) return 0;
+		} else {
+			// If we're an array, the user id goes in the query
+			$preq->vals['user'] = $user['id'];
+		}
+		
+		// Tag support
+		$tags = get_tags($user, [
+			'mood'     => $preq->vals['moodid'],
+			'numposts' => $user['posts'] + 1,
+		]);
+		$preq->vals['text']     = replace_tags($preq->vals['text'], $tags);
+		$preq->vals['tagval']   = json_encode($tags);
+		
+		// Post layout options
+		if ($preq->nolayout) {
+			$preq->vals['headid'] = 0;
+			$preq->vals['signid'] = 0;
+			$preq->vals['cssid']  = 0;
+		} else {
+			$preq->vals['headid'] = getpostlayoutid($user['postheader']);
+			$preq->vals['signid'] = getpostlayoutid($user['signature']);
+			$preq->vals['cssid']  = getpostlayoutid($user['css']);
+		}
+		
+		//--
+		// TEMPORARY HACK BEFORE NUKING 'options'
+		$preq->vals['options'] = $preq->vals['nosmilies'] . "|" . $preq->vals['nohtml'];
+		unset($preq->vals['nosmilies'], $preq->vals['nohtml']);
+		//--
+		
+		// Misc
+		$currenttime = time();
+		$preq->vals['date'] = $currenttime;
+
+
+		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($preq->vals), $preq->vals);
 		$pid = $sql->insert_id();
+		
 		$sql->query("UPDATE `users` SET `posts` = posts + 1, `lastposttime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
-		$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '{$currenttime}', `lastpostuser` = '{$user['id']}', `lastpostid` = '{$pid}' WHERE `id` = '{$forum}'");
-		if ($sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$thread}") > 1) {
+		$sql->query("UPDATE `forums` SET `numposts` = `numposts` + 1, `lastpostdate` = '{$currenttime}', `lastpostuser` = '{$user['id']}', `lastpostid` = '{$pid}' WHERE `id` = '{$preq->forum}'");
+		if ($sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$preq->vals['thread']}") > 1) {
 			// Not the first post: update other stats
-			$modq = ($threadupdate ? mysql::setplaceholders($threadupdate)."," : "");
-			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$thread}'", $threadupdate);
-			// If this value is missing altogether, it likely means the status wasn't changed
-			if (isset($threadupdate['featured'])) {
-				if ($threadupdate['featured']) {
-					feature_thread($thread, false, true);
-				} else {
-					unfeature_thread($thread, false, true);
-				}
-			}
-			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$thread}'");
-			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$thread}', `time` = '{$currenttime}', `read` = '1'");
+			$modq = ($preq->threadupdate ? mysql::setplaceholders($preq->threadupdate)."," : "");
+			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $threadupdate);
+			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
+			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
 		}
 		return $pid;	
 	}
@@ -626,24 +599,24 @@
 		return true;
 	}
 	
-	
-	
-	function feature_thread($id, $change = true, $archive = true) {
-		global $sql;
-		if ($change) 
-			$sql->query("UPDATE threads SET featured = 1 WHERE id = {$id}");
-		if ($archive) 
-			$sql->query("INSERT INTO threads_featured (thread, date, enabled) VALUES ({$id}, ".time().", 1) ON DUPLICATE KEY UPDATE date = VALUES(date), enabled = 1");
+	// request/response models that can be passed around to extensions
+	class create_thread_req {
+		// Query values
+		public $vals;
+		// Created thread ID (return)
+		public $id;
 	}
 	
-	function unfeature_thread($id, $change = true, $archive = true, $hard = false) {
-		global $sql;
-		if ($change)
-			$sql->query("UPDATE threads SET featured = 0 WHERE id = {$id}");
-		if ($archive) { 
-			if (!$hard)
-				$sql->query("UPDATE threads_featured SET enabled = 0 WHERE thread = {$id}");
-			else
-				$sql->query("DELETE FROM threads_featured WHERE thread = {$id}");
-		}
+	class create_post_req {
+		// Query values
+		public $vals;
+		// Forum ID the post goes into
+		public $forum;
+		// Virtual "No layout" option (not a real post flag)
+		public $nolayout;
+		// Fields to update in the threads row, for mod actions
+		public $threadupdate = [];
+		// Created post ID (return)
+		public $id;
 	}
+	

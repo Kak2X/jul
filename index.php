@@ -1,6 +1,5 @@
 <?php
-	const _WND_FEATURED = -3;
-	
+
 	if (isset($_GET['u']) && $_GET['u']) {
 		header("Location: profile.php?id=". $_GET['u']);
 		die();
@@ -277,89 +276,11 @@
 				</td>
 			</tr>
 		</table>
-		<br>
 		<?php
 	}
 	
-/*
-	Grab a random featured thread (if one is set)
-*/
-	// there shouldn't be too many featured threads at once
-	$featured = $sql->getresults("
-		SELECT t.id FROM threads t 
-		INNER JOIN forums f ON t.forum = f.id
-		WHERE t.featured = 1 AND ".can_view_forum_query()."
-	");
-	if ($featured) {
-		$hidden = filter_int($_COOKIE['hcat'][_WND_FEATURED]);
-?>
-		<table class="table">
-			<tr><td class="tdbgh center fonts" colspan="2">Featured thread<?= _collapse_toggle(_WND_FEATURED, $hidden) ?></td></tr>
-<?php
-		if (!$hidden) {
-			$featid = pick_any($featured);
-			$total  = count($featured);
-			$cur    = array_search($featid, $featured) + 1;
-			$counter = " ({$cur}/{$total})";
-			
-			$fthread = $sql->fetchq("
-				SELECT t.id, t.title, t.description, t.firstpostdate, t.replies, t.icon, t.forum, t.poll, t.user,
-					   f.pollstyle, p.text, p.options, {$userfields} uid
-				FROM threads t
-				LEFT JOIN forums f ON t.forum = f.id
-				LEFT JOIN users  u ON t.user  = u.id
-				LEFT JOIN posts  p ON t.id    = p.thread
-				WHERE t.id = {$featid} AND ({$loguser['id']} OR !f.login)
-				ORDER BY p.id ASC
-				LIMIT 1
-			");		
-			
-			$polltbl = "";
-			if ($fthread['pollstyle'] != -2 && $fthread['poll']) {
-				if (load_poll($fthread['poll'], $fthread['pollstyle'])) {
-					// CSS Hack around removing the <br> tag, which is unnecessary here
-					$polltbl = "<tr><td class='tdbg2 welp' colspan='2'>
-						".print_poll($poll, $fthread, $fthread['forum'])."
-						<style>.welp > br {display: none}</style>
-					</td></tr>";
-				}
-			}
-			
-		// TODO: move the thread icon CSS to base.css
-?>
-			<tr>
-				<td class="tdbg1 center thread-icon-td">
-					<div class="thread-icon">
-						<?= ($fthread['icon'] ? "<img src=\"".htmlspecialchars($fthread['icon'])."\" alt='->'>" : "->") ?>
-					</div>
-				</td>
-				<td class="tdbg1">
-					<a href="thread.php?id=<?= $fthread['id'] ?>"><?= htmlspecialchars($fthread['title']) ?></a>
-					<br><span class="fonts"><?= htmlspecialchars($fthread['description']) ?></span>
-				</td>
-			</tr>
-			<?= $polltbl ?>
-			<tr>
-				<td class="tdbg1"></td>
-				<td class="tdbg2">
-					<div style="max-height: 100px; overflow-y: scroll">
-						<?= dofilters(doreplace2($fthread['text'], $fthread['options']), $fthread['forum']) ?>
-					</div>
-				</td>
-			</tr>
-			<tr>
-				<td class="tdbg2" colspan="2">
-					<b><a href="forum.php?feat=2">Featured thread</a><?= $counter ?></b> - <?= getuserlink($fthread) ?> - <?= printdate($fthread['firstpostdate']) ?>
-					<span style="float: right">Replies: <?= $fthread['replies'] ?> - <a href="thread.php?id=<?= $fthread['id'] ?>">Read More</a></span>
-				</td>
-			</tr>
-<?php
-		}
-?>
-		</table>
-		
-<?php
-	}
+	print hook_print("index-window");
+	
 	
 	// Display recent active threads
 	// Part of this was lifted from latestposts.php and tweaked to show threads instead of posts

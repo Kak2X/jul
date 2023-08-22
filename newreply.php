@@ -53,7 +53,6 @@
 	$_POST['stick'] = filter_int($_POST['stick']);
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = filter_int($_POST['tannc']);
-	$_POST['tfeat'] = filter_int($_POST['tfeat']);
 	
 	$error       = false;
 	$login_error = "";
@@ -106,22 +105,34 @@
 				check_token($_POST['auth']);
 				$sql->beginTransaction();
 				
+				$preq = new create_post_req();
+				$preq->forum = $forum['id'];
+				$preq->nolayout = $_POST['nolayout'];
+				$preq->vals = [
+					// Base fields
+					'thread'        => $thread['id'],
+					'user'          => $user,
+					'ip'            => $_SERVER['REMOTE_ADDR'],
+					'text'          => $_POST['message'],
+					// Opt
+					'moodid'        => $_POST['moodid'],
+					// Flags
+					'nosmilies'     => $_POST['nosmilies'],
+					'nohtml'        => $_POST['nohtml'],
+				];
 				if ($ismod) {
-					$modq = array(
+					$preq->threadupdate = [
 						'closed'       => $_POST['close'],
 						'sticky'       => $_POST['stick'],
 						'announcement' => $_POST['tannc'],
-					);
-					if ($_POST['tfeat'] != $thread['featured']) { // Save a query if it wasn't changed, as it would call (un)feature_thread()
-						$modq['featured'] = $_POST['tfeat'];
-					}
-				} else {
-					$modq = array();
+					];
 				}
+				hook_use('post-create-fields', $preq);
+				$preq->id = create_post($preq);
+				hook_use('post-create-precommit', $preq);
 				
-				$pid = create_post($user, $forum['id'], $thread['id'], $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout'], $modq);
 				if ($can_attach) {
-					confirm_attachments($attach_key, $userid, $pid);
+					confirm_attachments($attach_key, $userid, $preq->id);
 				}
 				$sql->commit();
 				
@@ -129,11 +140,11 @@
 					'forum'		=> $forum['title'],
 					'fid'		=> $forum['id'],
 					'thread'	=> str_replace("&lt;", "<", $thread['title']),
-					'pid'		=> $pid,
+					'pid'		=> $preq->id,
 					'pow'		=> $forum['minpower'],
 				));
 				
-				return header("Location: thread.php?pid={$pid}#{$pid}");
+				return header("Location: thread.php?pid={$preq->id}#{$preq->id}");
 
 			}
 		}
@@ -143,7 +154,6 @@
 		$_POST['stick'] = $thread['sticky'];
 		$_POST['close'] = $thread['closed'];
 		$_POST['tannc'] = $thread['announcement'];
-		$_POST['tfeat'] = $thread['featured'];
 	}
 	
 	/*
@@ -223,7 +233,6 @@
 		$selsticky = $_POST['stick'] ? "checked" : "";
 		$selclosed = $_POST['close'] ? "checked" : "";
 		$seltannc  = $_POST['tannc'] ? "checked" : "";
-		$seltfeat  = $_POST['tfeat'] ? "checked" : "";
 		
 		$modoptions = 
 		"<tr>
@@ -234,7 +243,7 @@
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
 				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
 				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
-				<input type='checkbox' name='tfeat' id='tfeat' value=1 $seltfeat ><label for='tfeat'>Featured</label>
+				".hook_print('thread-mod-opt')."
 			</td>
 		</tr>";
 	}

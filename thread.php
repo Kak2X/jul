@@ -137,30 +137,24 @@
 	if ($_GET['id']) {
 		if ($ismod) {
 			$fulledit = "<a href='editthread.php?id={$_GET['id']}'>Edit thread<a>";
-			$linklist = array();
-			$link = "<a href='editthread.php?id={$_GET['id']}&auth=".generate_token(TOKEN_MGET)."&action";
-
-			if (!$thread['sticky'])
-				$linklist[] = "$link=qstick'>Stick</a>";
-			else
-				$linklist[] = "$link=qunstick'>Unstick</a>";
-
-			if (!$thread['closed'])
-				$linklist[] = "$link=qclose'>Close</a>";
-			else
-				$linklist[] = "$link=qunclose'>Open</a>";
-
-			if (!$thread['featured'])
-				$linklist[] = "$link=qfeat'>Feature</a>";
-			else
-				$linklist[] = "$link=qunfeat'>Unfeature</a>";
+			
+			// action key => label for QUICKMOD ACTIONS ONLY (instant, no confirmation) which is easier to support with hooks
+			$actions = [];
+			$actions[] = !$thread['sticky'] ? ['qstick', "Stick"] : ['qunstick', "Unstick"];
+			$actions[] = !$thread['closed'] ? ['qclose', "Close"] : ['qunclose', "Open"];
+			hook_use_ref('thread-quickmod-link', $actions);
 
 			if ($thread['forum'] != $config['trash-forum'])
-				$linklist[] = "<a href='editthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
-
-			//$linklist[] = "$link=delete'>Delete</a>";
-			$linklist = implode(' | ', $linklist);
-			$modfeats = "<tr><td class='tdbgc fonts' colspan=2>Moderating options: $linklist -- $fulledit</td></tr>";
+				$trash = " | <a href='editthread.php?id={$_GET['id']}&action=trashthread'>Trash</a>";
+			else
+				$trash = "";
+			
+			$baselink = "<a href='editthread.php?id={$_GET['id']}&auth=".generate_token(TOKEN_MGET)."&action=";
+			$linklist = "";
+			foreach ($actions as $action) {
+				$linklist .= (($linklist !== "") ? " | " : "")."{$baselink}{$action[0]}'>{$action[1]}</a>";
+			}
+			$modfeats = "<tr><td class='tdbgc fonts' colspan='2'>Moderating options: {$linklist}{$trash} -- {$fulledit}</td></tr>";
 		}
 		else if ($loguser['id'] == $thread['user']) {
 			// Allow users to rename their own thread

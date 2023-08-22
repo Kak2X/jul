@@ -65,7 +65,6 @@
 	$_POST['stick'] = filter_int($_POST['stick']);
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = (int) (filter_int($_POST['tannc']) || isset($_GET['a']));
-	$_POST['tfeat'] = filter_int($_POST['tfeat']);
 	
 	$error       = false;
 	$login_error = "";
@@ -150,7 +149,7 @@
 				
 				$sql->beginTransaction();
 				if ($_GET['poll']) {
-					$pollid = create_poll($_POST['question'], $_POST['briefing'], $_POST['chtext'], $_POST['chcolor'], $_POST['doublevote']);
+					$pollid = create_poll($_POST['question'], $_POST['briefing'], $_POST['chtext'], $_POST['chcolor'], $_POST['doublevote']) or throw new Exception("Failed to create poll.");
 				} else {
 					$pollid = 0;
 				}
@@ -159,27 +158,66 @@
 					$_POST['close'] = 0;
 					$_POST['stick'] = 0;
 					$_POST['tannc'] = 0;
-					$_POST['tfeat'] = 0;
 				}
-				$tid = create_thread($user, $forum['id'], $_POST['subject'], $_POST['description'], $posticon, $pollid, $_POST['close'], $_POST['stick'], $_POST['tannc'], $_POST['tfeat']);
-				$pid = create_post($user, $forum['id'], $tid, $_POST['message'], $_SERVER['REMOTE_ADDR'], $_POST['moodid'], $_POST['nosmilies'], $_POST['nohtml'], $_POST['nolayout']);
 				
+				// Create thread
+				$treq = new create_thread_req();
+				$treq->vals = [
+					// Base fields
+					'title'             => $_POST['subject'],
+					'description'       => $_POST['description'],
+					'icon'              => $posticon,
+					'forum'             => $forum['id'],
+					'user'              => $user,
+					// Flags
+					'closed'            => $_POST['close'],
+					'sticky'            => $_POST['stick'],
+					'announcement'      => $_POST['tannc'],
+					// Thread type
+					'poll'              => $pollid,
+				];
+				// Additional fields
+				hook_use('thread-create-fields', $treq);
+				$treq->id = create_thread($treq) or throw new Exception("Failed to create thread.");
+				
+				// Create post
+				$preq = new create_post_req();
+				$preq->forum = $forum['id'];
+				$preq->nolayout = $_POST['nolayout'];
+				$preq->vals = array(
+					// Base fields
+					'thread'        => $treq->id,
+					'user'          => $user,
+					'ip'            => $_SERVER['REMOTE_ADDR'],
+					'text'          => $_POST['message'],
+					// Opt
+					'moodid'        => $_POST['moodid'],
+					// Flags
+					'nosmilies'     => $_POST['nosmilies'],
+					'nohtml'        => $_POST['nohtml'],
+				);
+				hook_use('thread-post-create-fields', $preq);
+				$preq->id = create_post($preq) or throw new Exception("Failed to create post.");
+				
+				hook_use('thread-create-precommit', $treq, $preq, $pollid);
+				
+				// Goes after precommit since it touches files, so nothing bad happens if an extension fails
 				if ($can_attach) {
-					confirm_attachments($attach_key, $userid, $pid);
-				}		
-				
-				$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
+					confirm_attachments($attach_key, $userid, $preq->id);
+				}
 				
 				$sql->commit();
+				
+				$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
 				xk_ircout(strtolower($whatisthis), $user['name'], array(
 					'forum'		=> $forum['title'],
 					'fid'		=> $forum['id'],
 					'thread'	=> $_POST['subject'],
-					'pid'		=> $pid,
+					'pid'		=> $preq->id,
 					'pow'		=> $forum['minpower'],
 				));
 				
-				errorpage("$whatisthis posted successfully!", "thread.php?id=$tid", $_POST['subject'], 0);
+				errorpage("$whatisthis posted successfully!", "thread.php?id={$treq->id}", $_POST['subject'], 0);
 				
 			}
 		}
@@ -226,7 +264,6 @@
 		$selsticky  = $_POST['stick'] ? "checked" : "";
 		$selclosed  = $_POST['close'] ? "checked" : "";
 		$seltannc   = $_POST['tannc'] ? "checked" : "";
-		$seltfeat   = $_POST['tfeat'] ? "checked" : "";
 	}
 	
 	$links = array(
@@ -428,8 +465,8 @@
 				<td class='tdbg2' colspan=2>
 					<input type='checkbox' name='close' id='close' value="1" <?=$selclosed?>><label for='close'>Close</label> -
 					<input type='checkbox' name='stick' id='stick' value="1" <?=$selsticky?>><label for='stick'>Sticky</label> - 
-					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label> - 
-					<input type='checkbox' name='tfeat' id='tfeat' value="1" <?=$seltfeat ?>><label for='tfeat'>Featured</label>
+					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label>
+					<?= hook_print('thread-mod-opt') ?>
 				</td>
 			</tr>
 <?php } ?>

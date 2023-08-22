@@ -1,0 +1,24 @@
+{
+	"xconf": [
+		{
+			"title":"Index page",
+			"fields":{
+				"index-window":{
+					"title":"Show random thread",
+					"desc":"Shows a random featured thread on the index page.",
+					"input":"radio",
+					"type":"int",
+					"default":1,
+					"special":"yesno"
+				},
+				"index-force-thread":{
+					"title":"Override featured thread",
+					"desc":"If non-zero, forces the specified featured thread to be always visible, regardless of the user hiding the box..",
+					"input":"text",
+					"type":"int",
+					"default":0
+				}
+			}
+		}
+	]
+}

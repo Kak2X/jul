@@ -87,7 +87,7 @@
 
 		$user['lastip']  = htmlspecialchars($user['lastip'], ENT_QUOTES);
 		$user['lasturl'] = str_replace('shop?h&','shop?',$user['lasturl']);
-		$user['lasturl'] = preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
+		$user['lasturl'] = preg_replace('/[\?\&]debugsql(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
 		$user['lasturl'] = preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
 		$user['lasturl'] = escape_attribute($user['lasturl']);
 
@@ -153,7 +153,7 @@
 	for ($i = 1; $guest = $sql->fetch($guests); ++$i){
 		$guest['ip'] = htmlspecialchars($guest['ip'], ENT_QUOTES);
 		$guest['lasturl'] = str_replace('shop?h&','shop?',$guest['lasturl']);
-		$guest['lasturl'] = preg_replace('/[\?\&]debugsql|(=[0-9]+)/i','',$guest['lasturl']); // let's not give idiots any ideas
+		$guest['lasturl'] = preg_replace('/[\?\&]debugsql(=[0-9]+)/i','',$guest['lasturl']); // let's not give idiots any ideas
 		$guest['lasturl'] = preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$guest['lasturl']); // just in case
 		$guest['lasturl'] = escape_attribute($guest['lasturl']);
 /*		if ($guest['useragent'] == "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.0.19) Gecko/2010031218 Firefox/3.0.19" && $banorama) {

@@ -1,6 +1,6 @@
 <?php
 	
-	const NEWS_VERSION = "v0.9 -- 19/04/20";
+	const NEWS_VERSION = "v0.91 -- 23/08/23";
 	const COMMENT_AVATAR_SIZE = 100;
 	
 	// Load "permissions"

@@ -147,8 +147,7 @@
 	}
 
 	// Email address
-	$email = urlencode(htmlspecialchars($user['email']));
-	$email = "<a href=\"mailto:{$email}\">{$email}</a>";
+	$email = "<a href=\"mailto:".urlencode($user['email'])."\">".htmlspecialchars($user['email'])."</a>";
 	switch ($user['privateemail']) {
 		case 0: break; // Public
 		case 1:

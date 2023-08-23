@@ -54,6 +54,8 @@
 			'regmode' 			=> ($sysadmin ? filter_int($_POST['regmode']) : $misc['regmode']),
 			'regcode' 			=> ($sysadmin ? filter_string($_POST['regcode']) : $misc['regcode']),
 			'private'			=> ($sysadmin ? filter_int($_POST['private']) : $misc['private']),
+			'attntitle'			=> filter_string($_POST['attntitle']),
+			'attntext'			=> filter_string($_POST['attntext']),
 		];
 			
 		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders($settings), $settings);
@@ -135,6 +137,14 @@
 		<tr>
 			<td class='tdbg1 center' width='200'><b>Custom header</b></td>
 			<td class='tdbg2'><textarea wrap=virtual name='specialtitle' ROWS=2 COLS=80 style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($misc['specialtitle'])?></textarea></td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'><b>Notice box title</b></td>
+			<td class='tdbg2'><input type='text' name='attntitle' value="<?=escape_html($misc['attntitle'])?>"></td>
+		</tr>
+		<tr>
+			<td class='tdbg1 center'><b>Notice box contents</b></td>
+			<td class='tdbg2'><textarea wrap=virtual name='attntext' ROWS=2 COLS=80 style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($misc['attntext'])?></textarea></td>
 		</tr>
 		
 		<tr><td class='tdbgc center' colspan=2>Records</td></tr>

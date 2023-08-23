@@ -562,6 +562,15 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$dispviews = $miscdata['views'];
 	//if (($views % 1000000 >= 999000) && ($views % 1000000 < 999990))
 	//	$dispviews = substr((string)$views, 0, -3) . "???";
+
+	// Notice window / points of required attention (global version)
+	$attn = "";
+	if ($miscdata['attntitle'])
+		$attn .= "<tr><td class='tdbgh center b'>".dofilters(domarkup($miscdata['attntitle']))."</td></tr>";
+	if ($miscdata['attntext'])
+		$attn .= "<tr><td class='tdbg2 left'>".dofilters(domarkup($miscdata['attntext']))."</td></tr>";
+	if ($attn)
+		$attn = "<table class='table attn-glob fonts'>{$attn}</table>";
 	
 ?><!doctype html>
 <html>
@@ -587,14 +596,21 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<center>
 			<table class='table'>
 				<tr>
-					<td class='tbl tdbg1 center' colspan=3><?=$config['board-title']?>
-						<span class='fonts'>
-							<br>
-							<?=$headlinks?>				
+					<td class='tbl tdbg1 center' colspan='3'>
+						
+						<table class="td-header w">
+							<tr>
+								<td><?=$config['board-title']?></td>
+								<td class="right"><?= $attn ?></td>
+							</tr>
+						</table>
+						<div class='fonts'>
+							<?=$headlinks?>	
+						</div>							
 <?php		
 		if (!$x_hacks['smallbrowse']) {
 				// Desktop header
-?>						</span>
+?>						
 					</td>
 				</tr>
 				<tr>
@@ -613,10 +629,10 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		} else {
 				// Mobile header
 ?>
-							<br>
+						<div class='fonts'>
 							<?=$dispviews?> views, <?=printdate()?><br>
 							(mobile view enabled)
-						</span>
+						</div>
 					</td>
 				</tr>
 				<tr>

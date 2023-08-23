@@ -74,7 +74,7 @@
 	//$sql->selectdb($dbname) or die("Another stupid MySQL error happened, panic<br><small>". mysql_error() ."</small>");
 
 	// Just fetch now everything from misc that's going to be used on every page
-	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup, defaultscheme FROM misc");
+	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup, defaultscheme, attntitle, attntext FROM misc");
 	
 	// Wait for the midnight backup to finish...
 	if ($miscdata['backup'] || (int) date("Gi") < 1) {

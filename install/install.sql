@@ -1012,7 +1012,9 @@ CREATE TABLE `misc` (
   `regcode` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `bigpostersupdate` int(11) NOT NULL DEFAULT '0',
   `private` tinyint(4) NOT NULL DEFAULT '0',
-  `backup` tinyint(1) NOT NULL DEFAULT '0'
+  `backup` tinyint(1) NOT NULL DEFAULT '0',
+  `attntitle` VARCHAR(255) NULL DEFAULT NULL,
+  `attntext` TEXT NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1022,7 +1024,7 @@ CREATE TABLE `misc` (
 
 LOCK TABLES `misc` WRITE;
 /*!40000 ALTER TABLE `misc` DISABLE KEYS */;
-INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,0,NULL,NULL,0,'',0,0,0);
+INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,0,NULL,NULL,0,'',0,0,0,NULL,NULL);
 /*!40000 ALTER TABLE `misc` ENABLE KEYS */;
 UNLOCK TABLES;
 

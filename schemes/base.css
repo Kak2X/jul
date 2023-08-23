@@ -39,6 +39,7 @@ img { border:none; }
 .center	{ text-align:center !important }
 .right	{ text-align:right !important }
 .vatop    { vertical-align:top }
+.vamid    { vertical-align:middle }
 
 .flexhvc  { 
 	display: flex;
@@ -261,6 +262,18 @@ input[type=radio] {
 }
 .spoiler > input[type="checkbox"]:checked + .hidden > * {
 	visibility: visible;
+}
+
+.td-header img, .td-header table {
+	vertical-align: middle;
+}
+/* Global attention box */
+.attn-glob {
+	width: unset !important;
+	display: inline-table;
+}
+.attn-glob td.tdbg2  {
+	padding: 5px 15px;
 }
 
 /* */

@@ -10,3 +10,9 @@ $res &= $sql->query("ALTER TABLE `posts`
 	ADD `nohtml` TINYINT(1) NOT NULL DEFAULT '0' AFTER `nosmilies`");
 $res &= $sql->query("ALTER TABLE `posts` DROP `options`");
 print checkres($res);
+
+print "<br>Adding global attention box...";
+$res = $sql->query("ALTER TABLE `misc` 
+	ADD `attntitle` VARCHAR(255) NULL DEFAULT NULL AFTER `backup`,
+	ADD `attntext` TEXT NULL DEFAULT NULL AFTER `attntitle`");
+print checkres($res);

@@ -6,8 +6,7 @@
 	pageheader("Smilies", NULL, NULL, true); // Small header
 
 ?>
-<center>
-<table height=100% valign=middle>
+<table class="tablevc">
 	<tr>
 		<td>
 			<table class='table'>

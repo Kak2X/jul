@@ -171,6 +171,7 @@
 		.avatarbox{
 			width: <?= $config['max-avatar-size-x'] + 5 ?>px;
 			height: <?= $config['max-avatar-size-y'] + 5 ?>px;
+			padding: 0;
 		}
 		.sect {
 			width: <?= $config['max-avatar-size-y'] + 5 ?>px;

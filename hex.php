@@ -31,7 +31,7 @@
 			}
 
 ?>		</map>
-		<table height=100% valign=middle align='center'>
+		<table class="tablevc">
 			<tr>
 				<td>
 				<table class='table'>

@@ -90,20 +90,20 @@
 		}
 	}
 	
-	$where = (empty($qwhere) ? '' : "WHERE ".implode(' AND ', $qwhere));	
-	
+
 	switch ($_GET['sort']) {
 		case 'name': 	$sorting = "ORDER BY u.name"; break;
 		case 'reg':  	$sorting = "ORDER BY u.regdate"; break;
 		case 'rating':
 		case 'exp':  	$sorting = ""; break;
-		case 'age':  	$sorting = "AND u.birthday ORDER BY u.birthday"; break; 
+		case 'age':  	$sorting = "ORDER BY u.birthday"; $qwhere[] = "u.birthday"; break; 
 		case '':
 		case 'posts':	$sorting = "ORDER BY u.posts"; break;
 		case 'act':		$sorting = "ORDER BY u.lastactivity"; break;
 		default: errorpage("No.");
 	}
 	
+	$where = (empty($qwhere) ? '' : "WHERE ".implode(' AND ', $qwhere));		
 
 	// Ordering / limit and special modes
 	$order = $fields = $join = $limit = "";

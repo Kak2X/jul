@@ -2,7 +2,8 @@
 
 if ($pagetitle === NULL) $pagetitle = $title; 
 
-?><html>
+?><!doctype html>
+<html>
 	<head>
 		<title><?=$pagetitle?></title>
 		<link rel="shortcut icon" href="images/favicon/favicon.ico" type="image/x-icon">
@@ -68,23 +69,25 @@ if ($pagetitle === NULL) $pagetitle = $title;
 		</style>
 	</head>
 	<body>
-		<div id='w'>
-		<center>
-			<div style="position: fixed; width: 600px; margin-left: -300px; top: 30%; left: 50%;">
-				<table class="table">
-					<tr>
-						<td class='tdbgh center b' style="padding: 3px;">
-							<?=$title?>
-						</td>
-					</tr>
-					<tr>
-					  <td class='tdbg1 center'>
-						&nbsp;<br><?=$message?><br>&nbsp;
-					  </td>
-					</tr>
-				</table>
-			</div>
-		</center>
+		<div id='w' class='flexhvc'>
+			<table class="tablevc">
+				<tr>
+					<td>
+					<table class="table">
+						<tr>
+							<td class='tdbgh center b' style="padding: 3px;">
+								<?=$title?>
+							</td>
+						</tr>
+						<tr>
+						  <td class='tdbg1 center'>
+							&nbsp;<br><?=$message?><br>&nbsp;
+						  </td>
+						</tr>
+					</table>
+					</td>
+				</tr>
+			</table>
 		</div>
 	</body>
 </html>

@@ -178,7 +178,7 @@
 				<td class='tdbg1 fonts center'>
 					<table class='w'>
 						<tr>
-							<td>
+							<td class='left'>
 								<?=$logmsg?>
 							</td>
 							<td class='right'>

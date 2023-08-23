@@ -562,10 +562,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	$dispviews = $miscdata['views'];
 	//if (($views % 1000000 >= 999000) && ($views % 1000000 < 999990))
 	//	$dispviews = substr((string)$views, 0, -3) . "???";
-
-
 	
-?><html>
+?><!doctype html>
+<html>
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 		<meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -578,7 +577,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<link rel='shortcut ico' href='images/favicon/<?=$favicon?>.ico' type='image/x-icon'>
 		<?=$css?>
 	</head>
-	<body>
+	<body <?= ($mini ? "class='flexhvc h'" : "") ?>>
 		<?= (isset($body_extra) ? $body_extra : "") ?>
 	<?php
 

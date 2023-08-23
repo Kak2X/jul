@@ -6,10 +6,10 @@
 	
 	// Line separators
 	const SIGNSEP_DESC 	= array('Dashes','Line','Full horizontal line','None');
-	const SIGNSEP	= array('<br><br>--------------------<br>',
-					'<br><br>____________________<br>',
-					'<br><br><hr>',
-					''); // None should mean NONE, not TWO BLANK LINES
+	const SIGNSEP	= array('<br>--------------------<br>',
+					'<br>____________________<br>',
+					'<br><hr>',
+					'<br>'); // A single <br> specifically for this, so it can get ignored when closing divs/tables
 	
 	// Function constants
 	const IRC_MAIN = 0;

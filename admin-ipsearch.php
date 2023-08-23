@@ -164,7 +164,7 @@
 		}
 		$pagectrl = "<br>
 		<table class='table'><tr><td class='tdbg1 center'>
-		{$pagectrl} &mdash; <button type='submit' class='submit' name='page' value='".($_POST['page']+1)."'>-&gt;</button>
+		{$pagectrl} &mdash; Page ".($_POST['page']+1)." &mdash; <button type='submit' class='submit' name='page' value='".($_POST['page']+1)."'>-&gt;</button>
 		</td></tr></table>";
 		
 ?>

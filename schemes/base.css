@@ -40,6 +40,16 @@ img { border:none; }
 .right	{ text-align:right !important }
 .vatop    { vertical-align:top }
 
+.flexhvc  { 
+	display: flex;
+    justify-content: center;
+    align-content: center;
+}
+.tablevc {
+	height: 100%;
+	vertical-align: middle;
+}
+
 /* Shorthand for disabling borders, mostly used to suppress table borders */
 .nbd { border: none !important }
 .nbdl { border-left: none !important }
@@ -51,6 +61,7 @@ img { border:none; }
 .w,.table { width:100% }
 .b		   { font-weight:bold !important }
 .i		   { font-style:italic !important }
+.h		   { height: 100vh }
 
 /* Make sure the last post text only stays in two lines*/
 .nobr,div.lastpost {white-space:nowrap}

@@ -154,12 +154,17 @@
 			$blockedlist = "<tr><td class='tdbg1 center'>You currently have no layouts blocked. To block a user's layout, go to their profile and click 'Block layout' at the bottom.</td></tr>";
 		} else for ($i = 0; $blocked = $sql->fetch($blo); ++$i) {
 			$cell = ($i % 2)+1;
-			$blockedlist .= "<tr><td class='tdbg{$cell} center'>".getuserlink($blocked)."</td><td class='tdbg{$cell} center' style='width: 100px'><a href='?action=block&id={$blocked['id']}{$tokenstr}'>Unblock</a></td></tr>";
+			$blockedlist .= "<tr>
+				<td class='tdbg{$cell} center' style='width:50px'>".($i+1)."</td>
+				<td class='tdbg{$cell}'>".getuserlink($blocked)."</td>
+				<td class='tdbg{$cell} center' style='width: 120px'><a href='postlayouts.php?id={$blocked['id']}'>View layout</a></td>
+				<td class='tdbg{$cell} center' style='width: 90px'><a href='?action=block&id={$blocked['id']}{$tokenstr}'>Unblock</a></td>
+			</tr>";
 		}
 ?>
 	<center>
 	<table class='table' style="width: 850px">
-		<tr><td class='tdbgh center b' colspan=2>Blocked layouts</td>
+		<tr><td class='tdbgh center b' colspan='4'>Blocked layouts</td>
 		<?= $blockedlist ?>
 	</table>
 	</center>

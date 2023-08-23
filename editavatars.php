@@ -115,7 +115,7 @@
 		$_POST['weblink'] = trim(filter_string($_POST['weblink']));
 		
 		// Make sure you aren't uploading something blank
-		$valid_file = (isset($_FILES['upload']) && !filter_int($_FILES['upload']['error']));
+		$valid_file = (!empty($_FILES['upload']) && !filter_int($_FILES['upload']['error']));
 		if (!$valid_file && !file_exists(avatar_path($_GET['id'], $newid)) && !$_POST['weblink']) {
 			upload_error($_FILES['upload']);
 			errorpage("You need to either upload an avatar or specify an URL.");

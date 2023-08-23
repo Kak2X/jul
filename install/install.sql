@@ -1773,7 +1773,7 @@ CREATE TABLE `ratings` (
 
 LOCK TABLES `ratings` WRITE;
 /*!40000 ALTER TABLE `ratings` DISABLE KEYS */;
-INSERT INTO `ratings` VALUES (1,'Like','Post approved','images/ratings/default/approved.png',1,1,0),(2,'Dislike','Post disliked','images/ratings/default/denied.gif',-1,1,0);
+INSERT INTO `ratings` VALUES (1,'Like','Post approved','extensions/postratings.abx/files/images/ratings/default/approved.png',1,1,0),(2,'Dislike','Post disliked','extensions/postratings.abx/files/images/ratings/default/denied.gif',-1,1,0);
 /*!40000 ALTER TABLE `ratings` ENABLE KEYS */;
 UNLOCK TABLES;
 

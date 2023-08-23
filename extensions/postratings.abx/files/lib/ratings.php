@@ -5,7 +5,7 @@
 
 function get_ratings($all = false) {
 	global $sql, $loguser;
-	return $sql->fetchq("SELECT ".($all ? "*" : "id, image, title, enabled, minpower")." FROM ratings ORDER BY id ASC", PDO::FETCH_UNIQUE, mysql::FETCH_ALL | mysql::USE_CACHE);
+	return $sql->getarraybykey("SELECT ".($all ? "*" : "id, image, title, enabled, minpower")." FROM ratings ORDER BY id ASC", "id", mysql::FETCH_ALL | mysql::USE_CACHE);
 }
 
 // Post rating HTML (rating list & post selection)
@@ -49,10 +49,48 @@ function ratings_html($post, $ratedata = array(), $my = array(), $mode = MODE_PO
 	return "<span class='rating-container'>{$curvotes}"./*($flags & PRH_2LINES ? "<br>" : "").*/"<span style='float: right'>{$vote}{$sneak}</span></span>";
 }
 
+
 function rating_image($data, $double = false) {
+	static $url_cache;
 	$css = $double ? "lg" : "";
-	return "<img src=\"".actionlink(escape_attribute($data['image']))."\" class='icon-rating-image {$css}' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
+	// Avoid file_exist'ing all the time
+	if (isset($url_cache[$data['id']])) {
+		$url = $url_cache[$data['id']];
+	} else if (file_exists(rating_path($data['id']))) {
+		$url = rating_path($data['id']);
+		$url_cache[$data['id']] = $url;
+	} else {
+		$url = escape_attribute($data['image']);
+		$url_cache[$data['id']] = $url;
+	}
+	return "<img src=\"{$url}\" class='icon-rating-image {$css}' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
 }
+
+function rating_path($id) {
+	return "extensions/postratings.abx/files/images/ratings/uploads/{$id}";
+}
+
+function upload_rating_image($file, $id) {
+	if (!$file['tmp_name'])
+		errorpage("No file selected.");
+
+	if (!$file['size']) 
+		errorpage("This is an 0kb file");
+	
+	list($width, $height) = getimagesize($file['tmp_name']);
+	
+	if (!$width || !$height)
+		errorpage("This isn't a supported image type.");
+	
+	return move_uploaded_file($file['tmp_name'], rating_path($id));
+}
+
+function delete_rating_image($id) {
+	$p = rating_path($id);
+	if (file_exists($p))
+		unlink(rating_path($id));
+}
+
 function rating_colors($val, $pts) {
 	if ($pts == 0) return $val;
 	if ($pts > 0)  return "<span style='color: #0f0'>{$val}</span>";

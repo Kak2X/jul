@@ -138,9 +138,11 @@
 			<table class='table rating-table'>
 				<tr><td class='tdbgh center b'>Rating details for post #<?= $_GET['post'] ?></td></tr>
 				<tr><td class='tdbg1 center b'>Total score: <?= rating_colors($score, $score) ?></td></tr>
+				<?php if ($loguser['id']) { ?>
 				<tr><td class='tdbg2' colspan='3'>
 					<span style="float: right">Rate this post: &nbsp; <?= ratings_html($_GET['post'], [], $myvotes, $mode, true) ?></span>
 				</td></tr>
+				<?php } ?>
 				<tr><td class='tdbg2'><center>
 				<?= $out ?>
 				</center></td></tr>
@@ -212,7 +214,9 @@
 				<tr><td class='tdbg1 center b' colspan='3'>Total score: <?= rating_colors($score, $score) ?></td></tr>
 				<tr><td class='tdbg2' colspan='3'>
 					Rating filter: <b id='rat-flt'><?= (isset($ratings[$_GET['ratid']]) ? $ratings[$_GET['ratid']]['title'] : "(none)") ?></b>
+					<?php if ($loguser['id']) { ?>
 					<span style="float: right">Rate this post: &nbsp; <?= ratings_html($_GET['post'], [], $myvotes, $mode, true) ?></span>
+					<?php } ?>
 				</td></tr>
 				<tr><td class='tdbg2' colspan='3'><?= $ratlist ?></td></tr>
 				<tbody id='rat-table-body'>

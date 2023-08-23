@@ -34,6 +34,10 @@ extensions/uploader.abx/uploads/*
 !extensions/uploader.abx/uploads/t/.htaccess
 !extensions/uploader.abx/uploads/f/.htaccess
 
+# Uploaded post ratings
+extensions/postratings.abx/files/images/ratings/uploads/*
+!extensions/postratings.abx/files/images/ratings/uploads/note.txt
+
 #Userpics
 userpic/*
 !userpic/note.txt

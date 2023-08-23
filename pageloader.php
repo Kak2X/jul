@@ -19,6 +19,7 @@
 	// <extName>[?<args>]
 	$_url = str_replace("{$boardurl}/", "", $_SERVER['REQUEST_URI']);
 	
+	
 	// Remove arguments, if any
 	$_paramPos = strpos($_url, "?");
 	if ($_paramPos !== false) {
@@ -29,17 +30,18 @@
 	$_parts = explode("/", $_url, 2); // leave "/" in the file name
 	$_bypassInit = false;
 	$_extSubDir = "files/";
+	$extName = $_parts[0];
 	
 	if (count($_parts) === 1) {
-		/*if (file_exists("pages/{$_parts[0]}.php")) {
+		/*
+		if (file_exists("pages/{$_parts[0]}.php")) {
 			require "pages/{$_parts[0]}.php";
 			die;
 		}*/
-		$extName = $_parts[0];
+		
 		$extFile = "index.php";
 		$_fileType = "php";
 	} else {
-		$extName = $_parts[0];
 		$extFile = $_parts[1];
 		
 		switch ($extFile) {
@@ -87,6 +89,16 @@
 	// To save ourselves from trouble, if an extension is disabled we don't prevent access to the resources
 	// only php files will trigger the 404 page
 	if ($_bypassInit || in_array($extName, array_map('trim', file("extensions/init.dat")), true)) {
+		
+		// Just in case, validate $extName if we bypassed the init file check.
+		// In theory it's not needed.
+		if ($_bypassInit) {
+			$_allowedExt = glob("extensions/*.abx", GLOB_NOSORT);
+			if (!in_array("extensions/{$extName}.abx", $_allowedExt))
+				die("No.");
+			unset($_allowedExt);
+		}
+		
 		$loadPath = "extensions/{$extName}.abx/{$_extSubDir}{$extFile}";
 		if (file_exists($loadPath)) {
 			

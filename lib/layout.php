@@ -40,7 +40,7 @@
 	} */
 
 
-function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false) {
+function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false, $centered = false) {
 	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $numcols, $barimg,
 			$isadmin, $issuper, $sysadmin, $isChristmas;
 			
@@ -586,7 +586,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		<link rel='shortcut ico' href='images/favicon/<?=$favicon?>.ico' type='image/x-icon'>
 		<?=$css?>
 	</head>
-	<body <?= ($mini ? "class='flexhvc h'" : "") ?>>
+	<body <?= ($centered ? "class='flexhvc h'" : "") ?>>
 		<?= (isset($body_extra) ? $body_extra : "") ?>
 	<?php
 

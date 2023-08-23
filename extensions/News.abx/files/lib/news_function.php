@@ -477,9 +477,9 @@
 		}
 	}
 	
-	function news_tag_format($tags){
+	function news_tag_format($tags) {
 		$text = array();
-		foreach($tags as $id => $data)
+		foreach ($tags as $id => $data)
 			$text[] = "<a href=\"".actionlink("news.php?tag={$id}")."\">".htmlspecialchars($data['title'])."</a>";
 		return implode(", ", $text);
 	}

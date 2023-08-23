@@ -3,7 +3,7 @@
   
 	$s = readsmilies();
 	
-	pageheader("Smilies", NULL, NULL, true); // Small header
+	pageheader("Smilies", NULL, NULL, true, true); // Small header
 
 ?>
 <table class="tablevc">

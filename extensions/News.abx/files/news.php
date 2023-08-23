@@ -153,7 +153,7 @@
 			} else {
 				print $pagelist;
 				while ($post = $sql->fetch($news)) {
-					$post['tags'] = $tags[$post['id']];
+					$post['tags']         = filter_array($tags[$post['id']]);
 					$post['userdata']     = get_userfields($post, 'u1');
 					$post['edituserdata'] = get_userfields($post, 'u2');
 					print news_format($post, !$_GET['id'], $_GET['pin'])."<br>";

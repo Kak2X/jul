@@ -17,6 +17,8 @@
 		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
 		header('Pragma: no-cache');
 	}
+	if (!isset($_SERVER['HTTP_USER_AGENT']))
+		$_SERVER['HTTP_USER_AGENT'] = "";
 	
 	require 'lib/function.php';		
 	

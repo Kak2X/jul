@@ -106,7 +106,7 @@ function load_ratings($searchon, $range, $mode = MODE_POST) {
 		// deja vu, anyone?
 		
 		if (!count($range))
-			return array();
+			return [[],[]];
 		
 		$ratings = $sql->query("
 			SELECT a.post, a.rating, a.user

@@ -52,13 +52,15 @@
 		$readdate = $sql->resultq("SELECT `readdate` FROM `forumread` WHERE `user` = '{$loguser['id']}' AND `forum` = '{$_GET['f']}' LIMIT 1");
 		$thread = $sql->fetchq("SELECT id, firstpostdate FROM threads WHERE forum = {$_GET['f']}".($forumannc ? " AND announcement = 1" : "")." ORDER BY firstpostdate DESC LIMIT 1");
 		
-		if ($loguser['id'] && $thread['firstpostdate'] > $readdate) {
-			// Set only the first post as marked so announcement replies won't get marked as read 
-			$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".($thread['firstpostdate']++)."', `read` = '1'");
+		if ($thread) {
+			if ($loguser['id'] && $thread['firstpostdate'] > $readdate) {
+				// Set only the first post as marked so announcement replies won't get marked as read 
+				$sql->query("REPLACE INTO threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".($thread['firstpostdate']++)."', `read` = '1'");
+			}
+			
+			$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, {$_GET['f']}, ".time().") 
+			ON DUPLICATE KEY UPDATE readdate = VALUES(readdate)");
 		}
-		
-		$sql->query("INSERT INTO announcementread (user, forum, readdate) VALUES({$loguser['id']}, {$_GET['f']}, ".time().") 
-		ON DUPLICATE KEY UPDATE readdate = VALUES(readdate)");
 	}
 	
 	// Syndrome detection

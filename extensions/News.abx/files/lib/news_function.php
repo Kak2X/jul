@@ -120,7 +120,7 @@
 			// $userpic = "";
 		} else {
 			prepare_avatar($post, $picture, $userpic);
-			$avimg = "<img src=\"{$picture}\" style='float:right'>";
+			$avimg = $picture ? "<img src=\"{$picture}\" style='float:right'>" : "";
 			
 			// moved here since it's useless to do for deleted posts
 			//--

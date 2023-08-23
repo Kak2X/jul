@@ -140,7 +140,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Notice box title</b></td>
-			<td class='tdbg2'><input type='text' name='attntitle' value="<?=escape_html($misc['attntitle'])?>"></td>
+			<td class='tdbg2'><input type='text' name='attntitle' style="width: 100%; max-width: 800px;" value="<?=escape_html($misc['attntitle'])?>"></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Notice box contents</b></td>

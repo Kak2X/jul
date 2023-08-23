@@ -60,17 +60,22 @@
 			else if ($item['effect'] == 2) $_POST['sex'] = 0;	// Force male
 		}
 
-		// Reset the date settings in case they match with the default
-		$eddateformat 	= filter_string($_POST['dateformat'], true);
-		$eddateshort 	= filter_string($_POST['dateshort'], true);
+
+		// With date formats, the preset has priority
+		$eddateformat = filter_string($_POST['datepreset']);
+		if (!$eddateformat) $eddateformat = filter_string($_POST['dateformat']);
+		$eddateshort = filter_string($_POST['dateshortpreset']);
+		if (!$eddateshort) $eddateshort = filter_string($_POST['dateshort']);	
+		
+		// Also reset the date settings in case they match with the default
 		if ($eddateformat == $config['default-dateformat']) $eddateformat = '';
 		if ($eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
 		
 		
 		// \n -> <br> conversion
-		$_POST['postheader'] = filter_string($_POST['postheader'], true);
-		$_POST['signature'] 	= filter_string($_POST['signature'], true);
-		$bio 		= filter_string($_POST['bio'], true);
+		$_POST['postheader'] = filter_string($_POST['postheader']);
+		$_POST['signature'] 	= filter_string($_POST['signature']);
+		$bio 		= filter_string($_POST['bio']);
 		sbr(0,$_POST['postheader']);
 		sbr(0,$_POST['signature']);
 		sbr(0,$bio);
@@ -79,28 +84,6 @@
 		$tlayout = filter_int($_POST['layout']);
 		$valid = $sql->resultq("SELECT id FROM tlayouts WHERE id = $tlayout");
 		if (!$valid) $tlayout = 1;	// Regular (no numgfx)
-			
-		
-		/*
-			$oldtitle	= "";
-			$title		= filter_string($_POST['title'], true);
-		while ($oldtitle != $title) {
-			$oldtitle = $title;
-			$title=preg_replace("'<(b|i|u|s|small|br)>'si", '[\\1]', $title);
-			$title=preg_replace("'</(b|i|u|s|small|font)>'si", '[/\\1]', $title);
-			$title=preg_replace("'<img ([^>].*?)>'si", '[img \\1]', $title);
-			$title=preg_replace("'<font ([^>].*?)>'si", '[font \\1]', $title);
-		//   $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); 
-			$title=strip_tags($title);
-		//    $title=preg_replace("'<[\/\!]*?[^<>]*?>'si", '&lt;\\1&gt;', $title); 
-			$title=preg_replace("'\[font ([^>].*?)\]'si", '<font \\1>', $title);
-			$title=preg_replace("'\[img ([^>].*?)\]'si", '<img \\1>', $title);
-			$title=preg_replace("'\[(b|i|u|s|small|br)\]'si", '<\\1>', $title);
-			$title=preg_replace("'\[/(b|i|u|s|small|font)\]'si", '</\\1>', $title);
-			$title=preg_replace("'(face|style|class|size|id)=\"([^ ].*?)\"'si", '', $title);
-			$title=preg_replace("'(face|style|class|size|id)=\'([^ ].*?)\''si", '', $title);
-			$title=preg_replace("'(face|style|class|size|id)=([^ ].*?)'si", '', $title);
-		}*/
 
 		// Changing the password?
 		$password 	= filter_string($_POST['pass1']);
@@ -413,15 +396,15 @@
 		));
 		
 		_table_format("Options", array(
-			"Custom date format" 			=> [0, "dateformat", "Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting. Leave blank to use the default.", 16, 32],
-			"Custom short date format" 		=> [0, "dateshort", "Change how abbreviated dates are displayed. Uses the same formatting. Leave blank to reset.", 8, 16],
+			"Custom date format" 			=> [4, "dateformat", "Change how dates are displayed. Uses <a href='http://php.net/manual/en/function.date.php'>date()</a> formatting. Leave blank to use the default.", 16, 32],
+			"Custom short date format" 		=> [4, "dateshort", "Change how abbreviated dates are displayed. Uses the same formatting. Leave blank to reset.", 8, 16],
 			"Timezone offset"	 			=> [0, "timezone", "How many hours you're offset from the time on the board (".date($loguser['dateformat'],time()).").", 5, 5],
 			"Posts per page"				=> [0, "postsperpage", "The maximum number of posts you want to be shown in a page in threads.", 3, 3],
 			"Threads per page"	 			=> [0, "threadsperpage", "The maximum number of threads you want to be shown in a page in forums.", 3, 3],
 			"Use post toolbar" 				=> [2, "posttool", "You can disable it here, which can make thread pages smaller and load faster.", "Disabled|Enabled"],
 			"Post layouts"	                => [2, "viewsig", "You can disable them here, which can make thread pages smaller and load faster.{$noeffect}", "Disabled|Enabled|Auto-updating"],
 			"Forum List layout"				=> [2, "splitcat", "'Split' uses two columns instead of one.", "Normal|Split ({$splitcount})"],
-			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Seperate Line (shows more pages)", "Inline|Seperate line"],
+			"Forum page list style"			=> [2, "pagestyle", "Inline (Title - Pages ...) or Separate Line (shows more pages)", "Inline|Separate line"],
 			"Poll vote system"				=> [2, "pollstyle", "Normal (based on users) or Influence (based on levels)", "Normal|Influence"],
 			"Thread layout"					=> [4, "layout", "You can choose from a few thread layouts here.{$noeffect}"],
 			"Signature separator"			=> [4, "signsep", "You can choose from a few signature separators here."],
@@ -533,6 +516,11 @@
 		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;
 		$scheme = doschemelist($userdata['scheme'], 'scheme', $schflags);
 		$fontsize = "<input type='text' name='fontsize' size=5 maxlength=5 value=\"".__($userdata['fontsize'])."\">%";
+		
+		$dateformat = input_html('dateformat', $userdata['dateformat'], ['input' => 'text', 'special' => 'dateformat', 'width' => '150px'], 'datepreset', $userdata['dateformat']);
+		$dateshort = input_html('dateshort', $userdata['dateshort'], ['input' => 'text', 'special' => 'dateshort', 'width' => '150px'], 'dateshortpreset', $userdata['dateshort']);
+		
+		
 		// listbox with <name> <used>
 		$layout   = _queryselectbox('layout',   'SELECT tl.id as id, tl.name, COUNT(u.layout) as used FROM tlayouts tl LEFT JOIN users u ON (u.layout = tl.id) GROUP BY tl.id ORDER BY tl.ord');
 		$useranks = _queryselectbox('useranks', 'SELECT rs.id as id, rs.name, COUNT(u.useranks) as used FROM ranksets rs LEFT JOIN users u ON (u.useranks = rs.id) GROUP BY rs.id ORDER BY rs.id');

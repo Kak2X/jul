@@ -5,11 +5,11 @@
 	$userfields_array = ['name', 'aka', 'sex', 'powerlevel', 'birthday', 'namecolor', 'minipic', 'id'];
 	
 	// Line separators
-	$sepn 	= array('Dashes','Line','Full horizontal line','None');
-	$sep	= array('<br><br>--------------------<br>',
+	const SIGNSEP_DESC 	= array('Dashes','Line','Full horizontal line','None');
+	const SIGNSEP	= array('<br><br>--------------------<br>',
 					'<br><br>____________________<br>',
 					'<br><br><hr>',
-					'<br><br>');
+					''); // None should mean NONE, not TWO BLANK LINES
 	
 	// Function constants
 	const IRC_MAIN = 0;

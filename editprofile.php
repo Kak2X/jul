@@ -540,9 +540,9 @@
 		
 		$used = $sql->getresultsbykey('SELECT signsep, count(*) as cnt FROM users GROUP BY signsep');
 		$signsep = "";
-		for($i = 0; isset($sepn[$i]); ++$i){
+		foreach (SIGNSEP_DESC as $i => $sepn) {
 				$sel = ($i==$userdata['signsep'] ? ' selected' : '');
-				$signsep .= "<option value={$i}{$sel}>{$sepn[$i]} (".filter_int($used[$i]).")";
+				$signsep .= "<option value='{$i}'{$sel}>{$sepn} (".filter_int($used[$i]).")";
 		}
 		$signsep="<select name='signsep'>$signsep</select>";
 		

@@ -2,7 +2,7 @@
 	
 	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0,$pthread = '', $multiforum = false) {
 		
-		global $config, $loguser, $sep, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons;
+		global $config, $loguser, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -43,7 +43,7 @@
 			prepare_avatar($post, $set['picture'], $set['userpic']);
 
 			if ($post['signtext']) {
-				$post['signtext'] = $sep[$loguser['signsep']].$post['signtext'];
+				$post['signtext'] = SIGNSEP[$loguser['signsep']].$post['signtext'];
 			}
 			
 			// Display the pretty attachment list

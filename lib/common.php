@@ -230,11 +230,11 @@
 			'id'			=> 0, // This is a much more useful value to default to
 			'name'			=> '',
 			'password'		=> '',
-			'viewsig'		=> 1,
+			'viewsig'		=> 1, // Enabled, with history
 			'layout'        => 1, // Regular
 			'powerlevel' 	=> 0,
 			'postsperpage'  => 20,
-			'signsep'		=> 1,
+			'signsep'		=> 3, // Hide separator for guests, since post layouts are enabled
 			'dateformat'	=> $config['default-dateformat'],
 			'dateshort'		=> $config['default-dateshort'],
 			'timezone'      => 0,
@@ -248,7 +248,7 @@
 			'pagestyle'     => 0,
 			'pollstyle'     => 0,
 			'splitcat'      => 0,
-			'posttool'      => 0,
+			'posttool'      => 1, // Sure, why not
 		);	
 	}
 	

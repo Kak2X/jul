@@ -2415,7 +2415,7 @@ CREATE TABLE `users` (
   `layout` tinyint(2) unsigned NOT NULL DEFAULT '1',
   `viewsig` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `posttool` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `signsep` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `signsep` tinyint(3) unsigned NOT NULL DEFAULT '3',
   `pagestyle` tinyint(4) NOT NULL DEFAULT '0',
   `pollstyle` tinyint(4) NOT NULL DEFAULT '0',
   `profile_locked` tinyint(1) NOT NULL DEFAULT '0',

@@ -57,7 +57,7 @@
 	
 	// This is basically the same thing as the normal cookie verification, except the cookies are stored in _POST.
 	function verify_password() {
-		global $btn, $step;
+		global $sql, $btn, $step;
 		
 		// Logging out is really just reloading the fresh index page
 		if (SETUP_DEBUG && isset($_GET['logout'])) {

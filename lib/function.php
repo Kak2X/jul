@@ -113,12 +113,7 @@ function get_tags($data, $repl = null) {
 }
 
 function escape_codeblock($text) {
-	$list  = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
-	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
-	
-	// @TODO why not just use htmlspecialchars() or htmlentities()
-	//return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
-	return "<blockquote class='code'><hr><pre><code>". str_replace($list, $list2, $text[0]) ."</code></pre><hr></blockquote>";
+	return "<blockquote class='code'><hr>". htmlspecialchars($text[1]) ."<hr></blockquote>";
 }
 
 
@@ -135,10 +130,7 @@ function domarkup($msg, $stdpost = null, $nosbr = false) {
 		$smiliesoff = $htmloff = false;
 	}
 	
-	//$list = array("<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
-	//$list2 = array("&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
 	$msg = preg_replace_callback("'\[code\](.*?)\[/code\]'si", 'escape_codeblock', $msg);
-
 
 	if ($htmloff) {
 		$msg = str_replace("<", "&lt;", $msg);

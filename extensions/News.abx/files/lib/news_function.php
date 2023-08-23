@@ -169,14 +169,14 @@
 					{$userpic}
 				</td>
 				<td class='tdbg2 vatop' style='padding-bottom: 12px'>
-					".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."
+					".dofilters(domarkup($post['text'], $post))."
 				</td>
 			</tr>
 			*/"
 			<tr>
 				<td class='tdbg2 vatop' style='padding-bottom: 12px' colspan='2'>
 					{$avimg}
-					".dofilters(doreplace2($post['text'], "{$post['nosmilies']}|{$post['nohtml']}"))."
+					".dofilters(domarkup($post['text'], $post))."
 				</td>
 			</tr>
 			
@@ -346,7 +346,7 @@
 			//$author = "<s>{$author}</s>";
 		} else {
 			prepare_avatar($comment, $picture, $userpic);
-			$ctext = dofilters(doreplace2($comment['text'], "0|0"));
+			$ctext = dofilters(domarkup($comment['text']));
 			$cimg  = "<img src=\"{$picture}\" style='max-width: ".COMMENT_AVATAR_SIZE."px; max-height: ".COMMENT_AVATAR_SIZE."px' />";
 		}
 		

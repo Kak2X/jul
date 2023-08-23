@@ -72,7 +72,8 @@
 					'csstext'	=> $css,
 					
 					
-					'options'	=> $nosmilies . "|" . $nohtml,
+					'nosmilies' => $nosmilies,
+					'nohtml'	=> $nohtml,
 					'edited'	=> $edited,
 					'editdate' 	=> time(),
 					
@@ -131,9 +132,8 @@
 			if(!$post['cssid'])  $css = $post['csstext'];
 			else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
 			
-			$options    = explode("|", $post['options']);
-			$nosmilies 	= $options[0];
-			$nohtml		= $options[1];
+			$nosmilies 	= $post['nosmilies'];
+			$nohtml		= $post['nohtml'];
 			$moodid		= $post['moodid'];
 			
 			sbr(1, $head);

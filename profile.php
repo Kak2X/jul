@@ -221,7 +221,7 @@
 			'Real name' => htmlspecialchars($user['realname']),
 			'Location'  => str_ireplace("&lt;br&gt;", "<br>", htmlspecialchars($user['location'])),
 			'Birthday'  => "{$birthday} {$age}",
-			'User bio'  => dofilters(doreplace2(replace_tags($user['bio'], get_tags($user)))),
+			'User bio'  => dofilters(domarkup(replace_tags($user['bio'], get_tags($user)))),
 		],
 	];
 	
@@ -364,7 +364,7 @@
 				<td class='tdbg{$cell} center' style='width: 1px'>{$newmark}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 60px'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr' style='width: 150px'>".printdate($x['date'])."</td>
-				<td class='tdbg{$cell}'>".getuserlink($x).": ".dofilters(doreplace2($x['text']))."</td>
+				<td class='tdbg{$cell}'>".getuserlink($x).": ".dofilters(domarkup($x['text']))."</td>
 			</tr>";
 	}
 	

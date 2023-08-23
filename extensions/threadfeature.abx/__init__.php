@@ -55,7 +55,7 @@ if ($xconf['index-window'] || $xconf['index-force-thread']) {
 			
 			$fthread = $sql->fetchq("
 				SELECT t.id, t.title, t.description, t.firstpostdate, t.replies, t.icon, t.forum, t.poll, t.user,
-					   f.pollstyle, p.text, p.options, {$userfields} uid
+					   f.pollstyle, p.text, p.nosmilies, p.nohtml, {$userfields} uid
 				FROM threads t
 				LEFT JOIN forums f ON t.forum = f.id
 				LEFT JOIN users  u ON t.user  = u.id
@@ -113,7 +113,7 @@ if ($xconf['index-window'] || $xconf['index-force-thread']) {
 					<td class="tdbg1"></td>
 					<td class="tdbg2">
 						<div style="max-height: 100px; overflow-y: scroll">
-							<?= dofilters(doreplace2($fthread['text'], $fthread['options']), $fthread['forum']) ?>
+							<?= dofilters(domarkup($fthread['text'], $fthread), $fthread['forum']) ?>
 						</div>
 					</td>
 				</tr>

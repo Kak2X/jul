@@ -395,12 +395,6 @@ function create_pm_post($preq) {
 		$preq->vals['cssid']  = getpostlayoutid($user['css']);
 	}
 	
-	//--
-	// TEMPORARY HACK BEFORE NUKING 'options'
-	$preq->vals['options'] = $preq->vals['nosmilies'] . "|" . $preq->vals['nohtml'];
-	unset($preq->vals['nosmilies'], $preq->vals['nohtml']);
-	//--
-	
 	// Misc
 	$currenttime = time();
 	$preq->vals['date'] = $currenttime;

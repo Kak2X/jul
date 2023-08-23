@@ -115,26 +115,29 @@ function get_tags($data, $repl = null) {
 function escape_codeblock($text) {
 	$list  = array("[code]", "[/code]", "<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
 	$list2 = array("", "", "&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
-
+	
 	// @TODO why not just use htmlspecialchars() or htmlentities()
 	//return "[quote]<code>". str_replace($list, $list2, $text[0]) ."</code>[/quote]";
 	return "<blockquote class='code'><hr><pre><code>". str_replace($list, $list2, $text[0]) ."</code></pre><hr></blockquote>";
 }
 
-function doreplace2($msg, $options='0|0', $nosbr = false){
+
+function domarkup($msg, $stdpost = null, $nosbr = false) {
 	global $hacks;
 	
-	if (!$msg) return $msg;
+	if (!$msg) return "";
 	
-	// options will contain smiliesoff|htmloff
-	$options     = explode("|", $options);
-	$smiliesoff  = $options[0];
-	$htmloff     = $options[1];
-
-
+	// These options use a consistent name across posts/pms/etc...
+	if ($stdpost !== null) {
+		$smiliesoff  = $stdpost['nosmilies'];
+		$htmloff     = $stdpost['nohtml'];
+	} else {
+		$smiliesoff = $htmloff = false;
+	}
+	
 	//$list = array("<", "\\\"" , "\\\\" , "\\'", "[", ":", ")", "_");
 	//$list2 = array("&lt;", "\"", "\\", "\'", "&#91;", "&#58;", "&#41;", "&#95;");
-	$msg=preg_replace_callback("'\[code\](.*?)\[/code\]'si", 'escape_codeblock',$msg);
+	$msg = preg_replace_callback("'\[code\](.*?)\[/code\]'si", 'escape_codeblock', $msg);
 
 
 	if ($htmloff) {
@@ -145,44 +148,43 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 	if (!$smiliesoff) {
 		global $smilies;
 		if (!$smilies) $smilies = readsmilies();
-		for($s = 0; isset($smilies[$s]); ++$s){
+		for ($s = 0; isset($smilies[$s]); ++$s){
 			$smilie = $smilies[$s];
-			// what?
-			//if ($htmloff) $smilie[0] = htmlspecialchars($smilie[0]);
-			$msg = str_replace($smilie[0], "<img src='$smilie[1]' align=absmiddle>", $msg);
+			$msg = str_replace($smilie[0], "<img src='{$smilie[1]}' align=absmiddle>", $msg);
 		}
 	}
 	
 	// Simple check for skipping BBCode replacements
 	if (strpos($msg, "[") !== false){
-		$msg=str_replace('[red]',	'<font color=FFC0C0>',$msg);
-		$msg=str_replace('[green]',	'<font color=C0FFC0>',$msg);
-		$msg=str_replace('[blue]',	'<font color=C0C0FF>',$msg);
-		$msg=str_replace('[orange]','<font color=FFC080>',$msg);
-		$msg=str_replace('[yellow]','<font color=FFEE20>',$msg);
-		$msg=str_replace('[pink]',	'<font color=FFC0FF>',$msg);
-		$msg=str_replace('[white]',	'<font color=white>',$msg);
-		$msg=str_replace('[black]',	'<font color=0>'	,$msg);
-		$msg=str_replace('[/color]','</font>',$msg);
-		$msg=preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
-		$msg=str_replace('[quote]','<blockquote><hr>',$msg);
-		$msg=str_replace('[/quote]','<hr></blockquote>',$msg);
-		$msg=preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
-		$msg=preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
+		$msg = str_replace('[red]',    '<span style="color:#FFC0C0">', $msg);
+		$msg = str_replace('[green]',  '<span style="color:#C0FFC0">', $msg);
+		$msg = str_replace('[blue]',   '<span style="color:#C0C0FF">', $msg);
+		$msg = str_replace('[orange]', '<span style="color:#FFC080">', $msg);
+		$msg = str_replace('[yellow]', '<span style="color:#FFEE20">', $msg);
+		$msg = str_replace('[pink]',   '<span style="color:#FFC0FF">', $msg);
+		$msg = str_replace('[white]',  '<span style="color:white">', $msg);
+		$msg = str_replace('[black]',  '<span style="color:black">', $msg);
+		$msg = preg_replace("'\[/(color|red|green|blue|orange|yellow|pink|white|black)\]'s",'</span>', $msg);
+		//$msg = str_replace('[/color]','</span>', $msg);
+		$msg = preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
+		$msg = str_replace('[quote]','<blockquote><hr>', $msg);
+		$msg = str_replace('[/quote]','<hr></blockquote>', $msg);
+		$msg = preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
+		$msg = preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
 		// Old spoiler tag
-		//$msg=str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">',$msg);
-		//$msg=str_replace('[/spoiler]','</div></div>',$msg);
+		//$msg = str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">', $msg);
+		//$msg = str_replace('[/spoiler]','</div></div>', $msg);
 		// New spoiler tag
-		$msg=str_replace('[spoiler]','<label class="spoiler spoiler-b"><div class="spoiler-label"></div><input type="checkbox"><div class="hidden"><div>',$msg);
-		$msg=str_replace('[/spoiler]','</div></div></label>',$msg);
-		$msg=str_replace('[spoileri]','<label class="spoiler"><span class="spoiler-label"></span><input type="checkbox"><span class="hidden"><span>',$msg);
-		$msg=str_replace('[/spoileri]','</span></span></label>',$msg);
+		$msg = str_replace('[spoiler]','<label class="spoiler spoiler-b"><div class="spoiler-label"></div><input type="checkbox"><div class="hidden"><div>', $msg);
+		$msg = str_replace('[/spoiler]','</div></div></label>', $msg);
+		$msg = str_replace('[spoileri]','<label class="spoiler"><span class="spoiler-label"></span><input type="checkbox"><span class="hidden"><span>', $msg);
+		$msg = str_replace('[/spoileri]','</span></span></label>', $msg);
 	
-		$msg=preg_replace("'\[(b|i|u|s)\]'si",'<\\1>',$msg);
-		$msg=preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>',$msg);
-		$msg=preg_replace("'\[img\](.*?)\[/img\]'si", '<img class="imgtag" src=\\1>', $msg);
-		$msg=preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
-		$msg=preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
+		$msg = preg_replace("'\[(b|i|u|s)\]'si",'<\\1>', $msg);
+		$msg = preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>', $msg);
+		$msg = preg_replace("'\[img\](.*?)\[/img\]'si", '<img class="imgtag" src=\\1>', $msg);
+		$msg = preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
+		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 	}
 
 	do {
@@ -192,11 +194,12 @@ function doreplace2($msg, $options='0|0', $nosbr = false){
 
 	// Comment display
 	if ($hacks['comments']) {
-		$msg=str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $msg);
-		$msg=str_replace("-->", '--&gt;</span>', $msg);
+		$msg = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $msg);
+		$msg = str_replace("-->", '--&gt;</span>', $msg);
 	}
 
-	if (!$nosbr) sbr(0,$msg);
+	// Cheap hack but convenient (it shouldn't be here)
+	if (!$nosbr) sbr(0, $msg);
 
 	return $msg;
 }

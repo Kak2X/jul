@@ -55,7 +55,7 @@
 			
 			//hook_use_ref('threadpost', $set, $post, $mode);
 			
-			$post['text'] = doreplace2($post['text'], $post['options']);
+			$post['text'] = domarkup($post['text'], $post);
 		}
 
 		// Thread marker for posts by thread / favourites view
@@ -161,20 +161,15 @@
 		$post['signtext'] = replace_tags($post['signtext'],$tags);
 		$post['csstext']  = replace_tags($post['csstext'], $tags);
 		
-		$post['headtext'] = "<span id='body{$post['id']}'>".doreplace2($post['headtext']);
-		$post['signtext'] = doreplace2($post['signtext'])."</span>";
+		$post['headtext'] = "<span id='body{$post['id']}'>".domarkup($post['headtext']);
+		$post['signtext'] = domarkup($post['signtext'])."</span>";
 		if ($post['csstext']) {
-			$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".doreplace2($post['csstext'], "0|0", true)."</style>{$post['headtext']}";
+			$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".domarkup($post['csstext'], null, true)."</style>{$post['headtext']}";
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
 		if ($post['headtext']) $post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['headtext']);
 		if ($post['sidebar'])  $post['sidebar']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['sidebar']);
-		
-
-
-		
-		//	$post['text'] = doreplace2($post['text'], $post['options']);
 		return $post;
 	}
 	
@@ -268,7 +263,8 @@
 
 		$ppost['deleted']       = 0;
 		$ppost['revision']      = 0;
-		$ppost['options']		= "{$data['nosmilies']}|{$data['nohtml']}";
+		$ppost['nosmilies']		= $data['nosmilies'];
+		$ppost['nohtml']		= $data['nohtml'];
 		$ppost['act'] 			= $sql->resultq("SELECT COUNT(*) num FROM posts WHERE date > ".(time() - 86400)." AND user = {$user['id']}");
 		$ppost['new']           = filter_bool($data['new']);
 		$ppost['piclink']       = get_weblink($user['id'], $data['moodid']);
@@ -332,7 +328,7 @@ function thread_history($thread, $num, $forum = 0) {
 	}
 	
 	$posts = $sql->query("
-		SELECT {$userfields}, u.posts, p.user, p.text, p.options, p.deleted, {$nf}num
+		SELECT {$userfields}, u.posts, p.user, p.text, p.nosmilies, p.nohtml, p.deleted, {$nf}num
 		FROM {$table} p
 		LEFT JOIN users u ON p.user = u.id
 		WHERE p.thread = $thread
@@ -360,7 +356,7 @@ function thread_history($thread, $num, $forum = 0) {
 			if ($num-- > 0){
 				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
 				$userlink = getuserlink($post);
-				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(doreplace2($post['text'], $post['options']), $forum);
+				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(domarkup($post['text'], $post), $forum);
 				$postlist .=
 					"<tr>
 						<td class='tdbg$bg' valign=top>

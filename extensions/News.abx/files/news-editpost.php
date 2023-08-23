@@ -74,6 +74,8 @@
 				'lastedituser' => $loguser['id'],
 				'lasteditdate' => time(),
 				'moodid'       => $_POST['moodid'],
+				'nosmilies'    => $_POST['nosmilies'],
+				'nohtml'       => $_POST['nohtml'],
 			);
 			$sql->queryp("UPDATE news SET ".mysql::setplaceholders($values)." WHERE id = {$_GET['id']}", $values);
 			
@@ -167,11 +169,13 @@
 				
 			// Create the post
 			$values = array(
-				'title'  => $_POST['title'],
-				'text'   => $_POST['text'],
-				'user'   => $loguser['id'],
-				'date'   => time(),
-				'moodid' => $_POST['moodid'],
+				'title'     => $_POST['title'],
+				'text'      => $_POST['text'],
+				'user'      => $loguser['id'],
+				'date'      => time(),
+				'moodid'    => $_POST['moodid'],
+				'nosmilies' => $_POST['nosmilies'],
+				'nohtml'    => $_POST['nohtml'],
 			);
 			$sql->queryp("INSERT INTO news SET ".mysql::setplaceholders($values), $values);
 			$id = $sql->insert_id();

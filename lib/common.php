@@ -246,6 +246,7 @@
 			'uploads_locked'  => 0,
 			'uploader_locked' => 0,
 			'pagestyle'     => 0,
+			'pollstyle'     => 0,
 			'splitcat'      => 0,
 			'posttool'      => 0,
 		);	

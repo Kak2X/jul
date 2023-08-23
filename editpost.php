@@ -113,7 +113,8 @@
 				
 				// Post update data which does not trigger a new revision
 				$pdata = array(
-					'options'	=> $nosmilies . "|" . $nohtml,
+					'nosmilies' => $nosmilies,
+					'nohtml'    => $nohtml,
 					'edited'	=> $edited,
 					'editdate' 	=> time(),
 					'moodid'	=> $moodid,
@@ -202,11 +203,9 @@
 			else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
 			if(!$post['cssid'])  $css = $post['csstext'];
 			else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
-
-			$options    = explode("|", $post['options']);
-			$nosmilies  = $options[0];
-			$nohtml     = $options[1];
-
+			
+			$nosmilies  = $post['nosmilies'];
+			$nohtml     = $post['nohtml'];
 			$moodid		= $post['moodid'];
 			//$user=$sql->fetchq("SELECT name FROM users WHERE id=$post[user]");		
 			sbr(1, $head);

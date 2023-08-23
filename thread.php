@@ -226,7 +226,7 @@
 	// heh
 	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
-				p.text$sfields, p.edited, p.editdate, p.options, p.tagval, p.deleted, p.revision,
+				p.text$sfields, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}$trfield
 		FROM posts p
 		

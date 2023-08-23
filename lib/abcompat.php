@@ -82,6 +82,9 @@
 		}
 		return replace_tags($msg, $tags);
 	}
+	function doreplace2($msg, $options = '0|0', $nosbr = false) {
+		return domarkup($msg, ['nosmilies' => $options[0] !== "0", 'nohtml' => $options[2] !== "0"], $nosbr);
+	}
 	
 	function settags($text, $tags) { return replace_tags($text, get_tags($tags)); }
 	function dotags($msg, $tagdata, &$tags = array()) {

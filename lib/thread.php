@@ -445,12 +445,6 @@
 			$preq->vals['cssid']  = getpostlayoutid($user['css']);
 		}
 		
-		//--
-		// TEMPORARY HACK BEFORE NUKING 'options'
-		$preq->vals['options'] = $preq->vals['nosmilies'] . "|" . $preq->vals['nohtml'];
-		unset($preq->vals['nosmilies'], $preq->vals['nohtml']);
-		//--
-		
 		// Misc
 		$currenttime = time();
 		$preq->vals['date'] = $currenttime;
@@ -464,7 +458,7 @@
 		if ($sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$preq->vals['thread']}") > 1) {
 			// Not the first post: update other stats
 			$modq = ($preq->threadupdate ? mysql::setplaceholders($preq->threadupdate)."," : "");
-			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $threadupdate);
+			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $preq->threadupdate);
 			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
 			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
 		}

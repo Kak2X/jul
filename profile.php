@@ -277,11 +277,10 @@
 			"Show posts"                 => ["thread.php?user={$_GET['id']}"],
 			"View threads by this user"  => ["forum.php?user={$_GET['id']}"],
 			"View comments by this user" => ["usercomment.php?id={$_GET['id']}"],
-			"View personal folders"      => ["uploader.php?mode=u&user={$_GET['id']}"],
 			"View layout code"           => ["postlayouts.php?id={$_GET['id']}"],
+			"View forum bans to this user" => ["forumbansbyuser.php?id={$_GET['id']}"],
 		],
 		1 => [
-			"View forum bans to this user" => ["forumbansbyuser.php?id={$_GET['id']}"],
 			"List posts by this user"      => ["forum.php?user={$_GET['id']}"],
 			"List posts by this user"      => ["postsbyuser.php?id={$_GET['id']}"],
 			"Posts by time of day"         => ["postsbytime.php?id={$_GET['id']}"],
@@ -320,6 +319,7 @@
 	) {
 		$options[0]["Preview mood avatar"] = ["avatar.php?id={$_GET['id']}", "class='popout' target='_blank'"];	
 	}
+	hook_use_ref('profile-options', $options);
 	
 	
 	/*

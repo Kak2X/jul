@@ -12,3 +12,8 @@ hook_add('adminlinkbar', function() use ($extName) {
 		"{$extName}/uploader-catman.php"     => "Folder Manager",
 	));
 });
+
+hook_add('profile-options', function($_, &$options) use ($extName) {
+	$options[0]["View personal folders"] = ["{$extName}/uploader.php?mode=u&user={$_GET['id']}"];
+});
+			

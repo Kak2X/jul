@@ -135,6 +135,6 @@ function ext_read_schema($name, $extName) {
 function actionlink($url = null, $args = "") {
 	global $scriptpath, $extName;
 	if ($url !== null)
-		return "{$extName}/{$url}";
+		return "{$extName}/{$url}{$args}";
 	return $scriptpath.$args;
 }

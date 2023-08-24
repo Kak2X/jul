@@ -39,7 +39,7 @@
 	
 	
 	// Breadcrumbs
-	$links = uploader_breadcrumbs_links(NULL, NULL, UBL_USERCAT);
+	$links = uploader_breadcrumbs_links(NULL, NULL);
 	$breadcrumbs = dobreadcrumbs($links, "<a href='".actionlink("uploader.php?mode=u")."'>Show all personal folders</a>"); 
 ?>
 	<?= $breadcrumbs ?>

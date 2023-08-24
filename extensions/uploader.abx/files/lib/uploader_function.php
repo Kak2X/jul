@@ -1,27 +1,5 @@
 <?php
 
-// not applicable anymore (finally)
-//if (!$config['allow-uploader'])
-//	return header("Location: index.php");
-
-if (!isset($meta['noparams'])) {
-	$_GET['mode'] = filter_string($_GET['mode']);
-	$_GET['user'] = filter_int($_GET['user']);
-	$baseparams = "?mode={$_GET['mode']}&user={$_GET['user']}";
-}
-
-function uploader_fix_baseparams($cat) {
-	global $baseparams;
-	if ($cat['user'] && (!$_GET['mode'] || $_GET['user'] != $cat['user'])) {
-		$_GET['mode'] = 'u';
-		$_GET['user'] = $cat['user'];
-	} else if (!$cat['user']) {
-		$_GET['mode'] = '';
-		$_GET['user'] = 0;
-	}
-	$baseparams = "?mode={$_GET['mode']}&user={$_GET['user']}";
-}
-
 // Uploader-specific functions
 function can_manage_category($cat) {
 	global $isadmin, $loguser;
@@ -39,7 +17,12 @@ function can_manage_category_files($cat) {
 
 function can_read_category($cat) {
 	global $isadmin, $loguser;
-	return ($isadmin || $cat['user'] == $loguser['id'] || $cat['minpowerread'] <= $loguser['powerlevel']);
+	return $isadmin || ($cat['user'] == $loguser['id']) || $loguser['powerlevel'] >= $cat['minpowerread'];
+}
+
+function can_upload_in_category($cat) {
+	global $isadmin, $loguser;
+	return ($isadmin || $cat['user'] == $loguser['id'] || $cat['minpowerupload'] <= $loguser['powerlevel']);
 }
 
 function can_read_file($file) {
@@ -52,10 +35,15 @@ function can_edit_file($file) {
 	return ($isadmin || ($loguser['id'] == $file['user'] && $loguser['powerlevel'] >= 0));
 }
 
-function load_uploader_category($id, $fields = "*") {
+function load_uploader_category($id, $fields = "c.*") {
 	global $sql, $isadmin, $loguser, $cat;
-	// Check the category to be sure. Private categories are a thing, you know
-	$cat = $sql->fetchq("SELECT {$fields} FROM uploader_cat WHERE id = {$id}");
+	// Check the category to be sure. Private categories are a thing, you know.
+	// Also reading the username off here to avoid having to query it later
+	$cat = $sql->fetchq("
+		SELECT {$fields}, u.name username
+		FROM uploader_cat c
+		LEFT JOIN users u ON c.user = u.id
+		WHERE c.id = {$id}");
 	if (!$cat) {
 		if (!$isadmin) {
 			errorpage("You aren't allowed to access this folder.");
@@ -66,14 +54,12 @@ function load_uploader_category($id, $fields = "*") {
 				'id' => $id,
 				'title' => "Invalid folder #{$id}",
 				'user' => $loguser['id'],
+				'username' => $loguser['name'],
 			];
 			return;
 		}
 	}
-	if (!$isadmin // Admin can do whatever
-		&& $cat['minpowerread'] && $cat['minpowerread'] > $loguser['powerlevel'] // Read perm
-		&& (!$cat['user'] || $cat['user'] != $loguser['id']) // Category not yours
-	) {
+	if (!can_read_category($cat)) {
 		errorpage("You aren't allowed to access this folder.");
 	}
 }
@@ -104,53 +90,69 @@ function validate_file_options($cat, $file) {
 		errorpage("You aren't meant to upload private files in public folder, you know.");	
 }
 
-function uploader_load_user($userid) {
-	$u = load_user($userid);
-	return $u ? $u : ['name' => "All personal folders"];
+function uploader_barright($cat = null, $user = null) {
+	global $loguser, $isadmin;
+	$barright = "<a href='".actionlink("uploader-catbyuser.php")."'>Folders by user</a>";
+	// Lock out management options when not logged in
+	if ($loguser['id'] && !$loguser['uploader_locked']) {
+		if ($isadmin)
+			$barright .= " - <a href='".actionlink("uploader-catman.php")."'>Manage shared folders</a>";
+		
+		// $obj can be either $user (uploader.php) or $cat (uploader-cat.php)
+		// detect which one it is by checking for $cat['username']
+		if ($cat || $user) {
+			
+			if ($cat) {
+				$userid   = $cat['user'];
+				$username = $cat['username'];
+			} else {
+				$userid   = $user['id'];
+				$username = $user['name'];
+			}
+			
+			if (($isadmin && $userid) || $userid == $loguser['id']) {
+				$barright .= " - <a href='".actionlink("uploader-catman.php?mode=u&user={$userid}")."'>Manage ".htmlspecialchars($username)."'s folders</a>";
+			}
+		}	
+	}
+	return $barright;
 }
 
-const UBL_USERCAT = -1;
-function uploader_breadcrumbs_links($cat = NULL, $user = NULL, $extra = NULL) {
-	// I'm not remembering all of this
-	//--
-	if (!isset($_GET['mode']))
-		$_GET['mode'] = '';
-	if (!isset($_GET['user']))
-		$_GET['user'] = '';
-	
-	// Base mode categories for the index
-	switch ($_GET['mode']) {
-		case 'u':
-			$links = array(
-				["Uploader", actionlink("uploader.php")],
-				["Personal folders", actionlink("uploader-catbyuser.php")],
-				[$user['name'], NULL],
-			);
-			$k = 2;
-			break;
-		default:
-			$links = array(
-				["Uploader", NULL]
-			);
-			$k = 0;
-			break;
-	}
-	// If a category is selected (be index or catman), add the category title
-	if ($cat || $extra !== NULL) {
-		$links[$k][1] = actionlink("uploader.php?mode={$_GET['mode']}&user={$_GET['user']}");
-		if ($extra === NULL) {
-			$links[] = [$cat['title'], NULL];
-		} else {
-			if ($cat)
-				$links[] = [$cat['title'], $links[$k][1]."&cat={$cat['id']}"];
-			if (is_array($extra))
-				$links = array_merge($links, $extra);
-			else if ($extra === UBL_USERCAT) // Special "intermediate" configurations
-				$links[] = ["Personal folders", NULL];
+function uploader_breadcrumbs_links($cat = null, $user = null, $extra = null) {
+		
+	// Base link
+	$links = array(
+		["Uploader", actionlink("uploader.php")]
+	);
+		
+	if (!$cat) { // Pages before selecting a folder
+		global $scriptpath, $extName;
+		
+		// Link to user folder group list
+		if ($user || $scriptpath == "{$extName}/uploader-catbyuser.php")
+			$links[] = ["Personal folders", actionlink("uploader-catbyuser.php")];
+		
+		if ($user)
+			$links[] = [$user['name'], null];
+	} else {
+		// We don't need $user at all here
+		
+		// User folders add two parts straight away
+		if ($cat['user']) {
+			$links[] = ["Personal folders", actionlink("uploader-catbyuser.php")];
+			$links[] = [$cat['username'], actionlink("uploader.php?mode=u&user={$cat['user']}")];
 		}
+		
+		// Category name
+		$links[] = [$cat['title'], actionlink("uploader-cat.php?cat={$cat['id']}")];
 	}
 	
-
+	// Merge any custom parts
+	if ($extra !== null)
+		$links = array_merge($links, $extra);
+	
+	// Last section is always unselectable, null out its link
+	$links[count($links)-1][1] = null;
 	
 	return $links;
 }
@@ -186,7 +188,7 @@ function uploader_cat_select($name, $sel = -1, $flags = UCS_DEFAULT, $none = "")
 
 const UUS_JS = 0b10;
 function uploader_user_select($name, $sel = 0, $flags = UUS_JS) {
-	global $loguser, $sql, $baseparams;
+	global $loguser, $sql;
 	
 	$users = $sql->query("
 		SELECT u.id, u.name 
@@ -203,9 +205,9 @@ function uploader_user_select($name, $sel = 0, $flags = UUS_JS) {
 	// Javascript autoredirect
 	$js = $prejs = $postjs = "";
 	if ($flags & UUS_JS) {
-		$js = "onChange=\"parent.location='".actionlink(null, "?mode={$_GET['mode']}&user=")."'+this.options[this.selectedIndex].value\"";
+		$js = "onChange=\"parent.location='".actionlink(null, "?mode=u&user=")."'+this.options[this.selectedIndex].value\"";
 		$prejs  = "<form method='GET' action='?' style='display: inline'>";
-		$postjs = "<noscript> <input type='hidden' name='mode' value='{$_GET['mode']}'><input type='submit' value='Go'></noscript></form>";
+		$postjs = "<noscript> <input type='hidden' name='mode' value='u'><input type='submit' value='Go'></noscript></form>";
 	}
 	
 	return "{$prejs}

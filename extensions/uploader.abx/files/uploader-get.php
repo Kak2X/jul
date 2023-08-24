@@ -1,6 +1,4 @@
 <?php
-	$meta['noparams'] = true;
-	
 	require "lib/common.php";
 	require "lib/uploader_function.php";
 	

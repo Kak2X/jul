@@ -111,7 +111,7 @@
 	}
 	
 	pageheader("Ratings editor");
-	print adminlinkbar();
+	print adminlinkbar($scriptpath);
 	
 	$ratings = get_ratings(true);
 	if ($_GET['id']) {

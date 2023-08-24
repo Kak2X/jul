@@ -13,11 +13,13 @@
 	if ($loguser['uploader_locked'] || $banned)
 		errorpage("Sorry, but you cannot access this feature.");
 	
-	$_GET['cat'] = filter_int($_GET['cat']);	
+	$_GET['mode']   = filter_string($_GET['mode']);
+	$_GET['user']   = filter_int($_GET['user']);
+	$_GET['cat']    = filter_int($_GET['cat']);
 	$_GET['action'] = filter_string($_GET['action']);
 	
 	define('_NEW_CATEGORY', ($_GET['cat'] == -1));
-	define('_MODE_USER', ($_GET['mode'] == 'u'));
+	define('_MODE_USER', $_GET['mode'] == 'u' || $_GET['user']);
 	
 	if (_NEW_CATEGORY && $_GET['action'] == 'delete')
 		errorpage("What r u doin dude.");
@@ -29,13 +31,19 @@
 	}
 	
 	// Filter by category
+	$cat = null;
 	if ($_GET['cat'] && !_NEW_CATEGORY) {
 		load_uploader_category($_GET['cat']);
 		if (!can_manage_category($cat))
-			errorpage("You aren't allowed to edit this folder.");	
+			errorpage("You aren't allowed to edit this folder.");
+		$_GET['user'] = $cat['user']; // For consistency. We validated with can_manage_category anyway
 	}
+	
 	// Filter by user
-	$user = uploader_load_user($_GET['user']);
+	$user = $_GET['user'] ? load_user($_GET['user']) : null;
+	
+	// Due to the -1 category existing, this really is needed even if userid=0
+	$base_catlist_redirect = "?user={$_GET['user']}&mode={$_GET['mode']}";
 	
 	// This can only be the edit action
 	if (isset($_POST['submit']) || isset($_POST['submit2'])) {
@@ -45,7 +53,7 @@
 		$_POST['user']           = filter_int($_POST['user']);
 		$_POST['minpowerread']   = numrange(filter_int($_POST['minpowerread']), _READPERM_MIN, PWL_ADMIN);
 		$_POST['minpowerupload'] = numrange(filter_int($_POST['minpowerupload']), _UPLOADPERM_MIN, PWL_ADMIN);
-		$_POST['minpowermanage'] = numrange(filter_int($_POST['minpowermanage']), _MANAGEPERM_MIN, PWL_MOD);
+		$_POST['minpowermanage'] = numrange(filter_int($_POST['minpowermanage']), _MANAGEPERM_MIN, PWL_ADMIN);
 		
 		if (!trim($_POST['title']))
 			errorpage("You need to specify a folder title.");
@@ -56,7 +64,7 @@
 				if ($_POST['user'] != $loguser['id'])
 					errorpage("You cannot create shared or other users' folders.");
 			} else {
-				if ($loguser['id'] != $cat['user'] && $_POST['user'] != $cat['user'])
+				if ($loguser['id'] != $cat['user'] || $_POST['user'] != $cat['user']) // first check shouldn't be needed
 					errorpage("You can't reassign this folder's ownership.");
 			}
 		}
@@ -87,9 +95,9 @@
 		}
 		
 		if (isset($_POST['submit2']))
-			return header("Location: {$baseparams}");
+			return header("Location: {$base_catlist_redirect}");
 		else
-			return header("Location: {$baseparams}&action=edit&cat={$_GET['cat']}");
+			return header("Location: {$base_catlist_redirect}&action=edit&cat={$_GET['cat']}");
 		
 	}
 
@@ -97,12 +105,13 @@
 	pageheader("Uploader Manager");
 	
 	if ($isadmin && !isset($_GET['noadmin'])) {
-		print adminlinkbar($scriptname, $_GET['mode'] ? "?mode={$_GET['mode']}" : "?", [
+		print adminlinkbar($scriptpath, $_GET['mode'] ? "?mode={$_GET['mode']}" : "?", [
 			actionlink(null,"?") => "Shared folders",
 			actionlink(null,"?mode=u") => "Personal folders",
 		]);
 	}
-	$links = uploader_breadcrumbs_links(null, $user, [["Manager", NULL]]);
+
+	$links = uploader_breadcrumbs_links($cat, $user, [["Manager", NULL]]);
 	$barright = "";
 	if ($isadmin) {
 		if (_MODE_USER)
@@ -139,7 +148,7 @@
 		$selperm = ($isadmin || $loguser['id'] == $cat['user']) ? 0 : SEL_DISABLED;
 		
 ?>
-		<form method="POST" action="<?=actionlink(null, "{$baseparams}&action=edit&cat={$_GET['cat']}")?>">
+		<form method="POST" action="<?=actionlink(null, "{$base_catlist_redirect}&action=edit&cat={$_GET['cat']}")?>">
 		<table class="table">
 			<tr><td class="tdbgh center b" colspan="4"><?= $htitle ?></tr>
 			<tr>
@@ -171,7 +180,7 @@
 				<td class="tdbg2 fonts">Note: you always have permission to upload files in your own folders.</td>
 <?php }?>
 				<td class="tdbg1 center b">...manage</td>
-				<td class="tdbg2"><?= power_select('minpowermanage', $cat['minpowermanage'], _MANAGEPERM_MIN, PWL_MOD, $selperm) ?></td>
+				<td class="tdbg2"><?= power_select('minpowermanage', $cat['minpowermanage'], _MANAGEPERM_MIN, PWL_ADMIN, $selperm) ?></td>
 			</tr>
 			<tr>
 				<td class="tdbg1 center b"><?= auth_tag() ?></td>
@@ -189,6 +198,8 @@
 			$_POST['mergeid'] = filter_int($_POST['mergeid']);
 			if ($_POST['mergeid'] == -1)
 				errorpage("You forgot to select a directory.");
+			if ($_GET['cat'] == $_POST['mergeid'])
+				errorpage("You can't select the same directory!");
 			
 			$validcats = uploader_filter_cat($_GET['cat'], UCS_DEFAULT | UCS_UPLOADPERM);
 			if (!isset($validcats[$_POST['mergeid']]))
@@ -202,19 +213,19 @@
 				$sql->query("DELETE FROM uploader_cat WHERE id = {$_GET['cat']}");
 				$sql->commit();
 				
-				errorpage("The category has been deleted!", actionlink(null, $baseparams), "the uploader");
+				errorpage("The category has been deleted!", actionlink(null, $base_catlist_redirect), "the uploader");
 			}
-			return header("Location: $baseparams");
+			return header("Location: {$base_catlist_redirect}");
 		}
 		
 		$title   = "Delete Category";
 		$message = "Are you sure you want to <b>delete</b> the category '".htmlspecialchars($cat['title'])."'?<br>".
 		           "All files will be moved to the category below.<br>".
-		           uploader_cat_select('mergeid', $_GET['cat'], UCS_DEFAULT | UCS_UPLOADPERM, "Choose a category to merge the files into...");
-		$form_link = actionlink("uploader-catman.php{$baseparams}&action=delete&cat={$_GET['cat']}");
+		           uploader_cat_select('mergeid', -1, UCS_DEFAULT | UCS_UPLOADPERM, "Choose a category to merge the files into...");
+		$form_link = actionlink("uploader-catman.php", "{$base_catlist_redirect}&action=delete&cat={$_GET['cat']}");
 		$buttons   = array(
 			[BTN_SUBMIT, "DELETE"],
-			[BTN_URL   , "Cancel", actionlink(null, $baseparams)]
+			[BTN_URL   , "Cancel", actionlink(null, $base_catlist_redirect)]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}
@@ -249,10 +260,10 @@
 
 		<tr>
 			<td class="tdbg2 center fonts nobr">
-				<a href="<?=actionlink(null, "{$baseparams}&action=edit&cat={$x['id']}")?>">Edit</a> - <a href="<?=actionlink(null, "{$baseparams}&action=delete&cat={$x['id']}")?>">Delete</a>
+				<a href="<?=actionlink(null, "{$base_catlist_redirect}&action=edit&cat={$x['id']}")?>">Edit</a> - <a href="<?=actionlink(null, "{$base_catlist_redirect}&action=delete&cat={$x['id']}")?>">Delete</a>
 			</td>
 			<td class="tdbg1">
-				<a href="<?=actionlink("uploader.php{$baseparams}&cat={$x['id']}")?>"><?= htmlspecialchars($x['title']) ?></a>
+				<a href="<?=actionlink("uploader-cat.php","?cat={$x['id']}")?>"><?= htmlspecialchars($x['title']) ?></a>
 				<span class="fonts"><br/><?= htmlspecialchars($x['description']) ?></span>
 			</td>
 			<td class="tdbg2 center"><?= ($x['uid'] ? getuserlink($x, $x['uid']) : "<i>Shared</i>") ?></td>
@@ -261,7 +272,7 @@
 		</tr>			
 
 <?php	} ?>
-		<tr><td class="tdbgc center" colspan="6"><a href="<?=actionlink(null, "{$baseparams}&action=edit&cat=-1")?>">Add a new folder</a></td></tr>
+		<tr><td class="tdbgc center" colspan="6"><a href="<?=actionlink(null, "{$base_catlist_redirect}&action=edit&cat=-1")?>">Add a new folder</a></td></tr>
 	</table>
 <?php
 	
@@ -269,7 +280,7 @@
 	pagefooter();
 
 function _uploader_private_file_confirmation($id) {
-	global $sql, $baseparams;
+	global $sql, $base_catlist_redirect;
 	$uhoh = $sql->resultq("SELECT COUNT(*) FROM uploader_files WHERE cat = {$id} && private = 1");
 	if ($uhoh && !confirmed($msgkey = 'prv-warn')) {
 		$title = "Private files will become public";
@@ -280,10 +291,10 @@ function _uploader_private_file_confirmation($id) {
 			<br>
 			Are you sure you want to continue?
 		";
-		$form_link = actionlink(null, "{$baseparams}&action={$_GET['action']}&cat={$_GET['cat']}");
+		$form_link = actionlink(null, "{$base_catlist_redirect}&action={$_GET['action']}&cat={$_GET['cat']}");
 		$buttons   = array(
 			[BTN_SUBMIT, "Yes"],
-			[BTN_URL   , "No", actionlink(null, $baseparams)]
+			[BTN_URL   , "No", actionlink(null, $base_catlist_redirect)]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
 	}

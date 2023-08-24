@@ -1,8 +1,8 @@
 {
 	"name":"File Uploader",
 	"description":"Provides a file storage for registered users.",
-	"version":"1.1",
+	"version":"1.2",
 	"author":"Kak",
-	"date":"16/03/2020",
+	"date":"25/08/2023",
 	"image" : "icon.png"
 }

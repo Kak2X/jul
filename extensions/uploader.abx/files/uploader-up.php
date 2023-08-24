@@ -11,11 +11,10 @@
 		errorpage("You aren't allowed to upload files on the uploader.");
 	
 	load_uploader_category($_GET['cat']);
-	if ($loguser['id'] != $cat['user'] && $loguser['powerlevel'] < $cat['minpowerupload'])
+	if (!can_upload_in_category($cat))
 		errorpage("You aren't allowed to upload files in this folder.");
 	
 	//--
-	$user = uploader_load_user($_GET['user']);
 	
 	if (isset($_POST['submit'])) {
 		check_token($_POST['auth']);
@@ -36,17 +35,19 @@
 		if (!upload_file($_FILES['up'], $loguser, $opts))
 			errorpage("The file could not be uploaded.");
 		
-		die(header("Location: uploader.php{$baseparams}&cat={$_GET['cat']}"));
+		die(header("Location: uploader-cat.php?cat={$_GET['cat']}"));
 	}
 	
-	pageheader("Uploader");
+	pageheader("Uploader - \"{$cat['title']}\" - Upload file");
 	
 	$perms = get_category_perms($cat);
-	$links = uploader_breadcrumbs_links($cat, NULL, UBL_USERCAT);
+	
+	$links = uploader_breadcrumbs_links($cat, null, [['Upload file', null]]);
 	$breadcrumbs = dobreadcrumbs($links); 
 	
+	print $breadcrumbs;
 ?>
-<form method="POST" action="<?=actionlink(null, "{$baseparams}&cat={$_GET['cat']}")?>" enctype="multipart/form-data">
+<form method="POST" action="<?=actionlink(null, "?cat={$_GET['cat']}")?>" enctype="multipart/form-data">
 <table class="table">
 	<tr><td class="tdbgh center b" colspan="2">Uploading a new file to "<?= htmlspecialchars($cat['title']) ?>"</td></tr>
 	<tr>
@@ -75,5 +76,6 @@
 </table>
 </form>
 <?php
+	print $breadcrumbs;
 	
 	pagefooter();

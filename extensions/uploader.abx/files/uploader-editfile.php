@@ -52,7 +52,7 @@ if ($_GET['action'] == 'edit') {
 		// Category validation 
 		if ($_POST['cat'] != $cat['id']) {
 			load_uploader_category($_POST['cat']);
-			if ($cat['minpowerupload'] > $loguser['powerlevel'])
+			if (!can_upload_in_category($cat))
 				errorpage("You aren't allowed to upload files in this folder.");
 			// The warning is not applicable as you would lose $_FILES in the process
 			// and that's bad
@@ -78,10 +78,14 @@ if ($_GET['action'] == 'edit') {
 		if (!reupload_file($_FILES['up'], $file, $loguser, $opts))
 			errorpage("An error occurred while reuploading the file.");
 		
-		die(header("Location: uploader.php?cat={$_POST['cat']}"));
+		die(header("Location: uploader-cat.php?cat={$_POST['cat']}"));
 	}
 	
+	$links = uploader_breadcrumbs_links($cat, null, [["Editing file \"{$file['filename']}\"", null]]);
+	$breadcrumbs = dobreadcrumbs($links); 
 	pageheader("Uploader");
+	
+	print $breadcrumbs;
 ?>
 <form method="POST" action="<?=actionlink(null, $baseparams)?>" enctype="multipart/form-data">
 <table class="table">
@@ -153,13 +157,14 @@ if ($_GET['action'] == 'edit') {
 	_togglePrivate(<?=($cat['user'] ? "true" : "false")?>);
 </script>
 <?php
+	print $breadcrumbs;
 }
 else if ($_GET['action'] == 'delete') {
 	$filename = htmlspecialchars(trim($file['filename']));
 	
 	if (confirmed($msgkey = 'del-file')) {
 		delete_upload($file);	
-		errorpage("The file '{$filename}' has been deleted!", actionlink("uploader.php?cat={$file['cat']}"), "the uploader");
+		errorpage("The file '{$filename}' has been deleted!", actionlink("uploader-cat.php?cat={$file['cat']}"), "the uploader");
 	}
 	
 	$title     = "File deletion";
@@ -167,7 +172,7 @@ else if ($_GET['action'] == 'delete') {
 	$form_link = actionlink(null, $baseparams);
 	$buttons   = array(
 		[BTN_SUBMIT, "Delete file"],
-		[BTN_URL   , "Cancel", actionlink("uploader.php?cat={$file['cat']}")]
+		[BTN_URL   , "Cancel", actionlink("uploader-cat.php?cat={$file['cat']}")]
 	);
 	
 	confirm_message($msgkey, $message, $title, $form_link, $buttons);

@@ -14,6 +14,11 @@ body {
 
 
 * {
+	/* Use the less bullshit box sizing */
+	box-sizing: border-box;
+}
+
+.pixel {
 	/* Make images upscale crispy */
 	image-rendering: -moz-crisp-edges;
 	image-rendering: -o-crisp-edges;
@@ -21,9 +26,6 @@ body {
 	image-rendering: crisp-edges;
 	image-rendering: pixelated;
 	-ms-interpolation-mode:nearest-neighbor;
-	
-	/* Use the less bullshit box sizing (for the pages which don't use quirks mode) */
-	box-sizing: border-box;
 }
 
 /* Make all links bold and not underlined by default */

@@ -2295,9 +2295,9 @@ function generatenumbergfx($num, $minlen = 0, $size = 1) {
 		if ($code == " ") {
 			$gfxcode .= "<img src='images/_.gif' style='width:{$nw}px;height:{$nw}px'>";
 		} else if ($code == "i") { // the infinity symbol is just a rotated 8, right...?
-			$gfxcode .= "<img src='numgfx/{$numdir}8.png' style='width:{$nw}px;height:{$nw}px;transform:rotate(90deg)'>";			
+			$gfxcode .= "<img src='numgfx/{$numdir}8.png' class='pixel' style='width:{$nw}px;height:{$nw}px;transform:rotate(90deg)'>";			
 		} else {
-			$gfxcode .= "<img src='numgfx/{$numdir}{$code}.png' style='width:{$nw}px;height:{$nw}px'>";
+			$gfxcode .= "<img src='numgfx/{$numdir}{$code}.png' class='pixel' style='width:{$nw}px;height:{$nw}px'>";
 		}
 	}
 	return $gfxcode;
@@ -2307,16 +2307,16 @@ function generatenumbergfx($num, $minlen = 0, $size = 1) {
 function drawprogressbar($width, $height, $done, $total, $images) {
 	$on  = min(round($done / $total * $width), $width);
 	$off = $width - $on;
-	return  "<img src='{$images[0]}' style='height:{$height}px'>".
-			"<img src='{$images[1]}' style='height:{$height}px;width:{$on}px'>".
-			"<img src='{$images[2]}' style='height:{$height}px;width:{$off}px'>".
-			"<img src='{$images[3]}' style='height:{$height}px'>";
+	return  "<img src='{$images[0]}' class='pixel' style='height:{$height}px'>".
+			"<img src='{$images[1]}' class='pixel' style='height:{$height}px;width:{$on}px'>".
+			"<img src='{$images[2]}' class='pixel' style='height:{$height}px;width:{$off}px'>".
+			"<img src='{$images[3]}' class='pixel' style='height:{$height}px'>";
 }
 
 // Single image progress bar (for comparisions like in activeusers.php)
 function drawminibar($width, $height, $progress, $image = 'images/minibar.png') {
 	$on = round($progress * 100 / $width);
-	return "<img src='{$image}' style='float: left; width: {$on}%; height: {$height}px'>";
+	return "<img src='{$image}' class='pixel' style='float: left; width: {$on}%; height: {$height}px'>";
 }
 
 

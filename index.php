@@ -206,10 +206,10 @@
 	if ($loguser['id']) {
 		$new     = '&nbsp;';
 		$lastmsg = "";
-		// Get number of PM threads, and a count of those with unread posts
+		// Get number of PM threads, and a count of unread posts
 		$data = $sql->fetchq("
 			SELECT COUNT(*) total,
-			       COUNT(tr.read OR t.lastpostdate < fr.readdate) tread,
+			       SUM((!tr.read OR tr.read IS NULL) AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)) tunread,
 				   MAX(t.lastpostdate) lastpostdate
 			FROM pm_threads t
 			INNER JOIN pm_access       a ON t.id     = a.thread
@@ -219,7 +219,7 @@
 		");
 		
 		if ($data['total']) {
-			if ($data['tread'] != $data['total']) {
+			if ($data['tunread']) {
 				$new = $statusicons['new'];
 			}
 			$thread = $sql->fetchq("
@@ -237,7 +237,7 @@
 				<tr>
 					<td class='tdbg1 center'><?=$new?></td>
 					<td class='tdbg2'>
-						<a href='private.php'>Private messages</a> -- You have <?= $data['total'] ?> private conversations (<?= ($data['total'] - $data['tread']) ?> new). <?=$lastmsg?>
+						<a href='private.php'>Private messages</a> -- You have <?= $data['total'] ?> private conversations (<?= $data['tunread'] ?> new post<?= ($data['tunread'] == 1 ? "" : "s") ?>). <?=$lastmsg?>
 					</td>
 				</tr>
 			</table>

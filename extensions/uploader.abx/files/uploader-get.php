@@ -1,4 +1,6 @@
 <?php
+	$meta['notrack'] = true;
+	
 	require "lib/common.php";
 	require "lib/uploader_function.php";
 	

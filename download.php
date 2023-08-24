@@ -1,5 +1,5 @@
 <?php
-
+	$meta['notrack'] = true;
 	require "lib/common.php";
 	
 	if (!$config['attachments-all-origin'] && !SAME_ORIGIN) {

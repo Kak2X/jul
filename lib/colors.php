@@ -24,25 +24,25 @@
 	$font2	= 'Verdana, Geneva, sans-serif';
 	$font3	= 'Tahoma, Verdana, Geneva, sans-serif';
 
-	$newpollpic		= '<img src="schemes/default/status/newpoll.png" alt="New poll" align="absmiddle">';
-	$newreplypic	= '<img src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';
-	$newthreadpic	= '<img src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
-	$closedpic		= '<img src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
-	$nopollpic      = '<img src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
-	$poweredbypic   = '<img src="images/poweredbyacmlm.gif">';
+	$newpollpic		= '<img class="pixel" src="schemes/default/status/newpoll.png" alt="New poll" align="absmiddle">';
+	$newreplypic	= '<img class="pixel" src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';
+	$newthreadpic	= '<img class="pixel" src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
+	$closedpic		= '<img class="pixel" src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
+	$nopollpic      = '<img class="pixel" src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
+	$poweredbypic   = '<img class="pixel" src="images/poweredbyacmlm.gif">';
 	$numdir			= 'jul/';
 
 	$statusicons = array(
-		'new'			=> '<img src="schemes/default/status/new.gif">',
-		'newhot'		=> '<img src="schemes/default/status/hotnew.gif">',
-		'newoff'		=> '<img src="schemes/default/status/off.gif">',
-		'newhotoff'		=> '<img src="schemes/default/status/hotoff.gif">',
-		'hot'			=> '<img src="schemes/default/status/hot.gif">',
-		'hotoff'		=> '<img src="schemes/default/status/hotoff.gif">',
-		'off'			=> '<img src="schemes/default/status/off.gif">',
+		'new'			=> '<img class="pixel" src="schemes/default/status/new.gif">',
+		'newhot'		=> '<img class="pixel" src="schemes/default/status/hotnew.gif">',
+		'newoff'		=> '<img class="pixel" src="schemes/default/status/off.gif">',
+		'newhotoff'		=> '<img class="pixel" src="schemes/default/status/hotoff.gif">',
+		'hot'			=> '<img class="pixel" src="schemes/default/status/hot.gif">',
+		'hotoff'		=> '<img class="pixel" src="schemes/default/status/hotoff.gif">',
+		'off'			=> '<img class="pixel" src="schemes/default/status/off.gif">',
 
-		'getnew'		=> '<img src="schemes/default/status/getnew.png" title="Go to new posts" align="absmiddle">',
-		'getlast'		=> '<img src="schemes/default/status/getlast.png" title="Go to last post" style="position:relative;top:1px">',
+		'getnew'		=> '<img class="pixel" src="schemes/default/status/getnew.png" title="Go to new posts" align="absmiddle">',
+		'getlast'		=> '<img class="pixel" src="schemes/default/status/getlast.png" title="Go to last post" style="position:relative;top:1px">',
 
 		'sticky'		=> 'Sticky:',
 		'poll'			=> 'Poll:',

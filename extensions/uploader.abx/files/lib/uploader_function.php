@@ -3,26 +3,22 @@
 // Uploader-specific functions
 function can_manage_category($cat) {
 	global $isadmin, $loguser;
-	return ($isadmin || ($cat['user'] && $cat['user'] == $loguser['id'] && $loguser['powerlevel'] >= 0));
-}
-
-function can_manage_category_files($cat) {
-	global $isadmin, $loguser;
-	return (
-		    $isadmin 
-		|| $cat['minpowermanage'] <= $loguser['powerlevel']
-		|| ($cat['user'] && $cat['user'] == $loguser['id'] && $loguser['powerlevel'] >= 0)
+	return $loguser['id'] && $loguser['powerlevel'] >= 0 && ($isadmin // not banned & logged in
+		|| ($cat['minpowermanage'] <= $loguser['powerlevel']) // Minpower check
+		|| ($cat['user'] && $cat['user'] == $loguser['id']) // folder owner
 	);
 }
 
 function can_read_category($cat) {
 	global $isadmin, $loguser;
-	return $isadmin || ($cat['user'] == $loguser['id']) || $loguser['powerlevel'] >= $cat['minpowerread'];
+	return $isadmin // admin
+	|| $loguser['powerlevel'] >= $cat['minpowerread'] // minpower check
+	|| ($cat['user'] && $cat['user'] == $loguser['id']); // folder owner
 }
 
 function can_upload_in_category($cat) {
 	global $isadmin, $loguser;
-	return ($isadmin || $cat['user'] == $loguser['id'] || $cat['minpowerupload'] <= $loguser['powerlevel']);
+	return $loguser['id'] && ($isadmin || $cat['user'] == $loguser['id'] || $cat['minpowerupload'] <= $loguser['powerlevel']);
 }
 
 function can_read_file($file) {
@@ -32,7 +28,7 @@ function can_read_file($file) {
 
 function can_edit_file($file) {
 	global $isadmin, $loguser;
-	return ($isadmin || ($loguser['id'] == $file['user'] && $loguser['powerlevel'] >= 0));
+	return $loguser['id'] && ($isadmin || ($loguser['id'] == $file['user'] && $loguser['powerlevel'] >= 0));
 }
 
 function load_uploader_category($id, $fields = "c.*") {
@@ -311,12 +307,12 @@ function upload_file($file, $user, $opt) {
 	$sql->queryp("UPDATE uploader_files SET hash = ? WHERE id = '{$file_id}'", [$hash]);
 	
 	// Move the file to the new location
-	$path = uploads_name($hash);
+	$path = uploads_name($file_id);
 	$res = move_uploaded_file($file['tmp_name'], $path);
 	
 	// Generate a thumbnail, if necessary
 	if ($is_image) {
-		save_thumbnail($path, uploads_name($hash, true), 150, 150);
+		save_thumbnail($path, uploads_name($file_id, true), 150, 150);
 	}
 	
 	$sql->commit();
@@ -350,14 +346,14 @@ function reupload_file($file, $orig_file, $user, $opt) {
 			'is_image'     => (int) $is_image,
 		];
 
-		$path = uploads_name($orig_file['hash']);
+		$path = uploads_name($orig_file['id']);
 		$res = move_uploaded_file($file['tmp_name'], $path);
 		
 		// Generate a thumbnail, if necessary
 		if ($is_image) {
-			save_thumbnail($path, uploads_name($orig_file['hash'], true), 150, 150);
+			save_thumbnail($path, uploads_name($orig_file['id'], true), 150, 150);
 		} else if ($orig_file['is_image']) { // Delete the current thumbnail if the file doesn't have it anymore
-			unlink(uploads_name($orig_file['hash'], true));
+			unlink(uploads_name($orig_file['id'], true));
 		}
 	}
 	
@@ -413,8 +409,8 @@ function delete_upload($file) {
 		return;
 	}
 	
-	$filepath = uploads_name($file['hash']);
-	$thumbpath = uploads_name($file['hash'], true);
+	$filepath = uploads_name($file['id']);
+	$thumbpath = uploads_name($file['id'], true);
 	unlink($filepath);
 	if (file_exists($thumbpath))
 		unlink($thumbpath);
@@ -437,11 +433,4 @@ function uploads_encode_hash($hash) {
 function uploads_name($file, $thumb = false) {
 	global $extName;
 	return "extensions/{$extName}.abx/uploads/".($thumb ? "t/{$file}.png" : "f/{$file}");
-}
-
-function uploader_base_params($as_input = false) {
-	if (!$as_input)
-		return "?mode={$_GET['mode']}&user={$_GET['user']}";
-	else
-		return "<input type='hidden' name='mode' value='{$_GET['mode']}'><input type='hidden' name='user' value='{$_GET['user']}'>";
 }

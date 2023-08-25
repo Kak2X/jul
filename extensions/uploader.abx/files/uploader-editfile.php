@@ -19,7 +19,7 @@ if ($error)
 
 load_uploader_file($_GET['f']);
 
-if (!can_manage_category_files($cat) && !can_edit_file($file))
+if (!can_manage_category($cat) && !can_edit_file($file))
 	errorpage("You aren't allowed to edit this file.", actionlink("uploader.php"), "the file uploader");
 
 $baseparams = "?action={$_GET['action']}&f={$_GET['f']}";

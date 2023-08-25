@@ -10,21 +10,31 @@
 		die;
 	}
 	
-	$_GET['f']    = filter_string($_GET['f']);
+	$_GET['f']    = filter_string($_GET['f']); // File hash
 	$_GET['info'] = filter_bool($_GET['info']);
 	
 	$file = $sql->fetchp("
-		SELECT f.filename, f.size, f.mime, f.user user, f.private, f.id fileid, f.is_image,
+		SELECT f.id, f.filename, f.size, f.mime, f.user user, f.private, f.id fileid, f.is_image,
 		       c.user cuser, c.id catid, c.minpowerread
 		FROM uploader_files f
 		INNER JOIN uploader_cat c ON f.cat = c.id
 		WHERE f.hash = ?
 	", [$_GET['f']]);
 	
-	$path = uploads_name($_GET['f']);
-	if (!$file || !can_read_category(['user' => $file['cuser'], 'minpowerread' => $file['minpowerread']]) || (!can_manage_category(['user' => $file['cuser']]) && !can_read_file($file)) || !file_exists($path)) {
+	
+	if (!$file // File not in DB
+		|| !can_read_category(['user' => $file['cuser'], 'minpowerread' => $file['minpowerread']]) // can't read category
+		|| (!can_manage_category(['user' => $file['cuser']]) && !can_read_file($file)) // can't read the file (bypassed if you can manage the category)
+	) {
 		header("HTTP/1.1 404 Not Found");
 		die("File not found.");
+	}
+	
+	// Use the numeric id to build the file path, not the hash
+	$path = uploads_name($file['id']);
+	if (!file_exists($path)) {
+		header("HTTP/1.1 404 Not Found");
+		die("The file <i>should</i> exist, but it couldn't be found in the uploads folder.");
 	}
 	
 	if ($isadmin && $_GET['info']) {

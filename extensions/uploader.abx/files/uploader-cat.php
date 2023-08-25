@@ -92,7 +92,7 @@
 
 	
 	$uploadfile = "";
-	if (!$loguser['uploader_locked'] && can_upload_in_category($cat)) {
+	if ($loguser['id'] && !$loguser['uploader_locked'] && can_upload_in_category($cat)) {
 		$uploadfile = "
 		<tr>
 			<td class='tdbgc center b' colspan='8'>
@@ -159,7 +159,7 @@
 			<td class="tdbgh center b">Downloads</td>
 		</tr>
 <?php
-	$canmanage = can_manage_category_files($cat);
+	$canmanage = can_manage_category($cat);
 	for ($i = 0; $x = $sql->fetch($files); ++$i) {
 		$c = ($i % 2)+1;
 		

@@ -131,7 +131,7 @@
 	*/
 	$foundres = "";
 	if (!$_GET['id']){
-		$foundres = "<div class='fonts w center'>".
+		$foundres = "<div class='w center'>".
 				"Showing {$total} post".($total == 1 ? "" : "s")." in total".
 				($total > $ppp ? ", from ".($min + 1)." to ".min($total, $min + $ppp)." on this page" : "").".<br>".
 				"Sorting from ".($_GET['ord'] ? "oldest to newest" : "newest to oldest").".".

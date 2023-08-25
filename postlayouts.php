@@ -10,16 +10,26 @@
 		errorpage("No user selected.");
 	}
 	
-	
-	pageheader("Post layouts");
+
+
 	
 	$user = $sql->fetchq("SELECT * FROM users u WHERE u.id = {$_GET['id']}");
 	if (!$user) {
 		errorpage("This user doesn't exist!");
 	}
 	
+	define('CAN_SAVE_LAYOUT', $isadmin || ($loguser['id'] == $_GET['id'] && !$user['profile_locked']));
 	
-	if (isset($_POST['submit'])) {
+	pageheader("Post layout ". (CAN_SAVE_LAYOUT ? "editor" : "viewer") . " - {$user['name']}");
+	
+	// Fake out the $user values when submitting the form, including when saving the changes.
+	// The latter is convenient so we don't have to recalculate shit like sidebartype twice.
+	if (isset($_POST['submit']) || isset($_POST['save'])) {
+		
+		// For consistency
+		if ($_POST['sidebartype'] == 2 && !file_exists("sidebars/{$_GET['id']}.php"))
+			$_POST['sidebartype'] = 1;
+		
 		$user['postheader']  = filter_string($_POST['postheader']);
 		$user['signature']   = filter_string($_POST['signature']);
 		$user['css']         = filter_string($_POST['css']);
@@ -30,6 +40,36 @@
 		// Force extended layout by default
 		$loguser['layout'] = 6;
 	}
+	
+	if (isset($_POST['save'])) {
+		if (!CAN_SAVE_LAYOUT)
+			errorpage("You aren't allowed to do this!");
+		
+		// Preprocessed <br>, fun
+		sbr(0, $user['postheader']);
+		sbr(0, $user['signature']);
+	
+		$set = [
+			'postheader'  => $user['postheader'],
+			'signature'   => $user['signature'],
+			'css'         => $user['css'],
+		];
+		
+		// Only Normal+ and above can save sidebar changes
+		if ($issuper) {
+			$set['sidebar'] = $user['sidebar'];
+			$set['sidebartype'] = $user['sidebartype'];
+		}
+		
+		$sql->queryp("UPDATE users SET ".mysql::setplaceholders($set)." WHERE id = {$_GET['id']}", $set);
+		
+		if ($_GET['id'] == $loguser['id']) {
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing your post layout.","postlayouts.php?id={$_GET['id']}",'view your post layout',0);
+		} else { 
+			errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for editing this post layout.","postlayouts.php?id={$_GET['id']}","view {$user['name']}'s post layout",0);
+		}
+	}
+	
 	$_POST['moodid'] = filter_int($_POST['moodid']);
 	
 	// So that the layout shows up
@@ -97,6 +137,17 @@
 		$tlayouts .= "<option value='{$x['id']}'".($x['id'] == $loguser['layout'] ? " selected" : "").">".htmlspecialchars($x['name'])."</option>";
 	}
 	
+	// Save button!
+	$savebtn = $nosavemark = "";
+	if (CAN_SAVE_LAYOUT) {
+		$savebtn = "";
+		$nosavemark = " (these won't get saved)";
+	}
+	
+	// Preprocessed <br>, fun
+	sbr(1, $user['postheader']);
+	sbr(1, $user['signature']);
+
 ?>
 <form method="POST" action="?id=<?= $_GET['id'] ?>">
 <div id="postpreview">
@@ -148,20 +199,27 @@
 			<center><?=mood_layout(0, $user['id'], $_POST['moodid'])?></center>
 		</td>		
 	</tr>
-	
 	<tr>
 		<td class="tdbg1" colspan="3">
 			<span id="jsbtn">
 				<label><input type="checkbox" id="autoupdate" value="1"<?= $_COOKIE['plp_aupd'] ? " checked" : ""?>> Auto update CSS</label> | 
 				<input type="button" onclick="quickpreview(true)" value="Preview CSS"> 
 			</span>
-			<input type="submit" name="submit" value="Preview All"> | 
+			<input type="submit" name="submit" value="Preview All"> <?= $savebtn ?> | 
 			Thread layout: <select name="tlayout">
 				<?= $tlayouts ?>
 			</select> | 
 			<?=mood_layout(1, $user['id'], $_POST['moodid'])?>
 		</td>
 	</tr>
+<?php if (CAN_SAVE_LAYOUT) { ?>
+	<tr>
+		<td class="tdbg1 right" colspan="3">
+			<div class="fonts">To save the changes to the <?= ($issuper ? "sidebar, " : "") ?>CSS, header and footer. The <?= ($issuper ? "" : "sidebar, ") ?>thread layout and mood options are for local preview only and won't get saved.</div> <input type="submit" name="save" value="Save changes"/>
+		</td>
+	</tr>
+<?php } ?>
+
 </table>
 </form>
 
@@ -189,6 +247,9 @@
 			document.cookie = "plp_aupd=; Max-Age=-99999999;";
 		}
 	});
+	
+	if (<?= $_COOKIE['plp_aupd'] ?>) 
+		css.addEventListener('input', quickpreview);
 	
 	function quickpreview(scroll = false) {
 		css_dest.innerHTML = css.value.replace(new RegExp("\.(top|side|main|cont)bar"+user+"", 'gi'), '.$1bar'+user+'_p0');

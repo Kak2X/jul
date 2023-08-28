@@ -14,7 +14,13 @@
  $statusicons['hotoff'] 	= '<img src="images/comport/off.gif">';
 */
 
-//	$formcss=1;  
+	$formcss=1;  
+	
+	$inputborder   = "000";
+	$formtextcolor = "000";
+	$formcolor     = "FFF";
+	
+	
 //	$inputborder='663399';  
 	$bgimage    = 'schemes/comport/bg.jpg';
 	$bgcolor    = '5070A0';   

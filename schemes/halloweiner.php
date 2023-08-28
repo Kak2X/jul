@@ -1,5 +1,9 @@
 <?php
-
+  $formcss = 1;
+  $inputborder   = "000";
+  $formtextcolor = "000";
+  $formcolor     = "FFF";
+  
  $nmcol[0]=array('-2'=>'666666','-1'=>'666666','ffffff','ffffff','ffffff','ffffff');
  $nmcol[1]=array('-2'=>'666666','-1'=>'666666','ffffff','ffffff','ffffff','ffffff');
  $nmcol[2]=array('-2'=>'666666','-1'=>'666666','ffffff','ffffff','ffffff','ffffff');

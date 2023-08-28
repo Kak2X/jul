@@ -7,7 +7,7 @@
 
 	**************************************************************************/
 	
-	$formcss		= 0;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
+	$formcss		= 1;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
 	$numcols		= 100;		# Width of text entry, just use css extra again
 
 	# Page background color, background image, and text color
@@ -31,7 +31,9 @@
 	
 	# Banner; comment for default
 	# $config['board-title']		= '<img src="schemes/aceboard/aceboardtitlepic.jpg">';
-	
+	$inputborder	= "000";
+	$formtextcolor	= "000";
+	$formcolor		= "FFF";
 	$tableborder	= '000000'; # Border color for tables
 	$tableheadtext	= 'FFFFFF'; # Table header text color
 	$tableheadbg	= '406030'; # Table header background (you can use images)

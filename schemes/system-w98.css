@@ -4,7 +4,7 @@ body {
 /*	background: linear-gradient(135deg, rgb(58,110,165) 0%,rgb(0,128,128) 100%); */
 	color: #000;
 	font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif !important;
-	font-size: 12px; 
+	font-size: 90%; 
 }
 
 /* Remove font weight / color from links */
@@ -16,12 +16,12 @@ a:not(.button) {
 
 
 /* font declarations*/
-.font { font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif; }
-.fonts { font: 10px 'Microsoft Sans Serif', 'Verdana', sans-serif !important;}
-.fontt { font: 12px 'Tahoma', serif; }
+.font { font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif; }
+.fonts { font: 85% 'Microsoft Sans Serif', 'Verdana', sans-serif !important;}
+.fontt { font-family: 'Tahoma', serif; }
 
 .tdbg1,.tdbg2,.tdbgc,.tdbgh	{ 
-	font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif;
+	font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif;
 }
 .font, .fonts, .fontt {
 	color: #000;
@@ -41,6 +41,7 @@ a:not(.button) {
 	border-right: 3px solid #808080; 
 	border-bottom: 3px solid #808080;
 	border-left: 3px solid #FFF;
+	border-collapse: separate; /* it needs as many borders as it can */
 }
 .table > tbody {
 	outline: 2px solid #C0C0C0;
@@ -60,10 +61,10 @@ a:not(.button) {
 	border-top: 1px solid #808080; 
 }
  
- .table tr {
+.table tr {
 	background: linear-gradient(to right, rgb(0,0,128) 0%,rgb(16,132,208) 100%);
  }
- .table td:not(.tdbgh) {
+.table td:not(.tdbgh) {
 	background: #C0C0C0;
  }
 .tdbgh { 

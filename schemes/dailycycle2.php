@@ -137,7 +137,7 @@
 	$weathertext1 = $weathertext2 = "";
 	if ($rainy) {
 		$weathertext1	= "background: url('schemes/dailycycle2/dc2_rainbg.php'); animation: rain 2s linear 0s infinite;";
-		$weathertext2	= "background:	url('schemes/dailycycle2/dc2_rainhit.php'); animation: rainhit 2s linear 0s infinite;";
+		$weathertext2	= "background:url('schemes/dailycycle2/dc2_rainhit.php'); animation: rainhit 2s linear 0s infinite;";
 	}
 	if ($starry && $cyclenum < 2) {
 		$weathertext1	= "background: url('schemes/dailycycle2/dc2_starsbg.php') repeat;";
@@ -164,7 +164,7 @@
 	}
 	.super	{	
 		$weathertext1
-		padding:	0 0 0 0;
+		padding:	8px;
 		margin:		0 0 0 0;
 		min-height:	100vh;
 	}

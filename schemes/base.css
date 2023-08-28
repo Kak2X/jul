@@ -69,12 +69,20 @@ img { border:none; }
 /* Make sure the last post text only stays in two lines*/
 .nobr,div.lastpost {white-space:nowrap}
 
-
-/* Force tables to inherit the parent font's size (not particularly obvious) */
-table { font-size: 100% }
+/* Force tables and input fields to inherit the parent font's size (not particularly obvious) */
+table, textarea, input, select, button, .button { font-size: 100% }
+.table {
+	/* Stop the table/td border insanity */
+	border-collapse: collapse;
+	/* Get rid of the horrible spacing between cells */
+	empty-cells: show;
+	border-spacing: 0px;
+}
 
 /* Small font setup */
+.font,.fonth {font-size: 100% } /*necessary?*/
 .fonts,.fontt,div.lastpost{font-size:75%}
+div.lastpost:first-line { font-size: 100% !important; }
 
 /* For use with elements with title tags */
 .underline {	text-decoration: underline dotted }
@@ -97,7 +105,6 @@ table { font-size: 100% }
 	text-decoration: none;
 	font-weight: normal !important;
 	cursor: default;
-	vertical-align: top;
 	-webkit-user-select: none;
 	-moz-user-select: none;    
 	-ms-user-select: none;     
@@ -106,8 +113,9 @@ table { font-size: 100% }
 .button:active {
 	padding: 1px 8px 1px 10px;
 }
+
 input[type=submit], input[type=button],input[type=color], button, .button {
-	line-height: 16px;	
+	vertical-align: top;
 }
 
 /* ? */
@@ -128,9 +136,6 @@ input[type=radio] {
 	background: white;
 	border: none;
 }
-
-/* Get rid of the horrible spacing between cells */
-.table {empty-cells:show;border-spacing: 0px;}
 
 /* Spoiler tag code */
 .pstspl1 {opacity:0;}

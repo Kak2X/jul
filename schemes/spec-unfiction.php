@@ -1,9 +1,10 @@
 <?php
     $config['board-title'] = '<img src="schemes/spec-unfiction/unfiction.png">';
-    $formcss 	= 0;
-	$usebtn		= 1;
+	$formcss       = 1;
+	$inputborder   = "a89";
+	$formtextcolor = "000";
+	$formcolor     = "FFF";
 	
-    $inputborder 	= '000000';
     $bgimage 		= '';
     $bgcolor		= 'bbbbbb';
     $textcolor		= '000000';
@@ -22,22 +23,5 @@
     $tableborder 	= '000000';
     # Extra CSS included at the bottom of a page
 	$css_extra		= "
-		textarea,input,select,button,.button{
-		  border:		1px solid #a89;
-		  background:	#fff;
-		  color:		#000;
-		  font:	10pt $font;
-		  }
-		input[type='radio'], .radio {
-		  border:	none;
-		  background: #fff0f8;
-		  color:	#ffffff;
-		  font:	10pt $font;}
-		input[type=submit],input[type=button],button,.button{
-		  border:	#000 solid 2px;
-		  font:	10pt $font;}
-		.button{color: #000 !important;}
-		a {
-/*			text-shadow: 0px 0px 3px #fff;
-*/			}
-		";
+		input[type='radio'], .radio { background: #fff0f8 }
+	";

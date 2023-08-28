@@ -3,7 +3,7 @@ body {
 	background: AppWorkspace;
 	color: ThreeDHighlight;
 	font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif !important;
-	font-size: 12px; 
+	font-size: 90%;
 }
 
 /* Remove font weight / color from links */
@@ -15,12 +15,12 @@ a:not(.button) {
 
 
 /* font declarations*/
-.font { font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif; }
-.fonts { font: 10px 'Microsoft Sans Serif', 'Verdana', sans-serif !important;}
-.fontt { font: 12px 'Tahoma', serif; }
+.font { font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif; }
+.fonts { font: 85% 'Microsoft Sans Serif', 'Verdana', sans-serif !important;}
+.fontt { font-family: 'Tahoma', serif; }
 
 .tdbg1,.tdbg2,.tdbgc,.tdbgh	{ 
-	font: 12px 'Microsoft Sans Serif', 'Verdana', sans-serif;
+	font-family: 'Microsoft Sans Serif', 'Verdana', sans-serif;
 }
 .font, .fonts, .fontt {
 	color: WindowText;
@@ -40,6 +40,7 @@ a:not(.button) {
 	border-right: 3px solid ThreeDShadow; 
 	border-bottom: 3px solid ThreeDShadow;
 	border-left: 3px solid ThreeDHighlight;
+	border-collapse: separate; /* it needs as many borders as it can */
 }
 .table > tbody {
 	outline: 2px solid ThreeDFace;

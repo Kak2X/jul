@@ -1,4 +1,6 @@
 <?php
+	$formcss       = 1;
+	
 	//$bgimage='http://xkeeper.shacknet.nu:5/img/fragment2.png';
 	$bgimage = 'schemes/fragmentation2/bg_2.png';
 	$bgcolor = '070722';   

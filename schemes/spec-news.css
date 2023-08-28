@@ -1,6 +1,6 @@
 body{
 	font-family: 		Verdana, Geneva, sans-serif;
-	font-size: 			13px;
+	
 	color:				#fff;
 	background: 		#000 url('spec-news/bg.png') repeat-x fixed top -2px left -6px;
 }
@@ -10,6 +10,7 @@ body{
 	border:				2px solid rgba(50,50,100, 0.8);
 	border-radius:		4px;
 	background:			rgba(16,16,16, 0.9);
+	border-collapse:    separate; /* table radius and padding require this */
 }
 .tdbgh{
 	background:			rgba(42,42,84, 0.5);

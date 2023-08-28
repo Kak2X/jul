@@ -12,6 +12,7 @@ a:hover		{color: #ffe090}
 .table {
 	border:			1px solid #5050a0;
 	border-spacing:	0px;
+	border-collapse: unset;
 }
 
 .tdbg1, .tdbg2, .tdbgc, .tdbgh {
@@ -36,22 +37,17 @@ a:hover		{color: #ffe090}
 	background:			#4040b0 url("rha2/tdbgh.png");
 	/* special uppercase effect */
 	font-variant:		small-caps;
-	font-size:			12px;
+	font-size:			90%;
 }
 .tdbgc {
 	background:			#202050 url("rha2/tdbgc.png");
 }
 
 input, textarea, select, button, .button {
-	font-size:			12px;
 	color:				#e0e0ff;
 	background-color:	#000000;
 	border:				1px solid #303090;
 	margin:				0px 0px 0px 0px;
-}
-
-select {
-	font-size:			11px !important;
 }
 
 .attachment-box, .attachment-box-addnew {

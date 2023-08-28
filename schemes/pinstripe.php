@@ -41,7 +41,7 @@
 	$css_extra        = "
 center > table.table td { padding: 4px; }
 
-center > table.table td.tdbg2 a { font-size: 11px; }
+center > table.table td.tdbg2 a { font-size: 110% }
 
 center + div + br + table td { padding: 2px; }
 center + div + br + table td table { margin: 0px; }
@@ -55,7 +55,7 @@ body > table[width='100%'] td[align='right'] { visibility: hidden; font-size: 4p
 
 body > table[width='100%'] td[align='right'] a {
 	visibility: visible;
-	font-size: 10px;
+	font-size: 90%;
 	border: 1px solid #4060aa;
 	border-right: 1px solid #314880;
 	border-bottom: 1px solid #314880;
@@ -73,24 +73,24 @@ body > table[width='100%'] td[align='right'] a:hover, body > table[width='100%']
   background: #4263af;
 }
 
-.tdbgc, .tdbgh { padding: 3px; font-weight: bold; font-size: 11px; }
+.tdbgc, .tdbgh { padding: 3px; font-weight: bold; font-size: 85%; }
 
 textarea,textarea:focus,input,select,button,.button{
 	border: #000 solid 1px;
 	background: #2e3f68;
 	color: #bfcef2;
-	font: 8pt verdana;
+	font: 85% verdana;
 	padding: 2px;
 }
 input[type='radio'], .radio {
 	border: none;
 	background: #2e3f68;
 	color: #bfcef2;
-	font: 10pt verdana;
+	font-family: verdana;
 }
 input[type=submit],input[type=button],button,.button{
 	border: #000 solid 2px;
-	font: 8pt verdana;
+	font-family: verdana;
 	padding: 1px 6px;
 }
 .button{

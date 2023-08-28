@@ -1,6 +1,5 @@
 <?php
-	$formcss		= 0;		# formcss makes forms black with tableborder borders; using cssextra below is easier
-	$usebtn			= 1;		# enable .button link rendering
+	$formcss		= 1;		# formcss makes forms black with tableborder borders; using cssextra below is easier
 	$numcols		= 100;		# same thing, more or less
 
 	$bgimage		= 'schemes/ymar/beegee.png';
@@ -55,26 +54,12 @@
 	$statusicons['hotoff']		= '<img src="schemes/ymar/status/hotoff.png">';
 	$statusicons['off']			= '<img src="schemes/ymar/status/off.png">';
 
-
+	$inputborder   = "a15c18";
+	$formtextcolor = "000000";
+	$formcolor     = "FFFFFF";
+	
 	# Extra CSS included at the bottom of a page
 	$css_extra		= "
-		textarea,input,select,button,.button{
-		  border:		1px solid #a15c18;
-		  background:	#fff;
-		  color:		#000;
-		  font:	10pt $font;
-		  }
-		input[type=\"radio\"], .radio {
-		  border:	none;
-		  background: #ecd7b2;
-		  color:	#000000;
-		  font:	10pt $font;}
-		input[type=submit],input[type=button],button,.button{
-		  border:	#000 solid 2px;
-		  font:	10pt $font;}
-		.button{color: #000 !important;}
-		a {
-/*			text-shadow: 0px 0px 3px #fff;
-*/			}
-		";
+		input[type='radio'], .radio { background: #ecd7b2;}
+	";
 	

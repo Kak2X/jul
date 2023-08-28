@@ -1,5 +1,5 @@
 <?php
-
+	$formcss  = 1;
 	$bgimage  = '';
 	$bgcolor  = '441808';   
 

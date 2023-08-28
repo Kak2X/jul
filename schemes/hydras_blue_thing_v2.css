@@ -1,9 +1,12 @@
-body { background: #013 !important; color: #DDD; }
-
-a { color: #BEBAFE; }
-a:visited { color: #9990c0; }
-a:active { color: #CFBEFF; }
-a:hover { color: #CECAFE; }
+a,.buttonlink { color: #BEBAFE; }
+a:visited,.buttonlink:visited { color: #9990c0; }
+a:active,.buttonlink:active { color: #CFBEFF; }
+a:hover,.buttonlink:hover { color: #CECAFE; }
+body { 
+	background: #013 !important;
+	color: #DDD;
+}
+.table, body { font-family: 'verdana', sans-serif; }
 
 .tdbg1 { background: #05375F; } /* tablebg1 */
 .tdbg2 { background: #15426D; } /* tablebg2 */
@@ -14,25 +17,36 @@ a:hover { color: #CECAFE; }
 	border-bottom: 1px solid black;
 	border-right: 1px solid black;
 	text-shadow: 2px 2px 4px #000;
-	font: 13px 'verdana', sans-serif;
+	font-family: 'verdana', sans-serif;
 } 
-.tdbg1,.tdbg2,.tdbgc,.tdbgh	{ border-right: 1px solid #000; border-bottom: 1px solid #000; }
-.table { border-top: #000 1px solid; border-left: #000 1px solid; }
-.font { font: 13px 'verdana', sans-serif; }
-.fonts { font: 10px 'verdana', sans-serif !important;}
-.fontt { font: 10px 'tahoma', serif; }
 
-textarea, input, select, button, .button {
+.table, .tdbg1,.tdbg2,.tdbgc,.tdbgh	{ border: 1px solid #000; }
+.fonts { font-family: 'verdana', sans-serif !important;}
+.fontt { font-family: 'tahoma', serif; }
+
+textarea, input, select, button, .button{
 	border: 1px solid #000;
 	background: #000;
 	color: #EEE;
-	font: 10pt monospace;
+	font-family: monospace;
 }
-
-input[type=submit], input[type=button], button, .button {
+textarea:focus {
+	border:	#000 solid 1px;
+	background:#000000;
+	color:	#EEE;
+	font-family: monospace;
+}
+input[type=radio] {
+	border:	none;
+	background:none;
+	color:	#EEE;
+	font-family: monospace;
+}
+input[type=submit], input[type=button], button, .button{
 	border: #000 solid 2px;
-	font: 10pt 'verdana', sans-serif;
+	font-family: 'verdana', sans-serif;
 }
+.button {color: #EEE !important;}
 
 .attachment-box,.attachment-box-addnew  {
 	border: #000 1px solid;
@@ -41,3 +55,18 @@ input[type=submit], input[type=button], button, .button {
 .attachment-box:hover,.attachment-box-addnew :hover{
 	background: #0F265F !important;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

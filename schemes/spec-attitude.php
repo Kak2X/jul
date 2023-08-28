@@ -1,4 +1,6 @@
 <?php
+	$formcss       = 1;
+
 	$bgimage='';
 	$bgcolor    = '403030';   
 	$textcolor  = 'ffdddd';   

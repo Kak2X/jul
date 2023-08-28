@@ -1,7 +1,10 @@
 <?php
 
 //	$config['board-title'] = '<img src=schemes/zelda/banner.png>';
-	
+	$formcss       = 1;
+	$inputborder   = "000";
+	$formtextcolor = "000";
+	$formcolor     = "FFF";
 	$bgimage       = 'schemes/zelda/background.gif';
 	$bgcolor       = "749379";
 	$textcolor     = "FFFFFF";

@@ -355,7 +355,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 	if ($nullscheme) {
 		// special "null" scheme.
-		$css = "<style type='text/css'>";
+		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'><style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
 		$css = "
@@ -381,24 +381,19 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 				font-family: $font;
 				background: #$bgcolor$bgimage;
 			}
-			div.lastpost { font: 75% $font2 !important; white-space: nowrap; }
-			div.lastpost:first-line { font: 100% $font !important; }
-			.font 	{font:100% $font}
-			.fonth	{font:100% $font;color:#$tableheadtext}
-			.fonts	{font:75% $font2}
-			.fontt	{font:75% $font3}
+			div.lastpost { font-family: $font2 !important; }
+			div.lastpost:first-line { font-family: $font !important; }
+			.font 	{font-family: $font}
+			.fonth	{color:#$tableheadtext; font-family: $font}
+			.fonts	{font-family: $font2}
+			.fontt	{font-family: $font3}
 			.tdbg1	{background:#$tablebg1}
 			.tdbg2	{background:#$tablebg2}
 			.tdbgc	{background:#$categorybg}
 			.tdbgh	{background:#$tableheadbg; /* color:#$tableheadtext */}
-			.table	{empty-cells:	show; width: 100%;
-					 border-top:	#$tableborder 1px solid;
-					 border-left:	#$tableborder 1px solid;
-					 border-spacing: 0px;
-					 font-family: 		 $font;}
-			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{
-					 border-right:	#$tableborder 1px solid;
-					 border-bottom:	#$tableborder 1px solid}
+			.table	{border: #$tableborder 1px solid;
+					 font-family: $font}
+			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{border: #$tableborder 1px solid}
 			.attachment-box,.attachment-box-addnew {
 				border: #$tableborder 1px solid;
 				background: #$tablebg2;
@@ -468,37 +463,39 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		";
 	}
 	
-	//$numcols=(filter_int($numcols) ? $numcols : 60);
-
 	// Is custom CSS defined for form elements?
 	if ($formcss) {
 		$numcols = 80;
 		
 		if (!isset($formtextcolor)) {
-			$formtextcolor = $textcolor; // Only one scheme uses this (!)
+			$formtextcolor = $textcolor;
+		}
+		if (!isset($formcolor)) {
+			$formcolor = "000";
 		}
 		if (!isset($inputborder)) {
 			$inputborder   = $tableborder;
 		}
+		
 		$css.="
 		textarea,input,select,button,.button{
 		  border:	#$inputborder solid 1px;
-		  background:#000000;
+		  background:#$formcolor;
 		  color:	#$formtextcolor;
-		  font:	100% $font;}
+		  font-family:	$font}
 		textarea:focus {
 		  border:	#$inputborder solid 1px;
-		  background:#000000;
+		  background:#$formcolor;
 		  color:	#$formtextcolor;
-		  font:	100% $font;}
+		  font-family:	$font}
 		input[type=radio]{
 		  border:	none;
 		  background:none;
 		  color:	#$formtextcolor;
-		  font:	100% $font;}
+		  font-family:	$font}
 		input[type=submit],input[type=button],button,.button{
 		  border:	#$inputborder solid 2px;
-		  font:	100% $font;}
+		  font-family:	$font}
 		.button{color: #$formtextcolor !important;}
 		";
 	} else if (!$usebtn) {

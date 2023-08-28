@@ -37,6 +37,11 @@ while (true) {
 	$ops = explode(",", $settings['opnick']);
 	print "[BOT] Opening receiver socket on port {$settings['recvport']}".PHP_EOL;
 	$recv = new listener($settings['recvport']);
+	if (!$recv->conn) {
+		print "[BOT] Failed to create the socket. Waiting 10 seconds, then retrying.".PHP_EOL;
+		sleep(10);
+		continue;
+	}
 	
 	// Do not allow proceeding until we connect successfully to IRC.
 	// The retry reloads the configuration just in case it's invalid, to allow getting any updated and hopefully fixed values.

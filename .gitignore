@@ -23,10 +23,10 @@ test/
 *.cmd
 
 # Attachments
-attachments/*
-!attachments/index.html
-!attachments/t/index.html
-!attachments/f/.htaccess
+attachments/t/*
+attachments/f/*
+!attachments/t/note.txt
+!attachments/f/note.txt
 
 # Uploads
 extensions/uploader.abx/uploads/*

@@ -119,7 +119,7 @@ function attachfield($list, $extra = "") {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		
 		if ($x['is_image']) { // An image
-			$thumb = isset($x['imgprev']) ? $x['imgprev'] : attachment_name($x['id'], true);
+			$thumb = isset($x['imgprev']) ? $x['imgprev'] : "download.php?id={$x['id']}&t=1";
 		} else { // Not an image
 			$thumb = "images/defaultthumb.png";
 		}

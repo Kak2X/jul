@@ -1,5 +1,7 @@
 <?php
 	$meta['notrack'] = true;
+	$meta['cache'] = true;
+	
 	require "lib/common.php";
 	
 	if (!$config['attachments-all-origin'] && !SAME_ORIGIN) {
@@ -10,6 +12,7 @@
 
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['info']   = filter_bool($_GET['info']);
+	$_GET['t']      = filter_bool($_GET['t']);
 	//$_GET['pm']     = isset($_GET['pm']);
 
 	if (!$_GET['id']) {
@@ -57,7 +60,7 @@
 			|| (!$isadmin && $post['deleted']) // Post deleted
 			|| (!$isadmin && !$post['tid']) // Post in invalid thread 
 			|| (!$isadmin && !$sql->resultq("SELECT COUNT(*) FROM pm_access WHERE user = {$loguser['id']} AND thread = {$post['tid']}")) // Can't view forum
-			|| !file_exists(attachment_name($_GET['id'])) // File missing
+			|| !file_exists(attachment_name($_GET['id'], $_GET['t'])) // File missing
 		) {
 			errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 		}
@@ -82,7 +85,7 @@
 	
 	header("Cache-Control: public");
 	header('Connection: Keep-Alive');
-	if (!$attachment['is_image']) {
+	if (!$attachment['is_image'] && !$_GET['t']) { // checking $_GET['t'] just in case of misconfiguration
 		// Display download box if it isn't an image
 		header("Content-Disposition: attachment");
 	}
@@ -92,6 +95,6 @@
 	header("Content-Length: {$attachment['size']}");
 	header("Content-type: {$attachment['mime']}");
 
-	readfile(attachment_name($_GET['id']));
+	readfile(attachment_name($_GET['id'], $_GET['t']));
 
 	die;

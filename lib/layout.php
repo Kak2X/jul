@@ -742,7 +742,7 @@ piwikTracker.enableLinkTracking();
 				<tr>
 					<td><?= $poweredbypic ?></td>
 					<td>
-						Acmlmboard - <?= hook_print("boardinfo-ver", file_get_contents('version.txt')) ?><br>
+						Acmlmboard - <a href="https://github.com/Kak2X/jul"><?= file_get_contents('version.txt') ?></a><br>
 						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al.<?= $ikachan_text ?>
 					</td>
 				</tr>

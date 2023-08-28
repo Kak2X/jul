@@ -443,6 +443,35 @@ LOCK TABLES `delusers` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `discord_webhooks`
+--
+
+DROP TABLE IF EXISTS `discord_webhooks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `discord_webhooks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `webhook` varchar(255) NOT NULL DEFAULT '',
+  `name` varchar(64) NOT NULL DEFAULT '',
+  `description` varchar(255) NOT NULL DEFAULT '',
+  `minpower` tinyint(4) NOT NULL DEFAULT 0,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `nodelete` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `discord_webhooks`
+--
+
+LOCK TABLES `discord_webhooks` WRITE;
+/*!40000 ALTER TABLE `discord_webhooks` DISABLE KEYS */;
+INSERT INTO `discord_webhooks` VALUES (1,'webhook goes here!','General','General discussion channel.',-2,1,1),(2,'webhook goes here!','Staff','Staff discussion channel.',1,1,1),(3,'webhook goes here!','Admin','Admin discussion channel.',3,1,1);
+/*!40000 ALTER TABLE `discord_webhooks` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `events`
 --
 
@@ -711,6 +740,8 @@ CREATE TABLE `forums` (
   `pollstyle` tinyint(2) NOT NULL DEFAULT '0',
   `login` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `attachmentmode` tinyint(4) NOT NULL DEFAULT '-1',
+  `ircchan` SMALLINT NOT NULL DEFAULT '0',
+  `discordwebhook` SMALLINT NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `catid` (`catid`),
   KEY `minpower` (`minpower`),
@@ -724,7 +755,7 @@ CREATE TABLE `forums` (
 
 LOCK TABLES `forums` WRITE;
 /*!40000 ALTER TABLE `forums` DISABLE KEYS */;
-INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0,0,-1),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0,0,-1),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0,0,-1),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0,0,-1);
+INSERT INTO `forums` VALUES (1,'General Forum','For everybody.','',1,0,0,0,0,0,0,0,0,0,NULL,0,'',0,0,-1,1,1),(2,'General Staff Forum','Not for everybody.','',2,1,1,1,0,0,0,0,0,2,NULL,0,'',0,0,-1,2,2),(3,'Trash Forum','?','',1,0,2,2,0,0,0,0,0,2,NULL,0,'',0,0,-1,1,1),(4,'Announcements','Announcements go here','',1,0,2,0,0,0,0,0,0,0,NULL,0,'',0,0,-1,1,1);
 /*!40000 ALTER TABLE `forums` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -807,6 +838,62 @@ CREATE TABLE `ipbans` (
 LOCK TABLES `ipbans` WRITE;
 /*!40000 ALTER TABLE `ipbans` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ipbans` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `irc_channels`
+--
+
+DROP TABLE IF EXISTS `irc_channels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `irc_channels` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL DEFAULT '',
+  `chankey` varchar(64) NOT NULL DEFAULT '',
+  `description` varchar(255) NOT NULL DEFAULT '',
+  `minpower` tinyint(4) NOT NULL DEFAULT 0,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `nodelete` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `irc_channels`
+--
+
+LOCK TABLES `irc_channels` WRITE;
+/*!40000 ALTER TABLE `irc_channels` DISABLE KEYS */;
+INSERT INTO `irc_channels` VALUES (1,'#y-general','','General discussion channel.',-2,1,1),(2,'#y-staff','yourkeyhere','Staff discussion channel.',1,1,1),(3,'#y-admin','anotherkeyhere','Admin discussion channel.',3,1,1);
+/*!40000 ALTER TABLE `irc_channels` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `irc_settings`
+--
+
+DROP TABLE IF EXISTS `irc_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `irc_settings` (
+  `server` varchar(128) DEFAULT '',
+  `port` smallint(6) unsigned NOT NULL DEFAULT 0,
+  `nick` varchar(128) NOT NULL DEFAULT '',
+  `pass` varchar(32) NOT NULL DEFAULT '',
+  `opnick` varchar(128) NOT NULL DEFAULT '',
+  `recvport` smallint(6) unsigned NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `irc_settings`
+--
+
+LOCK TABLES `irc_settings` WRITE;
+/*!40000 ALTER TABLE `irc_settings` DISABLE KEYS */;
+INSERT INTO `irc_settings` VALUES ('irc.example.com',6667,'ReportBot,ReportBot_,KakBot2,KakBot2_','','Nobody,Nothing,Null,Void,None,CornMaster',64378);
+/*!40000 ALTER TABLE `irc_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1014,7 +1101,9 @@ CREATE TABLE `misc` (
   `private` tinyint(4) NOT NULL DEFAULT '0',
   `backup` tinyint(1) NOT NULL DEFAULT '0',
   `attntitle` VARCHAR(255) NULL DEFAULT NULL,
-  `attntext` TEXT NULL DEFAULT NULL
+  `attntext` TEXT NULL DEFAULT NULL,
+  `irc_enable` TINYINT(1) NOT NULL DEFAULT '0',
+  `discord_enable` TINYINT(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1024,7 +1113,7 @@ CREATE TABLE `misc` (
 
 LOCK TABLES `misc` WRITE;
 /*!40000 ALTER TABLE `misc` DISABLE KEYS */;
-INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,0,NULL,NULL,0,'',0,0,0,NULL,NULL);
+INSERT INTO `misc` VALUES (0,30,0,0,0,0,0,0,NULL,0,0,0,0,0,NULL,NULL,0,'',0,0,0,NULL,NULL,0,0);
 /*!40000 ALTER TABLE `misc` ENABLE KEYS */;
 UNLOCK TABLES;
 

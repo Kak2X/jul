@@ -59,7 +59,7 @@
 		/*
 		if ($_POST['name'] == "Blaster") {
 			$sql -> query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Idiot'");
-			@xk_ircsend("1|". xk(7) ."Auto-IP banned Blaster with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration.");
+			report_send(IRC_STAFF, xk(7) ."Auto-IP banned Blaster with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration.");
 			die("<td class='tdbg1 center'>Thank you, $_POST['name'], for registering your account.<br>".redirect('index.php','the board',0).$footer);
 		}
 		*/
@@ -100,7 +100,7 @@
 				shuffle($adjectives);
 
 				$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Reregistering fuckwit'");
-				@xk_ircsend("1|". xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $_POST['name'])");
+				report_send(IRC_STAFF, xk(7) ."Auto-IP banned proxy-abusing $adjectives[0] with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." on registration. (Tried to register with username $_POST['name'])");
 				errorpage("Thank you, $_POST['name'], for registering your account.", 'index.php', 'the board', 0);
 				*/
 				$regerrors['main'] .= "<li>It appears you're trying to register through some proxy service or other anonymizing tool.
@@ -114,7 +114,7 @@
 		// You asked for it
 		if (isset($_POST['homepage']) && $_POST['homepage']) {
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Automatic spambot protection'");
-			@xk_ircsend("1|". xk(7) ."Auto-IP banned user with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for filling in the dummy registration field. (Tried to register with username $_POST['name'])");
+			report_send(IRC_STAFF, xk(7) ."Auto-IP banned user with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for filling in the dummy registration field. (Tried to register with username $_POST['name'])");
 			errorpage("Thank you, $_POST['name'], for registering your account.", 'index.php', 'the board', 0);
 		}*/
 
@@ -140,12 +140,21 @@
 				]);
 				
 				$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedregs` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
-				@xk_ircsend("102|". xk(14) ."Failed attempt". xk(8) ." #$fails ". xk(14) ."to register using the wrong code ". xk(8) . $_POST['regcode'] . xk(14) ." by IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(14) .".");
+				report_send(
+					IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to register using the wrong code ".xk(8)."{$_POST['regcode']}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
+					IRC_ADMIN, "Failed attempt **#{$fails}** to register using the wrong code **{$_POST['regcode']}** by IP **{$_SERVER['REMOTE_ADDR']}**."
+				);
 
 				if ($fails >= 5) {
 					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail to re-request the registration code'");
-					@xk_ircsend("102|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for this.");
-					@xk_ircsend("1|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for repeated failed registration attempts.");
+					report_send(
+						IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+						IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
+					);
+					report_send(
+						IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed registration attempts.",
+						IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed registration attempts."
+					);
 					die(header("Location: ?"));
 				}
 				
@@ -218,21 +227,15 @@
 						'ip'		=> $_SERVER['REMOTE_ADDR'],
 						'date'		=> $currenttime,
 					]);
-
+				$newuserid  = $sql->insert_id();
+				report_send(
+					IRC_STAFF, "New pending user #".xk(12)."{$newuserid}".xk(11)." {$_POST['name']}".xk()." (IP: ".xk(12)."{$_SERVER['REMOTE_ADDR']}".xk().")",
+					IRC_STAFF, "New pending user #{$newuserid} **{$_POST['name']}** (IP: **{$_SERVER['REMOTE_ADDR']}**)"
+				);
 			//		$sql->query("INSERT INTO `ipbans` SET `ip` = '$ipaddr', `reason` = 'Automagic ban', `banner` = 'Acmlmboard'");
 
 				errorpage("Thank you, ".htmlspecialchars($_POST['name']).", for registering your account.",'index.php','the board', 0);
 			} else {
-
-				$ircout = array (
-					'id'	=> $newuserid,
-					'name'	=> stripslashes($_POST['name']),
-					'ip'	=> $_SERVER['REMOTE_ADDR']
-				);
-				
-				
-				// No longer useful
-				//$ircout['pmatch']	= $sql -> resultq("SELECT COUNT(*) FROM `users` WHERE `password` = '". md5($_POST['pass']) ."'");
 				$sql->beginTransaction();
 				
 				$data = array(
@@ -252,7 +255,13 @@
 				
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
 				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, {$currenttime} FROM forums");
-				xk_ircout("user", $ircout['name'], $ircout);
+				
+				$ircout = array (
+					'id'	=> $newuserid,
+					'name'	=> $_POST['name'],
+					'ip'	=> $_SERVER['REMOTE_ADDR'],
+				);
+				report_new_user("user", $ircout);
 				
 				// If the next user is the deleted user ID, make sure to automatically register it
 				if ($makedeluser) {

@@ -32,14 +32,11 @@ if (isset($_POST['act'])){
 		$sql->query("INSERT INTO users_rpg (uid) VALUES ({$newuserid})");
 		$sql->commit();
 		
-		xk_ircsend(IRC_STAFF."|". xk(8) . $loguser['name'] . xk(7) ." APPROVED pending user ". xk(8) . $data['name'] . xk(7) ." with IP ". xk(8) . $data['ip'] . xk() ." | {$config['board-url']}/?u=". $newuserid  . xk(7).".");
-		
-		$ircout = array (
+		report_new_user("approved pending user", [
 			'id'	=> $newuserid,
 			'name'	=> $data['name'],
 			'ip'	=> $data['ip']
-		);
-		xk_ircout("user", $ircout['name'], $ircout);	
+		]);
 		errorpage("User approved!", 'admin-pendingusers.php', 'the Pending Users page');
 	} else if ($_POST['act'] == 'Reject') {
 		/*
@@ -47,7 +44,10 @@ if (isset($_POST['act'])){
 			Simply delete the pendinguser data
 		*/
 		$sql->query("DELETE FROM pendingusers WHERE id = {$_GET['id']}");
-		xk_ircsend(IRC_STAFF."|". xk(8) . $loguser['name'] . xk(7) ." REJECTED pending user ". xk(8) . $data['name'] . xk(7) ." with IP ". xk(8) . $data['ip'] . xk(7).".");
+		report_send(
+			IRC_STAFF, xk(8)."{$loguser['name']}".xk(7)." REJECTED pending user ".xk(8)."{$data['name']}".xk(7)." with IP ".xk(8)."{$data['ip']}".xk(7).".",
+			IRC_STAFF, "**{$loguser['name']}** REJECTED pending user **{$data['name']}** with IP **{$data['ip']}**."
+		);
 		errorpage("User rejected!", 'admin-pendingusers.php', 'the Pending Users page');
 	} else if ($_POST['act'] == 'IP Ban') {
 		/*
@@ -55,7 +55,7 @@ if (isset($_POST['act'])){
 			Add IP Ban and delete the pendingusers data
 		*/
 		$sql->query("DELETE FROM pendingusers WHERE id = {$_GET['id']}");
-		$ircmsg = xk(8) . $loguser['name'] . xk(7) ." IP BANNED pending user ". xk(8) . $data['name'] . xk(7) ." with IP ". xk(8) . $data['ip'] . xk(7).".";
+		$ircmsg = xk(8)."{$loguser['name']}".xk(7)." IP BANNED pending user ".xk(8)."{$data['name']}".xk(7)." with IP ".xk(8)."{$data['ip']}".xk(7).".";
 		ipban($data['ip'], "Rejected", $ircmsg, IRC_STAFF, 0, $loguser['id']);
 		errorpage("User blocked!", 'admin-pendingusers.php', 'the Pending Users page');
 	} else {

@@ -101,4 +101,24 @@
 		
 		return replace_tags($msg, $tags);
 	}
+	
+	
+	function addslashes_array($data) {
+		if (is_array($data)){
+			foreach ($data as $key => $value){
+				$data[$key] = addslashes_array($value);
+			}
+			return $data;
+		} else {
+			return addslashes($data);
+		}
+	}
+	function xk_ircout() {
+		// nothing
+	}
+	function xk_ircsend($str) {
+		$str = explode("|", $str, 2);
+		irc_send($str[0], $str[1]);
+	}
+	
 	pageheader();

@@ -136,13 +136,11 @@
 				}
 				$sql->commit();
 				
-				xk_ircout("reply", $user['name'], array(
-					'forum'		=> $forum['title'],
-					'fid'		=> $forum['id'],
-					'thread'	=> str_replace("&lt;", "<", $thread['title']),
+				report_post("New reply", $forum, [
+					'user'      => $user['name'],
+					'thread'	=> $thread['title'],
 					'pid'		=> $preq->id,
-					'pow'		=> $forum['minpower'],
-				));
+				]);
 				
 				return header("Location: thread.php?pid={$preq->id}#{$preq->id}");
 

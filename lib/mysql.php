@@ -511,6 +511,16 @@ class mysql {
 		);
 	}
 	
+	// only here because $arraySet is the same exact value passed to setplaceholders
+	public static function compareplaceholders($arraySet, $target) {
+		foreach ($arraySet as $k => $v) {
+			if ($v != $target[$k]) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public static function setplaceholders($arraySet) {
 		$out = "";
 		

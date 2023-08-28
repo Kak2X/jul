@@ -48,7 +48,7 @@
 				$msg = "You are now logged in as ".getuserlink(null, $userid).".";
 			//} else if (/*$username == "Blaster" || */$username === "tictOrnaria") {
 			//	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Abusive / malicious behavior'");
-			//	@xk_ircsend("1|". xk(7) ."Auto banned tictOrnaria (malicious bot) with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+			//	report_send(IRC_STAFF, xk(7) ."Auto banned tictOrnaria (malicious bot) with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 			} else {
 				
 				$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
@@ -64,12 +64,21 @@
 				// when you could previously, making extra checks to stop botspam not matter
 
 				//if ($fails > 1)
-				@xk_ircsend("102|". xk(14) ."Failed attempt". xk(8) ." #$fails ". xk(14) ."to log in as ". xk(8) . $username . xk(14) ." by IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(14) .".");
+				report_send(
+					IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to log in as ".xk(8)."{$username}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
+					IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
+				);
 
 				if ($fails >= 5) {
 					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail for password recovery'");
-					@xk_ircsend("102|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for this.");
-					@xk_ircsend("1|". xk(7) ."Auto-IP banned ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." for repeated failed logins.");
+					report_send(
+						IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+						IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
+					);
+					report_send(
+						IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
+						IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
+					);
 				}
 
 				$msg = "Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.";
@@ -148,7 +157,10 @@
 	}
 	else { // Just what do you think you're doing
 		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Generic internet exploit searcher'");
-		xk_ircsend("1|". xk(7) ."Auto-banned asshole trying to be clever with the login form (action: " . xk(8) . $action . xk(7) . ") with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+		report_send(
+			IRC_STAFF, xk(7)."Auto-banned asshole trying to be clever with the login form (action: ".xk(8)."{$action}".xk(7).") with IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7).".",
+			IRC_STAFF, "Auto-banned asshole trying to be clever with the login form (action: **{$action}**) with IP **{$_SERVER['REMOTE_ADDR']}**."
+		);
 		errorpage("Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.");
 	}	
 

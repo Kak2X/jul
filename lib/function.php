@@ -17,6 +17,7 @@
 	require 'lib/schema.php';
 	
 	require 'lib/errorhandler.php';
+	require 'lib/reporting.php';
 
 // For our convenience (read: to go directly into a query), at the cost of sacrificing the NULL return value
 function filter_int(&$v) 		{ return (int) $v; }
@@ -687,7 +688,7 @@ function checkuser($name, $pass){
 		else {
 			if ($user['password'] === md5($pass)) { // Uncomment the lines below to update password hashes
 				$sql->query("UPDATE users SET `password` = '".getpwhash($pass, $user['id'])."' WHERE `id` = '$user[id]'");
-				xk_ircsend("102|".xk(3)."Password hash for ".xk(9).$name.xk(3)." (uid ".xk(9).$user['id'].xk(3).") has been automatically updated.");
+				report_send(IRC_ADMIN, xk(3)."Password hash for ".xk(9)."{$name}".xk(3)." (uid ".xk(9).$user['id'].xk(3).") has been automatically updated.");
 			}
 			else return -1;
 		}
@@ -965,7 +966,7 @@ function ipban($ip, $reason, $ircreason = NULL, $destchannel = IRC_STAFF, $expir
 			`expire` = VALUES(`expire`)
 		", [$ip, $reason, time(), $banner, $expire]);
 	if ($ircreason !== NULL) {
-		xk_ircsend("{$destchannel}|{$ircreason}");
+		report_send($destchannel, $ircreason);
 	}
 }
 
@@ -987,7 +988,7 @@ function ipban_edit($sourceip, $ip, $reason, $ircreason = NULL, $destchannel = I
 	
 	$sql->queryp("UPDATE `ipbans` SET {$phs} WHERE `ip` = :sourceip", $values);
 	if ($ircreason !== NULL) {
-		xk_ircsend("{$destchannel}|{$ircreason}");
+		report_send($destchannel, $ircreason);
 	}
 }
 function ipban_exists($ip) {
@@ -1010,7 +1011,7 @@ function userban($id, $reason = "", $ircreason = NULL, $expire = false, $permane
 		WHERE id = ?", [$new_powl, $reason, $expire, $id]);
 		
 	if ($ircreason !== NULL){
-		xk_ircsend(IRC_STAFF."|{$ircreason}");
+		report_send(IRC_STAFF, $ircreason);
 	}
 }
 
@@ -1026,7 +1027,7 @@ function forumban($forum, $user, $reason = "", $ircreason = NULL, $destchannel =
 		VALUES(?,?,?,?,?,?)", [$user, $forum, time(), $banner, $expire, $reason]);
 		
 	if ($ircreason !== NULL){
-		xk_ircsend("{$destchannel}|{$ircreason}");
+		report_send($destchannel, $ircreason);
 	}
 }
 
@@ -1043,7 +1044,7 @@ function forumban_edit($source, $forum, $user, $reason = "", $ircreason = NULL, 
 	$sql->queryp("UPDATE forumbans SET ".mysql::setplaceholders($values)." WHERE id = {$source}", $values);
 	
 	if ($ircreason !== NULL) {
-		xk_ircsend("{$destchannel}|{$ircreason}");
+		report_send($destchannel, $ircreason);
 	}
 }
 
@@ -1524,6 +1525,7 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			'admin.php'	              => "Admin Control Panel",
 //			'admin-todo.php'          => "To-do list",
 			'admin-extensions.php'    => "Extensions manager",
+			'admin-reporting.php'     => "Post Reporting",
 		),
 		'Quick jump' => array(
 			'announcement.php'        => "Go to Announcements",
@@ -1790,107 +1792,6 @@ function replytoolbar($elem, $smil) {
 		$loaded = true;
 	}
 	print "\n<script type='text/javascript'>toolbarHook('{$elem}');</script>";
-}
-
-function addslashes_array($data) {
-	if (is_array($data)){
-		foreach ($data as $key => $value){
-			$data[$key] = addslashes_array($value);
-		}
-		return $data;
-	} else {
-		return addslashes($data);
-	}
-}
-
-
-function xk_ircout($type, $user, $in) {
-	global $config;
-	
-	// gone
-	// return;
-	# and back
-
-	$indef = array(
-		'pow'		=> 1,
-		'fid'		=> 0,
-		'id'		=> 0,
-		//'pmatch'	=> 0,
-		'ip'		=> 0,
-		'forum'		=> 0,
-		'thread'	=> 0,
-		'pid'		=> 0,
-	);
-	
-	$in = array_merge($indef, $in);
-	
-	// Public forums have dest 0, everything else 1
-	$dest	= min(1, max(0, $in['pow']));
-	
-	// Posts in certain forums are reported elsewhere
-	if ($in['fid'] == 99) {
-		$dest	= 6;
-	} elseif ($in['fid'] == 98) {
-		$dest	= 7;
-	}
-
-	global $x_hacks;
-	if ($x_hacks['host'] || !$config['irc-reporting']) return;
-
-	
-	
-	if ($type == "user") {
-		/* not usable
-		if ($in['pmatch']) {
-			$color	= array(8, 7);
-			if		($in['pmatch'] >= 3) $color	= array(7, 4);
-			elseif	($in['pmatch'] >= 5) $color	= array(4, 5);
-			$extra	= " (". xk($color[1]) ."Password matches: ". xk($color[0]) . $in['pmatch'] . xk() .")";
-		}
-		*/
-		$extra = "";
-		xk_ircsend("1|New user: #". xk(12) . $in['id'] . xk(11) ." $user ". xk() ."(IP: ". xk(12) . $in['ip'] . xk() .")$extra: {$config['board-url']}/?u=". $in['id']);
-		// Also show to public channel, but without the admin-only fluff
-		xk_ircsend("0|New user: #". xk(12) . $in['id'] . xk(11) ." $user ". xk() .")$extra: {$config['board-url']}/?u=". $in['id']);
-		
-		
-	} else {
-//			global $sql;
-//			$res	= $sql -> resultq("SELECT COUNT(`id`) FROM `posts`");
-		xk_ircsend("$dest|New $type by ". xk(11) . $user . xk() ." (". xk(12) . $in['forum'] .": ". xk(11) . $in['thread'] . xk() ."): {$config['board-url']}/?p=". $in['pid']);
-
-	}
-
-}
-
-function xk_ircsend($str) {
-	global $config;
-	// $str = <chan id>|<message>
-	if (!$config['no-curl']) {
-/*	
-	$str = str_replace(array("%10", "%13"), array("", ""), rawurlencode($str));
-
-	$str = html_entity_decode($str);
-	
-
-	$ch = curl_init();
-	//curl_setopt($ch, CURLOPT_URL, "http://treeki.rustedlogic.net:5000/reporting.php?t=$str");
-	curl_setopt($ch, CURLOPT_URL, "ext/reporting.php?t=$str");
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3); // <---- HERE
-	curl_setopt($ch, CURLOPT_TIMEOUT, 5); // <---- HERE
-	$file_contents = curl_exec($ch);
-	curl_close($ch);
-*/
-	}
-	return true;
-}
-
-// IRC Color code setup
-function xk($n = -1) {
-	if ($n == -1) $k = "";
-		else $k = str_pad($n, 2, 0, STR_PAD_LEFT);
-	return "\x03". $k;
 }
 
 function formatting_trope($input) {

@@ -188,6 +188,11 @@
 			
 			$sql->commit();
 			
+			report_send(
+				IRC_MAIN, "New news by ".xk(11)."{$loguser['name']}".xk()." (".xk(11)."{$_POST['title']}".xk()."): {$config['board-url']}/news/news.php?id={$id}",
+				IRC_MAIN, "New news by **{$loguser['name']}** (**{$_POST['title']}**): <{$config['board-url']}/news/news.php?id={$id}>"
+			);
+			
 			return header("Location: news.php?id=$id");
 		}
 		

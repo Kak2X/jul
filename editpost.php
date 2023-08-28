@@ -81,7 +81,7 @@
 				
 				// :^)
 				if ($loguser['editing_locked']) {
-					xk_ircsend("1|'{$loguser['name']}' tried to edit post #{$_GET['id']}");
+					report_send(IRC_STAFF, "'{$loguser['name']}' tried to edit post #{$_GET['id']}");
 					errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
 				}
 				
@@ -95,7 +95,7 @@
 				
 				/*
 				if ($loguserid == 1162) {
-					xk_ircsend("1|The jceggbert5 dipshit tried to edit another post: ". $_GET['id']);
+					report_send(IRC_STAFF, "The jceggbert5 dipshit tried to edit another post: ". $_GET['id']);
 					errorpage("");
 				}
 				
@@ -159,6 +159,12 @@
 				if ($can_attach) {
 					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], 0, $attachsel);
 				}
+				
+				report_post("Post edited", $forum, [
+					'user'      => $loguser['name'],
+					'thread'	=> $thread['title'],
+					'pid'		=> $_GET['id'],
+				]);
 				
 				errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
 				
@@ -290,7 +296,7 @@
 	else if ($_GET['action'] == 'delete') {
 		if (confirmed($msgkey = 'delpost')) {
 			if ($loguser['editing_locked']) {
-				xk_ircsend("1|'{$loguser['name']}' tried to ".($post['deleted'] ? "un" : "")."delete post #{$_GET['id']}");
+				report_send(IRC_STAFF, "'{$loguser['name']}' tried to ".($post['deleted'] ? "un" : "")."delete post #{$_GET['id']}");
 			} else {
 				$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
 			}

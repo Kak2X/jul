@@ -12,7 +12,6 @@ $_GET['delete'] 	= filter_int($_GET['delete']);
 $_GET['catid'] 		= filter_int($_GET['catid']);
 $_GET['catdelete'] 	= filter_int($_GET['catdelete']);
 
-
 if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	#if (!$isadmin) 
 	#	die("You aren't an admin!");
@@ -34,6 +33,8 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'pollstyle' 		=> filter_int($_POST['pollstyle']),
 		'login' 			=> filter_int($_POST['login']),
 		'attachmentmode'    => filter_int($_POST['attachmentmode']),
+		'ircchan'			=> filter_int($_POST['ircchan']),
+		'discordwebhook'	=> filter_int($_POST['discordwebhook']),
 	);
 	$qadd = mysql::setplaceholders($values);
 	if ($_GET['id'] <= -1) {
@@ -194,6 +195,9 @@ if ($_GET['delete']) {
 else if ($_GET['id']) {
 	$categories = $sql->getresultsbykey("SELECT id, name FROM categories ORDER BY id");
 	$forum = $sql->fetchq("SELECT * FROM `forums` WHERE `id` = '". $_GET['id'] . "'");
+	$irc_channels = $sql->getresultsbykey("SELECT id, name FROM `irc_channels` ORDER by id");
+	$discord_channels = $sql->getresultsbykey("SELECT id, name FROM `discord_webhooks` ORDER by id");
+	
 	if (!$forum) {
 		$_GET['id'] = -1;
 		$forum = array(
@@ -213,6 +217,8 @@ else if ($_GET['id']) {
 			'pollstyle'      => -1,
 			'login'          =>  0,
 			'attachmentmode' => -1,
+			'ircchan'        => 0,
+			'discordwebhook' => 0,
 		);
 	} else {
 		if (!isset($categories[$forum['catid']]))
@@ -279,8 +285,17 @@ else if ($_GET['id']) {
 		</tr>
 		
 		<tr>
-			<td class='tdbgh center'>Custom header</td>
-			<td class='tdbg1' colspan=5><textarea wrap=virtual name=specialtitle ROWS=2 COLS=80 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['specialtitle'])?></TEXTAREA></td>
+			<td class='tdbgh center' rowspan='2'>Custom header</td>
+			<td class='tdbg1' colspan='3' rowspan='2'><textarea wrap=virtual name=specialtitle ROWS=2 COLS=80 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['specialtitle'])?></TEXTAREA></td>
+			<td class='tdbgh center'>IRC Channel</td>
+			<td class='tdbg1'><?=int_select("ircchan", $irc_channels, $forum['ircchan'], "*** Disable ***")?></td>
+		</tr>
+		<tr>
+
+			<td class='tdbgh center'>Discord Webhook</td>
+			<td class='tdbg1'><?=int_select("discordwebhook", $discord_channels, $forum['discordwebhook'], "*** Disable ***")?></td>
+		</tr>
+		
 		<tr>
 			<td class='tdbgc center' colspan=6>
 				<input type="submit" name="edit" value="Save and continue">&nbsp;<input type="submit" name="edit2" value="Save and close">
@@ -558,13 +573,16 @@ print "
 pagefooter();
 
 function _dropdownList($links, $sel, $n) {
-	$r	= "<select name=\"$n\">";
-
-	foreach($links as $link => $name) {
-		$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">".htmlspecialchars($name)."</option>";
-	}
-
-	return $r ."</select>";
+	
+	return int_select($n, $links, $sel);
+	
+	//$r	= "<select name=\"$n\">";
+	//
+	//foreach($links as $link => $name) {
+	//	$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">".htmlspecialchars($name)."</option>";
+	//}
+	//
+	//return $r ."</select>";
 }
 
 function _previewbox(){

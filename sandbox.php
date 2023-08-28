@@ -1,4 +1,6 @@
 <?php
+
+die;
 require "lib/common.php";
 
 $sql->query("UPDATE users SET powerlevel = 4 WHERE id = 1");

@@ -10,9 +10,9 @@ function error_reporter($type, $msg, $file, $line) {
 	
 
 	switch($type) {
-		case E_USER_ERROR:			$typetext = "User Error";   $irctypetext = xk(4) . "- Error";   break;
-		case E_USER_WARNING:		$typetext = "User Warning"; $irctypetext = xk(7) . "- Warning"; break;
-		case E_USER_NOTICE:			$typetext = "User Notice";  $irctypetext = xk(8) . "- Notice";  break;
+		case E_USER_ERROR:			$typetext = "User Error";   $irccol = 4; $irctypetext = "- Error";   break;
+		case E_USER_WARNING:		$typetext = "User Warning"; $irccol = 7; $irctypetext = "- Warning"; break;
+		case E_USER_NOTICE:			$typetext = "User Notice";  $irccol = 8; $irctypetext = "- Notice";  break;
 		case E_ERROR:			 	$typetext = "Error"; 				break;
 		case E_WARNING: 			$typetext = "Warning"; 				break;
 		case E_NOTICE:				$typetext = "Notice"; 				break;
@@ -49,8 +49,10 @@ function error_reporter($type, $msg, $file, $line) {
 	
 	// Without $irctypetext the error is marked as "local reporting only"
 	if (isset($irctypetext)) {
-		xk_ircsend("102|".($loguser['id'] ? xk(11) . $loguser['name'] .' ('. xk(10) . $_SERVER['REMOTE_ADDR'] . xk(11) . ')' : xk(10) . $_SERVER['REMOTE_ADDR']) .
-				   " {$irctypetext}: ".xk()."({$file} #{$line}) {$msg}");
+		report_send(
+			IRC_ADMIN, ($loguser['id'] ? xk(11)."{$loguser['name']} (".xk(10)."{$_SERVER['REMOTE_ADDR']}".xk(11).")" : xk(10)."{$_SERVER['REMOTE_ADDR']}")." ".xk($irccol)."{$irctypetext}: ".xk()."({$file} #{$line}) {$msg}",
+			IRC_ADMIN, ($loguser['id'] ? "**{$loguser['name']}** (**{$_SERVER['REMOTE_ADDR']}**)" : "**{$_SERVER['REMOTE_ADDR']}**")." **{$irctypetext}**: ({$file} #{$line}) {$msg}"
+		);
 	}
 
 	// Local reporting

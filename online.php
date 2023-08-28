@@ -6,13 +6,13 @@
 /*
 	if (empty($_COOKIE) && $_SERVER['HTTP_REFERER'] == "http://jul.rustedlogic.net/") {
 		// Some lame botnet that keeps refreshing this page every second or so.
-		xk_ircsend("102|". date("Y-m-d h:i:s") ." - ".xk(7)."IP address ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." is being weird. ". xk(5) ."(UA: ". $_SERVER['HTTP_USER_AGENT'] .")");
+		report_send(IRC_ADMIN, date("Y-m-d h:i:s") ." - ".xk(7)."IP address ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." is being weird. ". xk(5) ."(UA: ". $_SERVER['HTTP_USER_AGENT'] .")");
 		header("Location: http://". $_SERVER['REMOTE_ADDR'] ."/");
 		die("Fuck off, forever.");
 	}
 	if (empty($_COOKIE)) {
 		// Some lame botnet that keeps refreshing this page every second or so.
-		xk_ircsend("102|". date("Y-m-d h:i:s") ." - ".xk(7)."IP address ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." is being slightly less weird, but still weird. ". xk(5) ."(UA: ". $_SERVER['HTTP_USER_AGENT'] .")");
+		report_send(IRC_ADMIN, date("Y-m-d h:i:s") ." - ".xk(7)."IP address ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) ." is being slightly less weird, but still weird. ". xk(5) ."(UA: ". $_SERVER['HTTP_USER_AGENT'] .")");
 		header("Location: http://". $_SERVER['REMOTE_ADDR'] ."/");
 		die("Don't be weird.");
 	}

@@ -119,7 +119,7 @@
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Listen to some good music for a change.'");
 			if ($userid != -1) //if ($_COOKIE['loguserid'] > 0)
 				$sql->query("UPDATE `users` SET `powerlevel` = '-2' WHERE `id` = {$userid}");
-			xk_ircsend("1|". xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
+			report_send(IRC_STAFF, xk(7) ."Auto-banned another Eminem wannabe with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 		}
 		// ---*/
 		
@@ -209,13 +209,11 @@
 				$sql->commit();
 				
 				$whatisthis = $_GET['poll'] ? "Poll" : "Thread";
-				xk_ircout(strtolower($whatisthis), $user['name'], array(
-					'forum'		=> $forum['title'],
-					'fid'		=> $forum['id'],
+				report_post("New ".strtolower($whatisthis), $forum, [
+					'user'      => $user['name'],
 					'thread'	=> $_POST['subject'],
 					'pid'		=> $preq->id,
-					'pow'		=> $forum['minpower'],
-				));
+				]);
 				
 				errorpage("$whatisthis posted successfully!", "thread.php?id={$treq->id}", $_POST['subject'], 0);
 				

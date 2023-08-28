@@ -12,9 +12,9 @@
 					'<br>'); // A single <br> specifically for this, so it can get ignored when closing divs/tables
 	
 	// Function constants
-	const IRC_MAIN = 0;
-	const IRC_STAFF = 1;
-	const IRC_ADMIN = 102;
+	const IRC_MAIN = 1;
+	const IRC_STAFF = 2;
+	const IRC_ADMIN = 3;
 	
 	const BPT_IPBANNED 	= 1;
 	const BPT_PROXY 	= 2;
@@ -84,6 +84,7 @@
 		'Sysadmin'
 	);
 	
-	// Will be merged
 	const DATE_FORMATS = array('m-d-y h:i:s A', 'd/m/Y H:i:s', 'Y-m-d H:i:s');
 	const DATE_SHORT_FORMATS  = array('m-d-y', 'd/m/Y', 'Y-m-d');
+	
+	const BOTCMD_RESTART = "-1";

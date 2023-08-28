@@ -388,14 +388,6 @@
 		{
 			"title":"IRC settings",
 			"fields":{
-				"irc-reporting":{
-					"title":"Enable IRC reporting",
-					"desc":"Enables preprocessing for IRC messages. Note you need to specify your own code for an IRC reporting (search for the 'xk_ircsend' function)",
-					"input":"radio",
-					"type":"bool",
-					"default":1,
-					"special":"yesno"
-				},
 				"irc-server-title":{
 					"title":"IRC Server title",
 					"desc":"Shown in the title of the IRC page.",

@@ -13,9 +13,9 @@ function upload_avatar($file, $maxsize, $x, $y, $dest = false, $qdata = NULL){
 	if ($file['size'] > $maxsize)
 		errorpage("File size limit exceeded.");
 	
-	list($width, $height) = getimagesize($file['tmp_name']);
+	list($is_image, $width, $height) = get_image_size($file['tmp_name']);
 	
-	if (!$width || !$height)
+	if (!$is_image)
 		errorpage("This isn't a supported image type.");
 	
 	if ($width > $x || $height > $y)

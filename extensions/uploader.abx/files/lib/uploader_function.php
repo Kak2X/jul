@@ -275,8 +275,7 @@ function upload_file($file, $user, $opt) {
 	//--
 	
 	// Image detection
-	list($width, $height) = getimagesize($file['tmp_name']);
-	$is_image = ($width && $height);
+	list($is_image, $width, $height) = get_image_size($file['tmp_name']);
 	
 	// Create the SQL entry
 	$sqldata = [
@@ -334,8 +333,7 @@ function reupload_file($file, $orig_file, $user, $opt) {
 			errorpage("The file you're trying to upload is over the file size limit.");	
 		
 		// Image detection
-		list($width, $height) = getimagesize($file['tmp_name']);
-		$is_image = ($width && $height);
+		list($is_image, $width, $height) = get_image_size($file['tmp_name']);
 		
 		$sqldata = [	
 			'mime'         => mime_content_type($file['tmp_name']),

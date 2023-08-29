@@ -335,8 +335,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	// Move the file and THEN generate the thumbnail
 	$res = move_uploaded_file($file['tmp_name'], $path);
 	
-	list($width, $height) = getimagesize($path);
-	$is_image = ($width && $height);
+	list($is_image, $width, $height) = get_image_size($file['tmp_name']);
 	
 	// but first, get the metadata out of the way
 	$metadata = array(

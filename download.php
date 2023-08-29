@@ -85,15 +85,19 @@
 	
 	header("Cache-Control: public");
 	header('Connection: Keep-Alive');
+	header("Content-Security-Policy: script-src none");
 	if (!$attachment['is_image'] && !$_GET['t']) { // checking $_GET['t'] just in case of misconfiguration
 		// Display download box if it isn't an image
 		header("Content-Disposition: attachment");
+		header('Content-Type: application/octet-stream');
+	} else {
+		header("Content-type: {$attachment['mime']}");
 	}
 	header("Content-Description: File Transfer");
 	header("Content-Disposition: filename=\"{$attachment['filename']}\"");
 	header("Content-Transfer-Encoding: binary");
 	header("Content-Length: {$attachment['size']}");
-	header("Content-type: {$attachment['mime']}");
+
 
 	readfile(attachment_name($_GET['id'], $_GET['t']));
 

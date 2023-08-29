@@ -55,16 +55,20 @@
 	header("Pragma: public");
 	header("Cache-Control: public");
 	header('Connection: Keep-Alive');
+	header("Content-Security-Policy: script-src none");
 	if (!$file['is_image']) {
 		// Display download box if it isn't an image
 		header("Content-Disposition: attachment");
+		header('Content-Type: application/octet-stream');
+	} else {
+		header("Content-type: {$file['mime']}");
 	}
 	header("Content-Description: File Transfer");
 	header("Content-Disposition: filename=\"{$file['filename']}\"");
 	header("Content-Transfer-Encoding: binary");
 	header("Content-Length: {$file['size']}");
-	header("Content-type: {$file['mime']}");
-
+	
+	
 	readfile($path);
 
 	die;

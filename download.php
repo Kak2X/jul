@@ -9,12 +9,29 @@
 		print "To continue to the attachment, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
 		die;
 	}
+	
+	$_GET['t']      = filter_bool($_GET['t']);
+		
+	// Temporary file mode? 
+	if (isset($_GET['tmp'])) {
+		$_GET['tmp'] = basename(filter_string($_GET['tmp']));
+		$_GET['hash'] = filter_string($_GET['hash']);
+		
+		if (!file_exists("temp/attach_{$_GET['tmp']}.dat"))
+			die("Preview failed.");
+		$meta = get_attachment_metadata("temp/attach_{$_GET['tmp']}");
+		
+		if ($meta['hash'] != $_GET['hash'])
+			die("Preview failed.");
+		
+		//$_GET['t'] = false;
+		download($meta, "temp/attach_{$_GET['tmp']}");
+		die;
+	}
 
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['info']   = filter_bool($_GET['info']);
-	$_GET['t']      = filter_bool($_GET['t']);
-	//$_GET['pm']     = isset($_GET['pm']);
-
+	
 	if (!$_GET['id']) {
 		errorpage("No attachment specified.");
 	}
@@ -25,7 +42,7 @@
 		errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 	}
 	
-	if (!isset($_GET['pm'])) {
+	if (!$attachment['pm']) {
 		$post = $sql->fetchq("
 			SELECT p.id pid, p.deleted, t.id tid, f.id fid, f.minpower
 			FROM posts p
@@ -74,31 +91,31 @@
 	}
 	
 	$sql->query("UPDATE attachments SET views = views + 1 WHERE id = {$_GET['id']}");
-	
-	// Clear out any previous state
-	if (ob_get_level()) ob_end_clean();
-	
-	// Set the correct headers to make this file downloadable
-	header("Pragma: public");
-	//header("Expires: 0");
-	//header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-	
-	header("Cache-Control: public");
-	header('Connection: Keep-Alive');
-	header("Content-Security-Policy: script-src none");
-	if (!$attachment['is_image'] && !$_GET['t']) { // checking $_GET['t'] just in case of misconfiguration
-		// Display download box if it isn't an image
-		header("Content-Disposition: attachment");
-		header('Content-Type: application/octet-stream');
-	} else {
-		header("Content-type: {$attachment['mime']}");
-	}
-	header("Content-Description: File Transfer");
-	header("Content-Disposition: filename=\"{$attachment['filename']}\"");
-	header("Content-Transfer-Encoding: binary");
-	header("Content-Length: {$attachment['size']}");
 
-
-	readfile(attachment_name($_GET['id'], $_GET['t']));
-
+	download($attachment, attachment_name($_GET['id'], $_GET['t']));
 	die;
+	
+	function download($attachment, $path) {
+		// Clear out any previous state
+		if (ob_get_level()) ob_end_clean();
+		
+		// Set the correct headers to make this file downloadable
+		header("Pragma: public");
+		header("Cache-Control: public");
+		header('Connection: Keep-Alive');
+		header("Content-Security-Policy: script-src none");
+		if (!$attachment['is_image']) {
+			// Display download box if it isn't an image
+			header("Content-Disposition: attachment");
+			header('Content-Type: application/octet-stream');
+		} else {
+			header("Content-type: {$attachment['mime']}");
+		}
+		header("Content-Description: File Transfer");
+		header("Content-Disposition: filename=\"{$attachment['filename']}\"");
+		header("Content-Transfer-Encoding: binary");
+		if (!$_GET['t'])
+			header("Content-Length: {$attachment['size']}");
+		
+		readfile($path);
+	}

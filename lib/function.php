@@ -178,6 +178,8 @@ function domarkup($msg, $stdpost = null, $nosbr = false) {
 		$msg = preg_replace("'\[img\](.*?)\[/img\]'si", '<img class="imgtag" src=\\1>', $msg);
 		$msg = preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
+		
+		$msg = preg_replace("'\[attach=(\d*?)\]'si", 'download.php?id=\\1', $msg);
 	}
 
 	do {
@@ -1675,6 +1677,18 @@ function include_js($fn, $as_tag = false) {
 		return "<script src='$fn' type='text/javascript'></script>";
 	} else {
 		return '<script type="text/javascript">'.file_get_contents("js/{$fn}").'</script>';
+	}
+}
+
+function register_js($fn, $link = true) {
+	global $js_extra;
+	if (!$js_extra)
+		$js_extra = "";
+	
+	if ($link) {
+		$js_extra .= "<script src='$fn' type='text/javascript'></script>";
+	} else {
+		$js_extra .= "<script type='text/javascript'>$fn</script>";
 	}
 }
 

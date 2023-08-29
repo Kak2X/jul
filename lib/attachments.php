@@ -112,9 +112,11 @@ function quikattach($thread, $user, $loguser, $powlreq = ATTACH_REQ_DEFAULT, $sh
 }
 
 // Assumes to receive an array of elements fetched off the DB
-function attachfield($list, $extra = "") {
+function attachfield($list) {
 	global $isadmin;
-	$out = "";
+	$out = "<noscript><style>.acp-js-link{display:none}</style></noscript>";
+	register_js("js/attach_bbcode.js");
+	
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		
@@ -127,24 +129,28 @@ function attachfield($list, $extra = "") {
 		// id 0 is a magic value used for post previews
 		$w = $x['id'] ? 'a' : 'b';
 		
+		$key = ($x['id'] ? $x['id'] : $x['hash']);
+		
 		$out .= "
 		<table class='attachment-box'>
 			<tr>
 				<td class='attachment-box-thumb' rowspan='2'>
-					<$w href='download.php?id={$x['id']}{$extra}'><img src='{$thumb}'></$w>
+					<$w href='download.php?id={$x['id']}'><img src='{$thumb}'></$w>
 				</td>
 				<td class='attachment-box-text fonts'>
-					<div><$w href='download.php?id={$x['id']}{$extra}'>".htmlspecialchars($x['filename'])."</$w></div>
+					<div><$w href='download.php?id={$x['id']}'>".htmlspecialchars($x['filename'])."</$w></div>
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>
 			</tr>
 			<tr>
 				<td class='attachment-box-controls fonts right'>
-				".($isadmin ? "
+				".($isadmin && $x['id'] ? "
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=edit'>Edit</a> - 
-					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a>
+					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a> - 
 				" : "")."
+					<a href='#' class='acp-js-link' data-key='{$key}'>Copy BBcode</a>
+					<div class='acp-js-hide'><input type='text' id='acp-input-{$key}' class='w' readonly value='[attach={$key}]'></div>
 				</td>
 			</tr>
 		</table>";
@@ -250,8 +256,21 @@ function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 	return $attachsel;
 }
 
+// Replaces the temporary [attach=<hash>] fields for the threadpost preview
+function replace_attachment_temp_tags($key, $user, $msg) {
+	for ($i = 0;; ++$i) {
+		// This is why temp attachments IDs need to be contiguous
+		$path = attachment_tempname($key, $user, $i);
+		if (!file_exists($path)) return $msg;
+		
+		$metadata = get_attachment_metadata($path);
+		
+		$msg = str_replace("[attach={$metadata['hash']}]", "download.php?tmp={$key}_{$user}_{$i}&hash={$metadata['hash']}", $msg);
+	}
+}
+
 // After submitting a post/thread/edit/whatever
-function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array()) {
+function confirm_attachments($key, $user, $post, $flags = 0, $remove = array()) {
 	global $sql;
 	// If any attachments
 	if ($remove) {
@@ -282,7 +301,7 @@ function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array
 		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
 		
 		$rowid = $sql->insert_id();
-		$ids[] = $rowid;
+		$ids[$metadata['hash']] = $rowid;
 		// Move the thumbnail we previously generated off the temp folder
 		if ($metadata['is_image']) {
 			rename("{$path}_t", attachment_name($rowid, true));
@@ -291,6 +310,20 @@ function confirm_attachments($key, $user, $post = 0, $flags = 0, $remove = array
 		unlink("{$path}.dat");
 	}
 	//--
+	
+	// Convert temporary [attach=<tags>] replacements to the finalized [attach=<id>] tags
+	if ($ids) {
+		$table = ($flags & ATTACH_PM) ? 'pm_posts' : 'posts';
+		$message = $sql->resultq("SELECT text FROM {$table} WHERE id = {$post}");
+		if ($message) {
+			foreach ($ids as $hash => $id) {
+				$message = str_replace("[attach=$hash]", "[attach=$id]", $message);
+			}
+			$sql->queryp("UPDATE {$table} SET text = ? WHERE id = {$post}", [$message]);
+		}
+	}
+
+
 	return $ids;
 }
 
@@ -335,7 +368,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	// Move the file and THEN generate the thumbnail
 	$res = move_uploaded_file($file['tmp_name'], $path);
 	
-	list($is_image, $width, $height) = get_image_size($file['tmp_name']);
+	list($is_image, $width, $height) = get_image_size($path);
 	
 	// but first, get the metadata out of the way
 	$metadata = array(
@@ -345,6 +378,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 		'width'    => (int) $width,
 		'height'   => (int) $height,
 		'is_image' => (int) $is_image,
+		'hash'     => md5(file_get_contents($path)),
 	);
 	write_attachment_metadata($path, $metadata);
 	
@@ -372,6 +406,7 @@ function get_temp_attachments($thread, $user) {
 			'views'    => 0,
 			'is_image' => $is_image,
 			'imgprev'  => $is_image ? "data:".mime_content_type("{$path}_t").";base64,".base64_encode(file_get_contents("{$path}_t")) : NULL, // Image preview hack
+			'hash'     => $metadata['hash'],
 		];
 	}
 	return $res;

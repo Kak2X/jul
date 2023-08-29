@@ -61,7 +61,7 @@
 				upload_attachment($file, $key, $user, $post, $flags);
 				$ids = confirm_attachments($key, $user, $post, $flags);
 				
-				$_GET['id'] = $ids[0]; // redirect to upload edit
+				$_GET['id'] = array_pop($ids); // redirect to upload edit
 			
 				$in = array(
 					'filename' => filter_string($_POST['filename']),
@@ -277,18 +277,15 @@
 			$cell = (++$i)%2+1;
 			if ($x['post']) {
 				$type = "<a href='thread.php?pid={$x['post']}#{$x['post']}'>Post</a>";
-				$typelink = "";
 			} else if ($x['pm']) {
 				$type = "<a href='showprivate.php?pid={$x['pm']}#{$x['pm']}'>PM</a>";
-				$typelink = "&pm";
 			} else {
 				$type     = "-";
-				$typelink = "";
 			}
 			$txt .= "<tr>
 				<td class='tdbg{$cell} center fonts nobr'><a href='?id={$x['id']}&action=edit'>Edit</a> - <a href='?id={$x['id']}&action=delete'>Delete</a></td>
 				<td class='tdbg{$cell} center'>{$x['id']}</td>
-				<td class='tdbg{$cell} center'><a href='download.php?id={$x['id']}{$typelink}' target='_blank'>".htmlspecialchars($x['filename'])."</a></td>
+				<td class='tdbg{$cell} center'><a href='download.php?id={$x['id']}' target='_blank'>".htmlspecialchars($x['filename'])."</a></td>
 				<td class='tdbg{$cell} center'>".htmlspecialchars($x['mime'])."</td>
 				<td class='tdbg{$cell} center'>".sizeunits($x['size'])."</td>
 				<td class='tdbg{$cell} center'>".getuserlink($x, $x['uid'])."</td>

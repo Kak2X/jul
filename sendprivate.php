@@ -134,9 +134,13 @@ if ($_GET['id']) {
 	}
 	
 	if (isset($_POST['preview'])) {
+		$preview_msg = $_POST['message'];
+		if ($can_attach) {
+			$preview_msg = replace_attachment_temp_tags($attach_key, $loguser['id'], $preview_msg);
+		}
 		$data = array(
 			// Text
-			'message' => $_POST['message'],	
+			'message' => $preview_msg,	
 			#'head'    => "",
 			#'sign'    => "",
 			// Post metadata
@@ -223,7 +227,7 @@ if ($_GET['id']) {
 			</td>
 		</tr>
 		<?=$modoptions?>
-		<?=quikattach($_GET['id'], $loguser['id'], $loguser, ATTACH_REQ_DEFAULT)?>
+		<?=quikattach($attach_key, $loguser['id'], $loguser, ATTACH_REQ_DEFAULT)?>
 	</table>
 	<br>
 	<?=$postlist?>
@@ -362,11 +366,15 @@ else {
 		if ($posticon) {
 			$iconpreview = "<img src=\"".escape_attribute($posticon)."\" height=15 align=absmiddle>";
 		}
+		$preview_msg = $_POST['message'];
+		if ($can_attach) {
+			$preview_msg = replace_attachment_temp_tags($attach_key, $loguser['id'], $preview_msg);
+		}
 		// Threadpost
 		
 		$data = array(
 			// Text
-			'message' => $_POST['message'],	
+			'message' => $preview_msg,	
 			#'head'    => "",
 			#'sign'    => "",
 			// Post metadata

@@ -123,15 +123,18 @@
 	// Execute anything to do as soon as the extension system loads
 	hook_use('init');
 
-	// Delete expired bans
-	$sql->query("
-		UPDATE `users` SET
-		    `ban_expire` = 0,
-		    `powerlevel` = powerlevel_prev
-		WHERE `ban_expire` != 0 AND
-		      `powerlevel` = '-1' AND
-		      `ban_expire` < ".time()
-	);
+	if (!filter_bool($meta['notrack'])) {
+		// Delete expired bans
+		$sql->query("
+			UPDATE `users` SET
+				`ban_expire` = 0,
+				`powerlevel` = powerlevel_prev
+			WHERE `ban_expire` != 0 AND
+				  `powerlevel` = '-1' AND
+				  `ban_expire` < ".time()
+		);		
+	}
+
 	$loguser = array();
 
 	// Just making sure.  Don't use this anymore.
@@ -530,13 +533,14 @@
 				IRC_MAIN, "View **".number_format($views)."** by ".($loguser['id'] ? "**{$loguser['name']}**" : "**{$_SERVER['REMOTE_ADDR']}**").($views % 1000000 > 500000 ? " (**".number_format(1000000 - ($views % 1000000))." to go)" : ""),
 			);
 		}
+		
 	}
-
-	// Dailystats update in one query
-	$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
-	             "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
-	             "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
-
+	if (!filter_bool($meta['notrack'])) {
+		// Dailystats update in one query
+		$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
+					 "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
+					 "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
+	}
 
 	$specialscheme = "";
 

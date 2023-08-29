@@ -172,9 +172,14 @@
 				/*
 					Edit preview
 				*/
+				$preview_msg = $message;
+				if ($can_attach) {
+					$preview_msg = replace_attachment_temp_tags($attach_key, $loguser['id'], $preview_msg);
+				}
+				
 				$data = array(
 					// Text
-					'message' => $message,	
+					'message' => $preview_msg,	
 					'head'    => $head,
 					'sign'    => $sign,
 					'css'     => $css,
@@ -228,56 +233,51 @@
 		<?= $barlinks . $forum_error ?>
 		<form method="POST" ACTION="editpost.php?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
+			<tr><td class='tdbgh center' colspan='3'>Edit post</td></tr>
 			<tr>
-				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
-				<td class='tdbgh center' colspan=2>&nbsp;</td>
-			</tr>
-			
-			<tr>
-				<td class='tdbg1 center b'>CSS:</td>
-				<td class='tdbg2' style='width: 800px' valign=top>
-					<textarea wrap=virtual name=css ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($css)?></textarea>
+				<td class='tdbg1 center b' style='width: 150px'>Post:</td>
+				<td class='tdbg2' id="msgtd"  style='width: 800px' valign="top">
+					<textarea id="msgtxt" wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
-				<td class='tdbg2' width=* rowspan=4>
+				<td class='tdbg2'>
 					<?=mood_layout(0, $post['user'], $moodid)?>
 				</td>
 			</tr>
 			<tr>
-				<td class='tdbg1 center b'>Header:</td>
-				<td class='tdbg2' id="headtd" style='width: 800px' valign=top>
-					<textarea id="headtxt" wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($head)?></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2' id="msgtd"  style='width: 800px' valign=top>
-					<textarea id="msgtxt" wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center b'>Signature:</td>
-				<td class='tdbg2' id="signtd" style='width: 800px' valign=top>
-					<textarea id="signtxt" wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($sign)?></textarea>
-				</td>
-			</tr>
-			
-			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2' colspan='2'>
 					<?= auth_tag() ?>
 					<input type='submit' class=submit name=submit VALUE="Edit post">
 					<input type='submit' class=submit name=preview VALUE="Preview post">
 				</td>
-			</tr>
-			
+			</tr>	
 			<tr>
 				<td class='tdbg1 center b'>Options:</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2' colspan='2'>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
 					<?=mood_layout(1, $post['user'], $moodid)?>
 				</td>
 				<?=quikattach($attach_key, $post['user'], $loguser, ATTACH_REQ_DEFAULT, $post['id'], $attachsel)?>
+			</tr>
+			<tr><td class='tdbgh center' colspan='3'>Edit layout specific to this post</td></tr>
+			<tr>
+				<td class='tdbg1 center b'>CSS:</td>
+				<td class='tdbg2' valign='top' colspan='2'>
+					<textarea wrap=virtual name=css ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($css)?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center b'>Header:</td>
+				<td class='tdbg2' id="headtd" valign='top' colspan='2'>
+					<textarea id="headtxt" wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($head)?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg1 center b'>Signature:</td>
+				<td class='tdbg2' id="signtd" valign='top' colspan='2'>
+					<textarea id="signtxt" wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($sign)?></textarea>
+				</td>
 			</tr>
 		</table>
 		</form>

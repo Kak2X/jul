@@ -658,7 +658,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 
 
 function pagefooter($showfooter = true) {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar, $poweredbypic;
+	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar, $poweredbypic, $js_extra;
 	
 	if ($_adminsidebar !== null)
 		print $_adminsidebar->DisplayBottom();
@@ -716,7 +716,8 @@ piwikTracker.enableLinkTracking();
 <!--<script type=\"text/javascript\" src=\"http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.6.min.js\"></script>
 <script type=\"text/javascript\" src=\"js/useful.js\"></script> -->
 	*/
-	
+	if (isset($js_extra))
+		print $js_extra;
 	//print "<script type='text/javascript' src='js/jquery.min.js'></script>";
 	print "<br><br><center>";
 	

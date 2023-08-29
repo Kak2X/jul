@@ -48,7 +48,7 @@
 			
 			// Display the pretty attachment list
 			if (filter_array($post['attach'])) {
-				$set['attach'] = attachfield($post['attach'], ($forum < 0 ? "&pm" : "")); //, ($isadmin || $post['uid'] == $loguser['id']));
+				$set['attach'] = attachfield($post['attach']); //, ($isadmin || $post['uid'] == $loguser['id']));
 			} else {
 				$set['attach'] = "";
 			}

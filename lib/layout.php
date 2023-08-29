@@ -91,15 +91,8 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		
 		// Now with logout workaround when JS is disabled
 		$logout = '
-		<form action="login.php" method="post" name="logout" style="display: inline">
-			<noscript>
-				<style>#logoutlink{display: none;}</style>
-				<input type="submit" name="njout" class="tdbg1 buttonlink" value="Logout">
-			</noscript>
-			<a id="logoutlink" href="javascript:document.logout.submit()">Logout</a>
-			<input type="hidden" name="action" value="logout">
-			'.auth_tag(TOKEN_LOGIN).'
-		</form>';
+		<form action="login.php" method="post" name="logout" style="display: inline"><input type="hidden" name="action" value="logout">'.auth_tag(TOKEN_LOGIN).'</form>
+		<a href="login.php?action=logout" onclick="event.preventDefault(); document.logout.submit()">Logout</a>';
 		
 		$headlinks.= $logout.'
 		- <a href="editprofile.php">Edit profile</a>

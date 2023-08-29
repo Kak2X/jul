@@ -13,6 +13,24 @@
 		$verifyid = 4;
 	}
 	
+	$_GET['action'] = filter_string($_GET['action']);
+	
+	if ($_GET['action'] == "logout") {
+		if (!confirmed($msgkey = 'logout')) {
+			$title   = "Board Message";
+			$message = "Are you sure you want to log out?";
+			$form_link = "?action=logout";
+			$buttons   = array(
+				[BTN_SUBMIT, "Yes"],
+				[BTN_URL, "No", "index.php"]
+			);
+			confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_LOGIN);			
+		}
+		$_POST['action'] = "logout";
+		$_POST['auth'] = $_POST['auth_logout'];
+	}
+	
+	
 	$action   = filter_string($_POST['action']);
 	
 	$txt = "";

@@ -56,6 +56,9 @@ function rating_image($data, $double = false) {
 	// Avoid file_exist'ing all the time
 	if (isset($url_cache[$data['id']])) {
 		$url = $url_cache[$data['id']];
+	} else if (file_exists(rating_path($data['id'], ".svg"))) {
+		$url = rating_path($data['id'], ".svg");
+		$url_cache[$data['id']] = $url;
 	} else if (file_exists(rating_path($data['id']))) {
 		$url = rating_path($data['id']);
 		$url_cache[$data['id']] = $url;
@@ -67,8 +70,8 @@ function rating_image($data, $double = false) {
 	return "<img src=\"images/_.gif\" class='icon-rating-image {$css}' style='background-image: url(\"{$url}\")' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
 }
 
-function rating_path($id) {
-	return "extensions/postratings.abx/files/images/ratings/uploads/{$id}";
+function rating_path($id, $ext = "") {
+	return "extensions/postratings.abx/files/images/ratings/uploads/{$id}{$ext}";
 }
 
 function upload_rating_image($file, $id) {
@@ -78,16 +81,25 @@ function upload_rating_image($file, $id) {
 	if (!$file['size']) 
 		errorpage("This is an 0kb file");
 	
-	if (!get_image_type($file['tmp_name']))
+	$img_type = get_image_type($file['tmp_name']);
+	if (!$img_type)
 		errorpage("This isn't a supported image type.");
 	
-	return move_uploaded_file($file['tmp_name'], rating_path($id));
+	// content-type requirements :(
+	$extension = $img_type == IMAGETYPE_SVG ? ".svg" : "";
+	
+	// Delete existing file, if present
+	delete_rating_image($id);
+	
+	return move_uploaded_file($file['tmp_name'], rating_path($id, $extension));
 }
 
 function delete_rating_image($id) {
 	$p = rating_path($id);
+	if (file_exists($p.".svg"))
+		unlink($p.".svg");
 	if (file_exists($p))
-		unlink(rating_path($id));
+		unlink($p);
 }
 
 function rating_colors($val, $pts) {

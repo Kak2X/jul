@@ -71,7 +71,7 @@
 			// adapted from editavatars, could be thrown in an helper func
 			if (!$_POST['delimg']) {
 				$valid_file = (!empty($_FILES['upload']) && !filter_int($_FILES['upload']['error']));
-				if (!$valid_file && !file_exists(rating_path($_GET['id'])) && !$_POST['image']) {
+				if (!$valid_file && !file_exists(rating_path($_GET['id'])) && !file_exists(rating_path($_GET['id'], ".svg")) && !$_POST['image']) {
 					upload_error($_FILES['upload']);
 					errorpage("You need to either upload an picture or specify an URL.");
 				}
@@ -131,7 +131,7 @@
 			$x = $ratings[$_GET['id']];
 			$editAction = "Editing rating '".htmlspecialchars($x['title'])."'";
 			$delrating = "<input type='checkbox' name='delete' value=1> Delete rating";
-			$delimg = file_exists(rating_path($_GET['id'])) ? '<label><input type="checkbox" name="delimg" value="1"> Delete uploaded file</label> - ' : "";
+			$delimg = file_exists(rating_path($_GET['id'])) || file_exists(rating_path($_GET['id'], ".svg")) ? '<label><input type="checkbox" name="delimg" value="1"> Delete uploaded file</label> - ' : "";
 		}		
 ?>
 		<form method="POST" action="<?= actionlink(null, "?id={$_GET['id']}")?>" enctype="multipart/form-data">

@@ -244,7 +244,7 @@ function postcode($post,$set){
 				{$noobspan}{$set['userlink']}</span>{$opt->top_left}
 			</td>";
 			$sidebar = "
-			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' valign=top>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' style='border-top: none' valign=top>
 				{$sidebar}
 				<img src='images/_.gif' width=200 height=1>
 			</td>";

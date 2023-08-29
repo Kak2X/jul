@@ -109,10 +109,43 @@ hook_add('tlayout-compact', function ($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	add_option_row("<tr><td class='tdbg{$set['bg']}' colspan='2'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_TOP);
 });
+hook_add('tlayout-hydra', function ($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<tr><td class='tdbg{$set['bg']}'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_BOTTOM);
+});
 hook_add('tlayout-ezboard', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	add_option_row("<tr>
 			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$data->csskey}_opt fonts'></td>
-			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts'>{$set['rating']}</td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td>
 		</tr>");
 });
+hook_add('tlayout-postwide', function ($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<tr><td class='tdbg{$set['bg']} fonts' colspan='2'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_TOP);
+});
+hook_add('tlayout-rpg', function($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<tr>
+			
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td>
+		</tr>");
+});
+hook_add('tlayout-ubb', function($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<tr>
+			<td class='tdbg{$set['bg']}' style='border-top: none'></td>
+			<td class='tdbg{$set['bg']}' style='border-top: none'><hr>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td>
+		</tr>");
+});
+hook_add('tlayout-vbb', function($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<tr>
+			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$data->csskey}_opt fonts'></td>
+			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td>
+		</tr>");
+});
+hook_add('tlayout-vertical', function ($_, $set, $post, $data) {
+	if ($post['deleted'] || !$post['id']) return;
+	add_option_row("<br/>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode']), OPTION_ROW_TOP);
+});		

@@ -30,12 +30,12 @@
 	
 	$height = $post['deleted'] ? 0 : 220;
 	
-	$optionrow = "";
-	if ($set['rating']) {
-		$optionrow .= "<tr>
-			<td class='tdbg{$set['bg']} fonts' colspan=2>{$set['rating']}</td>
-		</tr>";
-	}
+	//--
+	$data = new tlayout_ext_input();
+	//--
+	$opt = get_tlayout_opts('postwide', $set, $post, $data);
+	
+
 	
     return "
 	<table class='table post tlayout-postwide' id='{$post['id']}'>
@@ -49,6 +49,7 @@
 				</table>
 			</td>
 		</tr>
+		{$opt->option_rows_top}
 		<tr>
 			<td class='tdbg{$set['bg']} vatop' style='height: {$height}px' colspan=2  id='post{$post['id']}'>
 				{$post['headtext']}
@@ -62,7 +63,7 @@
 				{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}
 			</td>
 		</tr>
-		{$optionrow}
+		{$opt->option_rows_bottom}
 	  </table>
     ";
   }

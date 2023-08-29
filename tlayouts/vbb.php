@@ -41,13 +41,12 @@ function postcode($post, $set){
 	$csskey = getcsskey($post);
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
-	$optionrow = "";
-	if ($set['rating']) {
-		$optionrow .= "<tr>
-			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'></td>
-			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts'>{$set['rating']}</td>
-		</tr>"; // &nbsp;<b>Post ratings:</b>
-	}
+	//--
+	$data = new tlayout_ext_input();
+	$data->csskey           = $csskey;
+	$data->rowspan          = 2;
+	//--
+	$opt = get_tlayout_opts('vbb', $set, $post, $data);
 	
     return "
 	<table class='table post tlayout-vbb contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
@@ -63,16 +62,18 @@ function postcode($post, $set){
 				{$post['signtext']}
 			</td>
 		</tr>
+		{$opt->option_rows_top}
 		<tr>
 			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$set['new']}{$postdate}</td>
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
 				<table class='w fonts'><tr>
+				
 					<td>[<a href='profile.php?id=$u'>Profile</a>] [<a href='sendprivate?userid=$u'>Send PM</a>]{$homepage} [<a href='thread.php?user=$u'>Search</a>]{$threadlink}</td>
 					<td class='nobr right'>{$post['edited']} {$controls['quote']} {$controls['edit']} {$controls['ip']}</td>
 				</tr></table>
 			</td>
 		</tr>
-		{$optionrow}
+		{$opt->option_rows_bottom}
 	</table>
     ";
   }

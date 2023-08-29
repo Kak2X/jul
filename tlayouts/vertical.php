@@ -35,6 +35,10 @@ function postcode($post,$set){
 	}
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
+	$data = new tlayout_ext_input();
+	$opt = get_tlayout_opts('vertical', $set, $post, $data);
+	//--
+	
 	if ($post['deleted']) {
 		$height = 0;
 		$sideleft = "{$noobspan}{$set['userlink']}</span>";
@@ -62,7 +66,7 @@ function postcode($post,$set){
 			<br>{$threadlink} {$controls['quote']}
 			<br>{$controls['edit']}
 			<br>{$controls['ip']}
-			<br>{$set['rating']}";
+			{$opt->option_rows_top}";
 	}
 	
     return "
@@ -84,6 +88,7 @@ function postcode($post,$set){
 		</td>
 	</tr>
 	<tr><td class='tdbg{$set['bg']}' height=1 colspan=2></td></tr>
+	{$opt->option_rows_bottom}
 </table>";
 
   }

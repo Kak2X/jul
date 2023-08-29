@@ -30,10 +30,16 @@ function postcode($post,$set){
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	$height   = $post['deleted'] ? 0 : 220;	
 	
+	//--
+	$data = new tlayout_ext_input();
+	$data->rowspan          = 2;
+	//--
+	$opt = get_tlayout_opts('hydra', $set, $post, $data);
+	
 	return 
 	"<table class='table post tlayout-hydra' id='{$post['id']}'>
 		<tr>
-			<td class='tdbg{$set['bg']} vatop' rowspan=3 style='width: 20% !important;'>
+			<td class='tdbg{$set['bg']} vatop' rowspan='{$opt->rowspan}' style='width: 20% !important;'>
 				{$noobspan}{$set['userlink']}</span>
 				<span class='fonts'>
 					<br>
@@ -55,6 +61,7 @@ function postcode($post,$set){
 				</table>
 			</td>
 		</tr>
+		{$opt->option_rows_top}
 		<tr>
 			<td class='tbl tdbg{$set['bg']} vatop' style='overflow: visible; width: 70%;' height={$height} id='post{$post['id']}'>
 				{$post['headtext']}
@@ -63,7 +70,7 @@ function postcode($post,$set){
 				{$post['signtext']}
 			</td>
 		</tr>
-		<tr><td class='tdbg{$set['bg']}'>{$set['rating']}</td></tr>
+		{$opt->option_rows_bottom}
 	</table>
 	<br>";
 /*

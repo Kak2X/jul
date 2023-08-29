@@ -14,6 +14,11 @@
 		$threadlink	= ", in {$set['threadlink']}";
 	}
 	
+	//--
+	$data = new tlayout_ext_input();
+	//--
+	$opt = get_tlayout_opts('ubb', $set, $post, $data);
+	
 	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	if ($post['deleted']) {
 		$sidebar = "";
@@ -40,6 +45,7 @@
 							<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
 							<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
 						</tr>
+						{$opt->option_rows_top}
 				</table>
 				<hr>
 				{$post['headtext']}
@@ -48,10 +54,7 @@
 				{$post['signtext']}
 			</td>
 		</tr>
-		<tr>
-			<td class='tdbg{$set['bg']}'></td>
-			<td class='tdbg{$set['bg']}'><hr>{$set['rating']}</td>
-		</tr>
+		{$opt->option_rows_bottom}
 	 </table>
     ";
   }

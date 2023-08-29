@@ -31,6 +31,7 @@ function postcode($post,$set) {
 	
 	return "
 <table class='table post tlayout-ezboard contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
+	{$opt->option_rows_top}
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop' style='width: 200px'>
 			{$noobspan}{$set['userlink']}</span>{$opt->top_left}
@@ -45,15 +46,13 @@ function postcode($post,$set) {
 				{$set['userpic']}
 			</span>
 		</td>
-		{$opt->option_rows_top}
 		<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} vatop' id='post{$post['id']}'>
 			{$post['headtext']}
 			{$post['text']}
 			{$set['attach']}
 			{$post['signtext']}
 		</td>
-		{$opt->option_rows_bottom}
 	</tr>
-	{$optionrow}
+	{$opt->option_rows_bottom}
 </table>";
 }

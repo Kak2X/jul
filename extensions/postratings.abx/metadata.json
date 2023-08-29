@@ -2,9 +2,9 @@
 	"name":"Post Ratings",
 	"description":"XenForo-like post ratings.",
 	"trueandhonest": "Enables users to flag islamic content and so much more.",
-	"version":"1.0",
+	"version":"1.1",
 	"author":"Kak",
-	"date":"23/08/2023",
+	"date":"29/08/2023",
 	"image" : "icon.png",
 	"configpage": true
 }

@@ -12,13 +12,15 @@
 
 /* icon sizes */
 .icon-rating-image {
-	max-width: 16px;
-	max-height: 16px;
+	width: 16px;
+	height: 16px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
 }
 .icon-rating-image.lg {
 	width: 32px;
-	max-width: unset;
-	max-height: 32px;
+	height: 32px;
 }
 .user-rating-thumbnail {
 	width: 64px;

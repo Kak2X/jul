@@ -178,7 +178,7 @@
 						".getuserlink($user, $user['uid'])."
 					</td>
 					<td class='tdbg{$cell} right'>
-						".rating_image($data, true)."<br/><span class='underline' title=\"".printdate($user['date'])."\">".printdate($user['date'], true)."</span>
+						".rating_image($data, true)."<br/><span class='underline nobr' title=\"".printdate($user['date'])."\">".printdate($user['date'], true)."</span>
 					</td>
 				</tr>";
 			}

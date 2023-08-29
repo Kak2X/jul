@@ -1814,6 +1814,35 @@ function cleanurl($url) {
 	return substr($url, $spos+1);
 }
 
+const IMAGETYPE_NONE = 0; // Not an image
+const IMAGETYPE_BITMAP = 1; // Thumbnailable
+const IMAGETYPE_SVG = 2; // Vector
+function get_image_type($path) {
+	// Let PHP do the hard work :^)
+	$type = mime_content_type($path);
+	switch ($type) {
+		case 'image/png':
+		case 'image/gif':
+		case 'image/jpg':
+		case 'image/webp':
+			return IMAGETYPE_BITMAP;
+		case 'image/svg+xml':
+			return IMAGETYPE_SVG;
+		default:
+			return IMAGETYPE_NONE; // sorry not sorry, actual bmp files
+	}
+}
+
+// list($is_image, $width, $height)
+function get_image_size($path) {
+	if (get_image_type($path) == IMAGETYPE_BITMAP) {
+		list ($width, $height) = getimagesize($path);
+		if ($width && $height)
+			return [true, $width, $height];
+	}
+	return [false, 0, 0];
+}
+
 /* extra fun functions! */
 function pick_any($array) {
 	if (is_array($array)) {

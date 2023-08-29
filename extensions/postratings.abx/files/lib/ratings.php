@@ -63,7 +63,8 @@ function rating_image($data, $double = false) {
 		$url = escape_attribute($data['image']);
 		$url_cache[$data['id']] = $url;
 	}
-	return "<img src=\"{$url}\" class='icon-rating-image {$css}' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
+	// changed to XF2-like background CSS format because SVGs didn't play well with it
+	return "<img src=\"images/_.gif\" class='icon-rating-image {$css}' style='background-image: url(\"{$url}\")' title=\"".htmlspecialchars($data['title'])."\" align='absmiddle'>";
 }
 
 function rating_path($id) {
@@ -77,9 +78,7 @@ function upload_rating_image($file, $id) {
 	if (!$file['size']) 
 		errorpage("This is an 0kb file");
 	
-	list($width, $height) = getimagesize($file['tmp_name']);
-	
-	if (!$width || !$height)
+	if (!get_image_type($file['tmp_name']))
 		errorpage("This isn't a supported image type.");
 	
 	return move_uploaded_file($file['tmp_name'], rating_path($id));

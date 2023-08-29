@@ -148,7 +148,7 @@
 			</tr>
 			<tr>
 				<td class="tdbg1 center b" rowspan="2">Image:</td>
-				<td class="tdbg1"><input name="upload" type="file"></td>
+				<td class="tdbg1"><input name="upload" type="file"><span class="fonts"> Allowed formats: png, gif, jpg, webp, svg</span></td>
 			</tr>
 			<tr>
 				<td class="tdbg1">

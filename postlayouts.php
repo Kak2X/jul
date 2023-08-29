@@ -2,12 +2,11 @@
 
 	require "lib/common.php";
 	
-	$_GET['id']          = filter_int($_GET['id']);
+	$_GET['id']          = isset($_GET['id']) ? (int)$_GET['id'] : $loguser['id'];
 	$_COOKIE['plp_aupd'] = filter_int($_COOKIE['plp_aupd']);
 	
-	
 	if (!$_GET['id']) {
-		errorpage("No user selected.");
+		errorpage("You need to be logged in to do this."); // close enough
 	}
 	
 

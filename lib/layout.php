@@ -103,6 +103,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		
 		$headlinks.= $logout.'
 		- <a href="editprofile.php">Edit profile</a>
+		'.(!$loguser['profile_locked'] ? " - <a href='postlayouts.php'>Edit layout</a>" : "").'
 		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
 		- <a href="postradar.php">Post radar</a>
 		- <a href="shop.php">Item shop</a>

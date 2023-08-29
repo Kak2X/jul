@@ -84,7 +84,7 @@
 <?php
 	} else {
 		$ratesel = $sql->fetchq("SELECT 1 rated, rating FROM userratings WHERE userfrom = {$loguser['id']} AND userrated = {$_GET['id']}");
-		if ($ratesel['rated']) {
+		if ($ratesel && $ratesel['rated']) {
 			$sel[$ratesel['rating']] = " checked";
 		}
 		

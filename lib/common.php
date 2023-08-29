@@ -13,10 +13,10 @@
 	header("Content-type: text/html; charset=utf-8'");
 
 	// cache bad (well, most of the time)
-	if (!isset($meta['cache'])) {
-		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-		header('Pragma: no-cache');
-	}
+	//if (!isset($meta['cache'])) {
+	//	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+	//	header('Pragma: no-cache');
+	//}
 	if (!isset($_SERVER['HTTP_USER_AGENT']))
 		$_SERVER['HTTP_USER_AGENT'] = "";
 

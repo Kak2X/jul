@@ -200,7 +200,7 @@
 	</tr>
 	<tr>
 		<td class="tdbg1" colspan="3">
-			<span id="jsbtn">
+			<span class="js">
 				<label><input type="checkbox" id="autoupdate" value="1"<?= $_COOKIE['plp_aupd'] ? " checked" : ""?>> Auto update CSS</label> | 
 				<input type="button" onclick="quickpreview(true)" value="Preview CSS"> 
 			</span>
@@ -221,9 +221,6 @@
 
 </table>
 </form>
-
-<noscript><style>#jsbtn{display:none}</style></noscript>
-
 	
 <script type="text/javascript">
 	var user = <?= $_GET['id'] ?>;

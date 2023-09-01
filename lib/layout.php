@@ -347,13 +347,13 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	
 	$customstyle = filter_string($meta['baserel']) . hook_print('header-css');
 
+	$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>";
 	if ($nullscheme) {
 		// special "null" scheme.
-		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'><style type='text/css'>";
+		$css .= "<style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "
-		<link rel='stylesheet' href='schemes/base.css' type='text/css'>$customstyle
+		$css = "$customstyle
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
 		
@@ -364,7 +364,7 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>$customstyle
+		$css .= "$customstyle
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }
@@ -527,7 +527,19 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	if ($loguser['fontsize']) {
 		$css .= "body { font-size: {$loguser['fontsize']}% }\n"; 
 	}
-	$css .= '</style>';
+	
+	/*
+		JS Utility (and other crap in common.js that's important to be loaded immediately)
+		
+		<noscript>   -> Only shown with JS disabled
+		.js          -> Only shown with JS enabled
+		.nojs-jshide -> Shown with JS disabled, hidden off-screen with JS enabled
+	*/
+	$css .= "
+	.js, .nojs-jshide {display: none}
+</style>
+<noscript><style>.nojs-jshide {display: unset}</style></noscript>
+<script type='text/javascript' src='js/common.js'></script>";
 
 	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
 	

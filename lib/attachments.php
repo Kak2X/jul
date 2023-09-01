@@ -114,9 +114,9 @@ function quikattach($thread, $user, $loguser, $powlreq = ATTACH_REQ_DEFAULT, $sh
 // Assumes to receive an array of elements fetched off the DB
 function attachfield($list) {
 	global $isadmin;
-	$out = "<noscript><style>.acp-js-link{display:none}</style></noscript>";
 	register_js("js/attach_bbcode.js");
 	
+	$out = "";
 	foreach ($list as $k => $x) {
 		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		
@@ -147,10 +147,10 @@ function attachfield($list) {
 				<td class='attachment-box-controls fonts right'>
 				".($isadmin && $x['id'] ? "
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=edit'>Edit</a> - 
-					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a> - 
+					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a><span class='js'> - </span>
 				" : "")."
-					<a href='#' class='acp-js-link' data-key='{$key}'>Copy BBcode</a>
-					<div class='acp-js-hide'><input type='text' id='acp-input-{$key}' class='w' readonly value='[attach={$key}]'></div>
+					<a href='#' class='js acp-js-link' data-key='{$key}'>Copy BBcode</a>
+					<div class='nojs-jshide'><input type='text' id='acp-input-{$key}' class='w right' readonly value='[attach={$key}]'></div>
 				</td>
 			</tr>
 		</table>";

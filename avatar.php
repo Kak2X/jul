@@ -57,11 +57,7 @@ while ($u = $sql->fetch($users)) {
 if ($me && $moods) {
 	
 	$_GET['start'] = filter_int($_GET['start']);
-	
-	// Output the javascript right away
-	print include_js('avatars.js').
-	'<noscript><style type="text/css">.hideme{display: none}</style></noscript>';
-	
+	print include_js("avatars.js");
 	
 	if ($config['allow-avatar-storage']) {
 		$header_text  = count($moods)." avatars found";
@@ -94,7 +90,7 @@ if ($me && $moods) {
 		
 		$selected = ($num == $_GET['start']) ? ' checked' : '';
 		$txt .= "
-		<span class='hideme'>
+		<span class='js'>
 			<input type='radio' name='moodid' value='{$num}' id='mood{$num}' tabindex='". (9000 + $num) ."' style='height: 12px' {$jsclick} {$selected}>
             <label for='mood{$num}' style='font-size: 12px'>
 				&nbsp;{$num}:&nbsp;".htmlspecialchars($x['title'])."
@@ -135,10 +131,9 @@ if ($me && $moods) {
 	}
 </script>
 <center>
-<table height=100% valign=middle>
+<table class="tablevc">
 	<tr>
 		<td>
-		
 			<table class='table'>
 				<tr style='height: 50px'>
 					<td class='tdbgh center' colspan=2>
@@ -155,7 +150,6 @@ if ($me && $moods) {
 				</tr>
 				<?=$ret?>
 			</table>
-			
 		</td>
 	<tr>
 </table>

@@ -79,7 +79,7 @@
 	$miscdata = $sql->fetchq("SELECT disable, views, scheme, specialtitle, private, backup, defaultscheme, attntitle, attntext, irc_enable, discord_enable FROM misc");
 
 	// Wait for the midnight backup to finish...
-	if ($miscdata['backup'] || (int) date("Gi") < 1) {
+	if ($miscdata['backup']) { // || (int) date("Gi") < 1) {
 		header("HTTP/1.1 503 Service Unavailable");
 		$title 		= "{$config['board-name']} -- Temporarily down";
 

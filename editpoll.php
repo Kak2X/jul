@@ -210,13 +210,12 @@
 			<td class='tdbg2'>
 				<?=$choice_txt?>
 				<noscript>
-					<style type="text/css">#jsadd{ display: none }</style>
 					<input type='submit' name='changeopt' value='Submit changes'>&nbsp;and show 
 					&nbsp;<input type='text' name='addopt' value='<?=$addopt?>' size='4' maxlength='1'>&nbsp;options
 				</noscript>
 			</td>
 		</tr>
-		<tr id="jsadd">
+		<tr class="js">
 			<td class='tdbg1 center b'>New choices:</td>
 			<td class='tdbg2'>
 				Add choice: <input type="button" value="+" onclick="addchoice()">

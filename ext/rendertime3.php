@@ -7,9 +7,10 @@
 	ini_set("memory_limit", "256M");
 
 	$mintime	= time() - (86400 * 30);
-
-	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes`". ($_GET['all'] ? "" : "WHERE `time` > $mintime ")));
-	$num		= ceil(time() / 3600) - $rangemin;
+	
+	$_GET['all'] = filter_bool($_GET['all']);
+	$rangemin	= floor((int)$sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes`". ($_GET['all'] ? "" : "WHERE `time` > $mintime ")));
+	$num		= $rangemin ? ceil(time() / 3600) - $rangemin : 1;
 
 	$maxy			= 500;
 	$scaley			= $maxy / 25;
@@ -69,8 +70,11 @@
 	$averages[]	= 0;
 	$averages[]	= $maxy;
 	$averages2	= $averages;
-
+	$averages2f = [];
+	
 	$avglen	= 12;
+	$avgpos = $avgpos2 = 0;
+	$overtop = false;
 	for ($i = -1; $i <= $num; $i++) { 
 
 		$oldavg		= $avgpos;
@@ -83,8 +87,8 @@
 
 		for ($avgpos = -$avgofs; $avgpos <= $avgofs; ++$avgpos) {
 			$sinc		= sinc($avgpos/$avgofs);
-			$thisavg	= $linedata[$i + $avgpos]['a'];
-			$thisavg2	= $linedata[$i + $avgpos]['m'];
+			$thisavg	= filter_int($linedata[$i + $avgpos]['a']);
+			$thisavg2	= filter_int($linedata[$i + $avgpos]['m']);
 			if (($i + $avgpos) <= $num && ($i + $avgpos) >= 0) {
 				$avgtotal	+= $thisavg * $sinc;
 				$avgtotal2	+= $thisavg2 * $sinc;
@@ -138,14 +142,13 @@
 		$averages2	= array_merge($averages2, $averages2f);
 	}
 
-	imagefilledpolygon($image, $averages2, (count($averages2) / 2), $col['avgf2']);
-	imagepolygon($image, $averages2, (count($averages2) / 2), $col['avgt2']);
+	drawfilledpolygon($image, $averages2, $col['avgt2'], $col['avgf2']);
 
 
 	foreach ($linedata as $x => $nums) {
 
-		$y	= $maxy - ($nums['a'] * $scaley);
-		$y2	= $maxy - ($nums['m'] * $scaley);
+		$y	= (int)($maxy - ($nums['a'] * $scaley));
+		$y2	= (int)($maxy - ($nums['m'] * $scaley));
 
 //		imagefilledrectangle($image, $x * $scalex, $maxy, ($x + 1) * $scalex - 1, $y2, $col['line3']);
 
@@ -159,11 +162,11 @@
 
 	}
 
-	imagefilledpolygon($image, $averages, (count($averages) / 2), $col['avgf']);
-	imagepolygon($image, $averages, (count($averages) / 2), $col['avgt']);
+	drawfilledpolygon($image, $averages, $col['avgt'], $col['avgf']);
 
 
-	header("Content-type: image/png");
+
+	header_content_type("image/png");
 	imagepng($image);
 	imagedestroy($image);
 
@@ -175,5 +178,3 @@
 		$ret	= ($x ? sin($x*pi())/($x*pi()) : 1);
 		return $ret;
 	}
-
-?>

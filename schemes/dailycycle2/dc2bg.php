@@ -1,9 +1,13 @@
 <?php
-	die;
+	//die;
 	
 	$_GET['length'] = isset($_GET['length']) ? (int)$_GET['length'] : 0;	
 	if (!$_GET['length'])		$_GET['length'] = 255;
 	if ($_GET['length'] > 255)	$_GET['length'] = 255;
+	
+	$keys = ['r1','r2','g1','g2','b1','b2'];
+	foreach ($keys as $k)
+		$_GET[$k] = isset($_GET[$k]) ? numrange($_GET[$k], 0, 255) : mt_rand(0, 255);
 	
 	$maxlen	= 512;
 	$img	= ImageCreatetruecolor(8, $_GET['length']);
@@ -20,7 +24,7 @@
 	}
 
 	imagecopyresampled($img2, $img, 0, 0, 0, 0, 8, $maxlen, 8, 255);
-	Header("Content-type:image/png");
+	header("Content-type: image/png");
 	ImagePNG($img2);
 	imagedestroy($img);
 	imagedestroy($img2);
@@ -32,5 +36,9 @@ function calc ($c1, $c2, $p) {
 	
 	$c = ($c2 * $p) + ($c1 * (1 - $p));
 	return $c;
+}
+
+function numrange($n, $lo, $hi) {
+	return max(min($hi, (int)$n), $lo);
 }
 

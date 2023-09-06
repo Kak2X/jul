@@ -47,39 +47,42 @@
 	$img = ImageCreate(256, 224 - (8 * 0));
 	imagesavealpha($img, true);
 	imagealphablending($img, false);
-	$c['bg']   = ImageColorAllocatealpha($img, 40, 40, 90, 127);
-	$c['bxb0'] = ImageColorAllocate($img,  0,  0,  0);
+	
+	$c = [
+		'bg'	=> ImageColorAllocatealpha($img, 40, 40, 90, 127),
+		'bxb0'	=> ImageColorAllocate($img,  0,  0,  0),
 
-//	$c['bxb1'] = ImageColorAllocate($img,225,200,180);
-//	$c['bxb2'] = ImageColorAllocate($img,190,160,130);
-//	$c['bxb3'] = ImageColorAllocate($img,130,110, 90);
+	//	'bxb1'	=> ImageColorAllocate($img,225,200,180),
+	//	'bxb2'	=> ImageColorAllocate($img,190,160,130),
+	//	'bxb3'	=> ImageColorAllocate($img,130,110, 90),
 
-	$c['bxb1'] = ImageColorAllocate($img, 200, 180, 225);
-	$c['bxb2'] = ImageColorAllocate($img, 160, 130, 190);
-	$c['bxb3'] = ImageColorAllocate($img,  90, 110, 130);
+		'bxb1'	=> ImageColorAllocate($img, 200, 180, 225),
+		'bxb2'	=> ImageColorAllocate($img, 160, 130, 190),
+		'bxb3'	=> ImageColorAllocate($img,  90, 110, 130),
 
+		'barE1' => ImageColorAllocate($img,120,150,180),
+		'barE2' => ImageColorAllocate($img, 30, 60, 90),
+		'bar1' => [
+			1	=> ImageColorAllocate($img, 215,  91, 129),
+			2	=> ImageColorAllocate($img, 255, 136, 154),
+			3	=> ImageColorAllocate($img, 255, 139,  89),
+			4	=> ImageColorAllocate($img, 255, 251,  89),
+			5	=> ImageColorAllocate($img,  89, 255, 139),
+			6	=> ImageColorAllocate($img,  89, 213, 255),
+			7	=> ImageColorAllocate($img, 196,  33,  33),
+			8	=> ImageColorAllocate($img, 196,  66, 196),
+			9	=> ImageColorAllocate($img, 100,   0, 155),
+			10	=> ImageColorAllocate($img,  88,   0, 121),
+			11	=> ImageColorAllocate($img,   0, 174, 215),
+			12	=> ImageColorAllocate($img,   0,  99, 151),
+			13	=> ImageColorAllocate($img, 175, 175, 175),
+			14	=> ImageColorAllocate($img, 222, 222, 222),
+			15	=> ImageColorAllocate($img, 255, 255, 255),
+		],
+	];
 	for ($i=0; $i<100; $i++)
 		 $c[$i] = ImageColorAllocate($img, (int)(15+$i/1.5),  8, 20+$i);
-
-	$c['barE1'] = ImageColorAllocate($img,120,150,180);
-	$c['barE2'] = ImageColorAllocate($img, 30, 60, 90);
-
-	$c['bar1'][ 1] = ImageColorAllocate($img, 215,  91, 129);
-	$c['bar1'][ 2] = ImageColorAllocate($img, 255, 136, 154);
-	$c['bar1'][ 3] = ImageColorAllocate($img, 255, 139,  89);
-	$c['bar1'][ 4] = ImageColorAllocate($img, 255, 251,  89);
-	$c['bar1'][ 5] = ImageColorAllocate($img,  89, 255, 139);
-	$c['bar1'][ 6] = ImageColorAllocate($img,  89, 213, 255);
-	$c['bar1'][ 7] = ImageColorAllocate($img, 196,  33,  33);
-	$c['bar1'][ 8] = ImageColorAllocate($img, 196,  66, 196);
-	$c['bar1'][ 9] = ImageColorAllocate($img, 100,   0, 155);
-	$c['bar1'][10] = ImageColorAllocate($img,  88,   0, 121);
-	$c['bar1'][11] = ImageColorAllocate($img,   0, 174, 215);
-	$c['bar1'][12] = ImageColorAllocate($img,   0,  99, 151);
-	$c['bar1'][13] = ImageColorAllocate($img, 175, 175, 175);
-	$c['bar1'][14] = ImageColorAllocate($img, 222, 222, 222);
-	$c['bar1'][15] = ImageColorAllocate($img, 255, 255, 255);
-
+	 
 	$st['CHP'] = max($st['HP'] - $user['damage'], 0);
 	if ($st['CHP'] <= 0)
 		$classtext = 'K.O.\'d';
@@ -99,7 +102,7 @@
 	$fontB=fontc(160,240,255, 120,190,240,  0, 0, 0);
 	$fontW=fontc(255,255,255, 210,210,210,  0, 0, 0);
 
-	twrite($fontW, 1, 1,0,"$user[name]");
+	twrite($fontW, 1, 1,0,$user['name']);
 	twrite((($classtext == $class['name']) ? $fontB : $fontR), 1, 4,0, $classtext);
 
 	twrite($fontB, 1, 8,0,'HP       /');
@@ -115,8 +118,8 @@
 		twrite($fontR, 3, 9,7,nlimiter($st['MP']));
 		twrite($fontY, 9, 9,7,nlimiter($st['MP']));
 	}
-	for($i=2;$i<9;$i++){
-		 twrite($fontB, 1,11+$i,0,"$stat[$i]");
+	for ($i = 2; $i < 9; $i++){
+		 twrite($fontB, 1,11+$i,0,$stat[$i]);
 		 twrite($fontY, 3,11+$i,7,nlimiter($st[$stat[$i]]));
 	}
 
@@ -133,25 +136,27 @@
 	twrite($fontY,21,25,10,max(0, $st['GP']));
 	twrite($fontG,21,26,10,max(0, $user['gcoins']));
 
-	$sc[ 1]=     1;
-	$sc[ 2]=     5;
-	$sc[ 3]=    25;
-	$sc[ 4]=   100;
-	$sc[ 5]=   250;
-	$sc[ 6]=   500;
-	$sc[ 7]=  1000;
-	$sc[ 8]=  2500;
-	$sc[ 9]=  5000;
-	$sc[10]= 10000;
-	$sc[11]= 100000;
-	$sc[12]= 1000000;
-	$sc[13]= 10000000;
-	$sc[14]= 100000000;
-	$sc[15]= 1000000000;
+	$sc = [
+		1  =>          1,
+		2  =>          5,
+		3  =>         25,
+		4  =>        100,
+		5  =>        250,
+		6  =>        500,
+		7  =>       1000,
+		8  =>       2500,
+		9  =>       5000,
+		10 =>      10000,
+		11 =>     100000,
+		12 =>    1000000,
+		13 =>   10000000,
+		14 =>  100000000,
+		15 => 1000000000,
+	];
 
 	bars();
-pagefooter();
-	header('Content-type:image/png');
+	
+	header_content_type("image/png");
 	ImagePNG($img);
 	ImageDestroy($img);
 

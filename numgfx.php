@@ -22,10 +22,8 @@
 	}
 	
 	$gfx = ImageCreateFromPNG("numgfx/{$file}.png");
-	$img = ImageCreate($min_chars * TILE_W, TILE_H);
-	
-	// ???
-	//ImageCopy($img, $gfx, 0, 0, 104, 0, 1, 1);
+	$img = ImageCreateTrueColor($min_chars * TILE_W, TILE_H);
+	$bg  = imagecolorallocatealpha($img, 0, 0, 0, 127);
 	
 	// Print the characters one by one
 	for ($i = 0; $i < $text_len; ++$i) {
@@ -39,12 +37,8 @@
 		ImageCopy($img, $gfx, ($i + $l_offset) * TILE_W, 0, $d * TILE_W, 0, TILE_W, TILE_H);
 	}
 	
-	Header('Content-type:image/png');
+	header("Content-type: image/png");
 	
-	// ??? - This looks wrong
-	// $ctp = ($file == "numdeath");
-	$ctp = false;
-	
-	ImageColorTransparent($img,$ctp);
+	ImageColorTransparent($img, $bg);
 	ImagePNG($img);
 	ImageDestroy($img);

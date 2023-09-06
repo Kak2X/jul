@@ -22,7 +22,7 @@
 
 	// Base the maximum
 	$max = ceil(($sql->resultq("SELECT MAX(posts) FROM users") + 1) / SECTOR_H) * SECTOR_H;
-	define('IMAGE_Y', $max / SCALE_Y);
+	define('IMAGE_Y', (int)($max / SCALE_Y));
 	define('IMAGE_X', $days * SCALE_X);
 
 	$img = ImageCreateTrueColor(IMAGE_X, IMAGE_Y);
@@ -73,9 +73,11 @@
 	
 	$z	= 0;
 	$data = getdata(array_keys($users));
+	
 	foreach($users as $uid => $userx) {
 		// Draw the post total as a line
-		drawdata($data[$uid], $userx['color']);
+		if (isset($data[$uid]))
+			drawdata($data[$uid], $userx['color']);
 		// 10px Dash next to the name...
 		imageline($img, BOX_X + 6, BOX_Y + 9 + $z * NAME_HEIGHT, BOX_X + 6 + 10, BOX_Y + 9 + $z * NAME_HEIGHT, $c['bg']);
 		imageline($img, BOX_X + 5, BOX_Y + 8 + $z * NAME_HEIGHT, BOX_X + 5 + 10, BOX_Y + 8 + $z * NAME_HEIGHT, $userx['color']);
@@ -85,9 +87,7 @@
 		++$z;
 	}
 	
-	// errorpage("check the error log");
-	
-	Header('Content-type:image/png');
+	header_content_type("image/png");
 	ImagePNG($img);
 	ImageDestroy($img);
 
@@ -99,7 +99,7 @@ function drawdata($p, $color) {
 		if (!isset($p[$i])) { // If nothing was posted, we keep the previous value
 			$y	= $oldy;
 		} else {
-			$y  = IMAGE_Y - $p[$i];
+			$y  = IMAGE_Y - (int)$p[$i];
 		}
 		$x      = $i * SCALE_X;
 		imageline($img, $x, $oldy, $x + SCALE_X - 1, $y, $color);

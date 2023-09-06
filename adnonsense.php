@@ -38,6 +38,7 @@
 	$bonusr	= 0;
 	$bonusg	= 0;
 	$bonusb	= 0;
+	$bonusm = 0;
 
 	// Determine the color settings
 	if ($_GET['m'] == "d") {
@@ -159,16 +160,15 @@
 	imagealphablending($img, true);
 	imagestring($img, $font, BAR_H, 3, $text, $textc);
 
-
-	header("Content-type: image/png;");
+	header_content_type("image/png");
 	imagepng($img);
 	imagedestroy($img);
 
 
 	function fillbar($img, $i, $r, $g, $b) {
-		$r	= min(255, $r);
-		$g	= min(255, $g);
-		$b	= min(255, $b);
+		$r	= min(255, (int)$r);
+		$g	= min(255, (int)$g);
+		$b	= min(255, (int)$b);
 		
 		// Filled vertical bar height (also influences the x position
 		$barch = BAR_H - 1;

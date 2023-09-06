@@ -68,12 +68,12 @@
 			$postdb[$i] = 0;
 		}
 		// Draw post average in relation to time
-		$avg = $total / ($i + 1);
+		$avg = (int)($total / ($i + 1));
 		ImageSetPixel($img, $i, $maxposts - $avg, (($postdb[$i] >= $avg) ? $c['pt2'] : $c['pt1']));
 	}
 
 	//errorpage("check the error log");
 	
-	Header('Content-type:image/png');
+	header_content_type("image/png");
 	ImagePNG($img);
 	ImageDestroy($img);

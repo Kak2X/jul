@@ -2,13 +2,20 @@
 
 	chdir("..");
 	require "lib/common.php";
+	
+	// now the file name isn't accurate anymore
+	$user   = filter_int($_GET['u']);
+	if (!$user)
+		$user = 1;
 
 	$img	= imagecreate(45, 37);
 	$bg		= imagecolorallocate($img, 100, 100, 100);
 	$num	= imagecreatefrompng("images/digitstiny.png");
 	
-	$xk		= $sql -> fetchq("SELECT * FROM `users` WHERE `id` = '1'");
-	$thread	= $sql -> resultq("SELECT COUNT(`id`) FROM `threads` WHERE `user` = '1'");
+	$xk		= $sql -> fetchq("SELECT * FROM `users` WHERE `id` = '{$user}'");
+	if (!$xk)
+		die("User not found.");
+	$thread	= $sql -> resultq("SELECT COUNT(`id`) FROM `threads` WHERE `user` = '{$user}'");
 
 	$exp	= calcexp($xk['posts'], (time() - $xk['regdate']) / 86400);
 	$level	= calclvl($exp);
@@ -25,7 +32,7 @@
 
 
 	imagecolortransparent($img, $bg);
-	header("Content-type: image/png");
+	header_content_type("image/png");
 	imagepng($img);
 	imagedestroy($img);
 	imagedestroy($num);

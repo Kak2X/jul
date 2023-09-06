@@ -1,7 +1,6 @@
 <?php
-	error_reporting(0);
 	
-	if (!$_GET['notice']) {
+	if (!isset($_GET['notice'])) {
 		
 		header("Pragma: no-cache;");
 		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
@@ -62,7 +61,13 @@
 		imagesavealpha($image, true);
 	//	imagerectangle($image, 0, 0, 113, 18, 0xFF0000);
 
-		$time	= mktime(  0,  0,  0,  4, 5, 2012) - microtime(true);
+
+		if (isset($_GET['time'])) {
+			$time = strtotime($_GET['time']) or die("Invalid time.");
+		} else {
+			$time = (floor(time() / 86400) + 1) * 86400; // tomorrow midnight
+		}
+		$time	= $time - microtime(true);
 		$time	= floor($time * (1000000 / 86400));
 
 		#$time	= microtime(true) - (time() - time() % 86400);
@@ -83,7 +88,7 @@
 		lazy($image, $xpos    , $ypos + 1, $time, $color['shadow']);
 		lazy($image, $xpos    , $ypos    , $time, $color['text']);
 
-		if (!$_GET['x'] && false) {
+		if (!isset($_GET['x']) && false) {
 			$image2	= imagecreatetruecolor(116, 19);
 			imagealphablending($image2, false);
 			imagealphablending($image, false);
@@ -101,7 +106,7 @@
 			}
 		}
 
-		header("Content-type: image/png;");
+		header("Content-type: image/png");
 		imagepng($image);
 		imagedestroy($image);
 
@@ -140,7 +145,7 @@
 		lazy2($image, $xpos    , $ypos + 1, $str, $color['shadow']);
 		lazy2($image, $xpos    , $ypos    , $str, $color['text']);
 
-		header("Content-type: image/png;");
+		header("Content-type: image/png");
 		imagepng($image);
 		imagedestroy($image);
 	}
@@ -150,7 +155,7 @@
 		$t		= str_pad($t, 9, " ", STR_PAD_LEFT);
 		$len	= strlen($t);
 		for ($i = 0; $i < $len; $i++) {
-			imagettftext($image, 24, 0, $x + $i * 11, $y + $offsets[$i], $c, "images/angsa.ttf", $t{$i});
+			imagettftext($image, 24, 0, $x + $i * 11, $y + $offsets[$i], $c, "images/angsa.ttf", $t[$i]);
 		}
 		
 		imagettftext($image, 20, 0, $x + 1 + 11 * strlen($t), $y - 2, $c, "images/angsa.ttf", "tu");

@@ -5,11 +5,12 @@
 
 	set_time_limit(0);
 	ini_set("memory_limit", "256M");
-
+	
+	$_GET['d']	= filter_int($_GET['d']);
 	$mintime	= time() - (($_GET['d'] ? min($_GET['d'], 14) : 7) * 24 * 3600);
 //	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes`"));
-	$rangemin	= floor($sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes` WHERE `time` > $mintime"));
-	$num		= ceil(time() / 3600) - $rangemin;
+	$rangemin	= floor((int)$sql -> resultq("SELECT MIN(`time` / 3600) FROM `rendertimes` WHERE `time` > $mintime"));
+	$num		= $rangemin ? ceil(time() / 3600) - $rangemin : 1;
 
 	$image			= imagecreatetruecolor(1100, $num * 10);
 	$col['bg']		= imagecolorallocate($image,   0,   0,   0);
@@ -46,6 +47,7 @@
 								"AND `time` > $mintime ".
 								"GROUP BY FLOOR(`time` / 3600)");
 
+	$dateold = null;
 	while ($rt = $sql -> fetch($data)) {
 		$y		= ($rt['time'] - $rangemin) * 10;
 		$date	= date("m.d ha", $rt['time'] * 3600);
@@ -56,9 +58,9 @@
 		}
 		$dateold	= $datenew;
 
-		$bmin	= $rt['minimum'] * 100;
-		$bmax	= $rt['maximum'] * 100;
-		$bavg	= $rt['average'] * 100;
+		$bmin	= round($rt['minimum'] * 100);
+		$bmax	= round($rt['maximum'] * 100);
+		$bavg	= round($rt['average'] * 100);
 		$c1	= ($bmax >= 1000 ? 3 : 1);
 
 		imagefilledrectangle($image, 100 + $bmin, $y, 100 + $bmax, $y + 8, $col['bar'. $c1]);
@@ -74,8 +76,6 @@
 
 	}
 
-	header("Content-type: image/png");
+	header_content_type("image/png");
 	imagepng($image);
 	imagedestroy($image);
-
-?>

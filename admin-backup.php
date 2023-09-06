@@ -37,7 +37,7 @@
 					header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 					header("Cache-Control: public");
 					header("Content-Description: File Transfer");
-					header("Content-type: application/octet-stream");
+					header_content_type("application/octet-stream");
 					header("Content-Disposition: attachment; filename=\"".preg_replace("'[^a-z0-9]'si", "_", $config['board-name'])."_{$download}.zip\"");
 					header("Content-Transfer-Encoding: binary");
 					header("Content-Length: ".filesize("{$config['backup-folder']}/$download.zip"));

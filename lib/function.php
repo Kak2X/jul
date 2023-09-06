@@ -2393,3 +2393,13 @@ function header_content_type($type) {
 		die;
 	}
 }
+
+function drawfilledpolygon($img, $points, $color, $fill_color = null) {
+	if (PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION >= 1)) {
+		if ($fill_color !== null) imagefilledpolygon($img, $points, $fill_color);
+		if ($color !== null)      imagepolygon      ($img, $points, $color);
+	} else {
+		if ($fill_color !== null) imagefilledpolygon($img, $points, count($points) / 2, $fill_color);
+		if ($color !== null)      imagepolygon      ($img, $points, count($points) / 2, $color);
+	}
+}

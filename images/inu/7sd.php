@@ -53,28 +53,27 @@ $shiftt = array();
 $shifts = array();
 $final = array();
 
-if ($_GET['raw']) {
-  $code = intval($_GET['raw']);
-  $raw = true;
-}
-else if ($_GET['s']) $string = strtoupper($_GET['s']);
-else $string = '01234 56789 ABCDE FGHIJ KLMNO PQRST UVWXY Z';
+$_GET['raw']	= isset($_GET['raw']) ? (int)$_GET['raw'] : false;
+$_GET['s']		= isset($_GET['s']) ? (string)$_GET['s'] : false;
 
-if (!$raw) {
-  $ssplit = str_split($string);
-  $i = 0;
-  while ($i < 200 && ($chr = array_shift($ssplit)) !== NULL) {
-    if ($chr == '>') {
-      $r = hexdec(array_shift($ssplit)) * 17;
-      $g = hexdec(array_shift($ssplit)) * 17;
-      $b = hexdec(array_shift($ssplit)) * 17;
-      $shiftt[$i] = array($r, $g, $b);
-    }
-    elseif (array_key_exists(ord($chr), $charlist))
-      $final[$i++] = ord($chr);
-  }
+if (!$_GET['raw']) {
+	$string = $_GET['s'] ? strtoupper($_GET['s']) : '01234 56789 ABCDE FGHIJ KLMNO PQRST UVWXY Z';
+	$ssplit = str_split($string);
+	$i = 0;
+	while ($i < 200 && ($chr = array_shift($ssplit)) !== NULL) {
+		if ($chr == '>') {
+			$r = hexdec(array_shift($ssplit)) * 17;
+			$g = hexdec(array_shift($ssplit)) * 17;
+			$b = hexdec(array_shift($ssplit)) * 17;
+			$shiftt[$i] = array($r, $g, $b);
+		}
+		else if (array_key_exists(ord($chr), $charlist))
+			$final[$i++] = ord($chr);
+	}
+	$strlen = count($final);
+} else {
+	$strlen = 1;
 }
-$strlen = ($raw) ? 1 : count($final);
 
 $im = @imagecreatetruecolor($strlen*$charwidth, $height) or die('oops, no image.');
 $black = imagecolorallocate($im, 0, 0, 1);
@@ -84,27 +83,27 @@ $shadow = imagecolorallocate($im, 0, 0, 0);
 
 $cl = imagecolorallocate($im, 0, 255, 0);
 
-if ($raw) {
-  placeshadow($code, 0);
-  place7sd($code, 0);
+if ($_GET['raw']) {
+	placeshadow($_GET['raw'], 0);
+	place7sd($_GET['raw'], 0);
 
-  header("Content-Type: image/png");
-  imagepng($im);
-  imagedestroy($im);
-  die();
+	header("Content-type: image/png");
+	imagepng($im);
+	imagedestroy($im);
+	die();
 }
 
 foreach ($shiftt as $p => $s)
-  $shifts[$p] = imagecolorallocate($im, $s[0], $s[1], $s[2]);
+	$shifts[$p] = imagecolorallocate($im, $s[0], $s[1], $s[2]);
 
 for ($i = 0; $i < $strlen; ++$i) {
-  if (array_key_exists($i, $shifts)) $cl = $shifts[$i];
-  $chr = $charlist[$final[$i]];
-  placeshadow($chr, $i);
-  place7sd($chr, $i);
+	if (array_key_exists($i, $shifts)) $cl = $shifts[$i];
+	$chr = $charlist[$final[$i]];
+	placeshadow($chr, $i);
+	place7sd($chr, $i);
 }
 
-header("Content-Type: image/png");
+header("Content-type: image/png");
 imagepng($im);
 imagedestroy($im);
 
@@ -126,7 +125,7 @@ function place7sd($lights, $w) {
 }
 
 function placeshadow($lights, $w) {
-  global $im, $cl, $charwidth;
+  global $im, $cl, $charwidth, $shadow;
   $w *= $charwidth;
   for ($i = 0x01; $i < 0x80; $i<<=1) {
     if ($lights & $i) switch ($i) {

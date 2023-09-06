@@ -124,7 +124,7 @@
 	
 	//errorpage("check the error log");
 
-	Header('Content-type:image/png');
+	header_content_type("image/png");
 	ImagePNG($img);
 	ImageDestroy($img);
 
@@ -140,7 +140,7 @@ function drawdata($p, $color, $fill_color = false) {
 		if (!isset($p[$i])) { // If nothing was posted, we keep the previous value
 			$y	= $oldy;
 		} else {
-			$y  = IMAGE_Y - $p[$i];
+			$y  = IMAGE_Y - (int)$p[$i];
 		}
 		$x      = $i * SCALE_X;
 
@@ -165,8 +165,8 @@ function drawdata($p, $color, $fill_color = false) {
 		$points[]   = $y;
 		$points[]   = IMAGE_X;
 		$points[]   = IMAGE_Y - 1;
-		imagefilledpolygon($img, $points, count($points) / 2, $fill_color);
-		imagepolygon      ($img, $points, count($points) / 2, $color);
+		
+		drawfilledpolygon($img, $points, $color, $fill_color);
 	}
 }
 

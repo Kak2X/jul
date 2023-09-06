@@ -143,9 +143,7 @@
 	die();*/
 	drawdata($average, $users[-1]['color']);
 	
-	//errorpage("check the error log");
-
-	Header('Content-type:image/png');
+	header_content_type("image/png");
 	ImagePNG($img);
 	ImageDestroy($img);
 
@@ -158,7 +156,7 @@ function drawdata($p, $color) {
 		if (!isset($p[$i])) { // If nothing was posted, we keep the previous value
 			$y	= $oldy;
 		} else {
-			$y  = IMAGE_Y - $p[$i];
+			$y  = IMAGE_Y - (int)$p[$i];
 		}
 		$x      = $i * SCALE_X;
 		imageline($img, $x, $oldy, $x + SCALE_X - 1, $y, $color);

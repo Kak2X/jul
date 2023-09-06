@@ -107,9 +107,9 @@
 		if (!$attachment['is_image']) {
 			// Display download box if it isn't an image
 			header("Content-Disposition: attachment");
-			header('Content-Type: application/octet-stream');
+			header_content_type("application/octet-stream");
 		} else {
-			header("Content-type: {$attachment['mime']}");
+			header_content_type($attachment['mime']);
 		}
 		header("Content-Description: File Transfer");
 		header("Content-Disposition: filename=\"{$attachment['filename']}\"");

@@ -2,18 +2,15 @@
 	chdir("..");
 	require "lib/common.php";
 	//$sql->selectdb("sonicret_s2bivb");
-
-	if ($_GET['s']) $size = $_GET['s'];
-	if ($size > 1024 || $size < 80) $size = 255;
-	if ($_GET['t']) $classt = $_GET['t'];
-	if ($classt > 9999 || $classt < 10) $classt = 500;
-
-	$size			= 255;
-	$classt			= 500;
+	
+	$_GET['s']		= filter_int($_GET['s']);
+	$_GET['t']		= filter_int($_GET['t']);
+	$size			= $_GET['s'] ? numrange($_GET['s'], 80, 1024) : 255;
+	$classt			= $_GET['t'] ? numrange($_GET['t'], 10, 1000) : 500;
+	
 	$class			= $sql->resultq("SELECT COUNT(`id`) FROM `posts` WHERE `date` > ". (time() - 86400));
 
-	if ($_GET['s']) $size = numrange((int)$_GET['s'], 80, 1024);
-	if ($_GET['t']) $classt = numrange((int)$_GET['t'], 10, 1000);
+
 	
 	$classtxt		= "    ppd   ";
 
@@ -34,7 +31,7 @@
 	imagefilledrectangle($image, 0, 0, $size+1, $size+1, imagecolorallocatealpha($image, 0, 0, 0, 127));
 	imagealphablending($image, true);
 
-	$point	= anglepos($size / 3, $size/2, $size/2, 90+45);
+//	$point	= anglepos($size / 3, $size/2, $size/2, 90+45);
 
 //	drawgauge($size/2, $size/2, $size, 180, 270);
 	drawgauge($size/2, $size/2, $size, 180 - 45, 270);
@@ -43,6 +40,9 @@
 
 	function drawgauge($xpos, $ypos, $size, $startangle, $endangle) {
 		global $image, $color, $class, $classt, $classtxt;
+		
+	
+		
 
 //		$startangle	= 90;
 		$endangle	= $startangle + $endangle;
@@ -50,8 +50,8 @@
 
 		$radius			= $size / 2;
 
-		imagefilledarc($image, $xpos, $ypos, $size, $size, 0, 360, $color['gray1'], IMG_ARC_PIE);
-		imagearc      ($image, $xpos, $ypos, $size, $size, 0, 360, $color['black']);
+		imagefilledarc($image, (int)$xpos, (int)$ypos, $size, $size, 0, 360, $color['gray1'], IMG_ARC_PIE);
+		imagearc      ($image, (int)$xpos, (int)$ypos, $size, $size, 0, 360, $color['black']);
 
 		for ($i = 0; $i <= 100; $i ++) {
 
@@ -66,16 +66,16 @@
 			if ($i >= 0 && $i <= 99) {
 				// Four different gradients for the four sections
 				if ($i <= 24) {
-					$cx	= ($i) / 25 * 255;
+					$cx	= (int)(($i) / 25 * 255);
 					$cc	= imagecolorallocate($image, 255, $cx, 0);
 				} elseif ($i <= 49) {
-					$cx	= ($i - 25) / 25 * 127;
+					$cx	= (int)(($i - 25) / 25 * 127);
 					$cc	= imagecolorallocate($image, 255 - $cx, 255 - $cx, $cx);
 				} elseif ($i <= 74) {
-					$cx	= ($i - 50) / 25 * 31;
+					$cx	= (int)(($i - 50) / 25 * 31);
 					$cc	= imagecolorallocate($image, 128 - $cx, 128 - $cx, 128 + $cx);
 				} else {
-					$cx	= ($i - 75) / 25 * 95;
+					$cx	= (int)(($i - 75) / 25 * 95);
 					$cc	= imagecolorallocate($image, 95 - $cx, 95 - $cx, 255 - $cx);
 				}
 
@@ -95,7 +95,8 @@
 
 //				imageline($image, $p1['x'], $p1['y'], $p2['x'], $p2['y'], $cc);
 //				imageline($image, $p1['x'], $p1['y'], $p2['x'], $p2['y'], $cc);
-				imagefilledpolygon($image, $pts, 4, $cc);
+				drawfilledpolygon($image, $pts, null, $cc);
+				//imagefilledpolygon($image, $pts, 4, $cc);
 //				imageline($image, $q[0]['x'], $q[0]['y'], $q[3]['x'], $q[3]['y'], $cc);
 			}
 
@@ -104,7 +105,7 @@
 			$p1	= anglepos($radius - 3, $xpos, $ypos, $r);
 			$p2	= anglepos($radius - 3 - $l, $xpos, $ypos, $r);
 
-			imageline($image, $p1['x'], $p1['y'], $p2['x'], $p2['y'], $c);
+			imageline($image, (int)$p1['x'], (int)$p1['y'], (int)$p2['x'], (int)$p2['y'], $c);
 
 			$markers	= ($size < 255 ? 25 : 10);
 			if ($i % $markers == 0) {
@@ -116,7 +117,7 @@
 				$nl		= strlen($n);
 
 				$x	= 2 + (3.5 * ($nl - 1));
-				imagestring($image, 3, $p3['x'] - $x, $p3['y'] - 7, $n, $color['white']);
+				imagestring($image, 3, (int)($p3['x'] - $x), (int)$p3['y'] - 7, $n, $color['white']);
 			}
 
 		}
@@ -133,7 +134,7 @@
 		drawneedle($ang,  $xpos, $ypos, $radius -  2, 5, -20, $color['blue']);
 
 		if ($size >= 128) {
-			imagestring($image, 1, $size / 2 - 26, $size * .7 + 4    , $classtxt, $color['white']);
+			imagestring($image, 1, (int)($size / 2) - 26, (int)($size * .7) + 4    , $classtxt, $color['white']);
 //			if (!$_GET['p']) imagestring($image, 1, $size / 2 + 14, $size * .7 + 16, "%", 0xcccccc);
 			digits($size * .50 - 12, $size * .7 + 14, $class, 3, 0);
 		} else {
@@ -142,7 +143,7 @@
 	}
 
 //	imagestring($image, 1, $size / 2 - 42, $size * .93 - 10, date("m/d/y H:i:s", time()), 0xcccccc);
-	header("Content-type: image/png");
+	header_content_type("image/png");
 	imagepng($image);
 	imagedestroy($image);
 
@@ -177,9 +178,9 @@
 //					$point4['x'], $point4['y'],
 					$point3['x'], $point3['y'],
 			);
-		imagefilledpolygon($image, $points, 3, $color);
-		imagepolygon($image, $points, 3, $color);
-		imageline($image, $point9['x'], $point9['y'], $cx, $cy, 0xffffff);
+			
+		drawfilledpolygon($image, $points, $color, $color);
+		imageline($image, (int)$point9['x'], (int)$point9['y'], (int)$cx, (int)$cy, 0xffffff);
 //		imagefilledpolygon($image, $points, 3, $color);
 
 	}
@@ -187,6 +188,9 @@
 	
 	function digits($x, $y, $n, $l = 4, $d = 2, $overlay = false) {
 		global $image;
+		
+		$x = (int) $x;
+		$y = (int) $y;
 
 		$numimage	= imagecreatefrompng("images/digits4.png");
 		$n			= number_format($n, $d);
@@ -201,7 +205,7 @@
 			imagecopy($image, $numimage, $x + ($o * 8), $y, $chrpos * 9, 0, 8, 14);
 		}
 
-		$small		= $n2[1];
+		$small		= count($n2) > 1 ? $n2[1] : "";
 		$slen		= strlen($small) + $o - 1;
 		for(; $o <= $slen; $o++) {
 			$lp		= $o - $len;

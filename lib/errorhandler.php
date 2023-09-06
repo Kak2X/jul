@@ -48,8 +48,9 @@ function error_reporter($type, $msg, $file, $line) {
 	$file = strip_doc_root($file);
 	
 	// Without $irctypetext the error is marked as "local reporting only"
+	// If the message fails to get sent, shrug and ignore any errors that may come out.
 	if (isset($irctypetext)) {
-		report_send(
+		@report_send(
 			IRC_ADMIN, ($loguser['id'] ? xk(11)."{$loguser['name']} (".xk(10)."{$_SERVER['REMOTE_ADDR']}".xk(11).")" : xk(10)."{$_SERVER['REMOTE_ADDR']}")." ".xk($irccol)."{$irctypetext}: ".xk()."({$file} #{$line}) {$msg}",
 			IRC_ADMIN, ($loguser['id'] ? "**{$loguser['name']}** (**{$_SERVER['REMOTE_ADDR']}**)" : "**{$_SERVER['REMOTE_ADDR']}**")." **{$irctypetext}**: ({$file} #{$line}) {$msg}"
 		);

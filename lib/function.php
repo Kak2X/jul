@@ -2370,3 +2370,26 @@ function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) 
 	setcookie($key, !$value, $expire, $boardurl, $_SERVER['SERVER_NAME'], false, true);
 	return true;
 }
+
+function header_content_type($type) {
+	global $runtime;
+	
+	if (!$runtime['show-log']) {
+		header("Content-type: image/png");
+		return;
+	}
+	
+	
+	if ($runtime['show-log'] === 2) {
+		// mini CSS for readability
+?><style>
+	.center {text-align:center}
+	.b {font-weight: bold }
+	.table,.w {width: 100%}
+	.table { border-collapse: collapse; }
+	.table td { border: 1px solid #000; }
+</style><center>
+<?php
+		die;
+	}
+}

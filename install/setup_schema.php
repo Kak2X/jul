@@ -38,7 +38,6 @@ function setup_generate_config() {
 
 	// Compatibility aliasing
 	extract(\$sqlconfig); // (\$sqlhost, \$sqluser, \$sqlpass, \$dbname)
-	\$sqldebuggers = \$config['sqldebuggers'];
 	
 	// Are we using SSL?
 	if (isset(\$_SERVER['HTTPS']) && \$_SERVER['HTTPS'] != 'off')

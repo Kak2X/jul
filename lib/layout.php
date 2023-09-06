@@ -381,6 +381,21 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		$x_hacks['smallbrowse']	= true;
 	}
 	
+	if ($loguser['id']) {
+		// Load inventory
+		$itemdb = getuseritems($loguser['id']);
+
+		// Items effects which only affect the user go here
+		if ($itemdb) {
+			foreach ($itemdb as $item) {
+				switch ($item['effect']) {
+					// New HTML comment display enable
+					case 5: $hacks['comments'] = true; break;
+				}
+			}
+		}
+	}
+	
 	$GLOBALS['forcetitle'] = $forcetitle;
 }
 
@@ -392,6 +407,9 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 	if (!isset($nmcol)) {
 		load_layout();
 	}
+	
+	// Allow eof_printer to show the logs if we printed out the header
+	$runtime['show-log'] = 1;
 	
 	/*
 		Track activity only for pages that render the main header
@@ -825,7 +843,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 
 
 function pagefooter($showfooter = true) {
-	global $x_hacks, $sql, $sqldebuggers, $loguser, $config, $scriptname, $startingtime, $_adminsidebar, $poweredbypic, $js_extra;
+	global $x_hacks, $sql, $loguser, $config, $scriptname, $startingtime, $_adminsidebar, $poweredbypic, $js_extra;
 	
 	if ($_adminsidebar !== null)
 		print $_adminsidebar->DisplayBottom();
@@ -953,122 +971,9 @@ piwikTracker.enableLinkTracking();
 		
 	print "</span>";
 	
-	// Print errors locally
-	print error_printer(true, ($loguser['powerlevel'] == 4 || $config['always-show-debug']), $GLOBALS['errors']);
-
-	// Print mysql queries
-	if (in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers) || $config['always-show-debug']) {
-		print "<br><a href='".actionlink(null, "?{$_SERVER['QUERY_STRING']}".($_SERVER['QUERY_STRING'] ? "&" : "")."debugsql=1")."'>".(mysql::$debug_on ? "Disable" : "Enable")." useless mySQL query debugging shit</a><br>";
-		if (mysql::$debug_on) {
-		
-?>
-	<br>
-	<table class='table'>
-		<tr>
-			<td class='tdbgh center b' colspan=5>
-				SQL Debug
-			</td>
-		</tr>
-		<tr>
-			<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
-			<td class='tdbgh center' style='width: 20px'>ID</td>
-			<td class='tdbgh center' style='width: 300px'>Function</td>
-			<td class='tdbgh center'>Query</td>
-			<td class='tdbgh center' style='width: 90px'>Time</td>
-		</tr>
-<?php
-			
-
-			
-			
-			$oldid    = NULL;
-			$num      = 1;
-			$transact = $transchg = false;
-			foreach(mysql::$debug_list as $i => $d) {
-				
-				// Add a separator between connection ID changes
-				if ($oldid != $d[0]) {
-?>
-		<tr><td class='tdbgc center' style='height: 4px' colspan=5></td></tr>
-<?php
-				}
-				$oldid = $d[0];
-				
-				// Does the row *NOT* count towards the query count?
-				if ($d[5]) {
-					$c = "-";
-				} else {
-					$c = $num;
-					++$num;
-				}
-				
-				// Format the message text
-				if ($d[6] & mysql::MSG_TRANSCHG) {
-					// Transaction change
-					$transchg = true;
-					$transact = !$transact;
-				} else if ($d[6] & mysql::MSG_QUERY) {
-					// The error marker has a higher precedence (for obv. reasons)
-					
-					if ($d[7] !== NULL) {
-						$color = "FF0000";
-					} else if ($d[6] & mysql::MSG_CACHED) {
-						$color = "00dd00";
-					} else if ($d[6] & mysql::MSG_PREPARED) {
-						$color = "ffff44";
-					} else if ($d[6] & mysql::MSG_EXECUTE) {
-						$color = "ffcc44";
-					} else {
-						$color = "";
-					}
-					
-					// Set the color for non-standard queries
-					if ($color !== NULL) {
-						$d[3] = "<span style='color:#{$color}".
-							   ( $d[7] !== NULL 
-							   ? ";border-bottom:1px dotted {$color}' title=\"{$d[7]}\"" 
-							   : "'" ).
-							   ">{$d[3]}</span>";
-						$d[4] = "<span style='color:#{$color}'>{$d[4]}</span>";
-					}
-					
-					$color = NULL;
-				} else { // Informative messages
-					$d[3] = "<i>{$d[3]}</i>";
-				}
-				
-				// Highlight queries in a transaction
-				if ($transchg) {
-					$cell = 'c fonts';
-					$transchg = false;
-				} else if ($transact) {
-					$cell = 'h';
-				} else {
-					$cell = (($i & 1)+1); // Cycling tccell1/2
-				}
-				
-?>
-		<tr>
-			<td class='tdbg<?=$cell?> center'><?= $c ?></td>
-			<td class='tdbg<?=$cell?> center'><?= $d[0] ?></td>
-			<td class='tdbg<?=$cell?> center'>
-				<?=$d[1]?><span class='fonts'><br>
-				<?=$d[2]?></span>
-			</td>
-			<td class='tdbg<?=$cell?>'><?= $d[3] ?></td>
-			<td class='tdbg<?=$cell?> center'><?= $d[4] ?></td>
-		</tr>
-<?php
-			}
-?>
-	</table>
-<?php
-		}
-	}
-	
 	// Logging of rendering times. Used back when DreamHost was being trash.
 	// Not that it ever stopped, but it hasn't really been an issue
-	if (!$x_hacks['host'] && $config['log-rendertimes']) {
+	if (!$x_hacks['host'] && $config['log-rendertime']) {
 		$pages	= array(
 			"index.php",
 			"thread.php",
@@ -1079,7 +984,7 @@ piwikTracker.enableLinkTracking();
 			$sql->query("DELETE FROM rendertimes WHERE time < '". (time() - 86400 * 14) ."'");
 		}
 	}	
-
+	
 	die;
 }
 

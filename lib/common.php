@@ -40,7 +40,7 @@
 	}
 
 	// Determine if to show conditionally the MySQL query list.
-	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $sqldebuggers)) {
+	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $config['sqldebuggers'])) {
 		if (toggle_board_cookie($_GET['debugsql'], 'debugsql')) {
 			$params = preg_replace('/\&?debugsql(=[0-9]+)/i','', $_SERVER['QUERY_STRING']);
 			die(header("Location: ?{$params}"));
@@ -106,6 +106,11 @@
 		'ajax-request' => isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest",
 		// for file downloads mostly
 		'same-origin' => $origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST)),
+		// if 0, tells the error/query logger executed as shutdown function to not print anything.
+		// reaching the pagefooter will always re-set this to 1 before the script ends, but it can be also
+		// if it's 2, the script will die in content pages (ie: status.php) before attempting to set the content type,
+		// to prevent the binary data from being visible.
+		'show-log' => isset($_GET['eof_log']) ? (int)$_GET['eof_log'] : 0,
 	];
 
 	ext_init();
@@ -171,19 +176,6 @@
 			$loguser['dateformat'] = $config['default-dateformat'];
 		if (!$loguser['dateshort'])
 			$loguser['dateshort'] = $config['default-dateshort'];
-
-		// Load inventory
-		$itemdb = getuseritems($loguser['id']);
-
-		// Items effects which only affect the user go here
-		if ($itemdb) {
-			foreach($itemdb as $item) {
-				switch ($item['effect']) {
-					// New HTML comment display enable
-					case 5: $hacks['comments'] = true; break;
-				}
-			}
-		}
 
 		if ($loguser['id'] == 1) {
 			$hacks['comments'] = true;
@@ -258,7 +250,7 @@
 	}
 	
 	// Moved down here so hacks.php can affect the powerlevel check
-	register_shutdown_function('error_printer', false, $sysadmin, $GLOBALS['errors']);
+	register_shutdown_function('eof_printer');
 
 	// Doom timer setup
 	//$getdoom = true;

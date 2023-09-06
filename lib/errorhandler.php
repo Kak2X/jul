@@ -98,66 +98,162 @@ function highlight_trace($arr) {
 	return $out;
 }
 
-function error_printer($trigger, $report, $errors){
-	static $called = false; // The error reporter only needs to be called once
+function eof_printer() {
+	// Return immediately if not enabled
+	global $runtime;
+	if (!$runtime['show-log'])
+		return true;
 	
-	if (!$called){
-		$called = true;
-		
-		// Exit if we don't have permission to view the errors or there are none
-		if (!$report || empty($errors)){
-			return $trigger ? "" : true;
-		}
-		
-		if ($trigger != false) { // called by printtimedif()
-			//array($typetext, $msg, $func, $args, $file, $line);
-			$cnt = count($errors);	
-			$list = "<br>
-			<table class='table'>
-				<tr>
-					<td class='tdbgh center b' colspan=4>
-						Error list (Total: {$cnt})
-					</td>
-				</tr>
-				<tr>
-					<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
-					<td class='tdbgh center' style='width: 150px'>Error type</td>
-					<td class='tdbgh center'>Function</td>
-					<td class='tdbgh center'>Message</td>
-				</tr>";
-			
-			for ($i = 0; $i < $cnt; ++$i) {
-				$cell = ($i%2)+1;
-				
-				if ($errors[$i][2]) {
-					$func = $errors[$i][2]."(".print_args($errors[$i][3]).")";
-				} else {
-					$func = "<i>(main)</i>";
-				}
-				
-				$list .= "
-					<tr>
-						<td class='tdbg{$cell} center'>".($i+1)."</td>
-						<td class='tdbg{$cell} center'>{$errors[$i][0]}</td>
-						<td class='tdbg{$cell} center'>
-							{$func}
-							<div class='fonts'>{$errors[$i][4]}:{$errors[$i][5]}</div>
-						</td>
-						<td class='tdbg{$cell}'>{$errors[$i][1]}</td>						
-					</tr>";
-			}
-				
-			return $list."</table>";
-			
-		}
-		else{
-				extract(error_get_last());
-				$ok = error_reporter($type, $message, $file, $line)[0];
-				fatal_error($type, $message, $file, $line);				
+	global $config, $sysadmin, $errors;
+	
+	// Error list
+	if (count($errors) && ($sysadmin || $config['always-show-debug'])) {
+		print print_error_table();
+	}	
+	
+	// Query list
+	if ($config['always-show-debug'] || in_array($_SERVER['REMOTE_ADDR'], $config['sqldebuggers'])) {
+		print "<div class='fonts'><a href='".actionlink(null, "?{$_SERVER['QUERY_STRING']}".($_SERVER['QUERY_STRING'] ? "&" : "")."debugsql=1")."'>".(mysql::$debug_on ? "Disable" : "Enable")." MySQL query logger</a></div>";
+		if (mysql::$debug_on) {
+			print print_mysql_table();
 		}
 	}
 	
 	return true;
+}
+
+function print_error_table() {
+	global $errors;
+	//array($typetext, $msg, $func, $args, $file, $line);
+	$cnt = count($errors);	
+	$list = "<br/>
+	<table class='table'>
+		<tr>
+			<td class='tdbgh center b' colspan='4'>
+				Error list (Total: {$cnt})
+			</td>
+		</tr>
+		<tr>
+			<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
+			<td class='tdbgh center' style='width: 150px'>Error type</td>
+			<td class='tdbgh center'>Function</td>
+			<td class='tdbgh center'>Message</td>
+		</tr>";
+	
+	for ($i = 0; $i < $cnt; ++$i) {
+		$cell = ($i%2)+1;
+		
+		if ($errors[$i][2]) {
+			$func = $errors[$i][2]."(".print_args($errors[$i][3]).")";
+		} else {
+			$func = "<i>(main)</i>";
+		}
+		
+		$list .= "
+			<tr>
+				<td class='tdbg{$cell} center'>".($i+1)."</td>
+				<td class='tdbg{$cell} center'>{$errors[$i][0]}</td>
+				<td class='tdbg{$cell} center'>
+					{$func}
+					<div class='fonts'>{$errors[$i][4]}:{$errors[$i][5]}</div>
+				</td>
+				<td class='tdbg{$cell}'>{$errors[$i][1]}</td>						
+			</tr>";
+	}
+		
+	return $list."</table>";
+}
+
+function print_mysql_table() {
+	// array($connId, $parentFunc, $fileLine, $query/$msg, $time, $noIncFlag, $msgType, $errorText)
+	$res = "<br/>
+	<table class='table'>
+		<tr><td class='tdbgh center b' colspan='5'>SQL Debug</td></tr>
+		<tr>
+			<td class='tdbgh center' style='width: 20px'>&nbsp;</td>
+			<td class='tdbgh center' style='width: 20px'>ID</td>
+			<td class='tdbgh center' style='width: 300px'>Function</td>
+			<td class='tdbgh center'>Query</td>
+			<td class='tdbgh center' style='width: 90px'>Time</td>
+		</tr>";
+			
+	$oldid    = NULL;
+	$num      = 1;
+	$transact = $transchg = false;
+	foreach(mysql::$debug_list as $i => $d) {
+		
+		// Add a separator between connection ID changes
+		if ($oldid != $d[0]) {
+			$res .= "<tr><td class='tdbgc center' style='height: 4px' colspan='5'></td></tr>";
+		}
+		$oldid = $d[0];
+		
+		// Does the row *NOT* count towards the query count?
+		if ($d[5]) {
+			$c = "-";
+		} else {
+			$c = $num;
+			++$num;
+		}
+		
+		// Format the message text
+		if ($d[6] & mysql::MSG_TRANSCHG) {
+			// Transaction change
+			$transchg = true;
+			$transact = !$transact;
+		} else if ($d[6] & mysql::MSG_QUERY) {
+			// The error marker has a higher precedence (for obv. reasons)
+			if ($d[7] !== NULL) {
+				$color = "FF0000";
+			} else if ($d[6] & mysql::MSG_CACHED) {
+				$color = "00dd00";
+			} else if ($d[6] & mysql::MSG_PREPARED) {
+				$color = "ffff44";
+			} else if ($d[6] & mysql::MSG_EXECUTE) {
+				$color = "ffcc44";
+			} else {
+				$color = "";
+			}
+			
+			// Set the color for non-standard queries
+			if ($color !== NULL) {
+				$d[3] = "<span style='color:#{$color}".
+					   ( $d[7] !== NULL 
+					   ? ";border-bottom:1px dotted {$color}' title=\"{$d[7]}\"" 
+					   : "'" ).
+					   ">{$d[3]}</span>";
+				$d[4] = "<span style='color:#{$color}'>{$d[4]}</span>";
+			}
+			
+			$color = NULL;
+		} else { // Informative messages
+			$d[3] = "<i>{$d[3]}</i>";
+		}
+		
+		// Highlight queries in a transaction (by convention
+		if ($transchg) {
+			$cell = 'c fonts';
+			$transchg = false;
+		} else if ($transact) {
+			$cell = 'h';
+		} else {
+			$cell = (($i & 1)+1); // Cycling tccell1/2
+		}
+		
+		$res .= "
+		<tr>
+			<td class='tdbg{$cell} center'>{$c}</td>
+			<td class='tdbg{$cell} center'>{$d[0]}</td>
+			<td class='tdbg{$cell} center'>
+				{$d[1]}
+				<div class='fonts'>{$d[2]}</div>
+			</td>
+			<td class='tdbg{$cell}'>{$d[3]}</td>
+			<td class='tdbg{$cell} center'>{$d[4]}</td>
+		</tr>";
+	}
+	
+	return $res."</table>";
 }
 
 function print_args($args) {

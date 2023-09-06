@@ -23,6 +23,8 @@
 		require "lib/abcompat_sql.php";
 	}
 	
+	$sqldebuggers = $config['sqldebuggers'];
+	
 	// layout declarations. oh god
 	$tablewidth = '100%';
 	$fonttag    = '<font class="font">';

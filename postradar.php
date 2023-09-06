@@ -23,7 +23,6 @@
 
 	// Form
 	// Include layout now so post radar on top of page is properly updated
-	//require 'lib/layout.php';
 	pageheader("Editing Post Radar");
 
 	// Deletions before additions

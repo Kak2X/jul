@@ -86,6 +86,7 @@
 				$forum_error = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>{$errortext}</td></tr>";
 			}
 		}
+		load_layout($forum['specialscheme'], $forum['specialtitle']);
 	}
 	
 	function load_thread($id, $postread = false, $check_forum = true, $ignore_errors = false) { // we boardc now
@@ -175,6 +176,8 @@
 				notAuthorizedError();
 			}
 		}
+		
+		load_layout($forum['specialscheme'], $forum['specialtitle']);
 		
 		if ($error) {
 			switch ($error) {

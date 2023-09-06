@@ -4,7 +4,7 @@
 	
 	admincheck();
 	
-	pageheader("");
+	pageheader("Uploader - File Count Fix");
 	
 	print adminlinkbar($scriptpath);
 

@@ -86,6 +86,9 @@
 	$statusicons['off']			= '<img src="schemes/default_old/status/off.gif">';
 */
 
+	# Favicon image, if one is provided
+//	$favicon = "favicon2x";
+
 	# Extra CSS included at the bottom of a page
 
 	$css_extra		= "

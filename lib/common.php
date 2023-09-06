@@ -8,15 +8,8 @@
 
 	// Set this right away to hopefully prevent fuckups
 	ini_set("default_charset", "UTF-8");
-
-	// UTF-8 time?
-	header("Content-type: text/html; charset=utf-8'");
-
-	// cache bad (well, most of the time)
-	//if (!isset($meta['cache'])) {
-	//	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-	//	header('Pragma: no-cache');
-	//}
+	
+	// PHP 8.2...
 	if (!isset($_SERVER['HTTP_USER_AGENT']))
 		$_SERVER['HTTP_USER_AGENT'] = "";
 
@@ -97,44 +90,29 @@
 		}
 		dialog($message, $messagetitle, $title);
 	}
-
-	// determine if the current request is an ajax request, currently only a handful of libraries
-	// set the x-http-requested-with header, with the value "XMLHttpRequest"
-	if (isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest") {
-		define("IS_AJAX_REQUEST", true); // ajax request!
-	} else {
-		define("IS_AJAX_REQUEST", false);
-	}
-
+	
 	// determine the origin of the request
 	$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : filter_string($_SERVER['HTTP_REFERER']);
-	if ($origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST))) {
-		define("SAME_ORIGIN", true);
-	} else {
-		define("SAME_ORIGIN", false);
-	}
-
-	if (file_exists("lib/firewall.php") && $config['enable-firewall']) {
-		require 'lib/firewall.php';
-	}
+	
+	$runtime = [
+		// determine if the current request is an ajax request,
+		// XMLHttpRequest functions helpfully set the x-http-requested-with header with the value "XMLHttpRequest".
+		//
+		// this feature has been in disuse even before the 2015 jul repository got published to github, 
+		// with many of the files not even being uploaded -- the only parts remaining are (now unused) 
+		// utilities in js/useful.js and the server-side code for the AJAX latestposts.
+		//
+		// more could be done with this one day
+		'ajax-request' => isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest",
+		// for file downloads mostly
+		'same-origin' => $origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST)),
+	];
 
 	ext_init();
 
 	// Execute anything to do as soon as the extension system loads
 	hook_use('init');
-
-	if (!filter_bool($meta['notrack'])) {
-		// Delete expired bans
-		$sql->query("
-			UPDATE `users` SET
-				`ban_expire` = 0,
-				`powerlevel` = powerlevel_prev
-			WHERE `ban_expire` != 0 AND
-				  `powerlevel` = '-1' AND
-				  `ban_expire` < ".time()
-		);		
-	}
-
+	
 	$loguser = array();
 
 	// Just making sure.  Don't use this anymore.
@@ -219,10 +197,6 @@
 		if ($loguser['viewsig'] >= 3)
 			return header("Location: /?sec=1");
 		*/
-		// Normal+ can view the submessage
-		if ($loguser['powerlevel'] >= 1) {
-			$config['board-title'] .= $config['title-submessage'];
-		}
 		// Making sure Tina is always admin even if it's displayed as Normal user?
 		/*
 		if ($loguser['id'] == 175 && !$x_hacks['host'])
@@ -255,28 +229,25 @@
 			'splitcat'      => 0,
 			'posttool'      => 1, // Sure, why not
 		);
+		
+		if ($miscdata['private'] == 2) {
+			do404();
+		}
 	}
 
-	if ($miscdata['private'] == 2 && !$loguser['id']) {
-		do404();
-	}
+
 
 	if ($x_hacks['superadmin']) $loguser['powerlevel'] = 4;
 
-	register_shutdown_function('error_printer', false, ($loguser['powerlevel'] == 4), $GLOBALS['errors']);
 
 	$banned    = (int) ($loguser['powerlevel'] <  0);
 	$issuper   = (int) ($loguser['powerlevel'] >= 1);
 	$ismod     = (int) ($loguser['powerlevel'] >= 2);
 	$isadmin   = (int) ($loguser['powerlevel'] >= 3);
 	$sysadmin  = (int) ($loguser['powerlevel'] >= 4);
-
-
 	$isfullmod = $ismod;
+	
 	// >_>
-	$isChristmas = (date('n') == 12);
-
-	// more >_>
 	if ($loguser['uploads_locked']) {
 		$config['allow-attachments'] = false;
 	}
@@ -285,6 +256,9 @@
 	if (file_exists("lib/hacks.php")) {
 		require "lib/hacks.php";
 	}
+	
+	// Moved down here so hacks.php can affect the powerlevel check
+	register_shutdown_function('error_printer', false, $sysadmin, $GLOBALS['errors']);
 
 	// Doom timer setup
 	//$getdoom = true;
@@ -368,7 +342,7 @@
 	*/
 	$url = $_SERVER['REQUEST_URI'];
 
-	if($ipbanned) {
+	if ($ipbanned) {
 		$url .= ' (IP banned)';
 		$bpt_flags = $bpt_flags & BPT_IPBANNED;
 	}
@@ -384,7 +358,7 @@
 		$bpt_flags = $bpt_flags & BPT_BOT;
 	}
 
-	if ($origin && !SAME_ORIGIN) {
+	if ($origin && !$runtime['same-origin']) {
 		$sql->queryp("INSERT INTO referer (time, url, ref, ip) VALUES (:time,:url,:ref,:ip)",
 		[
 			'time' => time(),
@@ -393,81 +367,44 @@
 			'ip'	=> $_SERVER['REMOTE_ADDR']
 		]);
 	}
+	
+	// Alert the admin channel for IP changes, instead of just writing these out in the open, on ipchanges.log
+	if ($loguser['id'] && $loguser['powerlevel'] <= 5 && !$runtime['ajax-request'] && $loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
+		// Determine IP block differences
+		$ip1 = explode(".", $loguser['lastip']);
+		$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
+		for ($diff = 0; $diff < 3; ++$diff)
+			if ($ip1[$diff] != $ip2[$diff]) break;
+		if ($diff == 0) $color = xk(4);	// IP completely different
+		else            $color = xk(8); // Not all blocks changed
+		$diff = "/".($diff+1)*8;
 
-	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(time() - 300));
+		report_send(
+			IRC_ADMIN, xk(7)."User {$loguser['name']} (id {$loguser['id']}) changed from IP ".xk(8)."{$loguser['lastip']}".xk(7)." to ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." ({$color}{$diff}".xk(7).")",
+			IRC_ADMIN, "User {$loguser['name']} (id {$loguser['id']}) changed from IP **{$loguser['lastip']}** to **{$_SERVER['REMOTE_ADDR']}** (**{$diff}**)"
+		);
 
-	if ($loguser['id']) {
-
-		if ($loguser['powerlevel'] <= 5 && !IS_AJAX_REQUEST) {
-
-			$influencelv = calclvl(calcexp($loguser['posts'], (time() - $loguser['regdate']) / 86400));
-
-			// Alart #defcon?
-			if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
-				// Determine IP block differences
-				$ip1 = explode(".", $loguser['lastip']);
-				$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
-				for ($diff = 0; $diff < 3; ++$diff)
-					if ($ip1[$diff] != $ip2[$diff]) break;
-				if ($diff == 0) $color = xk(4);	// IP completely different
-				else            $color = xk(8); // Not all blocks changed
-				$diff = "/".($diff+1)*8;
-
-				report_send(
-					IRC_ADMIN, xk(7)."User {$loguser['name']} (id {$loguser['id']}) changed from IP ".xk(8)."{$loguser['lastip']}".xk(7)." to ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." ({$color}{$diff}".xk(7).")",
-					IRC_ADMIN, "User {$loguser['name']} (id {$loguser['id']}) changed from IP **{$loguser['lastip']}** to **{$_SERVER['REMOTE_ADDR']}** (**{$diff}**)"
-				);
-
-				// "Transfer" the IP bans just in case
-				$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
-				if ($oldban){
-					ipban(
-						$_SERVER['REMOTE_ADDR'],  // IP to ban
-						$oldban['reason'], // Copy over the ban reason
-						"Previous IP address was IP banned - updated IP bans list.", // IRC Message
-						IRC_ADMIN // IRC Channel
-					);
-					die;
-				}
-				unset($oldban);
-
-				// optionally force log out
-				if ($config['force-lastip-match']) {
-					remove_board_cookie('loguserid');
-					remove_board_cookie('logverify');
-					// Attempt to preserve current page
-					die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
-				}
-			}
-
-			if (!filter_bool($meta['notrack'])) {
-				$sql->queryp("
-					UPDATE users
-					SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
-					WHERE id = {$loguser['id']}",
-					[
-						'lastactivity' 	=> time(),
-						'lastip' 		=> $_SERVER['REMOTE_ADDR'],
-						'lasturl' 		=> $url,
-						'lastforum'		=> 0,
-						'influence'		=> $influencelv,
-					]);
-			}
+		// "Transfer" the IP bans just in case
+		$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
+		if ($oldban){
+			ipban(
+				$_SERVER['REMOTE_ADDR'],  // IP to ban
+				$oldban['reason'], // Copy over the ban reason
+				"Previous IP address was IP banned - updated IP bans list.", // IRC Message
+				IRC_ADMIN // IRC Channel
+			);
+			die;
 		}
+		unset($oldban);
 
-	} else {
-		$sql->queryp("
-			INSERT INTO guests (ip, date, useragent, lasturl, lastforum, flags) VALUES (:ip, :date, :useragent, :lasturl, :lastforum, :flags)",
-			[
-				'ip'			=> $_SERVER['REMOTE_ADDR'],
-				'date'			=> time(),
-				'useragent'		=> $_SERVER['HTTP_USER_AGENT'],
-				'lasturl'		=> $url,
-				'lastforum'		=> 0,
-				'flags'			=> $bpt_flags,
-			]);
+		// optionally force log out
+		if ($config['force-lastip-match']) {
+			remove_board_cookie('loguserid');
+			remove_board_cookie('logverify');
+			// Attempt to preserve current page
+			die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
+		}
 	}
-
 
 	if ($ipbanned) {
 		if ($loguser['title'] == "Banned; account hijacked. Contact admin via PM to change it.") {
@@ -503,63 +440,14 @@
 
 		echo dialog($message, "Tor is not allowed", $config['board-name']);
 	}
-
-	/*
-		View milestones
-	*/
-
-	$views = $miscdata['views'] + 1;
-
-	if (!$isbot && !IS_AJAX_REQUEST && !filter_bool($meta['notrack'])) {
-
-		// Don't increment the view counter for bots
-		$sql->query("UPDATE misc SET views = views + 1");
-
-		// Log hits close to a milestone
-		if($views%10000000>9999000 || $views%10000000<1000) {
-			$sql->query("INSERT INTO hits VALUES ($views ,{$loguser['id']}, '{$_SERVER['REMOTE_ADDR']}', ".time().")");
-		}
-
-		// Print out a message to IRC whenever a 10-million-view milestone is hit
-		if (
-			 $views % 10000000 >  9999994 ||
-			($views % 10000000 >= 9991000 && $views % 1000 == 0) ||
-			($views % 10000000 >= 9999900 && $views % 10 == 0) ||
-			($views > 5 && $views % 10000000 < 5)
-		) {
-			// View <num> by <username/ip> (<num> to go)
-			report_send(
-				IRC_MAIN, "View ".xk(11).str_pad(number_format($views), 10, " ", STR_PAD_LEFT).xk()." by ".($loguser['id'] ? xk(11).str_pad($loguser['name'], 25, " ") : xk(12).str_pad($_SERVER['REMOTE_ADDR'], 25, " ")).xk().($views % 1000000 > 500000 ? " (". xk(12).str_pad(number_format(1000000 - ($views % 1000000)), 5, " ", STR_PAD_LEFT).xk(2) ." to go".xk().")" : ""),
-				IRC_MAIN, "View **".number_format($views)."** by ".($loguser['id'] ? "**{$loguser['name']}**" : "**{$_SERVER['REMOTE_ADDR']}**").($views % 1000000 > 500000 ? " (**".number_format(1000000 - ($views % 1000000))." to go)" : ""),
-			);
-		}
-		
-	}
-	if (!filter_bool($meta['notrack'])) {
-		// Dailystats update in one query
-		$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
-					 "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
-					 "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
-	}
-
-	$specialscheme = "";
-
-	// "Mobile" layout
-	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE", "BlackBerry", "iPhone", "Mobile");
-	if ( (str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
-		$loguser['layout']		= 2;
-		$loguser['viewsig']		= 0;
-		$config['board-title']	= "<span style='font-size: 2em'>{$config['board-name']}</span>";
-		$x_hacks['smallbrowse']	= true;
-	}
-
+	
 	/*
 		Other helpful stuff
 	*/
 
 
 
-
+//  Fake downtime page, long deleted
 //	$atempval	= $sql -> resultq("SELECT MAX(`id`) FROM `posts`");
 //	if ($atempval == 199999 && $_SERVER['REMOTE_ADDR'] != "172.130.244.60") {
 //		//print "DBG ". strrev($atempval);
@@ -573,11 +461,6 @@
 //	$getdoom	= true;
 //	require "ext/mmdoom.php";
 
-	// When a post milestone is reached, everybody gets rainbow colors for a day
-	if (!$x_hacks['rainbownames']) {
-		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > time()-86400);
-	}
-
 	// Private board option
 	$allowedpages = ['register.php', 'login.php', 'faq.php'];
 	if (!$loguser['id'] && $miscdata['private'] && !in_array($scriptname, $allowedpages)) {
@@ -588,33 +471,3 @@
 		);
 	}
 	unset($allowedpages);
-
-	/* we're not Jul, and the special sex->namecolor system got nuked anyway
-	if (!$x_hacks['host'] && filter_int($_GET['namecolors'])) {
-		//$sql->query("UPDATE `users` SET `sex` = '255' WHERE `id` = 1");
-		//$sql->query("UPDATE `users` SET `name` = 'Ninetales', `powerlevel` = '3' WHERE `id` = 24 and `powerlevel` < 3");
-		//$sql->query("UPDATE `users` SET `sex` = '9' WHERE `id` = 1");
-		//$sql->query("UPDATE `users` SET `sex` = '10' WHERE `id` = 855");
-		//$sql->query("UPDATE `users` SET `sex` = '7' WHERE `id` = 18");	# 7
-		//$sql->query("UPDATE `users` SET `sex` = '99' WHERE `id` = 21"); #Tyty (well, not anymore)
-		//$sql->query("UPDATE `users` SET `sex` = '9' WHERE `id` = 275");
-
-		$sql->query("UPDATE `users` SET `sex` = '4' WHERE `id` = 41");
-		$sql->query("UPDATE `users` SET `sex` = '6' WHERE `id` = 4");
-		$sql->query("UPDATE `users` SET `sex` = '11' WHERE `id` = 92");
-		$sql->query("UPDATE `users` SET `sex` = '97' WHERE `id` = 24");
-		$sql->query("UPDATE `users` SET `sex` = '42' WHERE `id` = 45");	# 7
-		$sql->query("UPDATE `users` SET `sex` = '8' WHERE `id` = 19");
-		$sql->query("UPDATE `users` SET `sex` = '98' WHERE `id` = 1343"); #MilesH
-		$sql->query("UPDATE `users` SET `sex` = '12' WHERE `id` = 1296");
-		$sql->query("UPDATE `users` SET `sex` = '13' WHERE `id` = 1090");
-		$sql->query("UPDATE `users` SET `sex` = '14' WHERE `id` = 6"); #mm88
-		$sql->query("UPDATE `users` SET `sex` = '21' WHERE `id` = 1840"); #Sofi
-		$sql->query("UPDATE `users` SET `sex` = '22' WHERE `id` = 20"); #nicole
-		$sql->query("UPDATE `users` SET `sex` = '23' WHERE `id` = 50"); #Rena
-		$sql->query("UPDATE `users` SET `sex` = '24' WHERE `id` = 2069"); #Adelheid/Stark/etc.
-
-		$sql->query("UPDATE `users` SET `name` = 'Xkeeper' WHERE `id` = 1"); #Xkeeper. (Change this and I WILL Z-Line you from Badnik for a week.)
-
-	}
-*/

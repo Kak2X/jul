@@ -127,7 +127,7 @@
 	}
 
 	
-	pageheader($opts->pagetitle, $opts->specialscheme, $opts->specialtitle);
+	pageheader($opts->pagetitle);
 	if ($_GET['id']) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum)."</table>";
 	}

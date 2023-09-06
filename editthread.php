@@ -42,7 +42,7 @@
 		return header("Location: thread.php?id={$_GET['id']}");
 	}
 	else if ($ismod && $_GET['action'] == 'trashthread') {
-		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);
+		pageheader();
 		
 		if (confirmed($msgkey = 'trash', TOKEN_SLAMMER)) {		
 			$sql->beginTransaction();
@@ -61,7 +61,7 @@
 		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else if ($sysadmin && filter_bool($_POST['deletethread']) && $config['allow-thread-deletion']) {
-		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);	
+		pageheader();	
 
 		if (confirmed($msgkey = 'erase-thread', TOKEN_SLAMMER)) {	
 			// Double-confirm the checkbox 
@@ -107,7 +107,7 @@
 		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
-		pageheader(NULL, $forum['specialscheme'], $forum['specialtitle']);
+		pageheader();
 		
 		$links = array(
 			[$forum['title']    , "forum.php?id={$forum['id']}"],

@@ -38,288 +38,139 @@
 		$cycler		= str_replace("color=", "#", getnamecolor(0, 0));
 		$config['board-title']	.= "</a><br><a href='/thread.php?id=5866'><span style='color: $cycler; font-size: 14px;'>Mosts Results posted. Go view.</span></a>";
 	} */
+	
+//$config['board-title'] = "<a href='./'><img src=\"images/christmas-banner-blackroseII.png\" title=\"Not even Christmas in July, no. It's May.\"></a>";
 
+// PONIES!!!
+// if($forumid==30) $config['board-title'] = "<a href='./'><img src=\"images/poniecentral.gif\" title=\"YAAAAAAAAAAY\"></a>";
+// end PONIES!!!
 
-function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, $mini = false, $centered = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $scriptname, $meta, $userfields, $numcols, $barimg,
-			$isadmin, $issuper, $sysadmin, $isChristmas;
+function load_layout($forcescheme = NULL, $forcetitle = NULL) {
+	global 	$sql, $config, $x_hacks, $loguser, $miscdata, $pwlnames, // globals - external
+			$nmcol, $statusicons, $numdir, $numfil, $barimg, $numcols, // globals - created
+			$favicon, $schemepre, $css, $body_extra, $schemerow, // for pageheader only
+			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $poweredbypic // thread pics
+			;
 			
-	// Load images right away
-	require 'lib/colors.php';
-	
 	/*
-		META tags & Favicon
+		Default color scheme
 	*/
-	$metatag = '';
-
-	if (isset($meta['noindex']))
-		$metatag .= "<meta name=\"robots\" content=\"noindex,follow\" />";
-
-	if (isset($meta['description']))
-		$metatag .= "<meta name=\"description\" content=\"{$meta['description']}\" />";
-
-	if (isset($meta['canonical'])) {
-		$metatag .= "<link rel='canonical' href='{$meta['canonical']}' />";
-	}
+			
+	$nmcol = [
+		0 => ['-2' => '6a6a6a', '-1' => '888888', '97ACEF', 'D8E8FE', 'AFFABE', 'FFEA95'],
+		1 => ['-2' => '767676', '-1' => '888888', 'F185C9', 'FFB3F3', 'C762F2', 'C53A9E'],
+		2 => ['-2' => '767676', '-1' => '888888', '7C60B0', 'EEB9BA', '47B53C', 'F0C413']
+	];
 	
-	$favicon = "favicon";
+	$linkcolor	='FFD040';
+	$linkcolor2 ='F0A020';
+	$linkcolor3 ='FFEA00';
+	$linkcolor4 ='FFFFFF';
+	$textcolor	='E0E0E0';
+	$tableheadtext = "";
+
+	$font	= 'Verdana, Geneva, sans-serif';
+	$font2	= 'Verdana, Geneva, sans-serif';
+	$font3	= 'Tahoma, Verdana, Geneva, sans-serif';
+
+	$newpollpic		= '<img class="pixel" src="schemes/default/status/newpoll.png" alt="New poll" align="absmiddle">';
+	$newreplypic	= '<img class="pixel" src="schemes/default/status/newreply.png" alt="New reply" align="absmiddle">';
+	$newthreadpic	= '<img class="pixel" src="schemes/default/status/newthread.png" alt="New thread" align="absmiddle">';
+	$closedpic		= '<img class="pixel" src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
+	$nopollpic      = '<img class="pixel" src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
+	$poweredbypic   = '<img class="pixel" src="images/poweredbyacmlm.gif">';
+	$numdir			= 'jul/';
+
+	$statusicons = [
+		'new'			=> '<img class="pixel" src="schemes/default/status/new.gif">',
+		'newhot'		=> '<img class="pixel" src="schemes/default/status/hotnew.gif">',
+		'newoff'		=> '<img class="pixel" src="schemes/default/status/off.gif">',
+		'newhotoff'		=> '<img class="pixel" src="schemes/default/status/hotoff.gif">',
+		'hot'			=> '<img class="pixel" src="schemes/default/status/hot.gif">',
+		'hotoff'		=> '<img class="pixel" src="schemes/default/status/hotoff.gif">',
+		'off'			=> '<img class="pixel" src="schemes/default/status/off.gif">',
+
+		'getnew'		=> '<img class="pixel" src="schemes/default/status/getnew.png" title="Go to new posts" align="absmiddle">',
+		'getlast'		=> '<img class="pixel" src="schemes/default/status/getlast.png" title="Go to last post" style="position:relative;top:1px">',
+
+		'sticky'		=> 'Sticky:',
+		'poll'			=> 'Poll:',
+		'stickypoll'	=> 'Sticky poll:',
+		'ann'			=> 'Announcement:',
+		'annsticky'		=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annsticky' 	=> 'Announcement - Sticky:',
+		'annpoll'		=> 'Announcement - Poll:',
+		'annstickypoll'	=> 'Announcement - Sticky poll:',
+	];
+	//$schemetime  = -1; // mktime(9, 0, 0) - time();
+	$numfil      = 'numnes';
+	$numcols     = 60;
+	$nullscheme  = 0;
+	$schemetype  = 0;
+	$formcss     = 0;
+	$usebtn      = 0;
+	$schemepre   = isset($_GET['scheme']);
+	$isChristmas = (date('n') == 12);
+	$css_extra = $body_extra = "";
+	
+	// Favicon, now here so schemes can override it
+	$favicon = "images/favicon/favicon";
 	if (!$x_hacks['host']) {
 		$favicon .= rand(1, 8);
 		if ($isChristmas) $favicon .= "x";	// Have a Santa hat
 	}
-
-	/*
-		Board title
-	*/
-	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . htmlspecialchars($windowtitle) : "");
+	$favicon .= ".ico";
 	
 	/*
-		Header links at the top of every page
+		Load scheme file
 	*/
-	$headlinks = '';
-	if($loguser['id']) {
-		
-		if($isadmin)
-			$headlinks .= '<a href="admin.php" style="font-style:italic;">Admin</a> - ';
-
-		if($issuper) {
-			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
-		}
-		if ($isadmin)
-			$headlinks .= '<a href="register.php" style="font-style:italic;">Register</a> - ';
-			
-		
-		// Now with logout workaround when JS is disabled
-		$logout = '
-		<form action="login.php" method="post" name="logout" style="display: inline"><input type="hidden" name="action" value="logout">'.auth_tag(TOKEN_LOGIN).'</form>
-		<a href="login.php?action=logout" onclick="event.preventDefault(); document.logout.submit()">Logout</a>';
-		
-		$headlinks.= $logout.'
-		- <a href="editprofile.php">Edit profile</a>
-		'.(!$loguser['profile_locked'] ? " - <a href='postlayouts.php'>Edit layout</a>" : "").'
-		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
-		- <a href="postradar.php">Post radar</a>
-		- <a href="shop.php">Item shop</a>
-		- <a href="forum.php?fav=1">Favorites</a>
-		- <a href="blocklayout.php">Blocked layouts</a>'.hook_print('header-links');
-		
-		// Page-specific addendums
-		switch ($scriptname) {
-			case 'index.php':
-			case 'latestposts.php':
-				$headlinks .= " - <a href='index.php?action=markallforumsread'>Mark all forums read</a>";
-				break;
-			
-			case 'forum.php':
-			case 'thread.php':
-				// Since we're supposed to have $forum when we browse these pages...
-				global $forum;
-				if (isset($forum['id']))
-					$headlinks .= " - <a href='index.php?action=markforumread&forumid={$forum['id']}'>Mark forum read</a>";
-				break;
-				
-			case 'private.php':
-				global $u;
-				if ($loguser['id'] == $u) {
-					$tokenstr = "&auth=".generate_token(TOKEN_MGET);
-					if (!default_pm_folder($_GET['dir'], DEFAULTPM_GROUPS)) {
-						$headlinks .= " - <a href='?action=markfolderread&dir={$_GET['dir']}{$tokenstr}'>Mark folder as read</a>";
-					}
-					$headlinks .= " - <a href='?action=markallfoldersread{$tokenstr}'>Mark all folders as read</a>";
-				}
-				break;
-		}
-		
-	} else {
-		$headlinks.='
-		  <a href="register.php">Register</a>
-		- <a href="login.php">Login</a>';
+	
+	// First determine the scheme ID to use
+	
+	// Previewing a scheme?
+	if ($schemepre) {
+		$scheme = (int)$_GET['scheme'];
+		if (!can_select_scheme($scheme))
+			dialog("The scheme you're trying to preview doesn't exist, or you're not allowed to use it.", "Scheme Preview");
 	}
-	
-	if (!$loguser['id'] && $miscdata['private']) {
-		$headlinks2 = '<a href="faq.php">Rules/FAQ</a>';
-	} else {
-		$headlinks2 = "
-		<a href='index.php'>Main</a>
-		- <a href='memberlist.php'>Memberlist</a>
-		- <a href='activeusers.php'>Active users</a>
-		- <a href='calendar.php'>Calendar</a>
-		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
-		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
-		- <a href='online.php'>Online users</a>
-		".hook_print('header-links-2')."
-		<br>
-		<a href='ranks.php'>Ranks</a>
-		- <a href='faq.php'>Rules/FAQ</a>
-		- <a href='acs.php'>JCS</a>
-		- <a href='stats.php'>Stats</a>
-		- <a href='latestposts.php'>Latest Posts</a>
-		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
-		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
-		";
-	}
-	
-	
-	
-	/*
-		Unread PMs box
-	*/
-	$privatebox = "";
-	// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
-	// This box only shows up when a new PM is found, so it's optimized for that
-	if ($loguser['id'] && !in_array($scriptname, array("private.php","index.php")) ) {
-		$lastthread = $sql->query("
-			SELECT t.id
-			FROM pm_threads t
-			INNER JOIN pm_access       a ON t.id         = a.thread
-			LEFT  JOIN pm_foldersread fr ON a.folder     = fr.folder AND a.user = fr.user
-			LEFT  JOIN pm_threadsread tr ON t.id         = tr.tid    AND tr.uid = {$loguser['id']}
-			WHERE a.user = {$loguser['id']} 
-			  AND (!tr.read OR tr.read IS NULL)			  
-			  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
-			ORDER BY t.lastpostdate DESC
-		");
-		$unreadcount = $sql->num_rows($lastthread);
-		
-		if ($unreadcount) {
-			$tid = $sql->result($lastthread);
-			$lastpost = $sql->fetchq("
-				SELECT p.id pid, p.date, $userfields
-				FROM pm_posts p
-				LEFT JOIN users u ON p.user = u.id
-				WHERE p.thread = {$tid}
-				ORDER BY p.date DESC
-				LIMIT 1
-			");
-			$privatebox = "
-				<tr>
-					<td colspan=3 class='tbl tdbg2 center fonts'>
-						{$statusicons['new']} <a href='private.php'>You have {$unreadcount} new private message".($unreadcount != 1 ? 's' : '')."</a> -- <a href='showprivate.php?pid={$lastpost['pid']}#{$lastpost['pid']}'>Last unread message</a> from ".getuserlink($lastpost)." on ".printdate($lastpost['date'])."
-					</td>
-				</tr>";			
-			
-		}
-	}
-	
-	// Pretty similar to the above but for profile comments
-	// Of course this is simpler
-	if ($loguser['id'] && $loguser['comments']) {
-		$unreadcount = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userto = {$loguser['id']} AND `read` = 0");
-		if ($unreadcount) {
-			$privatebox .= "
-			<tr>
-				<td colspan=3 class='tdbg2 center fonts'>
-					{$statusicons['new']} <a href='usercomment.php?id={$loguser['id']}&to=1'>You have {$unreadcount} new profile comment".($unreadcount != 1 ? 's' : '')."</a>
-				</td>
-			</tr>";
-		}
-	}
-	
-	
-	/*
-		CSS
-	*/
-		
-	// Default values
-	$numcols 	= 60;
-	$nullscheme = 0;
-	$schemetype = 0;
-	$formcss 	= 0;
-	$usebtn     = 0;
 	// If a scheme is being forced board-wise, make it override forum-specific schemes
-	// (Special schemes and $specialscheme now pass through $forcescheme)
-	if ($miscdata['scheme'] !== NULL)
-		$forcescheme = $miscdata['scheme'];
-	
-	$schemepre	= false;
-
-	// Just skip all of this if we've forced a scheme
-	if ($forcescheme === null) {
-	
-		// Force Xmas scheme (cue whining, as always)
-		if ($isChristmas && !$x_hacks['host'] && $config['enable-christmas']) {
-			$scheme = 3;
-			$x_hacks['rainbownames'] = true;
-		}
-		//	Previewing a scheme?
-		else if (isset($_GET['scheme'])) {
-			$scheme = (int)$_GET['scheme'];
-			if (!can_select_scheme($scheme))
-				$scheme = 0;
-			else
-				$schemepre	= true;
-		}
-		else {
-			$scheme = $loguser['scheme'];
-		}
-		
-	} else {
+	else if ($miscdata['scheme'] !== NULL)
+		$scheme = $miscdata['scheme'];
+	// Forum-specific scheme, passed to the function
+	else if ($forcescheme !== null)
 		$scheme = $forcescheme;
+	// Force Xmas scheme (cue whining, as always)
+	else if ($isChristmas && !$x_hacks['host'] && $config['enable-christmas']) {
+		$scheme = 3;
+		$x_hacks['rainbownames'] = true;
 	}
+	// Standard scheme
+	else
+		$scheme = $loguser['scheme'];
 
 	$schemerow	= $sql->fetchq("SELECT name, file FROM schemes WHERE id = '{$scheme}'");
-
-	$filename	= "";
 	if ($schemerow && substr($schemerow['file'], -4) === ".php" && valid_filename(substr($schemerow['file'], 0, -4)) && file_exists("schemes/{$schemerow['file']}")) {
 		$filename	= $schemerow['file'];
 	} else {
 		$filename	= "night.php";
-		$schemepre	= false;
 	}
-
-	#	if (!$x_hacks['host'] && true) {
-	#		$filename	= "ymar.php";
-	#	}
-	
-	
 	require "schemes/$filename";
+	
 	// Some of the original jul schemes do not define the "permabanned" color
 	if (!isset($nmcol[0][-2])) {
 		$nmcol[0][-2] = $nmcol[0][-1]; 
 		$nmcol[1][-2] = $nmcol[1][-1]; 
 		$nmcol[2][-2] = $nmcol[2][-1]; 
 	}
-	
-	// Overriding the default title?
-	// Moved here to allow overriding themes defining custom headers (and fixing the bug which renders the custom header non-clickable)
-	if ($miscdata['specialtitle'])
-		$config['board-title'] = $miscdata['specialtitle'];	// Global
-	else if ($forcetitle) 
-		$config['board-title'] = $forcetitle; // Forum specific
-	else 
-		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
-
-	if ($issuper) {
-		$config['board-title'] .= $config['title-submessage'];
+	// Hide Normal+ to non-admins
+	if ($loguser['powerlevel'] < $config['view-super-minpower']) {
+		$nmcol[0][1]	= $nmcol[0][0];
+		$nmcol[1][1]	= $nmcol[1][0];
+		$nmcol[2][1]	= $nmcol[2][0];
 	}
 	
-	$config['board-title'] = xssfilters($config['board-title']);
-	
-	/*
-		Extra title rows (for admin info)
-	*/
-	if ($schemepre) {
-		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". htmlspecialchars($schemerow['name']) ."</b>\"</span>";
-	}
-	
-	// Admin-only info
-	// in_array($loguserid,array(1,5,2100))
-	if ($sysadmin) {
-		if (file_exists("{$config['backup-folder']}/".date("Ymd").".zip") && date('Gi') < 100){ // Give this warning message for an hour
-			$config['board-title']	.=  "<br><a href='admin-backup.php'><span class='font b' style='color: #f00'>Please download the nightly backup.</span></a>";			
-		}
-		
-		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`date`) as date FROM `pendingusers`");
-		if ($xminilog['count']) {
-			$xminilogip	= $sql->fetchq("SELECT `name`, `ip` FROM `pendingusers` ORDER BY `date` DESC LIMIT 1");
-			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>{$xminilog['count']}</b> pending user(s), last <b>'{$xminilogip['name']}'</b> at <b>". printdate($xminilog['date']) ."</b> by <b>{$xminilogip['ip']}</b></span></a>";
-		}
-	}
-	
-	// Additional options
-	$config['board-title'] .= hook_print('header-title-rows');
-	
-	// Default bar image definition
+	// Default bar image definition, after numdir got potentially updated by the scheme
 	$barimg = array(
 		0 => "images/bar/{$numdir}barleft.png",
 		1 => "images/bar/{$numdir}bar-on.png",
@@ -327,44 +178,29 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		3 => "images/bar/{$numdir}barright.png",
 	);
 	
-	
-
-	//$config['board-title'] = "<a href='./'><img src=\"images/christmas-banner-blackroseII.png\" title=\"Not even Christmas in July, no. It's May.\"></a>";
-
-	// PONIES!!!
-	// if($forumid==30) $config['board-title'] = "<a href='./'><img src=\"images/poniecentral.gif\" title=\"YAAAAAAAAAAY\"></a>";
-	// end PONIES!!!
-	
-	
-	// Build post radar
-	$race = $loguser['id'] ? postradar($loguser['id']) : "";
-	
-
-	if (isset($bgimage) && $bgimage != "")
-		$bgimage = " url('$bgimage')";
-	else 
-		$bgimage = '';
-	
-	$customstyle = filter_string($meta['baserel']) . hook_print('header-css');
-
+	/*
+		Build the CSS using the scheme variables
+	*/
 	$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>";
 	if ($nullscheme) {
-		// special "null" scheme.
+		//  Special "null" scheme.
 		$css .= "<style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css = "$customstyle
+		$css .= hook_print('header-css')."
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
-		
 		$usebtn = 1;
-		// backwards compat
-		//global $bgcolor, $linkcolor;
-		//$bgcolor = "000";
-		//$linkcolor = "FFF";
 	} else {
 		// Standard
-		$css .= "$customstyle
+		
+		// Convert image URL to proper CSS url
+		if (isset($bgimage) && $bgimage)
+			$bgimage = " url('$bgimage')";
+		else 
+			$bgimage = "";
+		
+		$css .= hook_print('header-css')."
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }
@@ -520,14 +356,343 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 	*/
 	
 	// 10/18/08 - hydrapheetz: added a small hack for "extra" css goodies.
-	if (isset($css_extra)) {
+	if ($css_extra) {
 		$css .= $css_extra . "\n";
 	}
 	
 	if ($loguser['fontsize']) {
 		$css .= "body { font-size: {$loguser['fontsize']}% }\n"; 
 	}
+	$css .= "</style>";
+
+	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
 	
+	// When a post milestone is reached, everybody gets rainbow colors for a day
+	if (!$x_hacks['rainbownames']) {
+		$x_hacks['rainbownames'] = ($sql->resultq("SELECT `date` FROM `posts` WHERE (`id` % 100000) = 0 ORDER BY `id` DESC LIMIT 1") > time()-86400);
+	}
+	
+	// "Mobile" layout
+	$smallbrowsers	= array("Nintendo DS", "Android", "PSP", "Windows CE", "BlackBerry", "iPhone", "Mobile");
+	if ((str_replace($smallbrowsers, "", $_SERVER['HTTP_USER_AGENT']) != $_SERVER['HTTP_USER_AGENT']) || filter_int($_GET['mobile'])) {
+		$loguser['layout']		= 2;
+		$loguser['viewsig']		= 0;
+		$config['board-title']	= "<span style='font-size: 2em'>{$config['board-name']}</span>";
+		$x_hacks['smallbrowse']	= true;
+	}
+	
+	$GLOBALS['forcetitle'] = $forcetitle;
+}
+
+function pageheader($windowtitle = '', $mini = false, $centered = false) {
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $numcols, $barimg, $isbot, $schemerow,
+			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css, $forcetitle;
+			
+	// Load this if it wasn't explicitly launched
+	if (!isset($nmcol)) {
+		load_layout();
+	}
+	
+	/*
+		Track activity only for pages that render the main header
+	*/
+	if ($loguser['id']) {
+		if (!filter_bool($meta['notrack'])) {
+			$influencelv = calclvl(calcexp($loguser['posts'], (time() - $loguser['regdate']) / 86400));
+			$sql->queryp("
+				UPDATE users
+				SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
+				WHERE id = {$loguser['id']}",
+				[
+					'lastactivity' 	=> time(),
+					'lastip' 		=> $_SERVER['REMOTE_ADDR'],
+					'lasturl' 		=> $url,
+					'lastforum'		=> 0,
+					'influence'		=> $influencelv,
+				]);
+		}
+	} else {
+		$sql->queryp("
+			INSERT INTO guests (ip, date, useragent, lasturl, lastforum, flags) VALUES (:ip, :date, :useragent, :lasturl, :lastforum, :flags)",
+			[
+				'ip'			=> $_SERVER['REMOTE_ADDR'],
+				'date'			=> time(),
+				'useragent'		=> $_SERVER['HTTP_USER_AGENT'],
+				'lasturl'		=> $url,
+				'lastforum'		=> 0,
+				'flags'			=> $bpt_flags,
+			]);
+	}
+	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(time() - 300));
+	
+
+	/*
+		View milestones
+	*/
+
+	$views = $miscdata['views'] + 1;
+
+	if (!filter_bool($meta['notrack'])) {
+		
+		if (!$isbot && !$runtime['ajax-request']) {
+
+			// Don't increment the view counter for bots
+			$sql->query("UPDATE misc SET views = views + 1");
+
+			// Log hits close to a milestone
+			if($views%10000000>9999000 || $views%10000000<1000) {
+				$sql->query("INSERT INTO hits VALUES ($views ,{$loguser['id']}, '{$_SERVER['REMOTE_ADDR']}', ".time().")");
+			}
+
+			// Print out a message to IRC whenever a 10-million-view milestone is hit
+			if (
+				 $views % 10000000 >  9999994 ||
+				($views % 10000000 >= 9991000 && $views % 1000 == 0) ||
+				($views % 10000000 >= 9999900 && $views % 10 == 0) ||
+				($views > 5 && $views % 10000000 < 5)
+			) {
+				// View <num> by <username/ip> (<num> to go)
+				report_send(
+					IRC_MAIN, "View ".xk(11).str_pad(number_format($views), 10, " ", STR_PAD_LEFT).xk()." by ".($loguser['id'] ? xk(11).str_pad($loguser['name'], 25, " ") : xk(12).str_pad($_SERVER['REMOTE_ADDR'], 25, " ")).xk().($views % 1000000 > 500000 ? " (". xk(12).str_pad(number_format(1000000 - ($views % 1000000)), 5, " ", STR_PAD_LEFT).xk(2) ." to go".xk().")" : ""),
+					IRC_MAIN, "View **".number_format($views)."** by ".($loguser['id'] ? "**{$loguser['name']}**" : "**{$_SERVER['REMOTE_ADDR']}**").($views % 1000000 > 500000 ? " (**".number_format(1000000 - ($views % 1000000))." to go)" : ""),
+				);
+			}
+			
+		}
+		// Dailystats update in one query
+		$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
+					 "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
+					 "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
+	}
+	
+	// Only here to skip executing it when the header doesn't get rendered.
+	if (!filter_bool($meta['notrack'])) {
+		// Delete expired bans
+		$sql->query("
+			UPDATE `users` SET
+				`ban_expire` = 0,
+				`powerlevel` = powerlevel_prev
+			WHERE `ban_expire` != 0 AND
+				  `powerlevel` = '-1' AND
+				  `ban_expire` < ".time()
+		);		
+	}
+		
+	// UTF-8 time?
+	header("Content-type: text/html; charset=utf-8'");
+
+	// cache bad (well, most of the time)
+	//if (!isset($meta['cache'])) {
+	//	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+	//	header('Pragma: no-cache');
+	//}		
+	
+	/*
+		META tags & Favicon
+	*/
+	$metatag = '';
+
+	if (isset($meta['noindex']))
+		$metatag .= "<meta name=\"robots\" content=\"noindex,follow\" />";
+
+	if (isset($meta['description']))
+		$metatag .= "<meta name=\"description\" content=\"{$meta['description']}\" />";
+
+	if (isset($meta['canonical']))
+		$metatag .= "<link rel='canonical' href='{$meta['canonical']}' />";
+	
+	/*
+		Board title
+	*/
+	$windowtitle = $config['board-name'] . ($windowtitle ? " -- " . htmlspecialchars($windowtitle) : "");
+	
+	/*
+		Header links at the top of every page
+	*/
+	$headlinks = '';
+	if ($loguser['id']) {
+		
+		if ($isadmin)
+			$headlinks .= '<a href="admin.php" style="font-style:italic;">Admin</a> - ';
+
+		if ($issuper)
+			$headlinks .= '<a href="shoped.php" style="font-style:italic;">Shop Editor</a> - ';
+		
+		if ($isadmin)
+			$headlinks .= '<a href="register.php" style="font-style:italic;">Register</a> - ';
+			
+		
+		// Now with logout workaround when JS is disabled
+		$logout = '
+		<form action="login.php" method="post" name="logout" style="display: inline"><input type="hidden" name="action" value="logout">'.auth_tag(TOKEN_LOGIN).'</form>
+		<a href="login.php?action=logout" onclick="event.preventDefault(); document.logout.submit()">Logout</a>';
+		
+		$headlinks.= $logout.'
+		- <a href="editprofile.php">Edit profile</a>
+		'.(!$loguser['profile_locked'] ? " - <a href='postlayouts.php'>Edit layout</a>" : "").'
+		'.($config['allow-avatar-storage'] ? " - <a href='editavatars.php'>Edit avatars</a>" : "").'
+		- <a href="postradar.php">Post radar</a>
+		- <a href="shop.php">Item shop</a>
+		- <a href="forum.php?fav=1">Favorites</a>
+		- <a href="blocklayout.php">Blocked layouts</a>'.hook_print('header-links');
+		
+		// Page-specific addendums
+		switch ($scriptname) {
+			case 'index.php':
+			case 'latestposts.php':
+				$headlinks .= " - <a href='index.php?action=markallforumsread'>Mark all forums read</a>";
+				break;
+			
+			case 'forum.php':
+			case 'thread.php':
+				// Since we're supposed to have $forum when we browse these pages...
+				global $forum;
+				if (isset($forum['id']))
+					$headlinks .= " - <a href='index.php?action=markforumread&forumid={$forum['id']}'>Mark forum read</a>";
+				break;
+				
+			case 'private.php':
+				global $u;
+				if ($loguser['id'] == $u) {
+					$tokenstr = "&auth=".generate_token(TOKEN_MGET);
+					if (!default_pm_folder($_GET['dir'], DEFAULTPM_GROUPS)) {
+						$headlinks .= " - <a href='?action=markfolderread&dir={$_GET['dir']}{$tokenstr}'>Mark folder as read</a>";
+					}
+					$headlinks .= " - <a href='?action=markallfoldersread{$tokenstr}'>Mark all folders as read</a>";
+				}
+				break;
+		}
+		
+	} else {
+		$headlinks.='
+		  <a href="register.php">Register</a>
+		- <a href="login.php">Login</a>';
+	}
+	
+	if (!$loguser['id'] && $miscdata['private']) {
+		$headlinks2 = '<a href="faq.php">Rules/FAQ</a>';
+	} else {
+		$headlinks2 = "
+		<a href='index.php'>Main</a>
+		- <a href='memberlist.php'>Memberlist</a>
+		- <a href='activeusers.php'>Active users</a>
+		- <a href='calendar.php'>Calendar</a>
+		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
+		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
+		- <a href='online.php'>Online users</a>
+		".hook_print('header-links-2')."
+		<br>
+		<a href='ranks.php'>Ranks</a>
+		- <a href='faq.php'>Rules/FAQ</a>
+		- <a href='acs.php'>JCS</a>
+		- <a href='stats.php'>Stats</a>
+		- <a href='latestposts.php'>Latest Posts</a>
+		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
+		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
+		";
+	}
+	
+	
+	
+	/*
+		Unread PMs box
+	*/
+	$privatebox = "";
+	// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
+	// This box only shows up when a new PM is found, so it's optimized for that
+	if ($loguser['id'] && !in_array($scriptname, array("private.php","index.php")) ) {
+		$lastthread = $sql->query("
+			SELECT t.id
+			FROM pm_threads t
+			INNER JOIN pm_access       a ON t.id         = a.thread
+			LEFT  JOIN pm_foldersread fr ON a.folder     = fr.folder AND a.user = fr.user
+			LEFT  JOIN pm_threadsread tr ON t.id         = tr.tid    AND tr.uid = {$loguser['id']}
+			WHERE a.user = {$loguser['id']} 
+			  AND (!tr.read OR tr.read IS NULL)			  
+			  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
+			ORDER BY t.lastpostdate DESC
+		");
+		$unreadcount = $sql->num_rows($lastthread);
+		
+		if ($unreadcount) {
+			$tid = $sql->result($lastthread);
+			$lastpost = $sql->fetchq("
+				SELECT p.id pid, p.date, $userfields
+				FROM pm_posts p
+				LEFT JOIN users u ON p.user = u.id
+				WHERE p.thread = {$tid}
+				ORDER BY p.date DESC
+				LIMIT 1
+			");
+			$privatebox = "
+				<tr>
+					<td colspan=3 class='tbl tdbg2 center fonts'>
+						{$statusicons['new']} <a href='private.php'>You have {$unreadcount} new private message".($unreadcount != 1 ? 's' : '')."</a> -- <a href='showprivate.php?pid={$lastpost['pid']}#{$lastpost['pid']}'>Last unread message</a> from ".getuserlink($lastpost)." on ".printdate($lastpost['date'])."
+					</td>
+				</tr>";			
+			
+		}
+	}
+	
+	// Pretty similar to the above but for profile comments
+	// Of course this is simpler
+	if ($loguser['id'] && $loguser['comments']) {
+		$unreadcount = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userto = {$loguser['id']} AND `read` = 0");
+		if ($unreadcount) {
+			$privatebox .= "
+			<tr>
+				<td colspan=3 class='tdbg2 center fonts'>
+					{$statusicons['new']} <a href='usercomment.php?id={$loguser['id']}&to=1'>You have {$unreadcount} new profile comment".($unreadcount != 1 ? 's' : '')."</a>
+				</td>
+			</tr>";
+		}
+	}
+	
+	// Overriding the default title?
+	// Moved here to allow overriding themes defining custom headers (and fixing the bug which renders the custom header non-clickable)
+	if ($miscdata['specialtitle'])
+		$config['board-title'] = $miscdata['specialtitle'];	// Global
+	else if ($forcetitle) 
+		$config['board-title'] = $forcetitle; // Forum specific
+	else 
+		$config['board-title'] = "<a href='./'>{$config['board-title']}</a>"; // Leave unchanged
+	
+	// Normal+ can view the submessage
+	if ($issuper) {
+		$config['board-title'] .= $config['title-submessage'];
+	}
+	
+	$config['board-title'] = xssfilters($config['board-title']);
+	
+	/*
+		Extra title rows (for admin info)
+	*/
+	if ($schemepre) {
+		$config['board-title']	.= "</a><br><span class='font'>Previewing scheme \"<b>". htmlspecialchars($schemerow['name']) ."</b>\"</span>";
+	}
+	
+	// Admin-only info
+	// in_array($loguserid,array(1,5,2100))
+	if ($sysadmin) {
+		if (file_exists("{$config['backup-folder']}/".date("Ymd").".zip") && date('Gi') < 100){ // Give this warning message for an hour
+			$config['board-title']	.=  "<br><a href='admin-backup.php'><span class='font b' style='color: #f00'>Please download the nightly backup.</span></a>";			
+		}
+		
+		$xminilog	= $sql->fetchq("SELECT COUNT(*) as count, MAX(`date`) as date FROM `pendingusers`");
+		if ($xminilog['count']) {
+			$xminilogip	= $sql->fetchq("SELECT `name`, `ip` FROM `pendingusers` ORDER BY `date` DESC LIMIT 1");
+			$config['board-title']	.= "<br><a href='admin-pendingusers.php'><span class='font' style='color: #ff0'><b>{$xminilog['count']}</b> pending user(s), last <b>'{$xminilogip['name']}'</b> at <b>". printdate($xminilog['date']) ."</b> by <b>{$xminilogip['ip']}</b></span></a>";
+		}
+	}
+	
+	// Additional options
+	$config['board-title'] .= hook_print('header-title-rows');
+	
+	// Build post radar
+	$race = $loguser['id'] ? postradar($loguser['id']) : "";
+	
+
+		
 	/*
 		JS Utility (and other crap in common.js that's important to be loaded immediately)
 		
@@ -535,18 +700,14 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		.js          -> Only shown with JS enabled
 		.nojs-jshide -> Shown with JS disabled, hidden off-screen with JS enabled
 	*/
-	$css .= "
+	$jscripts = "<style>
 	.js, .nojs-jshide {display: none}
 </style>
 <noscript><style>.nojs-jshide {display: unset}</style></noscript>
 <script type='text/javascript' src='js/common.js'></script>";
-
-	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
 	
 	//No gunbound rankset here (yet), stop futily trying to update it
 	//updategb();
-	
-//$jscripts = '';
 
 	/*
 		Page overlays
@@ -586,8 +747,9 @@ function pageheader($windowtitle = '', $forcescheme = NULL, $forcetitle = NULL, 
 		/* Because this breaks links which do not specify a page (ie: ?id=1), this is disabled for pages loaded directly without the help of pageloader */
 		(isset($meta['base']) ? "<base href=\"{$meta['base']}\">" : "")
 		 ?>
-		<link rel='shortcut ico' href='images/favicon/<?=$favicon?>.ico' type='image/x-icon'>
+		<link rel='shortcut ico' href='<?=$favicon?>' type='image/x-icon'>
 		<?=$css?>
+		<?=$jscripts?>
 	</head>
 	<body <?= ($centered ? "class='flexhvc h'" : "") ?>>
 		<?= (isset($body_extra) ? $body_extra : "") ?>

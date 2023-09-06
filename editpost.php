@@ -42,7 +42,7 @@
 	}
 	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- Editing Post";
-	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	pageheader($windowtitle);
 	
 	$links = array(
 		[$forum['title']    , "forum.php?id={$forum['id']}"],

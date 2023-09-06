@@ -159,7 +159,7 @@
 	*/
 	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
-	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	pageheader($windowtitle);
 	
 	$ppp      = get_ppp();	
 	$smilies  = readsmilies();

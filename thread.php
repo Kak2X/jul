@@ -53,14 +53,11 @@
 	} else {
 		$_GET['page']		= filter_int($_GET['page']);
 	}
-	$specialscheme = $specialtitle = NULL;
+	
 	$forum_error   = "";
 	$multiforum    = false;
 	if ($_GET['id']) {
 		load_thread($_GET['id'], true);
-
-		$specialscheme = $forum['specialscheme'];
-		$specialtitle  = $forum['specialtitle'];
 		
 		$tlinks = array();
 		
@@ -125,7 +122,7 @@
 
 	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
 	
-	pageheader($windowtitle, $specialscheme, $specialtitle);
+	pageheader($windowtitle);
 
 	if ($_GET['id'] && !$forum_error) {
 		print "<table class='table'><td class='tdbg1 fonts center'>".onlineusers($forum, $thread)."</table>";

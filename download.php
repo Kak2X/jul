@@ -4,7 +4,7 @@
 	
 	require "lib/common.php";
 	
-	if (!$config['attachments-all-origin'] && !SAME_ORIGIN) {
+	if (!$config['attachments-all-origin'] && !$runtime['same-origin']) {
 		print "<title>{$config['board-name']}</title>";
 		print "To continue to the attachment, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
 		die;

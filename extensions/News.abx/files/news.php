@@ -92,7 +92,7 @@
 	// Get the total right away to possibly fix bad page numbers
 	$total	= $sql->resultp("SELECT COUNT(*) FROM news n {$joins}{$q_where}{$tagfilter}", $vals);
 	$ppp    = get_ppp();
-	$pagelist = pagelist($url, $total, $ppp);
+	$pagelist = pagelist($_SERVER['REQUEST_URI'], $total, $ppp);
 	
 	$min = $_GET['page'] * $ppp;
 	

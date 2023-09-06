@@ -8,7 +8,7 @@ if (isset($_GET['go'])) {
 
 require "lib/common.php";
 
-pageheader("Mood Avatar Preview", NULL, NULL, true, true); // Small header
+pageheader("Mood Avatar Preview", true, true); // Small header
 
 $_GET['id'] = filter_int($_GET['id']);
 

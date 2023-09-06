@@ -29,11 +29,15 @@
 	}
 	
 	function news_header($title = "") {
-		global $xconf, $meta;
-		$meta['baserel'] = "<link rel='stylesheet' href='".actionlink("css/news.css")."' type='text/css'>";
+		global $xconf;
+		
+		hook_add('header-css', function() {
+			return "<link rel='stylesheet' href='".actionlink("css/news.css")."' type='text/css'>";
+		});
+			
 		if ($xconf['show-special-header']) {
-			print "<!doctype html>"; // We need to print this here, since pageheader() doesn't set one
-			pageheader($title, NULL, NULL, true);
+			
+			pageheader($title, true);
 			?>
 			
 			<center>

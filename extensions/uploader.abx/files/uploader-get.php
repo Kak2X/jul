@@ -5,7 +5,7 @@
 	require "lib/common.php";
 	require "lib/uploader_function.php";
 	
-	if (!$xconf['all-origin'] && !SAME_ORIGIN) {
+	if (!$xconf['all-origin'] && !$runtime['same-origin']) {
 		print "<title>{$config['board-name']}</title>";
 		print "To continue to the file, click <a href='?{$_SERVER['QUERY_STRING']}'>here</a>.";
 		die;

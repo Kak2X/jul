@@ -151,7 +151,7 @@
 		++$j;
 	} while ($i < $addopt);
 	
-	pageheader("Edit poll", $forum['specialscheme'], $forum['specialtitle']);
+	pageheader("Edit poll");
 
 	$links = array(
 		[$forum['title']  , "forum.php?id={$forum['id']}"],

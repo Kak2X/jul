@@ -1933,7 +1933,7 @@ function save_vars($arr, $nested = "") {
 		if (is_array($val)) {
 			$out .= save_vars($val, $name);
 		} else {
-			$out .= "<input type='hidden' name='{$name}' value=\"".($val === null ? "" : htmlspecialchars($val))."\">";
+			$out .= "<input type='hidden' name='{$name}' value=\"".escape_html($val)."\">";
 		}
 	}
 	return $out;

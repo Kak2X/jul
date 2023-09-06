@@ -16,7 +16,7 @@
 	check_forumban($_GET['id'], $loguser['id']);
 	
 	$windowtitle = htmlspecialchars($forum['title'])." -- New Thread";
-	pageheader($windowtitle, $forum['specialscheme'], $forum['specialtitle']);
+	pageheader($windowtitle);
 	
 	$smilies = readsmilies();
 	

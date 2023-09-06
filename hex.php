@@ -1,7 +1,7 @@
 <?php
 	require "lib/common.php";
 	
-	pageheader("Hexadecimal color chart", NULL, NULL, true, true); // Small header
+	pageheader("Hexadecimal color chart", true, true); // Small header
 ?>
 	<script language=javascript>
 		function hex(val){

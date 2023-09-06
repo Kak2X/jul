@@ -79,7 +79,7 @@
 		
 	} else {
 		// JSON Output
-		require "lib/colors.php";
+		load_layout();
 		
 		$output = array(
 				'tzoff'		=> $tzoff,
@@ -87,14 +87,13 @@
 				'posts'		=> array(), //$sql->fetchAll($data, PDO::FETCH_ASSOC)
 			);
 		
-		while ($in = $sql->fetch($data)) {
-			
+		while ($in = $sql->fetch($data)) {	
 			$in['namecolor'] = getnamecolor($in['sex'], $in['powerlevel'], $in['namecolor']);
 			$output['posts'][] = $in;
 		}
 		
 		//header("Content-type: text/plain", true);
 		header("Content-Type: application/json", true);
-		header("Ajax-request: ".IS_AJAX_REQUEST, true);
+		header("Ajax-request: {$runtime['ajax-request']}", true);
 		echo json_encode($output);
 	}

@@ -4,76 +4,81 @@
 	require "lib/common.php";
 	
 	$u  = filter_int($_GET['u']);	// User ID
-	$it = filter_int($_GET['it']);	// Extra item (for item previews)
+	$it = filter_int($_GET['it']);	// Extra item ID 
+	$ct = filter_int($_GET['ct']);	// Extea item category ID (for item previews)
 	$ne = filter_int($_GET['ne']);	// No item display
 	$nc = filter_int($_GET['nc']);	// No RPG Class display
-	$ct = filter_int($_GET['ct']);	// No coins display
 	
 	if (!$u) die;
 
-	$user = $sql->fetchq("SELECT u.name,u.posts,u.regdate,r.* FROM users u INNER JOIN users_rpg r ON u.id = r.uid WHERE id = $u");
-	$p = $user['posts'];
-	$d = (time()-$user['regdate'])/86400;
-
-	if(!$it)
-		$it=0;
-	if(!$ne) {
+	$user   = $sql->fetchq("SELECT u.name,u.posts,u.regdate,r.* FROM users u INNER JOIN users_rpg r ON u.id = r.uid WHERE id = $u");
+	$p      = $user['posts'];
+	$d      = (time()-$user['regdate'])/86400;
+	
+	if (!$ne) {
 		$num 	= $sql->fetchq("SELECT id FROM itemcateg", PDO::FETCH_COLUMN, mysql::FETCH_ALL);
 		$q 		= "";
-		foreach($num as $i) $q .= " OR id = ".filter_int($user['eq'.$i]);
+		foreach ($num as $i) $q .= " OR id = ".filter_int($user['eq'.$i]);
 		$items = $sql->getarraybykey("SELECT * FROM items WHERE id=$it$q", 'id');
-	}
-	if(!$nc)
+	} else 
+		$items = [];
+	
+	if (!$nc)
 		$class = $sql->fetchq("SELECT * FROM `rpg_classes` WHERE `id` = '{$user['class']}'");
-
-	if($ct) {
-		$GPdif = floor($items[$user['eq'.$ct]]['coins']*0.6)-$items[$it]['coins'];
-		$user['eq'.$ct] = $it;
+	else
+		$class = null;
+	
+	if ($ct && !$ne) {
+		$GPcur = isset($items[$user['eq'.$ct]]) ? floor($items[$user['eq'.$ct]]['coins']*0.6) : 0;
+		$GPdif = $GPcur-$items[$it]['coins']; // current item price - previewed item price
+		$user['eq'.$ct] = $it; // fake equipped item
+	} else {
+		$GPdif = 0;
 	}
 
 	$st = getstats($user, $items, $class);
-	$st['GP']+=$GPdif;
-	if($st['lvl'] > 0) $pct = 1 - calcexpleft($st['exp'])/totallvlexp($st['lvl']);
+	$st['GP'] += $GPdif;
+	if ($st['lvl'] > 0) $pct = 1 - calcexpleft($st['exp'])/totallvlexp($st['lvl']);
 
 	if (!$class) {
-		$class['name']	= "None";
+		$class = ['name' => "None"];
 	}
 
-	$img=ImageCreate(256,224 - (8 * 0));
+	$img = ImageCreate(256, 224 - (8 * 0));
 	imagesavealpha($img, true);
 	imagealphablending($img, false);
-	$c['bg']=  ImageColorAllocatealpha($img, 40, 40, 90, 127);
-	$c['bxb0']=ImageColorAllocate($img,  0,  0,  0);
+	$c['bg']   = ImageColorAllocatealpha($img, 40, 40, 90, 127);
+	$c['bxb0'] = ImageColorAllocate($img,  0,  0,  0);
 
-//	$c['bxb1']=ImageColorAllocate($img,225,200,180);
-//	$c['bxb2']=ImageColorAllocate($img,190,160,130);
-//	$c['bxb3']=ImageColorAllocate($img,130,110, 90);
+//	$c['bxb1'] = ImageColorAllocate($img,225,200,180);
+//	$c['bxb2'] = ImageColorAllocate($img,190,160,130);
+//	$c['bxb3'] = ImageColorAllocate($img,130,110, 90);
 
-	$c['bxb1']=ImageColorAllocate($img, 200, 180, 225);
-	$c['bxb2']=ImageColorAllocate($img, 160, 130, 190);
-	$c['bxb3']=ImageColorAllocate($img,  90, 110, 130);
+	$c['bxb1'] = ImageColorAllocate($img, 200, 180, 225);
+	$c['bxb2'] = ImageColorAllocate($img, 160, 130, 190);
+	$c['bxb3'] = ImageColorAllocate($img,  90, 110, 130);
 
-	for($i=0;$i<100;$i++)
-		 $c[$i]=ImageColorAllocate($img,  15+$i/1.5,  8, 20+$i);
+	for ($i=0; $i<100; $i++)
+		 $c[$i] = ImageColorAllocate($img, (int)(15+$i/1.5),  8, 20+$i);
 
-	$c['barE1']=ImageColorAllocate($img,120,150,180);
-	$c['barE2']=ImageColorAllocate($img, 30, 60, 90);
+	$c['barE1'] = ImageColorAllocate($img,120,150,180);
+	$c['barE2'] = ImageColorAllocate($img, 30, 60, 90);
 
-	$c['bar1'][ 1]	= ImageColorAllocate($img, 215,  91, 129);
-	$c['bar1'][ 2]	= ImageColorAllocate($img, 255, 136, 154);
-	$c['bar1'][ 3]	= ImageColorAllocate($img, 255, 139,  89);
-	$c['bar1'][ 4]	= ImageColorAllocate($img, 255, 251,  89);
-	$c['bar1'][ 5]	= ImageColorAllocate($img,  89, 255, 139);
-	$c['bar1'][ 6]	= ImageColorAllocate($img,  89, 213, 255);
-	$c['bar1'][ 7]	= ImageColorAllocate($img, 196,  33,  33);
-	$c['bar1'][ 8]	= ImageColorAllocate($img, 196,  66, 196);
-	$c['bar1'][ 9]	= ImageColorAllocate($img, 100,   0, 155);
-	$c['bar1'][10]	= ImageColorAllocate($img,  88,   0, 121);
-	$c['bar1'][11]	= ImageColorAllocate($img,   0, 174, 215);
-	$c['bar1'][12]	= ImageColorAllocate($img,   0,  99, 151);
-	$c['bar1'][13]	= ImageColorAllocate($img, 175, 175, 175);
-	$c['bar1'][14]	= ImageColorAllocate($img, 222, 222, 222);
-	$c['bar1'][15]	= ImageColorAllocate($img, 255, 255, 255);
+	$c['bar1'][ 1] = ImageColorAllocate($img, 215,  91, 129);
+	$c['bar1'][ 2] = ImageColorAllocate($img, 255, 136, 154);
+	$c['bar1'][ 3] = ImageColorAllocate($img, 255, 139,  89);
+	$c['bar1'][ 4] = ImageColorAllocate($img, 255, 251,  89);
+	$c['bar1'][ 5] = ImageColorAllocate($img,  89, 255, 139);
+	$c['bar1'][ 6] = ImageColorAllocate($img,  89, 213, 255);
+	$c['bar1'][ 7] = ImageColorAllocate($img, 196,  33,  33);
+	$c['bar1'][ 8] = ImageColorAllocate($img, 196,  66, 196);
+	$c['bar1'][ 9] = ImageColorAllocate($img, 100,   0, 155);
+	$c['bar1'][10] = ImageColorAllocate($img,  88,   0, 121);
+	$c['bar1'][11] = ImageColorAllocate($img,   0, 174, 215);
+	$c['bar1'][12] = ImageColorAllocate($img,   0,  99, 151);
+	$c['bar1'][13] = ImageColorAllocate($img, 175, 175, 175);
+	$c['bar1'][14] = ImageColorAllocate($img, 222, 222, 222);
+	$c['bar1'][15] = ImageColorAllocate($img, 255, 255, 255);
 
 	$st['CHP'] = max($st['HP'] - $user['damage'], 0);
 	if ($st['CHP'] <= 0)
@@ -145,7 +150,7 @@
 	$sc[15]= 1000000000;
 
 	bars();
-
+pagefooter();
 	header('Content-type:image/png');
 	ImagePNG($img);
 	ImageDestroy($img);
@@ -169,8 +174,8 @@ function fontc($r1,$g1,$b1,$r2,$g2,$b2,$r3,$g3,$b3){
 	$font=ImageCreateFromPNG('images/rpg/font.png');
 	ImageColorTransparent($font,1);
 	ImageColorSet($font,6,$r1,$g1,$b1);
-	ImageColorSet($font,5,($r1*2+$r2)/3,($g1*2+$g2)/3,($b1*2+$b2)/3);
-	ImageColorSet($font,4,($r1+$r2*2)/3,($g1+$g2*2)/3,($b1+$b2*2)/3);
+	ImageColorSet($font,5,(int)(($r1*2+$r2)/3),(int)(($g1*2+$g2)/3),(int)(($b1*2+$b2)/3));
+	ImageColorSet($font,4,(int)(($r1+$r2*2)/3),(int)(($g1+$g2*2)/3),(int)(($b1+$b2*2)/3));
 	ImageColorSet($font,3,$r2,$g2,$b2);
 	ImageColorSet($font,0,$r3,$g3,$b3);
 	return $font;
@@ -191,7 +196,7 @@ function box($x,$y,$w,$h){
 	ImageRectangle($img,$x+4,$y+4,$x+$w-5,$y+$h-5,$c['bxb0']);
 
 	for($i=5;$i<$h-5;$i++) {
-	  $n=(1-$i/$h)*100;
+	  $n=(int)((1-$i/$h)*100);
 	  ImageLine($img,$x+5,$y+$i,$x+$w-6,$y+$i,$c[$n]);
 	}
 }
@@ -214,8 +219,8 @@ function bars(){
 	}
 
 	if ($st['MP'] > 0) {
-		ImageFilledRectangle($img,137,49+24,136+$st['MP']/$sc[$s],55+24,$c['bxb0']);
-		ImageFilledRectangle($img,136,48+24,135+$st['MP']/$sc[$s],54+24,$c['bar1'][$s]);
+		ImageFilledRectangle($img,137,49+24,136+(int)($st['MP']/$sc[$s]),55+24,$c['bxb0']);
+		ImageFilledRectangle($img,136,48+24,135+(int)($st['MP']/$sc[$s]),54+24,$c['bar1'][$s]);
 	}
 
 	for($i=2;$i<9;$i++) $st2[$i]=$st[$stat[$i]];
@@ -223,8 +228,8 @@ function bars(){
 	if(!$sc[$s]) $sc[$s]=1;
 	for($i=2;$i<9;$i++){
 		if (floor($st[$stat[$i]]/$sc[$s]) > 0) {
-			ImageFilledRectangle($img,89,65+$i*8+24,89+$st[$stat[$i]]/$sc[$s], 71+$i*8+24,$c['bxb0']);
-			ImageFilledRectangle($img,88,64+$i*8+24,88+$st[$stat[$i]]/$sc[$s], 70+$i*8+24,$c['bar1'][$s]);
+			ImageFilledRectangle($img,89,65+$i*8+24,89+(int)($st[$stat[$i]]/$sc[$s]), 71+$i*8+24,$c['bxb0']);
+			ImageFilledRectangle($img,88,64+$i*8+24,88+(int)($st[$stat[$i]]/$sc[$s]), 70+$i*8+24,$c['bar1'][$s]);
 		}
 	}
 

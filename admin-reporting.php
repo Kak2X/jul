@@ -107,7 +107,7 @@ else if ($_GET['action'] == "ircedit") {
 			'name' => $_POST['name'],
 			'description' => filter_string($_POST['description']),
 			'chankey' => filter_string($_POST['chankey']),
-			'minpower' => filter_int($_POST['minpower']),
+			//'minpower' => filter_int($_POST['minpower']),
 			'enabled' => filter_int($_POST['enabled']),
 		];
 		
@@ -143,26 +143,27 @@ else if ($_GET['action'] == "ircedit") {
 		<table class="table">
 			<tr><td class="tdbgh center" colspan="2"><?= $title ?></td></tr>
 			<tr>
-				<td class="tdbg1 center b">
-					Channel Name
+				<td class="tdbg1 center">
+					<div class="b">Channel Name:</div>
 					<div class="fonts">Must begin with #</div>
 				</td>
 				<td class="tdbg2"><?= input_html("name", $chan['name'], ['input' => 'text', 'width' => '300px']) ?></td>
 			</tr>
 			<tr>
-				<td class="tdbg1 center b">
-					Channel Key
+				<td class="tdbg1 center">
+					<div class="b">Channel Key:</div>
 					<div class="fonts">Specify if the To allow the IRC bot to access the protected channel.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("chankey", $chan['chankey'], ['input' => 'text', 'width' => '300px']) ?></td>
 			</tr>
 			<tr>
-				<td class="tdbg1 center b">
-					Channel Description
+				<td class="tdbg1 center">
+					<div class="b">Channel Description:</div>
 					<div class="fonts">Describe the channel contents, if you want to.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("description", $chan['description'], ['input' => 'text', 'width' => '550px']) ?></td>
 			</tr>
+			<!--
 			<tr>
 				<td class="tdbg1 center b">
 					Power needed to view
@@ -170,10 +171,10 @@ else if ($_GET['action'] == "ircedit") {
 				</td>
 				<td class="tdbg2"><?= power_select("minpower", $chan['minpower']) ?></span></td>
 			</tr>
-			
+			-->
 			<tr>
-				<td class="tdbg1 center b">
-					Enable channel
+				<td class="tdbg1 center">
+					<div class="b">Enable channel:</div>
 					<div class="fonts">If disabled, no posts will be reported to this channel.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("enabled", $chan['enabled'], ['input' => 'radio', 'special' => 'yesno']) ?></td>
@@ -210,7 +211,7 @@ else if ($_GET['action'] == "discedit") {
 			'name' => $_POST['name'],
 			'description' => filter_string($_POST['description']),
 			'webhook' => $_POST['webhook'],
-			'minpower' => filter_int($_POST['minpower']),
+			//'minpower' => filter_int($_POST['minpower']),
 			'enabled' => filter_int($_POST['enabled']),
 		];
 		
@@ -246,26 +247,27 @@ else if ($_GET['action'] == "discedit") {
 		<table class="table">
 			<tr><td class="tdbgh center" colspan="2"><?= $title ?></td></tr>
 			<tr>
-				<td class="tdbg1 center b">
-					Webhook ID
+				<td class="tdbg1 center">
+					<div class="b">Webhook ID:</div>
 					<div class="fonts">What matters to discord.</div>
 				</td>
 				<td class="tdbg2"><b>https://discord.com/api/webhooks/</b><?= input_html("webhook", $chan['webhook'], ['input' => 'text', 'width' => '300px']) ?></td>
 			</tr>
 			<tr>
-				<td class="tdbg1 center b">	
-					Title
-					<div class="fonts">Channel title, shown on the <a href="irc.php" target="_blank">Discord page</a></div>
+				<td class="tdbg1 center">	
+					<div class="b">Title:</div>
+					<div class="fonts">Channel title.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("name", $chan['name'], ['input' => 'text', 'width' => '300px']) ?></td>
 			</tr>
 			<tr>
-				<td class="tdbg1 center b">
-					Channel Description
+				<td class="tdbg1 center"></div>
+					<div class="b">Channel Description:</div>
 					<div class="fonts">Describe the channel contents, if you want to.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("description", $chan['description'], ['input' => 'text', 'width' => '550px']) ?></td>
 			</tr>
+			<!--
 			<tr>
 				<td class="tdbg1 center b">
 					Power needed to view
@@ -273,10 +275,10 @@ else if ($_GET['action'] == "discedit") {
 				</td>
 				<td class="tdbg2"><?= power_select("minpower", $chan['minpower']) ?></span></td>
 			</tr>
-			
+			-->
 			<tr>
-				<td class="tdbg1 center b">
-					Enable channel
+				<td class="tdbg1 center">
+					<div class="b">Enable channel:</div>
 					<div class="fonts">If disabled, no posts will be reported to this channel.</div>
 				</td>
 				<td class="tdbg2"><?= input_html("enabled", $chan['enabled'], ['input' => 'radio', 'special' => 'yesno']) ?></td>
@@ -345,11 +347,11 @@ else {
 	<table class="table" id="glob">
 		<tr><td class="tdbgh center" colspan="2">Global reporting options</td></tr>
 		<tr>
-			<td class="tdbg1 center b">Enable IRC Reporting</td>
+			<td class="tdbg1 center b">Enable IRC Reporting:</td>
 			<td class="tdbg2"><?= input_html("irc_enable", $miscdata['irc_enable'], ['input' => 'radio', 'special' => 'yesno']) ?></td>
 		</tr>
 		<tr>
-			<td class="tdbg1 center b">Enable Discord Reporting</td>
+			<td class="tdbg1 center b">Enable Discord Reporting:</td>
 			<td class="tdbg2"><?= input_html("discord_enable", $miscdata['discord_enable'], ['input' => 'radio', 'special' => 'yesno']) ?></td>
 		</tr>
 		<tr><td class="tdbgh center" colspan="2">IRC Bot connection options</td></tr>
@@ -362,29 +364,29 @@ else {
 			<td class="tdbg2"><?= input_html("port", $settings['port'], ['input' => 'text', 'width' => '100px']) ?></td>
 		</tr>
 		<tr>
-			<td class="tdbg1 center b">
-				Nickname:
+			<td class="tdbg1 center">
+				<div class="b">Nickname:</div>
 				<div class="fonts">The nicknames for the bot account, comma-separated.</div>
 			</td>
 			<td class="tdbg2"><?= input_html("nick", $settings['nick'], ['input' => 'text', 'width' => '500px']) ?></td>
 		</tr>
 		<tr>
-			<td class="tdbg1 center b">
-				Password:
+			<td class="tdbg1 center">
+				<div class="b">Password:</div>
 				<div class="fonts">Optional - The NickServ account password.</div>
 			</td>
 			<td class="tdbg2"><?= input_html("pass", $settings['pass'], ['input' => 'password', 'width' => '500px']) ?></td>
 		</tr>
 		<tr>
-			<td class="tdbg1 center b">
-				Operator Nicknames:
+			<td class="tdbg1 center">
+				<div class="b">Operator Nicknames:</div>
 				<div class="fonts">The nicknames for the operators, comma-separated, which should be registered on NickServ for extra security.</div>
 			</td>
 			<td class="tdbg2"><?= input_html("opnick", $settings['opnick'], ['input' => 'text', 'width' => '500px']) ?></td>
 		</tr>
 		<tr>
-			<td class="tdbg1 center b">
-				Listener Port:
+			<td class="tdbg1 center">
+				<div class="b">Listener Port:</div>
 				<div class="fonts">The IRC bot will listen to this local port for incoming board messages.</div>
 			</td>
 			<td class="tdbg2"><?= input_html("recvport", $settings['recvport'], ['input' => 'text', 'width' => '500px']) ?></td>

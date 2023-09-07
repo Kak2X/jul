@@ -596,7 +596,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		- <a href='activeusers.php'>Active users</a>
 		- <a href='calendar.php'>Calendar</a>
 		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
-		".($config['irc-servers'] && $config['irc-channels'] ? " - <a href='irc.php'>IRC Chat</a>" : "")."
+		- <a href='chat.php'>Chat</a>
 		- <a href='online.php'>Online users</a>
 		".hook_print('header-links-2')."
 		<br>

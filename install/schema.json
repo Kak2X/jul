@@ -386,18 +386,18 @@
 			}
 		},
 		{
-			"title":"IRC settings",
+			"title":"Chat page settings",
 			"fields":{
 				"irc-server-title":{
 					"title":"IRC Server title",
-					"desc":"Shown in the title of the IRC page.",
+					"desc":"Shown in the title of the IRC section.",
 					"input":"text",
 					"type":"string",
 					"default":"A sample IRC server"
 				},
 				"irc-servers":{
 					"title":"IRC Servers",
-					"desc":"List of IRC servers in the IRC page. Separated by ;",
+					"desc":"List of selectable servers in the IRC section. Separated by ;",
 					"input":"text",
 					"type":"array",
 					"default":[
@@ -408,7 +408,7 @@
 				},
 				"irc-channels":{
 					"title":"IRC channel list",
-					"desc":"Channels to auto-join when connecting in the IRC page. Separated by ;",
+					"desc":"Channels to auto-join when connecting to IRC. Separated by ;",
 					"input":"text",
 					"type":"array",
 					"default":[
@@ -416,6 +416,20 @@
 						"#ytest"
 					],
 					"width":"470px"
+				},
+				"discord-guild-title":{
+					"title":"Discord guild title",
+					"desc":"Shown in the title of the Discord section.",
+					"input":"text",
+					"type":"string",
+					"default":"A sample discord guild"
+				},
+				"discord-invites":{
+					"title":"Discord invites",
+					"desc":"Invites (optionally to specific channels) selectable in the chat page, one for each line.",
+					"input":"textarea",
+					"type":"string",
+					"default":"invite title 1;http://discord.gg/someinvitehere\r\ninvite title 2;http://discord.gg/someotherinvite"
 				}
 			}
 		},

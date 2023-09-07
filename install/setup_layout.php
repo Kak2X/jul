@@ -59,7 +59,11 @@ function setupfooter($buttons = 0) {
 	</table>
 	</form>
 	
-	<?= error_printer(true, SETUP_DEBUG, $GLOBALS['errors']) ?>
+<?php
+	if (SETUP_DEBUG && $GLOBALS['errors']) {
+		print print_error_table();
+	}
+?>
 <!--	<script type="text/javascript" src="installer.js"></script> -->
 	</body>
 </html>

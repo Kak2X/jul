@@ -198,7 +198,8 @@ class mysql {
 		// If the result was cached, grab the result instead of attempting to fetch from a dummy pointer
 		if ($hash && isset($this->cache[$hash])) {
 			$res = $this->cache[$hash];
-		} else if ($result != false && $res = $result->fetch($flag)) { //, $reset ? PDO::FETCH_ORI_ABS : PDO::FETCH_ORI_NEXT))
+		} else if ($result != false) { //, $reset ? PDO::FETCH_ORI_ABS : PDO::FETCH_ORI_NEXT))
+			$res = $result->fetch($flag);
 			++self::$rowsf;
 			if ($hash) $this->cache[$hash] = $res;
 		}
@@ -213,7 +214,8 @@ class mysql {
 		
 		if ($hash && isset($this->cache[$hash])) {
 			$res = $this->cache[$hash];
-		} else if ($result != false && $res = $result->fetchAll($flag)) {
+		} else if ($result != false) {
+			$res = $result->fetchAll($flag);
 			++self::$rowsf;
 			if ($hash) $this->cache[$hash] = $res;
 		}
@@ -558,7 +560,7 @@ class mysql {
 		return $backtrace[$i];
 	}
 	
-	private static function getqueryhash($query, $cache = true) {
-		return ($cache) ? md5($query) : NULL;
+	private static function getqueryhash($query, $options) {
+		return $options & mysql::USE_CACHE ? md5($query) : NULL;
 	}
 }

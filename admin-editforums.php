@@ -24,8 +24,6 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 		'minpower' 			=> filter_int($_POST['minpower']),
 		'minpowerthread' 	=> filter_int($_POST['minpowerthread']),
 		'minpowerreply' 	=> filter_int($_POST['minpowerreply']),
-		'numthreads' 		=> filter_int($_POST['numthreads']),
-		'numposts' 			=> filter_int($_POST['numposts']),
 		'forder' 			=> filter_int($_POST['forder']), 
 		'specialscheme' 	=> get_scheme_opt($_POST['specialscheme']),
 		'specialtitle' 		=> filter_string($_POST['specialtitle']),
@@ -64,7 +62,7 @@ elseif (isset($_POST['delete'])) {
 
 	if ($id <= 0)
 		errorpage("No forum selected to delete.");
-	if ($mergeid <= 0)
+	if ($mergeid <= 0 || $mergeid == $id)
 		errorpage("No forum selected to merge to.");
 	
 	$sql->beginTransaction();
@@ -122,7 +120,7 @@ elseif (isset($_POST['catdelete'])) {
 
 	if ($id <= 0)
 		errorpage("No category selected to delete.");
-	if ($mergeid <= 0)
+	if ($mergeid <= 0 || $mergeid == $id)
 		errorpage("No category selected to merge to.");
 	
 	$sql->beginTransaction();
@@ -175,7 +173,7 @@ if ($_GET['delete']) {
 				You are about to delete forum ID <b><?=$_GET['delete']?></b>.<br>
 				<br>
 				All announcements and threads will be moved to the forum below.<br>
-				<?= _dropdownList($forums, -1, "mergeid") ?>
+				<?= int_select("mergeid", $forums, -1) ?>
 			</td>
 		</tr>
 		<tr>
@@ -207,9 +205,7 @@ else if ($_GET['id']) {
 			'minpower'       =>  0,
 			'minpowerthread' =>  0,
 			'minpowerreply'  =>  0,
-			'numthreads'     =>  0,
 			'forder'         =>  0,
-			'numposts'       =>  0,
 			'specialscheme'  => -1,
 			'catid'          =>  1,
 			'specialtitle'   => '',
@@ -236,8 +232,8 @@ else if ($_GET['id']) {
 			<td class='tdbgh center'>Forum Name</td>
 			<td class='tdbg1' colspan='4'><input type="text" class="w" name="forumtitle" value="<?=htmlspecialchars($forum['title'])?>" maxlength="250"></td>
 			<td class='tdbg1' width=10%>
-				<label><input type="checkbox" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> Hidden</label>
-				<label><input type="checkbox" name="login" value="1"<?=($forum['login'] ? " checked" : "")?>> Login required</label>
+				<label class="nobr"><input type="checkbox" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> Hidden</label>
+				<label class="nobr"><input type="checkbox" name="login" value="1"<?=($forum['login'] ? " checked" : "")?>> Login required</label>
 			</td>
 		</tr>
 
@@ -248,45 +244,42 @@ else if ($_GET['id']) {
 		</tr>
 
 		<tr>
-			<td class='tdbgh center'>...to view the forum</td>
-			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpower'], "minpower")?></td>
+			<td class='tdbgh center' width='10%'>...to view the forum</td>
+			<td class='tdbg1' width='23%'><?=int_select("minpower", $powers, $forum['minpower'])?></td>
 		</tr>
 
 		<tr>
 			<td class='tdbgh center'>...to post a thread</td>
-			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpowerthread'], "minpowerthread")?></td>
+			<td class='tdbg1'><?=int_select("minpowerthread", $powers, $forum['minpowerthread'])?></td>
 		</tr>
 
 		<tr>
 			<td class='tdbgh center'>...to reply</td>
-			<td class='tdbg1'><?=_dropdownList($powers, $forum['minpowerreply'], "minpowerreply")?></td>
+			<td class='tdbg1'><?=int_select("minpowerreply", $powers, $forum['minpowerreply'])?></td>
 		</tr>
 		<tr>
 			<td class='tdbgh center'>...to post attachments</td>
-			<td class='tdbg1'><?=_dropdownList($attachmodes, $forum['attachmentmode'], "attachmentmode")?></td>
+			<td class='tdbg1'><?=int_select("attachmentmode", $attachmodes, $forum['attachmentmode'])?></td>
 		</tr>
 		
 		<tr>
-			<td class='tdbgh center'  width='10%'>Number of Threads</td>
-			<td class='tdbg1' width='24%'><input type="text" name="numthreads" maxlength="8" size="10" value="<?=($forum['numthreads'] ? $forum['numthreads'] : "0")?>" class="right"></td>
-			<td class='tdbgh center'  width='10%'>Forum order</td>
-			<td class='tdbg1' width='23%'><input type="text" name="forder" maxlength="8" size="10" value="<?=($forum['forder'] ? $forum['forder'] : "0")?>" class="right"></td>
-			<td class='tdbgh center'  width='10%'>Poll Style</td>
-			<td class='tdbg1' width='23%'><?=_dropdownList($pollstyles, $forum['pollstyle'], "pollstyle")?></td>
-		</tr>
-
-		<tr>
-			<td class='tdbgh center' >Number of Posts</td>
-			<td class='tdbg1'><input type="text" name="numposts" maxlength="8" size="10" value="<?=($forum['numposts'] ? $forum['numposts'] : "0")?>" class="right"></td>
 			<td class='tdbgh center' >Special Scheme</td>
-			<td class='tdbg1'><?=doschemeList($forum['specialscheme'], 'specialscheme', SL_SHOWSPECIAL | SL_SHOWNONE)?></td>
+			<td class='tdbg1' width='24%'><?=doschemeList($forum['specialscheme'], 'specialscheme', SL_SHOWSPECIAL | SL_SHOWNONE)?></td>
+			<td class='tdbgh center'>Forum order</td>
+			<td class='tdbg1' width='23%'><input type="text" name="forder" maxlength="8" size="10" value="<?=($forum['forder'] ? $forum['forder'] : "0")?>" class="right"></td>
 			<td class='tdbgh center' >Category</td>
-			<td class='tdbg1'><?=_dropdownList($categories, $forum['catid'], "catid")?></td>
+			<td class='tdbg1' width='23%'><?=int_select("catid", $categories, $forum['catid'])?></td>
+	
+		</tr>
+		<tr>
+			<td class='tdbgh center' rowspan='3'>Custom header</td>
+			<td class='tdbg1' colspan='3' rowspan='3'><textarea name="specialtitle" rows="3" class="no-resize"><?=escape_html($forum['specialtitle'])?></textarea></td>
+			<td class='tdbgh center'>Poll Style</td>
+			<td class='tdbg1'><?=int_select("pollstyle", $pollstyles, $forum['pollstyle'])?></td>
 		</tr>
 		
 		<tr>
-			<td class='tdbgh center' rowspan='2'>Custom header</td>
-			<td class='tdbg1' colspan='3' rowspan='2'><textarea name="specialtitle" rows="2" class="no-resize"><?=escape_html($forum['specialtitle'])?></textarea></td>
+		
 			<td class='tdbgh center'>IRC Channel</td>
 			<td class='tdbg1'><?=int_select("ircchan", $irc_channels, $forum['ircchan'], "*** Disable ***")?></td>
 		</tr>
@@ -323,7 +316,7 @@ else if ($_GET['catdelete']) {
 				You are about to delete category ID <b><?=$_GET['catdelete']?></b>.<br>
 				<br>
 				All forums will be moved to the category below.<br>
-				<?= _dropdownList($categories, -1, "mergeid") ?>
+				<?= int_select("mergeid", $categories, -1) ?>
 			</td>
 		</tr>
 		<tr>
@@ -367,7 +360,7 @@ else if ($_GET['catid']) {
 			<td class='tdbgh center nobr'>Options</td>
 			<td class='tdbg1'><label><input type="checkbox" name="side" value="1" <?=($category['side'] ? " checked" : "")?>> Right side</label></td>
 			<td class='tdbgh center nobr'>Minimum power needed to view</td>
-			<td class='tdbg1'><?=_dropdownList($powers, $category['minpower'], "minpower")?></td>
+			<td class='tdbg1'><?=int_select("minpower", $powers, $category['minpower'])?></td>
 		</tr>		
 		<tr>
 			<td class='tdbgc center' colspan=6>
@@ -380,7 +373,8 @@ else if ($_GET['catid']) {
 <?php
 }
 
-
+// TODO: This could be merged with the index page logic, it's basically the same with minor changes.
+//       print forum_index($editmode = false, $sel = -1, $power = null)
 $forumheaders="
 	<tr>
 		<td class='tdbgh center' width=90px>Actions</td>
@@ -572,35 +566,22 @@ print "
 
 pagefooter();
 
-function _dropdownList($links, $sel, $n) {
-	
-	return int_select($n, $links, $sel);
-	
-	//$r	= "<select name=\"$n\">";
-	//
-	//foreach($links as $link => $name) {
-	//	$r	.= "<option value=\"$link\"". ($sel == $link ? " selected" : "") .">".htmlspecialchars($name)."</option>";
-	//}
-	//
-	//return $r ."</select>";
-}
-
 function _previewbox(){
-	global $preview;
+	global $preview, $pwlnames;
 	if ($_GET['id']) {
 		$idtxt  = "id=" . $_GET['id'] . "&";
 		$idtxt2 = "?id=" . $_GET['id'];
 	} else {
 		$idtxt = $idtxt2 = "";
 	}
+	
+	$out = "";
+	foreach ($pwlnames as $p => $lbl) {
+		$out .= "<option value='admin-editforums.php?{$idtxt}preview={$p}' ".($preview === $p ? 'selected' : '') .">{$lbl}</option>";
+	}
 
 	return "<form><select onChange=parent.location=this.options[this.selectedIndex].value>
-			<option value='admin-editforums.php{$idtxt2}' ".((!$preview || $preview < 0 || $preview > 4) ? 'selected' : '') ."'>Disable</option>
-			<option value='admin-editforums.php?{$idtxt}preview=0' ".((isset($preview) && $preview == 0) ? 'selected' : '') .">Normal</option>
-			<option value='admin-editforums.php?{$idtxt}preview=1' ".($preview == 1 ? 'selected' : '') .">Normal +</option>
-			<option value='admin-editforums.php?{$idtxt}preview=2' ".($preview == 2 ? 'selected' : '') .">Moderator</option>
-			<option value='admin-editforums.php?{$idtxt}preview=3' ".($preview == 3 ? 'selected' : '') .">Administrator</option>
-			<option value='admin-editforums.php?{$idtxt}preview=4' ".($preview == 4 ? 'selected' : '') .">Administrator (hidden)</option>
+			<option value='admin-editforums.php{$idtxt2}'>Disable</option>
+			{$out}
 		</select></form>";
 }
-?>

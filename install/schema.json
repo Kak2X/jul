@@ -83,6 +83,13 @@
 					"default":"http:\/\/localhost",
 					"width":"350px"
 				},
+				"footer-extra":{
+					"title":"Extra footer HTML",
+					"desc":"Additional HTML to display below the footer text.",
+					"input":"textarea",
+					"type":"string",
+					"default":""
+				},
 				"admin-name":{
 					"title":"Admin name",
 					"desc":"The board owner's email, which appears in the IP ban message.",
@@ -119,6 +126,14 @@
 					"input":"textarea",
 					"type":"string",
 					"default":"<optgroup label=\"Forum affiliates\">\r\n\t<option value=\"about:blank\" selected=\"\">something<\/option>\r\n<\/optgroup>\r\n<optgroup label=\"Other Acmlmboards\">\r\n\t<option value=\"about:blank\">just so you know<\/option>\r\n\t<option value=\"about:blank\">usually there are<\/option>\r\n\t<option value=\"about:blank\">no affiliates<\/option>\r\n\t<option value=\"about:blank\">so you can remove this<\/option>\r\n<\/optgroup>"
+				},
+				"money-stats":{
+					"title":"Show money stats",
+					"desc":"If enabled, bars with money info will be shown on the footer, displaying values that can be edited from the Admin Control Panel.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
 				}
 			}
 		},

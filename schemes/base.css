@@ -290,10 +290,10 @@ input[type=radio] {
 
 /* Mostly for use within the newreply / newthread form */
 textarea.newposttextbox {
-	 max-width: 100%;
-	 width: 800px;
-	 height: 20em;
-	 resize: both;
+	max-width: 100%;
+	width: 800px;
+	height: 20em;
+	resize: both;
 }
 table.table-fixed {
 	table-layout: fixed;
@@ -319,6 +319,18 @@ img[src^="images/smilies/"] { vertical-align: middle; }
 	border-color: #4448C8;
 }
 .td-highlight { height: 5px; border: none !important }
+
+/* Footer text */
+.footer {
+	padding-top: 32px;
+}
+.footer-item { padding-bottom: 16px }
+.footer-pic img, .footer-ver { vertical-align: middle }
+.footer-ver {
+	display: inline-block;
+	text-align: left;
+}
+
 
 /* Ikachan cursor (disabled) */
 /*			

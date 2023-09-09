@@ -891,36 +891,34 @@ piwikTracker.enableLinkTracking();
 	if (isset($js_extra))
 		print $js_extra;
 	//print "<script type='text/javascript' src='js/jquery.min.js'></script>";
-	print "<br><br><center>";
+	print "<center><div class='footer'>";
 	
 	if ($showfooter) {
+		
+		if ($config['money-stats']) {
+			?>
+			<div class="footer-item">
+				<img src='adnonsense.php?m=d' title='generous donations to the first national bank of bad jokes and other dumb crap people post' style='display: block; margin-left: 44px;'>
+				<img src='adnonsense.php' title='hotpod fund' style='display: block; margin: 0 22px;'>
+				<img src='adnonsense.php?m=v' title='VPS slushie fund' style='display: block; margin-right: 44px;'>
+			</div>
+			<?php
+		}
 		?>
-		<!--
-		<img src='adnonsense.php?m=d' title='generous donations to the first national bank of bad jokes and other dumb crap people post' style='margin-left: 44px;'><br>
-		<img src='adnonsense.php' title='hotpod fund' style='margin: 0 22px;'><br>
-		<img src='adnonsense.php?m=v' title='VPS slushie fund' style='margin-right: 44px;'>
-		-->
-		<br>
+		
 	
-		<span class='fonts'>
-			<br>
-			<br>
+		<div class="footer-item fonts">
 			<a href='<?=$config['footer-url']?>'><?=$config['footer-title']?></a>
-			<br>
-		</span>
-		<?=$affiliatelinks?>
-		<span class='fonts'>
-			<br>
-			
-			<table cellpadding=0 border=0 cellspacing=2>
-				<tr>
-					<td><?= $poweredbypic ?></td>
-					<td>
-						Acmlmboard - <a href="https://github.com/Kak2X/jul"><?= file_get_contents('version.txt') ?></a><br>
-						&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al.<?= $ikachan_text ?>
-					</td>
-				</tr>
-			</table>	
+			<?=$config['footer-extra']?>
+		</div>
+		<?= ($affiliatelinks ? "<div class='footer-item'>$affiliatelinks</div>" : "") ?>
+		<div class="footer-item fonts">
+			<span class="footer-pic"><?= $poweredbypic ?></span>
+			<div class="footer-ver">
+				Acmlmboard - <a href="https://github.com/Kak2X/jul"><?= file_get_contents('version.txt') ?></a><br>
+				&copy;2000-<?=date("Y")?> Acmlm, Xkeeper, Inuyasha, et al.<?= $ikachan_text ?>
+			</div>
+		</div>
 		<?php
 	} else {
 		print $ikachan_text;
@@ -944,19 +942,18 @@ piwikTracker.enableLinkTracking();
 	$cache   = mysql::$cachehits;
 
 	if (isset($_GET['oldfooter'])) {
-		print "<br><font>Page rendered in {$tseconds} seconds; used {$curmem} (max {$maxmem})</font><br>";
+		print "<div class='footer-item fonts'>Page rendered in {$tseconds} seconds; used {$curmem} (max {$maxmem})</div>";
 	} else {
-		print "<br>
-			<span>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</span>
+		print "<div class='footer-item fonts'>
+			<div>{$queries} database queries". (($cache > 0) ? ", {$cache} query cache hits" : "") .".</div>
 			<table style='border-spacing: 0px'>
 				<tr><td align=right>Query execution time:&nbsp;</td><td>{$qseconds} seconds</td></tr>
 				<tr><td align=right>Script execution time:&nbsp;</td><td>{$sseconds} seconds</td></tr>
 				<tr><td align=right>Total render time:&nbsp;</td><td>{$tseconds} seconds</td></tr>
 				<tr><td align=right>Memory used:&nbsp;</td><td>{$curmem} (max {$maxmem})</td></tr>
-			</table>";
+			</table>
+			</div>";
 	}
-		
-	print "</span>";
 	
 	// Logging of rendering times. Used back when DreamHost was being trash.
 	// Not that it ever stopped, but it hasn't really been an issue
@@ -972,7 +969,7 @@ piwikTracker.enableLinkTracking();
 		}
 	}	
 	
-	die;
+	die("</div>");
 }
 
 	

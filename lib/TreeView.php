@@ -24,7 +24,7 @@ class TreeView {
 		<div style='display: flex'>
 			<table class='table' style='width: 0px; margin-right: 10px'>
 				<tr><td class='tdbgh center b' style='padding-right: 20px'>".$this->title."</td></tr>
-				<tr><td class='tdbg1 nobr' style='padding-right: 20px; padding-left: 10px'>{$linksHtml}</td></tr>
+				<tr><td class='tdbg1 nobr vatop' style='padding-right: 20px; padding-left: 10px'>{$linksHtml}</td></tr>
 			</table>
 			<div class='font' style='flex-grow: 1'>
 		";

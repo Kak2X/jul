@@ -230,7 +230,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 				<td class='font'>Forum jump: </td>
 				<td>
 					<form>
-						<select onChange='parent.location=\"forum.php?id=\"+this.options[this.selectedIndex].value' style='position:relative;top:8px'>
+						<select onChange='parent.location=\"forum.php?id=\"+this.options[this.selectedIndex].value'>
 		";
 		$showhidden = 0;
 	}
@@ -259,7 +259,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 	while ($forum = $sql->fetch($forums)) {
 		// New category
 		if ($prev != $forum['catid']) {
-			$forumlinks .= "</optgroup><optgroup label=\"".htmlspecialchars($forum['catname'])."\">";
+			$forumlinks .= "</optgroup><optgroup label=\"".escape_attribute($forum['catname'])."\">";
 			$prev = $forum['catid'];
 		}
 		
@@ -718,6 +718,7 @@ function generate_token($div = TOKEN_MAIN, $extra = "") {
 }
 
 function check_token(&$var, $div = TOKEN_MAIN, $extra = "") {
+	if (!$var) errorpage("No token sent, doofus.");
 	$res = (trim($var) == generate_token($div, $extra));
 	if (!$res) errorpage("Invalid token.");
 }
@@ -1543,16 +1544,15 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			'admin-forumbans.php'     => "Edit Forum Bans",
 			'admin-attachments.php'   => "Edit Attachments",
 		),
-		'ThreadFix' => array(
-			'admin-threads.php'       => "ThreadFix",
-			'admin-threads2.php'      => "ThreadFix 2",
-		),
-		'Security' => array(
+		'Management' => array(
+			'admin-repair.php'        => "Repair System",
 			'admin-backup.php'        => "Board Backups",
-//			'admin-downloader.php'    => "?",	
+		),
+//		'Security' => array(
+//			'admin-downloader.php'    => "?",	// coming never ever
 //			'admin-showlogs.php'      => "Log Viewer",	
 //			'shitbugs.php'            => "?"
-		),
+//		),
 		'IP management' => array(
 			'admin-ipsearch.php'      => "IP Search",
 			'admin-ipbans.php'        => "IP Bans",
@@ -1573,7 +1573,7 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 	} else {
 		// ...
 		$_adminlinks['Quick jump'] = array_merge($_adminlinks['Quick jump'], $_adminlinks['Configuration']);
-		$_adminlinks['ThreadFix'] = array_merge($_adminlinks['ThreadFix'], $_adminlinks['Security']);
+		//$_adminlinks['ThreadFix'] = array_merge($_adminlinks['ThreadFix'], $_adminlinks['Security']);
 		$_adminlinks['IP management'] = array_merge($_adminlinks['IP management'], $_adminlinks['User management']);
 		unset($_adminlinks['Configuration'], $_adminlinks['Security'], $_adminlinks['User management']);
 		
@@ -1595,7 +1595,7 @@ function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
 			foreach($linkrow as $link => $name) {
 				$cell = '1';
 				if ($link == $sel) $cell = 'c';
-				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
+				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px; border-top: 0' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
 			}
 
 			$r .= "</tr></table>";

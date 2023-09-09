@@ -23,27 +23,10 @@
 		// Token check
 		check_token($_POST['auth']);
 		
-		if (filter_bool($_POST['maxusersreset'])) {
-			$maxusers 		= 0;
-			$maxusersdate 	= 0;
-			$maxuserstext 	= NULL;
-		} else {
-			$maxusers 		= filter_int($_POST['maxusers']);
-			$maxusersdate 	= fieldstotimestamp('maxusers_','_POST');
-			$maxuserstext 	= $misc['maxuserstext'];
-		}
 		
 		// The query
 		$settings = [
-			'views'				=> filter_int($_POST['views']),
 			'hotcount'			=> filter_int($_POST['hotcount']),
-			'maxpostsday' 		=> filter_int($_POST['maxpostsday']),
-			'maxpostshour' 		=> filter_int($_POST['maxpostshour']),
-			'maxpostsdaydate' 	=> fieldstotimestamp('maxpostsday_','_POST'),
-			'maxpostshourdate' 	=> fieldstotimestamp('maxpostshour_','_POST'),
-			'maxusers' 			=> $maxusers,
-			'maxusersdate' 		=> $maxusersdate,
-			'maxuserstext' 		=> $maxuserstext,
 			'disable' 			=> ($sysadmin ? filter_int($_POST['disable']) : $misc['disable']),
 			'donations' 		=> filter_float($_POST['donations']),
 			'ads' 				=> filter_float($_POST['ads']),
@@ -57,7 +40,31 @@
 			'attntitle'			=> filter_string($_POST['attntitle']),
 			'attntext'			=> filter_string($_POST['attntext']),
 		];
-			
+		
+		
+		if (filter_bool($_POST['recordeditok'])) {	
+			if (filter_bool($_POST['maxusersreset'])) {
+				$maxusers 		= 0;
+				$maxusersdate 	= 0;
+				$maxuserstext 	= NULL;
+			} else {
+				$maxusers 		= filter_int($_POST['maxusers']);
+				$maxusersdate 	= fieldstotimestamp('maxusers_','_POST');
+				$maxuserstext 	= $misc['maxuserstext'];
+			}
+		
+			$settings += [
+				'views'				=> filter_int($_POST['views']),
+				'maxpostsday' 		=> filter_int($_POST['maxpostsday']),
+				'maxpostshour' 		=> filter_int($_POST['maxpostshour']),
+				'maxpostsdaydate' 	=> fieldstotimestamp('maxpostsday_','_POST'),
+				'maxpostshourdate' 	=> fieldstotimestamp('maxpostshour_','_POST'),
+				'maxusers' 			=> $maxusers,
+				'maxusersdate' 		=> $maxusersdate,
+				'maxuserstext' 		=> $maxuserstext,
+			];
+		}
+		
 		$sql->queryp("UPDATE misc SET ".mysql::setplaceholders($settings), $settings);
 		
 		errorpage("Settings saved!", 'admin.php', 'administration main page', 0);
@@ -147,7 +154,10 @@
 			<td class='tdbg2'><textarea name='attntext' rows='2'><?=escape_html($misc['attntext'])?></textarea></td>
 		</tr>
 		
-		<tr><td class='tdbgc center' colspan=2>Records</td></tr>
+		<tr><td class='tdbgc center' colspan=2>
+			Records
+			<br/><input type='checkbox' name='recordeditok' value='1'> To save the values in this section, you must check this box first.
+		</td></tr>
 		<tr>
 			<td class='tdbg1 center' width='200'><b>View count</b></td>
 			<td class='tdbg2'><input type='text' name='views' value='<?=$misc['views']?>' class='right'> views</td>

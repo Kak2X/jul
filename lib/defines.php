@@ -88,3 +88,15 @@
 	const DATE_SHORT_FORMATS  = array('m-d-y', 'd/m/Y', 'Y-m-d');
 	
 	const BOTCMD_RESTART = "-1";
+	
+	const PWARN_MIN = 0;
+	const PWARN_MAX = 2;
+	const PWARN_NONE = 0; // Not warned
+	const PWARN_WARN = 1; // Warned - unread
+	const PWARN_WARNREAD = 2; // Warned - read
+	
+	const PHILI_MIN = 0;
+	const PHILI_MAX = 2;
+	const PHILI_NONE = 0; // None
+	const PHILI_LOCAL = 1; // Local to the thread
+	const PHILI_SUPER = 2; // Hall of fame

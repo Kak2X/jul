@@ -67,7 +67,7 @@ if ($_GET['id']) {
 		
 		// Process attachments removal
 		if ($can_attach) {
-			process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM);
+			list($attachsel, $total) = process_attachments($attach_key, $loguser['id'], 0, ATTACH_PM);
 		}
 				
 		if (isset($_POST['submit'])) {

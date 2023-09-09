@@ -24,8 +24,10 @@
 	$data->rowspan          = 2;
 	//--
 	$opt = get_tlayout_opts('rpg', $set, $post, $data);
-	
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
+	//--
+	if ($set['warntext']) 		$opt->option_rows_top .= $set['warntext'];
+	if ($set['highlighttext'])	$opt->option_rows_top .= $set['highlighttext'];
+	//--
 	
 	if ($post['deleted']) {
 		$height = 0;
@@ -34,7 +36,7 @@
 		$height = 220;
 		$rpgbox = "
 		<span class='fonts'><br>{$set['userrank']}</span>
-		<table border bordercolor=$tableborder cellspacing=0 cellpadding=0 style='background: {$tablebg2}' id='rpg{$post['uid']}{$data->csskey}'>
+		<table border='' bordercolor='{$tableborder}' cellspacing='0' cellpadding='0' style='background: #{$tablebg2}' id='rpg{$post['uid']}{$data->csskey}'>
 			<tr>
 				<td style='width: 100px; height: 100px' valign=center align=center id='rpgtop{$post['uid']}{$data->csskey}_1'><span class='rpg-avatar'>{$set['userpic']}</span></td>
 				<td style='width: 60px; height: 60px' class='vatop' id='rpgtop{$post['uid']}{$data->csskey}_2'>
@@ -63,11 +65,11 @@
 
 		
 	
-return "
+return "{$set['highlightline']}
 <table class='table post tlayout-rpg contbar{$post['uid']}{$data->csskey}' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$data->csskey} vatop' rowspan='{$opt->rowspan}' style='width: 200px'>
-			{$noobspan}{$set['userlink']}</span>
+			{$set['userspan']}{$set['userlink']}</span>
 			{$rpgbox}
 		</td>
 		<td class='tdbg{$set['bg']} topbar{$post['uid']}{$data->csskey}_2'>
@@ -79,9 +81,9 @@ return "
 			</table>
 		</td>
 	</tr>
-	{$opt->option_rows_top}
 	<tr>
 		<td class='tdbg2 vatop mainbar{$post['uid']}{$data->csskey}' style='height: {$height}px' id='post{$post['id']}'>
+			{$opt->option_rows_top}
 			{$post['headtext']}
 			{$post['text']}
 			{$set['attach']}

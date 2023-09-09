@@ -272,6 +272,7 @@ function load_pm_thread($id) {
 		}
 		$forum_error = "<tr><td style='background:#cc0000;color:#eeeeee;text-align:center;font-weight:bold;'>{$errortext}</td></tr>";
 	}
+	load_layout();
 }
 
 /*

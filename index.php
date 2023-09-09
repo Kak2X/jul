@@ -1,5 +1,7 @@
 <?php
-
+	const _WND_PFEAT = -5;
+	const _WND_ACTIVE = -4;
+	
 	if (isset($_GET['u']) && $_GET['u']) {
 		header("Location: profile.php?id=". $_GET['u']);
 		die();
@@ -279,61 +281,107 @@
 		<?php
 	}
 	
-	print hook_print("index-window");
-	
-	
-	// Display recent active threads
-	// Part of this was lifted from latestposts.php and tweaked to show threads instead of posts
-	
-	const _WND_ACTIVE = -4;
-	$hidden = filter_int($_COOKIE['hcat'][_WND_ACTIVE]);
-	if ($hidden) {
-?>
-		<br/>
-		<table class='table'>
-			<tr><td class='tdbgc center'><a href='latestposts.php'>Recently active threads<?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></a></tr>
-		</table>
-<?php
-	} else {
-		$data	= $sql->query("
-			SELECT
-				t.id as id,
-				t.lastposter,
-				t.lastpostdate as date,
-				f.title as ftitle,
-				t.forum as fid,
-				t.title as title,
-				$userfields uid
-			FROM `threads` t
-			LEFT JOIN `forums` f ON t.forum = f.id
-			LEFT JOIN `users` u ON t.lastposter = u.id
-			WHERE f.hidden = 0 AND ".can_view_forum_query()."
-			ORDER BY t.lastpostdate DESC
-			LIMIT 5
-			");
+	/*
+		Featured posts, once again like the XenForo feature but nowhere near as good.
+	*/
+
+	if ($config['post-highlight-index-days'] > 0 && $config['post-highlight-index-limit'] > 0) {
 		
-	?>
+		
+		$hidden = filter_int($_COOKIE['hcat'][_WND_PFEAT]);
+		if ($hidden) {
+?>
 			<br/>
 			<table class='table'>
-				<tr><td class='tdbgc center' colspan='4'><a href='latestposts.php'>Recently active threads<?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></a></tr>
-				<tr>
-					<td class='tdbgh center' width='25%'>Forum</td>
-					<td class='tdbgh center' width='45%'>Thread</td>
-					<td class='tdbgh center' width='20%'>User</td>
-					<td class='tdbgh center' width='10%'>Time</td>
-				</tr>
-	<?php		foreach ($data as $in) { ?>
-				<tr>
-					<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
-					<td class='tdbg1'><a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
-					<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
-					<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
-				</tr>
-	<?php		} ?>
-		</table>
-	<?php
-	}
+				<tr><td class='tdbgh center'><a href='thread.php?hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
+			</table>
+<?php
+		} else {
+			$highlights = $sql->query("
+				SELECT p.id, p.highlighttext, p.highlightdate 
+				FROM posts p
+				LEFT JOIN threads t ON p.thread = t.id
+				LEFT JOIN forums  f ON t.forum  = f.id
+				WHERE p.highlighted = ".PHILI_SUPER." AND ".can_view_forum_query()."
+				      AND p.highlightdate > ".(time() - $config['post-highlight-index-days'] * 86400)."
+				ORDER BY p.highlightdate DESC
+				LIMIT {$config['post-highlight-index-limit']}
+			");
+			
+			if ($sql->num_rows($highlights)) {
+?>
+				<br/>
+				<table class='table'>
+					<tr><td class='tdbgh center'><a href='thread.php?hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
+					<tr><td class='tdbg2'><ul class='m-0'>
+<?php				foreach ($highlights as $x) { ?>
+					<li>
+						<a title="Featured on <?=printdate($x['highlightdate'])?>" href='thread.php?pid=<?=$x['id']?>#<?=$x['id']?>'>
+							<?= htmlspecialchars($x['highlighttext']) ?>
+						</a>
+					</li>
+<?php				} ?>
+					</ul></td></tr>
+			</table>
+<?php
+			}
+		}
 
+	}
+	
+	print hook_print("index-window");
+	
+	if ($config['active-threads-index']) {
+		// Display recent active threads
+		// Part of this was lifted from latestposts.php and tweaked to show threads instead of posts
+		$hidden = filter_int($_COOKIE['hcat'][_WND_ACTIVE]);
+		if ($hidden) {
+?>
+			<br/>
+			<table class='table'>
+				<tr><td class='tdbgc center'><a href='latestposts.php'>Recently active threads</a><?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></tr>
+			</table>
+<?php
+		} else {
+			$data	= $sql->query("
+				SELECT
+					t.id as id,
+					t.lastposter,
+					t.lastpostdate as date,
+					f.title as ftitle,
+					t.forum as fid,
+					t.title as title,
+					$userfields uid
+				FROM `threads` t
+				LEFT JOIN `forums` f ON t.forum = f.id
+				LEFT JOIN `users` u ON t.lastposter = u.id
+				WHERE f.hidden = 0 AND ".can_view_forum_query()."
+				ORDER BY t.lastpostdate DESC
+				LIMIT 5
+				");
+			
+?>
+				<br/>
+				<table class='table'>
+					<tr><td class='tdbgc center' colspan='4'><a href='latestposts.php'>Recently active threads</a><?= _collapse_toggle(_WND_ACTIVE, $hidden) ?></tr>
+					<tr>
+						<td class='tdbgh center' width='25%'>Forum</td>
+						<td class='tdbgh center' width='45%'>Thread</td>
+						<td class='tdbgh center' width='20%'>User</td>
+						<td class='tdbgh center' width='10%'>Time</td>
+					</tr>
+<?php				foreach ($data as $in) { ?>
+					<tr>
+						<td class='tdbg2 center'><a href='forum.php?id=<?=$in['fid']?>'><?= htmlspecialchars($in['ftitle']) ?></a></td>
+						<td class='tdbg1'><a href='thread.php?id=<?=$in['id']?>&end=1'><?= htmlspecialchars($in['title']) ?></a></td>
+						<td class='tdbg1 center'><?= getuserlink($in, $in['uid']) ?></td>
+						<td class='tdbg2 center'><?= timeunits(time() - $in['date']) ?></td>
+					</tr>
+<?php				} ?>
+			</table>
+<?php
+		}
+	}
 
 // Hopefully this version won't break horribly if breathed on wrong
 	$forumheaders ="

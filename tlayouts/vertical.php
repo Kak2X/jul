@@ -33,15 +33,18 @@ function postcode($post,$set){
 	if (filter_string($set['threadlink'])) {
 		$threadlink	= "Thread: {$set['threadlink']}";
 	}
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
 	$data = new tlayout_ext_input();
 	$opt = get_tlayout_opts('vertical', $set, $post, $data);
 	//--
+	$warn = "";
+	if ($set['warntext']) 		$warn .= $set['warntext'];
+	if ($set['highlighttext'])	$warn .= $set['highlighttext'];
+	//--
 	
 	if ($post['deleted']) {
 		$height = 0;
-		$sideleft = "{$noobspan}{$set['userlink']}</span>";
+		$sideleft = "{$set['userspan']}{$set['userlink']}</span>";
 		$sideright = "{$set['new']}Posted: {$postdate} {$post['edited']}<br>{$threadlink} {$controls['edit']} | {$controls['ip']}";
 	} else {
 		$height = 50;
@@ -50,7 +53,7 @@ function postcode($post,$set){
 			<tr>
 				<td style='width: 80px; height: 80px'><span class='rpg-avatar'>{$set['userpic']}</span></td>
 				<td class='nobr vatop'>
-					{$noobspan}{$set['userlink']}</span>
+					{$set['userspan']}{$set['userlink']}</span>
 					<span class='fonts'>
 						<br>{$level}
 						<br>{$bar}
@@ -69,7 +72,7 @@ function postcode($post,$set){
 			{$opt->option_rows_top}";
 	}
 	
-    return "
+    return "{$set['highlightline']}
 <table class='table post tlayout-vertical' id='{$post['id']}'>
 	<tr>
 		<td class='tdbg{$set['bg']} vatop'>
@@ -81,6 +84,7 @@ function postcode($post,$set){
 	</tr>
 	<tr>
 		<td class='tdbg{$set['bg']} vatop' style='height: {$height}px' colspan=2>
+			{$warn}
 			{$post['headtext']}
 			{$post['text']}
 			{$set['attach']}

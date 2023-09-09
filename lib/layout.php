@@ -47,9 +47,9 @@
 
 function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	global 	$sql, $config, $x_hacks, $loguser, $miscdata, $pwlnames, // globals - external
-			$nmcol, $statusicons, $numdir, $numfil, $barimg, $numcols, // globals - created
-			$favicon, $schemepre, $css, $body_extra, $schemerow, // for pageheader only
-			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $poweredbypic // thread pics
+			$nmcol, $statusicons, $numdir, $numfil, $barimg, $numcols, $tableborder, $tablebg2, $tableheadtext, // globals - created
+			$favicon, $schemepre, $css_layout, $body_extra, $schemerow, // for pageheader only
+			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $poweredbypic, $warnpic // thread pics
 			;
 			
 	/*
@@ -79,6 +79,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	$closedpic		= '<img class="pixel" src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
 	$nopollpic      = '<img class="pixel" src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
 	$poweredbypic   = '<img class="pixel" src="images/poweredbyacmlm.gif">';
+	$warnpic        = '<img class="vamid" src="images/warn.png">';
 	$numdir			= 'jul/';
 
 	$statusicons = [
@@ -181,13 +182,13 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	/*
 		Build the CSS using the scheme variables
 	*/
-	$css = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>";
+	$css_layout = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>";
 	if ($nullscheme) {
 		//  Special "null" scheme.
-		$css .= "<style type='text/css'>";
+		$css_layout .= "<style type='text/css'>";
 	} else if ($schemetype == 1) {
 		// External CSS
-		$css .= hook_print('header-css')."
+		$css_layout .= hook_print('header-css')."
 		<link rel='stylesheet' type='text/css' href='schemes/$schemefile.css'>
 		<style type='text/css'>";
 		$usebtn = 1;
@@ -200,7 +201,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		else 
 			$bgimage = "";
 		
-		$css .= hook_print('header-css')."
+		$css_layout .= hook_print('header-css')."
 		<style type='text/css'>
 			a,.buttonlink                   { color: #$linkcolor; }
 			a:visited,.buttonlink:visited   { color: #$linkcolor2; }
@@ -243,7 +244,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		&& isset($scr6)
 		&& isset($scr7)
 	) {
-		$css	.= "
+		$css_layout	.= "
 		/* IE/Webkit/Chrome/etc. custom scrollbars. Remember these? */
 		body {
 			scrollbar-face-color:		#$scr3;
@@ -307,7 +308,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 			$inputborder   = $tableborder;
 		}
 		
-		$css.="
+		$css_layout.="
 		textarea,input,select,button,.button{
 		  border:	#$inputborder solid 1px;
 		  background:#$formcolor;
@@ -329,7 +330,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		.button{color: #$formtextcolor !important;}
 		";
 	} else if (!$usebtn) {
-		$css.="
+		$css_layout.="
 		a.button, a.button:active, a.button:hover {
 			font-weight: bold !important;
 			cursor: pointer;
@@ -337,9 +338,24 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		";
 	}
 
+	if (isset($errorcolor)) {
+		$css_layout .= ".alert-error {
+			background: #$errorcolor;
+			color: #$errortextcolor;
+			border-color: #$errortextcolor;
+		}";
+	}
+	if (isset($infocolor)) {
+		$css_layout .= ".alert-info {
+			background: #$infocolor;
+			color: #$infotextcolor;
+			border-color: #$infotextcolor;
+		}";
+	}
+
 	// April 1st page flip
 	/*
-	$css .= "
+	$css_layout .= "
 		body {
 			transform:			scale(-1, 1);
 			-o-transform:		scale(-1, 1);
@@ -357,15 +373,15 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	
 	// 10/18/08 - hydrapheetz: added a small hack for "extra" css goodies.
 	if ($css_extra) {
-		$css .= $css_extra . "\n";
+		$css_layout .= $css_extra . "\n";
 	}
 	
 	if ($loguser['fontsize']) {
-		$css .= "body { font-size: {$loguser['fontsize']}% }\n"; 
+		$css_layout .= "body { font-size: {$loguser['fontsize']}% }\n"; 
 	}
-	$css .= "</style>";
+	$css_layout .= "</style>";
 
-	// $css	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
+	// $css_layout	.= "<!--[if IE]><style type='text/css'>#f_ikachan, #f_doomcounter, #f_mustbeblind { display: none; }</style><![endif]-->	";
 	
 	// When a post milestone is reached, everybody gets rainbow colors for a day
 	if (!$x_hacks['rainbownames']) {
@@ -401,7 +417,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 
 function pageheader($windowtitle = '', $mini = false, $centered = false) {
 	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $numcols, $barimg, $isbot, $schemerow,
-			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css, $forcetitle;
+			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css_layout, $forcetitle, $warnpic;
 			
 	// Load this if it wasn't explicitly launched
 	if (!isset($nmcol)) {
@@ -500,10 +516,10 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 	header("Content-type: text/html; charset=utf-8'");
 
 	// cache bad (well, most of the time)
-	//if (!isset($meta['cache'])) {
-	//	header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
-	//	header('Pragma: no-cache');
-	//}		
+	if (!isset($meta['cache'])) {
+		header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+		header('Pragma: no-cache');
+	}		
 	
 	/*
 		META tags & Favicon
@@ -605,6 +621,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		- <a href='acs.php'>JCS</a>
 		- <a href='stats.php'>Stats</a>
 		- <a href='latestposts.php'>Latest Posts</a>
+		- <a href='thread.php?hi=".PHILI_SUPER."'>Featured Posts</a>
 		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
 		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
 		";
@@ -616,56 +633,71 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		Unread PMs box
 	*/
 	$privatebox = "";
-	// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
-	// This box only shows up when a new PM is found, so it's optimized for that
-	if ($loguser['id'] && !in_array($scriptname, array("private.php","index.php")) ) {
-		$lastthread = $sql->query("
-			SELECT t.id
-			FROM pm_threads t
-			INNER JOIN pm_access       a ON t.id         = a.thread
-			LEFT  JOIN pm_foldersread fr ON a.folder     = fr.folder AND a.user = fr.user
-			LEFT  JOIN pm_threadsread tr ON t.id         = tr.tid    AND tr.uid = {$loguser['id']}
-			WHERE a.user = {$loguser['id']} 
-			  AND (!tr.read OR tr.read IS NULL)			  
-			  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
-			ORDER BY t.lastpostdate DESC
-		");
-		$unreadcount = $sql->num_rows($lastthread);
+
+	if ($loguser['id']) {
 		
-		if ($unreadcount) {
-			$tid = $sql->result($lastthread);
-			$lastpost = $sql->fetchq("
-				SELECT p.id pid, p.date, $userfields
-				FROM pm_posts p
-				LEFT JOIN users u ON p.user = u.id
-				WHERE p.thread = {$tid}
-				ORDER BY p.date DESC
-				LIMIT 1
+		// Note that we ignore this in private.php (obviously) and the index page (it handles PMs itself)
+		// This box only shows up when a new PM is found, so it's optimized for that
+		
+		if (!in_array($scriptname, array("private.php","index.php"))) {
+			$lastthread = $sql->query("
+				SELECT t.id
+				FROM pm_threads t
+				INNER JOIN pm_access       a ON t.id         = a.thread
+				LEFT  JOIN pm_foldersread fr ON a.folder     = fr.folder AND a.user = fr.user
+				LEFT  JOIN pm_threadsread tr ON t.id         = tr.tid    AND tr.uid = {$loguser['id']}
+				WHERE a.user = {$loguser['id']} 
+				  AND (!tr.read OR tr.read IS NULL)			  
+				  AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)
+				ORDER BY t.lastpostdate DESC
 			");
-			$privatebox = "
-				<tr>
-					<td colspan=3 class='tbl tdbg2 center fonts'>
-						{$statusicons['new']} <a href='private.php'>You have {$unreadcount} new private message".($unreadcount != 1 ? 's' : '')."</a> -- <a href='showprivate.php?pid={$lastpost['pid']}#{$lastpost['pid']}'>Last unread message</a> from ".getuserlink($lastpost)." on ".printdate($lastpost['date'])."
-					</td>
-				</tr>";			
+			$unreadcount = $sql->num_rows($lastthread);
 			
+			if ($unreadcount) {
+				$tid = $sql->result($lastthread);
+				$lastpost = $sql->fetchq("
+					SELECT p.id pid, p.date, $userfields
+					FROM pm_posts p
+					LEFT JOIN users u ON p.user = u.id
+					WHERE p.thread = {$tid}
+					ORDER BY p.date DESC
+					LIMIT 1
+				");
+				$privatebox = "
+					<tr>
+						<td colspan=3 class='tdbg2 center fonts'>
+							{$statusicons['new']} <a href='private.php'>You have {$unreadcount} new private message".($unreadcount != 1 ? 's' : '')."</a> -- <a href='showprivate.php?pid={$lastpost['pid']}#{$lastpost['pid']}'>Last unread message</a> from ".getuserlink($lastpost)." on ".printdate($lastpost['date'])."
+						</td>
+					</tr>";			
+				
+			}
 		}
-	}
 	
-	// Pretty similar to the above but for profile comments
-	// Of course this is simpler
-	if ($loguser['id'] && $loguser['comments']) {
-		$unreadcount = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userto = {$loguser['id']} AND `read` = 0");
+		// Pretty similar to the above but for profile comments
+		// Of course this is simpler
+		if ($loguser['comments']) {
+			$unreadcount = $sql->resultq("SELECT COUNT(*) FROM users_comments WHERE userto = {$loguser['id']} AND `read` = 0");
+			if ($unreadcount) {
+				$privatebox .= "
+				<tr>
+					<td colspan=3 class='tdbg2 center fonts'>
+						{$statusicons['new']} <a href='usercomment.php?id={$loguser['id']}&to=1'>You have {$unreadcount} new profile comment".($unreadcount != 1 ? 's' : '')."</a>
+					</td>
+				</tr>";
+			}
+		}
+		
+		// And again
+		$unreadcount = $sql->resultq("SELECT (SELECT COUNT(*) FROM posts WHERE user = {$loguser['id']} AND `warned` = ".PWARN_WARN.")+(SELECT COUNT(*) FROM pm_posts WHERE user = {$loguser['id']} AND `warned` = ".PWARN_WARN.")");
 		if ($unreadcount) {
 			$privatebox .= "
 			<tr>
 				<td colspan=3 class='tdbg2 center fonts'>
-					{$statusicons['new']} <a href='usercomment.php?id={$loguser['id']}&to=1'>You have {$unreadcount} new profile comment".($unreadcount != 1 ? 's' : '')."</a>
+					<span class='icon-16'>{$warnpic}</span> <a href='postsbyuser.php?id={$loguser['id']}&pm=1&warn=2'>You have {$unreadcount} unread warning".($unreadcount != 1 ? 's' : '')."</a>
 				</td>
 			</tr>";
 		}
 	}
-	
 	// Overriding the default title?
 	// Moved here to allow overriding themes defining custom headers (and fixing the bug which renders the custom header non-clickable)
 	if ($miscdata['specialtitle'])
@@ -766,7 +798,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		(isset($meta['base']) ? "<base href=\"{$meta['base']}\">" : "")
 		 ?>
 		<link rel='shortcut ico' href='<?=$favicon?>' type='image/x-icon'>
-		<?=$css?>
+		<?=$css_layout?>
 		<?=$jscripts?>
 	</head>
 	<body <?= ($centered ? "class='flexhvc h'" : "") ?>>

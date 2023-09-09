@@ -169,7 +169,7 @@ function can_use_attachments($user, $powlreq = ATTACH_REQ_DEFAULT) {
 		|| $powlreq == ATTACH_REQ_DISABLED // Disabled for forum
 	);
 }
-
+	
 // After post previews
 const ATTACH_PM     = 0b1;  // Handle attachments for PMs, not posts.
 const ATTACH_INCKEY = 0b10; // Use incremented key mode (attachments are not shared between tabs of the same page)
@@ -253,7 +253,7 @@ function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 		$input_tid = $total ? "<input type='hidden' name='attach_id' value='{$attach_id}'>" : ""; 
 		return $input_tid;
 	}
-	return $attachsel;
+	return [$attachsel, $total];
 }
 
 // Replaces the temporary [attach=<hash>] fields for the threadpost preview

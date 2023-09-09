@@ -2,7 +2,7 @@
 	
 	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0,$pthread = '', $multiforum = false) {
 		
-		global $config, $loguser, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons;
+		global $config, $loguser, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons, $warnpic;
 		
 		// Fetch an array containing all blocked layouts now
 		if (!isset($blockedlayouts)) {
@@ -13,9 +13,8 @@
 		}
 		
 		
-		$set['bg']    = $bg; //${"tablebg$bg"};
-		$userlink = getuserlink($post, $post['uid'], "url".$post['uid']);
-		$set['userlink'] = "<a name={$post['uid']}></a>{$userlink}";
+		$set['bg']       = $bg;
+		$set['userlink'] = getuserlink($post, $post['uid'], "url".$post['uid']);;
 		$set['date']     = printdate($post['date']);
 		if (!isset($post['num'])) $post['num'] = 0;
 		
@@ -38,7 +37,7 @@
 			);
 			
 			
-			$set['location'] = filter_string($post['location']) ? "<br>From: ". htmlspecialchars($post['location']) : ""; 
+			$set['location'] = filter_string($post['location']) ? "<br>From: ". str_ireplace("&lt;br&gt;", "<br>", htmlspecialchars($post['location'])) : ""; 
 			
 			prepare_avatar($post, $set['picture'], $set['userpic']);
 
@@ -60,7 +59,7 @@
 
 		// Thread marker for posts by thread / favourites view
 		if ($pthread) { 
-			$set['threadlink'] = "<a href=thread.php?id={$pthread['id']}>".htmlspecialchars($pthread['title'])."</a>";
+			$set['threadlink'] = "<a href=thread.php?id={$pthread['tid']}>".htmlspecialchars($pthread['title'])."</a>";
 		}
 
 		// Edit date and revision selector
@@ -91,7 +90,29 @@
 		
 		$set['new'] = __($post['new']) ? "{$statusicons['new']} | " : "";
 		$set['mode'] = $mode;
+		
+		$set['userspan'] = $post['noob'] ? "<span class='userlink' style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span class='userlink'>";
+		$set['warntext'] = $post['warned'] ? "<div class='alert alert-error'>{$warnpic} ".($post['warntext'] ? domarkup($post['warntext']) : "(USER WAS WARNED FOR THIS POST)")."</div>" : "";
+		
+		if ($post['highlighted']) {
+			if ($post['highlighted'] == PHILI_LOCAL) {
+				$typetxt    = "<b>Highlight</b>";
+			} else {
+				$typetxt    = "<b>Featured</b>";
+			}
+			$urlback	= isset($post['highlightprev']) ? "<a href='{$post['highlightprev']}'>&lt;&lt;</a> " : "";
+			$urlnext	= isset($post['highlightnext']) ? " <a href='{$post['highlightnext']}'>&gt;&gt;</a>" : "";
 			
+			$set['highlightctrl'] = "{$urlback}{$typetxt}{$urlnext} | ";
+			$set['highlighttext'] = $post['highlighttext'] ? "<div class='alert alert-info'>".domarkup($post['highlighttext'])."</div>" : "";
+			$set['highlightline'] = "<div class='td-highlight tdbgh'></div>";
+		} else {
+			$set['highlighttext'] = "";
+			$set['highlightctrl'] = "";
+			$set['highlightline'] = "";
+		}
+		
+		
 		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
 		
 		return dofilters(postcode($post,$set), $forum, $multiforum);
@@ -197,10 +218,28 @@
 		return $id;
 	}
 	
+	// Gets the post layout fields for a specific (pm) post
+	function getpostlayoutforedit($post) {
+		global $sql;
+					
+		if (!$post['headid']) $head = $post['headtext'];
+		else $head = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['headid']}");
+		if (!$post['signid']) $sign = $post['signtext'];
+		else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
+		if (!$post['cssid'])  $css = $post['csstext'];
+		else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
+		
+		sbr(1, $head);
+		sbr(1, $sign);
+		
+		return [$head, $sign, $css];
+	}
+	
 	const PREVIEW_NEW     = 0;
 	const PREVIEW_EDITED  = 1;
 	const PREVIEW_PROFILE = 2;
 	const PREVIEW_PM      = 3;
+	const PREVIEW_GENERIC = 4;
 	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
 		global $sql, $controls, $loguser, $config, $isadmin;
 		
@@ -241,6 +280,16 @@
 		$ppost['date']   = $data['date'];
 		$ppost['moodid'] = $data['moodid'];
 		$ppost['noob']   = filter_int($data['noob']);
+		//--
+		if ($ppost['highlighted'] = filter_int($data['highlighted'])) {
+			$ppost['highlighttext'] = $data['highlighttext'];
+			//$ppost['highlightdate'] = $data['highlightdate'];
+		}
+		if ($ppost['warned'] = filter_int($data['warned'])) {
+			$ppost['warntext'] = $data['warntext'];
+			//$ppost['warndate'] = $data['warndate'];
+		}
+		//--
 		
 		$gtopt = array(
 			'posts' => $posts,
@@ -274,7 +323,7 @@
 			// If we're viewing the post preview when *EDITING* a new post/pm
 			// the attachment list should contain the temp attachments and the already uploaded attachments
 			// (and hide those marked as deleted)
-			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
+			if ($config['allow-attachments'] && isset($data['attach_key'])) {
 				$real = get_saved_attachments($data['id'], isset($data['attach_pm']), $data['attach_sel']);
 				$temp = get_temp_attachments($data['attach_key'], $user['id']);
 				$ppost['attach'] = array_merge($real, $temp);
@@ -285,10 +334,15 @@
 			$ppost['editdate'] 	= $currenttime;
 		} else if ($flags == PREVIEW_PROFILE) {
 			$data['ip'] = $user['lastip'];
+		} else if ($flags == PREVIEW_GENERIC) {
+			// Generic post view mode
+			if ($config['allow-attachments']) {
+				$ppost['attach'] = get_saved_attachments($data['id'], isset($data['attach_pm']));
+			}
 		} else {
 			// If we're viewing the post preview when creating a new post/pm/etc
 			// the attachment list should contain the temp attachments
-			if ($config['allow-attachments'] && $data['attach_key'] !== NULL) {
+			if ($config['allow-attachments'] && isset($data['attach_key'])) {
 				$ppost['attach'] = get_temp_attachments($data['attach_key'], $user['id']);
 			}
 			$data['ip'] = $_SERVER['REMOTE_ADDR'];
@@ -472,7 +526,7 @@ const TOPBAR_LEFT = 1;
 const OPTION_ROW_TOP = 2;
 const OPTION_ROW_BOTTOM = 3;
 
-function add_option_row($html, $dir = OPTION_ROW_BOTTOM, $rowspan = 1) {
+function add_option_row($html, $dir = OPTION_ROW_BOTTOM, $rowspan = 0) {
 	if ($dir === OPTION_ROW_BOTTOM) {
 		global $tloptrows;
 		$tloptrows[] = [$html, $rowspan];

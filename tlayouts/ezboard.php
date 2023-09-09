@@ -15,7 +15,6 @@ function postcode($post,$set) {
 	}
 	
 	$postnum = ($post['num'] ? " {$post['num']}/":'').$post['posts'];
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	
 
 	// remove paranthesis and uppercase the first letter
@@ -28,13 +27,16 @@ function postcode($post,$set) {
 	$data->csskey           = $csskey;
 	//--
 	$opt = get_tlayout_opts('ezboard', $set, $post, $data);
+	//--
+	if ($set['warntext']) 		$opt->option_rows_top .= $set['warntext'];
+	if ($set['highlighttext'])	$opt->option_rows_top .= $set['highlighttext'];
+	//--
 	
-	return "
+	return "{$set['highlightline']}
 <table class='table post tlayout-ezboard contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
-	{$opt->option_rows_top}
 	<tr>
 		<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey} vatop' style='width: 200px'>
-			{$noobspan}{$set['userlink']}</span>{$opt->top_left}
+			{$set['userspan']}{$set['userlink']}</span>{$opt->top_left}
 			<span class='fonts'>
 				<br>
 				<b>{$set['userrank']}</b><br>
@@ -47,6 +49,7 @@ function postcode($post,$set) {
 			</span>
 		</td>
 		<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} vatop' id='post{$post['id']}'>
+			{$opt->option_rows_top}
 			{$post['headtext']}
 			{$post['text']}
 			{$set['attach']}

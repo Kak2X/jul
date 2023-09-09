@@ -65,6 +65,8 @@ img { border:none; }
 .b		   { font-weight:bold !important }
 .i		   { font-style:italic !important }
 .h		   { height: 100vh }
+.p-0	   { padding: 0 !important }
+.m-0	   { margin: 0 !important }
 
 /* Make sure the last post text only stays in two lines*/
 .nobr,div.lastpost {white-space:nowrap}
@@ -169,6 +171,7 @@ input[type=radio] {
 	max-height:		30px; 
 	overflow:		hidden;
 }
+.icon-16 img { width:16px }
 
 /* Attachments */
 .attachment-box, .attachment-box-addnew{
@@ -297,6 +300,25 @@ table.table-fixed {
 }
 input, select { vertical-align: middle; }
 img[src^="images/smilies/"] { vertical-align: middle; }
+
+
+/* Alert default */
+.alert {
+	width: 100%;
+	padding: 6px 8px;
+	border-left: 2px solid #000;
+}
+.alert-error {
+	background: #fde9e9 linear-gradient(to bottom, #fcfcfc 0%,#fcd4d4 100%);
+	color: #c84448;
+	border-color: #c84448;
+}
+.alert-info {
+	background: #e9e9fd linear-gradient(to bottom, #fcfcfc 0%,#d4d4fc 100%);
+	color: #4448C8;
+	border-color: #4448C8;
+}
+.td-highlight { height: 5px; border: none !important }
 
 /* Ikachan cursor (disabled) */
 /*			

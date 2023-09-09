@@ -206,6 +206,7 @@ function domarkup($msg, $stdpost = null, $nosbr = false) {
 */
 function dobreadcrumbs($set, $right = "") {
 	global $config;
+	$set[count($set)-1][1] = null; // Last item never displays the URL
 	$out = "<a href='index.php'>{$config['board-name']}</a>";
 	foreach ($set as $link) {
 		if ($link[1] !== NULL) {
@@ -712,8 +713,8 @@ function create_verification_hash($n,$pw) {
 }
 
 function generate_token($div = TOKEN_MAIN, $extra = "") {
-	global $config, $loguser;
-	return hash('sha256', $loguser['name'] . $config['salt-string'] . $div . $loguser['password']);
+	global $config, $loguser; // adding back $_SERVER['REMOTE_ADDR'] to here for now
+	return hash('sha256', $loguser['name'] . $_SERVER['REMOTE_ADDR'] . $config['salt-string'] . $div . $loguser['password']);
 }
 
 function check_token(&$var, $div = TOKEN_MAIN, $extra = "") {
@@ -1737,13 +1738,25 @@ function xssfilters($data, $validate = false){
 	return $data;
 	
 }
+
+// prepares dofilters for multiforum mode
+function prepare_filters($forums = null) {
+	global $sql, $forum_filters;
+	$f = $forums ? implode(",", array_map('intval', array_unique($forums))) : null;
+	
+	$forum_filters = $sql->fetchq("
+		SELECT forum, method, source, replacement
+		FROM filters
+		WHERE enabled = 1 AND forum ".($f ? "IN (0,{$f})" : "= 0")."
+		ORDER BY ord ASC, id ASC
+	", PDO::FETCH_GROUP, mysql::FETCH_ALL | mysql::USE_CACHE);
+}
+
 function dofilters($p, $f = 0, $multiforum = false){
 	if (!$p) return $p;
 	
-	global $sql, $hacks;
-	//static $filters;
-	
 	if (!$multiforum) { // Basically, everything except "Show posts" (of user)
+		global $sql, $hacks;
 		$filters = $sql->fetchq("
 			SELECT method, source, replacement
 			FROM filters
@@ -1751,21 +1764,18 @@ function dofilters($p, $f = 0, $multiforum = false){
 			ORDER BY ord ASC, id ASC
 		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
 	} else {
-		$filters = $sql->fetchq("
-			SELECT method, source, replacement
-			FROM filters
-			WHERE enabled = 1 AND forum = 0
-			ORDER BY ord ASC, id ASC
-		", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE);
+		global $forum_filters;
 		
-		if ($f) {
-			$filters = array_merge($filters, $sql->fetchq("
-				SELECT method, source, replacement 
-				FROM filters
-				WHERE enabled = 1 AND forum = {$f}
-				ORDER BY ord ASC, id ASC
-			", PDO::FETCH_ASSOC, mysql::FETCH_ALL | mysql::USE_CACHE));
-		}
+		// No filters, somehow...
+		if (!isset($forum_filters[0]) && !isset($forum_filters[$f]))
+			return $p;
+		
+		if (!isset($forum_filters[$f]))
+			$filters = $forum_filters[0];
+		else if (!isset($forum_filters[0]))
+			$filters = $forum_filters[$f];
+		else
+			$filters = array_merge($forum_filters[0], $forum_filters[$f]);
 	}
 
 	
@@ -2371,11 +2381,11 @@ function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) 
 	return true;
 }
 
-function header_content_type($type) {
+function header_content_type() {
 	global $runtime;
 	
 	if (!$runtime['show-log']) {
-		header("Content-type: image/png");
+		header("Content-type: $type");
 		return;
 	}
 	

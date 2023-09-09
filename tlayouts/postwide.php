@@ -17,13 +17,9 @@
 	//$numdir     = 'num1/';
 	if ($numdir === NULL) $numdir = get_complete_numdir();
 	$level		= "<img src='numgfx/{$numdir}level.png' width=36 height=8><img src='numgfx.php?n=$lvl&l=3&f=$numfil' height=8>";
-	$bar = "<br>".drawprogressbar(56, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
-	
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
-	
-	$postdate		= printdate($post['date']);
-	
-	$threadlink		= "";
+	$bar		= "<br>".drawprogressbar(56, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
+	$postdate	= printdate($post['date']);
+	$threadlink	= "";
 	if (filter_string($set['threadlink'])) {
 		$threadlink	= ", in {$set['threadlink']}";
 	}
@@ -34,24 +30,27 @@
 	$data = new tlayout_ext_input();
 	//--
 	$opt = get_tlayout_opts('postwide', $set, $post, $data);
-	
+	//--
+	if ($set['warntext']) 		$opt->option_rows_top .= $set['warntext'];
+	if ($set['highlighttext'])	$opt->option_rows_top .= $set['highlighttext'];
+	//--
 
 	
-    return "
+    return "{$set['highlightline']}
 	<table class='table post tlayout-postwide' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} w' height=1 colspan=2>
 				<table cellspacing=0 cellpadding=2 class='w fonts'>
 					<tr>
-						<td>{$noobspan}{$set['userlink']}</span><span class='fonts'><br> {$level}{$bar}</span></td>
+						<td>{$set['userspan']}{$set['userlink']}</span><span class='fonts'><br> {$level}{$bar}</span></td>
 						<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
 					</tr>
 				</table>
 			</td>
 		</tr>
-		{$opt->option_rows_top}
 		<tr>
 			<td class='tdbg{$set['bg']} vatop' style='height: {$height}px' colspan=2  id='post{$post['id']}'>
+				{$opt->option_rows_top}
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

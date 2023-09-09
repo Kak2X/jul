@@ -83,15 +83,21 @@ function postcode($post,$set){
 	$data = new tlayout_ext_input();
 	$data->csskey           = $csskey;
 	$data->sidebar_one_cell = $sidebaronecell;
-	// Keep count of the cell size (for single column mode)
-	$data->rowspan          = 2;
+	// Keep count of the cell size (for single column mode and option_row_top extras)
+	$data->rowspan          = $sidebaronecell ? 2 : 1;
 	//--
+	
 	$opt = get_tlayout_opts('regular', $set, $post, $data);
-	
+	//--
+	if ($set['warntext']) {
+		$opt->option_rows_top .= $set['warntext'];
+	}
+
+	if ($set['highlighttext']) {
+		$opt->option_rows_top .= $set['highlighttext'];
+	}
+	//--
 //	if (true) {
-	
-		$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
-		
 		// Extra row specific to the "Regular Extended" layout
 		$icqicon = $imood = "";
 		if (($tlayout == 6 || $tlayout == 12) && $sidebartype != 1) {
@@ -126,7 +132,6 @@ function postcode($post,$set){
 			</tr>";
 		}
 		
-		$noobspan = $post['noob'] ? "<span class='userlink' style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span class='userlink'>";
 		$height   = $post['deleted'] ? 0 : 220;
 		
 		if ($post['deleted']) {
@@ -232,7 +237,7 @@ function postcode($post,$set){
 			// Single cell sidebar
 			$topbar1 = "
 			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' rowspan={$opt->rowspan} valign=top>
-				{$noobspan}{$set['userlink']}</span>{$opt->top_left}
+				{$set['userspan']}{$set['userlink']}</span>{$opt->top_left}
 				<br>{$sidebar}
 				<img src='images/_.gif' width=200 height=1>
 			</td>";
@@ -240,8 +245,8 @@ function postcode($post,$set){
 		} else {
 			// Normal
 			$topbar1 = "
-			<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' valign=top style='border-bottom: none'>
-				{$noobspan}{$set['userlink']}</span>{$opt->top_left}
+			<td class='tdbg{$set['bg']} topbar{$post['uid']}{$csskey}_1' rowspan={$opt->rowspan} valign=top style='border-bottom: none'>
+				{$set['userspan']}{$set['userlink']}</span>{$opt->top_left}
 			</td>";
 			$sidebar = "
 			<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}' style='border-top: none' valign=top>
@@ -253,7 +258,7 @@ function postcode($post,$set){
 		// Position relative div moved to the CSS defn for the .post
 		// Incidentally, this fixes an issue with DCII as browsers would close the body container defining the padding.
 		return 
-		"
+		"{$set['highlightline']}
 			<table class='table post tlayout-regular contbar{$post['uid']}{$csskey}' id='{$post['id']}'>
 				<tr>
 					{$topbar1}
@@ -261,9 +266,9 @@ function postcode($post,$set){
 						<table cellspacing=0 cellpadding=2 class='w fonts'>
 							<tr>
 								<td>
-									{$set['new']}Posted on $postdate$threadlink{$post['edited']}
+									{$set['new']}{$set['highlightctrl']}Posted on $postdate$threadlink{$post['edited']}
 								</td>
-								<td class='nobr' style='width: 255px'>
+								<td class='right'>
 									{$controls['quote']}{$controls['edit']}{$controls['ip']}
 								</td>
 								{$opt->top_right}
@@ -271,10 +276,11 @@ function postcode($post,$set){
 						</table>
 					</td>
 				</tr>
-				{$opt->option_rows_top}
+				
 				<tr>
 					{$sidebar}
 					<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey} w' valign=top height={$height} id='post{$post['id']}'>
+						{$opt->option_rows_top}
 						{$post['headtext']}
 						{$post['text']}
 						{$set['attach']}

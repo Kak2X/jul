@@ -16,9 +16,11 @@
 	$navparam = '&'.opt_param(['dir', 'user']);
 	if (!isset($_GET['user'])) $_GET['user'] = $loguser['id'];
 	
-	$_GET['pin'] = filter_int($_GET['pin']);
-	$_GET['lpt'] = filter_int($_GET['lpt']);
-	$_GET['end'] = filter_int($_GET['end']);	
+	$_GET['pin']  = filter_int($_GET['pin']);
+	$_GET['lpt']  = filter_int($_GET['lpt']);
+	$_GET['end']  = filter_int($_GET['end']);	
+	$_GET['hi']   = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
+	$_GET['warn'] = filter_bool($_GET['warn']); // Warn filter for Thread/User modes
 	
 	
 	// Skip to last post/end thread
@@ -43,8 +45,24 @@
 		$_GET['page'] = filter_int($_GET['page']);
 	}
 	
+	// Prepare the additional WHERE filters that can be applied on top of other modes
+	$filterquery = "";
+	$baseparams = "";
+	if ($_GET['hi']) {
+		$filterquery = "highlighted >= {$_GET['hi']}";
+	}
+	if ($_GET['warn']) {
+		$filterquery .= ($filterquery ? " AND " : "")."warned != 0";
+	}
 	
+	$baseparams = "id={$_GET['id']}";
 	load_pm_thread($_GET['id']);
+	
+	// Replacement counter with the post filter
+	if ($filterquery) {
+		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$_GET['id']}".($filterquery ? " AND {$filterquery}" : "")) - 1;
+	}
+	
 	if ($access) {
 		// Automatically move threads out of invalid folders upon access
 		if (!valid_pm_folder($access['folder'], $loguser['id'])) {
@@ -111,8 +129,6 @@
 	");
 	if ($tprev) $tlinks[] = "<a href='?id={$tprev}{$navparam}' class='nobr'>Next older thread</a>";
 	$tlinks = implode(' | ', $tlinks);
-	
-	pageheader("Private messages: ".htmlspecialchars($thread['title']));
 
 	
 	/*
@@ -164,18 +180,6 @@
 		{$forum_error}
 	";
 	
-	$links = array(
-		["Private messages" , "private.php"],
-		[$thread['title']   , NULL],
-	);
-	// New reply text
-	$newxlinks = "<a href='sendprivate.php'>New conversation</a>";
-	if (!$thread['closed']) {
-		$newxlinks .= " - <a href='sendprivate.php?id={$_GET['id']}'>{$newreplypic}</a>";
-	}
-	$threadforumlinks = dobreadcrumbs($links, $newxlinks); 
-
-	
 	// Query elements
 	$min      = $ppp * $_GET['page'];
 	$searchon = "p.thread = {$_GET['id']}";
@@ -185,6 +189,7 @@
 	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, 0 revision,
+				p.highlighted, p.highlighttext, p.warned, p.warntext,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM pm_posts p
 		
@@ -194,6 +199,53 @@
 		ORDER BY p.id ASC
 		LIMIT $min,$ppp
 	"));
+	
+	/*
+		Handle top links, now that we fetched the posts
+	*/
+	
+	// Barlinks
+	$links = array(
+		["Private messages" , "private.php"],
+		[$thread['title']   , "showprivate.php?{$baseparams}"],
+	);
+	if ($_GET['hi'])
+		$links[] = [$_GET['hi'] == PHILI_LOCAL ? "Thread highlights" : "Featured posts", null];
+	if ($_GET['warn'])
+		$links[] = ["Warnings", null];
+	
+	// Highlight navigation
+	$highlights = [];
+	$hprev = $hnext = null;
+	if ($_GET['id'] && !$_GET['hi'] && $posts) {
+		foreach ($posts as $post) {
+			if ($post['highlighted']) {
+				$highlights[] = $post['id'];
+			}
+		}
+		$hprev = $sql->resultq("SELECT p.id FROM pm_posts p WHERE {$searchon} AND p.highlighted > ".PHILI_NONE." AND p.id < {$posts[0]['id']} ORDER BY p.id DESC LIMIT 1");
+		$hnext = $sql->resultq("SELECT p.id FROM pm_posts p WHERE {$searchon} AND p.highlighted > ".PHILI_NONE." AND p.id > ".$posts[count($posts)-1]['id']." ORDER BY p.id ASC LIMIT 1");
+	}
+	
+	// New reply text
+	$newxlinks = [];
+
+	if (!$_GET['hi']) {
+		$newxlinks[] = "<a href='thread.php?{$baseparams}&hi=1'>View highlights</a>";
+		if ($_GET['id']) {
+			// Highlight navigation
+			if ($hprev) $newxlinks[] = "<a href='?pid={$hprev}#{$hprev}' class='nobr'>Previous highlight</a>";
+			if ($hnext) $newxlinks[] = "<a href='?pid={$hnext}#{$hnext}' class='nobr'>Next highlight</a>";
+		}
+	}
+	if (!$_GET['warn'])
+		$newxlinks[] = "<a href='?{$baseparams}&warn=1'>View warnings</a>";
+	
+	
+	$newxlinks[] = "<a href='sendprivate.php'>New conversation</a>";
+	if (!$thread['closed']) {
+		$newxlinks[] = "<a href='sendprivate.php?id={$_GET['id']}'>{$newreplypic}</a>";
+	}
 	
 	preplayouts($posts);
 		
@@ -210,7 +262,13 @@
 	$controls['ip'] = "";
 	$tokenstr       = "&auth=".generate_token(TOKEN_MGET);
 	$bg = 0;
+	$warnings_read = [];
 	foreach ($posts as $post) {
+		// For now rendering the post with the unread warning marks it as read.
+		// This logic will either stay like this, or not.
+		if ($post['user'] == $loguser['id'] && $post['warned'] == PWARN_WARN)
+			$warnings_read[] = $post['id'];
+			
 		$bg = $bg % 2 + 1;
 		
 		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
@@ -237,8 +295,14 @@
 				}
 				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Undelete</a>";
 			} else {
-				if ($ismod)
+				if ($ismod) {
 					$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
+					//--
+					if (can_edit_highlight($post))
+						$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=highlight&type=1{$tokenstr}'>".($post['highlighted'] ? "Unh" : "H")."ighlight</a>";
+					$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=warn{$tokenstr}'>".($post['warned'] ? "Unw" : "W")."arn</a>";
+					//--
+				}
 				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Delete</a>";
 			}
 			if ($sysadmin && $config['allow-post-deletion']) {
@@ -260,7 +324,11 @@
 		$post['act']     = filter_int($act[$post['user']]);	
 		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";
 	}
-
+	// Automark unread warnings
+	if (count($warnings_read)) {
+		$sql->query("UPDATE pm_posts SET warned = ".PWARN_WARNREAD." WHERE id IN (".implode(",", $warnings_read).")");
+	}
+		
 	// Strip _GET variables that can set the page number
 	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
 	$query = preg_replace("'pid=(\d*)'si", "id={$_GET['id']}", $query);
@@ -269,15 +337,17 @@
 
 	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
 
-	
+		
+	pageheader("Private messages: ".htmlspecialchars($thread['title']));
+	$barlinks = dobreadcrumbs($links, implode(" - ", $newxlinks)); 
 	print "
-		$threadforumlinks
+		$barlinks
 		<table width=100%><td align=left class='fonts'>$pagelinks</td><td align=right class='fonts'>$tlinks</table>
 		{$postlist}
 		<table class='table'>
 		{$modfeats}
 		</table>
 		<table width=100%><td align=left class='fonts'>$pagelinks</td><td align=right class='fonts'>$tlinks</table>
-		$threadforumlinks";
+		$barlinks";
 	
 	pagefooter();

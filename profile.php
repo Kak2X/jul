@@ -74,6 +74,36 @@
 	// Total threads
 	$threadsposted 	= $sql->resultq("SELECT COUNT(*) FROM threads WHERE user = {$_GET['id']}");
 	
+	// Warnings (Posts + PMs)
+	$warncount = $sql->fetchq("
+		SELECT 
+		(SELECT COUNT(*) FROM posts WHERE warned > 0 AND user = {$_GET['id']}) post, 
+		(SELECT COUNT(*) FROM pm_posts WHERE warned > 0 AND user = {$_GET['id']}) pm
+	");
+	$warnings = "";
+	if ($warncount['post'])
+		$warnings .= "<a href='thread.php?user={$_GET['id']}&warn=1'>{$warncount['post']}</a> post".($warncount['post'] == 1 ? "" : "s");
+	if ($isadmin || $loguser['id'] == $_GET['id']) {
+		if ($warncount['pm'])
+			$warnings .= ($warnings ? ", " : "" )."{$warncount['pm']}</a> PM".($warncount['pm'] == 1 ? "" : "s");
+		if ($warnings)
+			$warnings = "<a href='postsbyuser.php?id={$_GET['id']}&pm=1&warn=1'>".array_sum($warncount)."</a> ({$warnings})";
+	}
+	if (!$warnings)
+		$warnings = "None";
+	
+	// Highlights (Posts-only, it only matters in public)
+	$hilicount = $sql->getresultsbykey("SELECT highlighted, COUNT(*) FROM posts WHERE highlighted > 0 AND user = {$_GET['id']} GROUP BY highlighted");
+	$highlights = "";
+	if (filter_int($hilicount[PHILI_LOCAL]))
+		$highlights .= "{$hilicount[PHILI_LOCAL]} threadmarked</a>";
+	if (filter_int($hilicount[PHILI_SUPER]))
+		$highlights .= ($highlights ? ", " : "" )."<a href='thread.php?user={$_GET['id']}&hi=2'>{$hilicount[PHILI_SUPER]}</a> featured";
+	if ($highlights)
+		$highlights = "<a href='thread.php?user={$_GET['id']}&hi=1'>".array_sum($hilicount)."</a> ({$highlights})";
+	else
+		$highlights = "None";
+	
 	// EXP
 	$exp 		= calcexp($user['posts'], $numdays);
 	$lvl 		= calclvl($exp);
@@ -198,6 +228,8 @@
 			'Total threads' => $threadsposted,
 			'EXP'           => $expstatus,
 			'User rating'   => $ratingstatus,
+			'Highlights received' => $highlights,
+			'Warnings received'   => $warnings,			
 			'Registered on' => printdate($user['regdate'])." (".floor($numdays)." days ago)",
 			'Last post'     => "{$lastpostdate}{$lastpostlink}",
 			'Last activity' => printdate($user['lastactivity']).$lastip,	

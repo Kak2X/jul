@@ -4,10 +4,9 @@
 
   function postcode($post,$set){
     global $controls, $loguser;
-
-	$set['location'] = str_ireplace("&lt;br&gt;", "<br>", $set['location']);
-    $since='<br>Registered: '.date('M Y',$post['regdate'] + $loguser['tzoff']);
-    $postdate = printdate($post['date']);
+	
+    $since		= '<br>Registered: '.date('M Y',$post['regdate'] + $loguser['tzoff']);
+    $postdate	= printdate($post['date']);
 	
 	$threadlink		= "";
 	if (filter_string($set['threadlink'])) {
@@ -18,8 +17,11 @@
 	$data = new tlayout_ext_input();
 	//--
 	$opt = get_tlayout_opts('ubb', $set, $post, $data);
+	//--
+	if ($set['warntext']) 		$opt->option_rows_top .= $set['warntext'];
+	if ($set['highlighttext'])	$opt->option_rows_top .= $set['highlighttext'];
+	//--
 	
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	if ($post['deleted']) {
 		$sidebar = "";
 	} else {
@@ -32,11 +34,11 @@
 			{$set['location']}{$since}
 		</span>";
 	}
-    return "
+    return "{$set['highlightline']}
 	<table class='table post tlayout-ubb' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} vatop' style='width: 200px; border-bottom: none'>
-				{$noobspan}{$set['userlink']}</span>
+				{$set['userspan']}{$set['userlink']}</span>
 				{$sidebar}
 			</td>
 			<td class='tdbg{$set['bg']} vatop' style='border-bottom: none' id='post{$post['id']}'>
@@ -45,9 +47,9 @@
 							<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
 							<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
 						</tr>
-						{$opt->option_rows_top}
 				</table>
 				<hr>
+				{$opt->option_rows_top}
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

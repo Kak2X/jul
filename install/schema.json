@@ -191,6 +191,40 @@
 					"type":"int",
 					"default":1,
 					"special":"powerlevel"
+				},
+				"active-threads-index":{
+					"title":"Show active threads",
+					"desc":"Displays a list of 'Recently active threads' on the index page.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"post-highlight-index-days":{
+					"title":"Featured post lifetime",
+					"desc":"Posts featured within the specified amount of days will be listed on the index page. Set to 0 to not show anything on the index.",
+					"input":"text",
+					"type":"int",
+					"default":7,
+					"desc_sfx":"days",
+					"width":"50px"
+				},
+				"post-highlight-index-limit":{
+					"title":"Featured post limit",
+					"desc":"Caps how many featured posts can be listed on the index page.",
+					"input":"text",
+					"type":"int",
+					"default":10,
+					"desc_sfx":"rows",
+					"width":"50px"
+				},
+				"post-highlight-super-minpower":{
+					"title":"Powerlevel required to feature posts",
+					"desc":"Minimum power required to feature posts, which can be visible on the index page and as its own archive.",
+					"input":"select",
+					"type":"int",
+					"default":3,
+					"special":"powerlevel"
 				}
 			}
 		},

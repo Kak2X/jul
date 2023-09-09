@@ -11,20 +11,22 @@ function postcode($post,$set){
 	if (filter_string($set['threadlink']))
 		$threadlink = ", in {$set['threadlink']}";
 	
-	$noobspan = $post['noob'] ? "<span style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span>";
 	$height   = $post['deleted'] ? 0 : 60;
 	
 	$data = new tlayout_ext_input();
 	$opt = get_tlayout_opts('compact', $set, $post, $data);
 	//--
+	if ($set['warntext']) 		$opt->option_rows_top .= $set['warntext'];
+	if ($set['highlighttext'])	$opt->option_rows_top .= $set['highlighttext'];
+	//--
 	
 	// We don't show the .topbar declaration since there's no CSS allowed anyway
-	return 
-	"<table class='table' id='{$post['id']}'>
+	return "{$set['highlightline']}
+	<table class='table' id='{$post['id']}'>
 		<tr>
 			<td class='tdbg{$set['bg']} vatop'>
 				<div class='mobile-avatar'>{$set['userpic']}</div>
-				{$noobspan}{$set['userlink']}</span><br>
+				{$set['userspan']}{$set['userlink']}</span><br>
 				<span class='fonts'> Posts: {$postnum}</span>{$opt->top_left}
 			</td>
 			<td class='tdbg{$set['bg']} vatop' style='width: 50%'>
@@ -33,9 +35,9 @@ function postcode($post,$set){
 				<span style='float: right'>&nbsp;{$controls['ip']}</span>{$opt->top_right}
 			</td>
 		</tr>
-		{$opt->option_rows_top}
 		<tr>
 			<td class='tdbg{$set['bg']} vatop' style='height: {$height}px' colspan=2 id='post{$post['id']}'>
+				{$opt->option_rows_top}
 				{$post['headtext']}
 				{$post['text']}
 				{$set['attach']}

@@ -451,7 +451,7 @@
 		// Misc
 		$currenttime = time();
 		$preq->vals['date'] = $currenttime;
-
+		$preq->vals['num'] = $user['posts'] + 1;
 
 		$sql->queryp("INSERT INTO `posts` SET ".mysql::setplaceholders($preq->vals), $preq->vals);
 		$pid = $sql->insert_id();
@@ -594,6 +594,42 @@
 			}
 		}
 		return true;
+	}
+	
+	// checks if the highlight settings can be changed from the source $post
+	function can_edit_highlight($post, $highlighted = -1, $highlighttext = -1) {
+		// Allow if unchanged
+		if ($post['highlighted'] === $highlighted && $post['highlighttext'] === $highlighttext)
+			return true;
+		
+		// Must be a mod if edited
+		global $ismod;
+		if (!$ismod) 
+			return false;
+		
+		// Allow mods to edit local thread highlights
+		if ($highlighted != PHILI_SUPER && $post['highlighted'] != PHILI_SUPER)
+			return true;
+		
+		// Otherwise, we must be the specified powerlevel
+		global $config, $loguser;
+		return $loguser['powerlevel'] >= $config['post-highlight-super-minpower'];
+	}
+	
+	function highlight_type_select($name, $value, $readonly) {
+		global $config, $loguser;
+		
+		// full list for readonly name reuse
+		$philiopt = [PHILI_NONE => "None", PHILI_LOCAL => "Thread highlight", PHILI_SUPER => "Featured content"];
+		
+		if ($readonly)
+			return "<input type='hidden' name='$name' value='$value'><i>{$philiopt[$value]}</i>";
+
+		// get rid of last power if not allowed
+		if ($loguser['powerlevel'] < $config['post-highlight-super-minpower'])
+			unset($philiopt[PHILI_SUPER]);
+		
+		return input_html($name, $value, ['input' => 'select', 'options' => $philiopt]);
 	}
 	
 	// request/response models that can be passed around to extensions

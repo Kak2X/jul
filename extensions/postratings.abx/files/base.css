@@ -1,5 +1,6 @@
 /* Post ratings */
 .rating-container {	width: 100%; }
+div > .rating-container {	width: 100%; display: table; height: 22px } /* When wrapped under a div instead of a td */
 .icon-rating { opacity: 0.5 }
 .icon-rating:hover,.icon-rated { opacity: 1 }
 .rate-total {

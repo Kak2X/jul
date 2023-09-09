@@ -1370,11 +1370,19 @@ CREATE TABLE `pm_posts` (
   `edited` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `editdate` int(11) unsigned DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `highlighted` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `highlightdate` int(10) unsigned DEFAULT NULL,
+  `highlighttext` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `warned` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `warndate` int(10) unsigned DEFAULT NULL,
+  `warntext` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `thread` (`thread`),
   KEY `date` (`date`),
   KEY `user` (`user`),
-  KEY `ip` (`ip`)
+  KEY `ip` (`ip`),
+  KEY `highlighted` (`highlighted`),
+  KEY `warned` (`warned`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1664,11 +1672,19 @@ CREATE TABLE `posts` (
   `editdate` int(11) unsigned DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `revision` tinyint(3) unsigned NOT NULL DEFAULT '1',
+  `highlighted` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `highlightdate` int(10) unsigned DEFAULT NULL,
+  `highlighttext` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `warned` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `warndate` int(10) unsigned DEFAULT NULL,
+  `warntext` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `thread` (`thread`),
   KEY `date` (`date`),
   KEY `user` (`user`),
-  KEY `ip` (`ip`)
+  KEY `ip` (`ip`),
+  KEY `highlighted` (`highlighted`),
+  KEY `warned` (`warned`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2211,7 +2227,7 @@ CREATE TABLE `tlayouts` (
 
 LOCK TABLES `tlayouts` WRITE;
 /*!40000 ALTER TABLE `tlayouts` DISABLE KEYS */;
-INSERT INTO `tlayouts` VALUES (1,1,'Regular','regular'),(2,3,'Compact','compact'),(3,5,'Hydra\'s Layout&trade;','hydra'),(4,2,'Regular with number/bar graphics','regular'),(5,6,'EZBoard-like','ezboard'),(6,7,'Regular extended','regular'),(7,8,'Wide','postwide'),(8,9,'RPG','rpg'),(9,10,'UBB-like','ubb'),(10,11,'VBB-like','vbb'),(11,4,'Compact Vertical','vertical'),(12,7,'Regular extended with number/bar graphics','regular');
+INSERT INTO `tlayouts` VALUES (1,1,'Regular','regular'),(2,3,'Compact','compact'),(3,5,'Hydra\'s Layout™','hydra'),(4,2,'Regular with number/bar graphics','regular'),(5,6,'EZBoard-like','ezboard'),(6,7,'Regular extended','regular'),(7,8,'Wide','postwide'),(8,9,'RPG','rpg'),(9,10,'UBB-like','ubb'),(10,11,'VBB-like','vbb'),(11,4,'Compact Vertical','vertical'),(12,7,'Regular extended with number/bar graphics','regular');
 /*!40000 ALTER TABLE `tlayouts` ENABLE KEYS */;
 UNLOCK TABLES;
 

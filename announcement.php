@@ -118,14 +118,20 @@
 		
 		$controls['edit'] = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
 		if ($canthread) {
-			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob&auth=".generate_token(TOKEN_MGET)."'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+			$tokenstr = "&auth=".generate_token(TOKEN_MGET);
+			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob{$tokenstr}'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+			//--
+			if (can_edit_highlight($post))
+				$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}&action=highlight&type=1{$tokenstr}'>".($annc['highlighted'] ? "Unh" : "H")."ighlight</a>";
+			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}&action=warn{$tokenstr}'>".($annc['warned'] ? "Unw" : "W")."arn</a>";			
+			//--
 			if ($isadmin) $controls['ip'] = " | IP: ".htmlspecialchars($annc['ip']);
 		}
 		hook_use_ref('annc-extra-fields', $annc);
 		
 		$annc['act'] = filter_int($act[$annc['user']]);
 		$annc['text'] = "<center><b>{$annc['atitle']}</b><div class='fonts'>{$annc['adesc']}</div></center><hr>{$annc['text']}";
-		$annclist .= threadpost($annc, $bg, MODE_ANNOUNCEMENT, $_GET['id']);
+		$annclist .= threadpost($annc, $bg, MODE_ANNOUNCEMENT, $_GET['f']);
 	}
 	
 	echo "$pagelinks<table class='table'>$annclist</table>$pagelinks";

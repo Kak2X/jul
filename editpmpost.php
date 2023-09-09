@@ -20,10 +20,14 @@
 	}
 	
 	load_pm_thread($post['thread']);
-	if (!$isadmin && $post['user'] != $loguser['id']) {
+	load_layout();
+	if (!$isadmin && ($post['user'] != $loguser['id'] || $post['warndate'])) {
 		errorpage("You are not allowed to edit this post.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'the post');
 	}
-	pageheader("Private Messages: ".htmlspecialchars($thread['title'])." -- Editing Post");
+	if ($forum_error) {
+		$forum_error = "<br><table class='table'>{$forum_error}</table>";
+	}
+	$windowtitle = "Private Messages: ".htmlspecialchars($thread['title'])." -- ";
 	
 	/*
 		Editing a post?
@@ -46,12 +50,35 @@
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
 			
+			//--
+			if ($ismod) {			
+				$warned			= numrange(filter_int($_POST['warned']), PWARN_MIN, PWARN_MAX);
+				$warntext		= filter_string($_POST['warntext']);
+				$highlighted	= numrange(filter_int($_POST['highlighted']), PHILI_MIN, PHILI_MAX);
+				$highlighttext	= filter_string($_POST['highlighttext']);
+			} else {
+				$warned			= $post['warned'];
+				$warntext		= $post['warntext'];
+				$highlighted	= $post['highlighted'];
+				$highlighttext	= $post['highlighttext'];
+			}
+			//--
+			
 			if ($can_attach) {
-				$attachsel = process_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
+				list($attachsel, $total) = process_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
 			}
 			
 			if (isset($_POST['submit'])) {
 				check_token($_POST['auth']);
+				
+				if (!trim($_POST['message']))
+					errorpage("You didn't enter anything in the post.");
+				if ($ismod) {
+					if (!can_edit_highlight($post, $highlighted, $highlighttext))
+						errorpage("You aren't allowed to change this featured content.");
+					if ($post['highlighted'] == PHILI_SUPER && !trim($highlighttext))
+						errorpage("Featured posts must contain an highlight text.");
+				}
 				
 				$gtopt = array(
 					'mood' => $moodid,
@@ -74,19 +101,47 @@
 					
 					'nosmilies' => $nosmilies,
 					'nohtml'	=> $nohtml,
-					'edited'	=> $edited,
-					'editdate' 	=> time(),
 					
 					'headid'	=> $headid,
 					'signid'	=> $signid,
 					'cssid'		=> $cssid,
 					'moodid'	=> $moodid,		
 				];
+				
+				// Copied from editpost, which actually used post revisions
+				$create_rev = 
+					   $post['text']     != $message 
+					|| $post['headtext'] != $head || $post['headid'] != $headid 
+					|| $post['signtext'] != $sign || $post['signid'] != $signid  
+					|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
+					
+				$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
+				if ($flag_as_edited) {
+					// This now only gets updated when a revision is added
+					$data['edited']	= $edited;
+					$data['editdate'] 	= time();
+				}
+				
+				//--
+				if ($ismod) {
+					$data['warned'] = $warned;
+					$data['warntext'] = $warntext;
+					// Only update the date when switching 
+					if (!$post['warned'] && $warned != $post['warned'])
+						$data['warndate'] = time();
+					
+					$data['highlighted'] = $highlighted;
+					$data['highlighttext'] = $highlighttext;
+					// Only update the date when going from nohighlight->highlight.
+					if (!$post['highlighted'] && $highlighted != $post['highlighted'])
+						$data['highlightdate'] = time();
+				}
+				//--
 				$sql->beginTransaction();
 				$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 				$sql->commit();
 				if ($can_attach) {
-					confirm_attachments($attach_key, $loguser['id'], $_GET['id'], ATTACH_PM, $attachsel);
+					confirm_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM, $attachsel);
 				}
 				errorpage("Post edited successfully.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
 				
@@ -96,7 +151,7 @@
 				*/
 				$preview_msg = $message;
 				if ($can_attach) {
-					$preview_msg = replace_attachment_temp_tags($attach_key, $loguser['id'], $preview_msg);
+					$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
 				}
 				
 				$data = array(
@@ -117,50 +172,45 @@
 					'nolayout'  => 0,
 					'moodid'    => $moodid,
 					'noob'      => $post['noob'],
+					// XFMod Options
+					'highlighted'   => $highlighted,
+					'highlighttext' => $highlighttext,
+					'warned'        => $warned,
+					'warntext'      => $warntext,
 					// Attachments
 					'attach_key' => $attach_key,
 					'attach_sel' => $attachsel,
 					'attach_pm'  => true, // temp measure probably
 				);
-				print preview_post($loguser, $data, PREVIEW_EDITED);
+				$preview = preview_post($post['user'], $data, PREVIEW_EDITED);
 			}
 			
 		} else {
 			// Replace the default variables with the original ones from the thread
-
 			$message = $post['text'];
-			
-			if(!$post['headid']) $head = $post['headtext'];
-			else $head = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['headid']}");
-			if(!$post['signid']) $sign = $post['signtext'];
-			else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
-			if(!$post['cssid'])  $css = $post['csstext'];
-			else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
-			
+			list($head, $sign, $css) = getpostlayoutforedit($post);
 			$nosmilies 	= $post['nosmilies'];
 			$nohtml		= $post['nohtml'];
 			$moodid		= $post['moodid'];
+			$preview 	= "";
 			
-			sbr(1, $head);
-			sbr(1, $sign);
+			$warned			= $post['warned'];
+			$warntext		= $post['warntext'];
+			$highlighted	= $post['highlighted'];
+			$highlighttext	= $post['highlighttext'];
 		}
 
 		$selsmilies = $nosmilies ? "checked" : "";
 		$selhtml    = $nohtml    ? "checked" : "";	
+		$hreadonly = !can_edit_highlight($post);
 		
-		$links = array(
-			["Private messages" , "private.php"],
-			[$thread['title']   , "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"],
-			["Edit post"        , NULL],
-		);
-		$barlinks = dobreadcrumbs($links); 
+		pageheader($windowtitle."Editing Post");
+		$barlinks = mklinks("Edit post");
 		
-		if ($forum_error) {
-			$forum_error = "<br><table class='table'>{$forum_error}</table>";
-		}
+
 
 		?>
-		<?= $barlinks . $forum_error ?>
+		<?= $barlinks . $forum_error . $preview ?>
 		<form method="POST" ACTION="?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan='3'>Edit post</td></tr>
@@ -190,6 +240,31 @@
 				</td>
 				<?=quikattach($attach_key, $post['user'], $loguser, ATTACH_REQ_DEFAULT, $post['id'], $attachsel, 'pm')?>
 			</tr>
+<?php if ($ismod) { ?>
+			<tr><td class="tdbgh center" colspan="3">Moderator options</td></tr>
+			<tr>
+				<td class="tdbg1 center b" rowspan="2">Warning:</td>
+				<td class="tdbg2" valign="top" colspan="2">
+					Type: <?= input_html("warned", $warned, ['input' => 'select', 'options' => [PWARN_NONE => "None", PWARN_WARN => "Warned", PWARN_WARNREAD => "Warned (read)"]]) ?>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg2" id="warntd" valign="top" colspan="2">
+					<textarea id="warntxt" name="warntext" style="resize:vertical; width: 100%"><?=escape_html($warntext)?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg1 center b" rowspan="2">Highlight:</td>
+				<td class="tdbg2" valign="top" colspan="2">
+					Type: <?= highlight_type_select("highlighted", $highlighted, $hreadonly) ?>
+				</td>
+			</tr>
+			<tr>
+				<td class="tdbg2" id="hilitd" valign="top" colspan="2">
+					<textarea id="hilitxt" name="highlighttext" <?=($hreadonly ? "readonly" : "")?> style="resize:vertical; width: 100%"><?=escape_html($highlighttext)?></textarea>
+				</td>
+			</tr>
+<?php } ?>
 			<tr><td class='tdbgh center' colspan='3'>Edit layout specific to this post</td></tr>
 			<tr>
 				<td class='tdbg1 center b'>CSS:</td>
@@ -219,13 +294,43 @@
 		replytoolbar('msg', $smilies);
 		replytoolbar('head', $smilies);
 		replytoolbar('sign', $smilies);
+		if ($ismod) {
+			replytoolbar('warn', $smilies);
+			if (!$hreadonly)
+				replytoolbar('hili', $smilies);
+		}
 	}
 	else if ($ismod && $_GET['action'] == 'noob') {
 		check_token($_GET['auth'], TOKEN_MGET);
 		$sql->query("UPDATE `pm_posts` SET `noob` = '1' - `noob` WHERE `id` = '{$_GET['id']}'");
-		errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
+		die(header("Location: showprivate.php?pid={$_GET['id']}#{$_GET['id']}"));
+		//errorpage("Post ".($post['noob'] ? "un" : "")."n00bed!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
 	}
-  
+	else if ($ismod && $_GET['action'] == 'warn') {
+		check_token($_GET['auth'], TOKEN_MGET);
+		if ($post['warned'])
+			$sql->query("UPDATE pm_posts SET warned = 0 WHERE id = '{$_GET['id']}'");
+		else {
+			$message = filter_string($_GET['msg']); // no ui to set it yet, will stay null
+			$sql->queryp("UPDATE pm_posts SET warned = ?, warndate = ?, warntext = ? WHERE id = '{$_GET['id']}'", [1, time(), $message]);
+		}
+		die(header("Location: showprivate.php?pid={$_GET['id']}#{$_GET['id']}"));
+		//errorpage("Post ".($post['warned'] ? "un" : "")."warned!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
+	}
+	else if ($ismod && $_GET['action'] == 'highlight') {
+		check_token($_GET['auth'], TOKEN_MGET);
+		if (!can_edit_highlight($post))
+			errorpage("You aren't allowed to edit this post highlight.");
+		if ($post['highlighted'])
+			$sql->query("UPDATE pm_posts SET highlighted = 0 WHERE id = '{$_GET['id']}'");
+		else {
+			$message = filter_string($_GET['msg']); // no ui to set it yet, will stay null
+			$type = numrange(filter_int($_GET['type']), PHILI_MIN + 1, PHILI_MAX);
+			$sql->queryp("UPDATE pm_posts SET highlighted = ?, highlightdate = ?, highlighttext = ? WHERE id = '{$_GET['id']}'", [$type, time(), $message]);
+		}
+		die(header("Location: showprivate.php?pid={$_GET['id']}#{$_GET['id']}"));
+		//errorpage("Post ".($post['highlighted'] ? "un" : "")."highlighted!", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}",'the post',0);
+	}
 	else if ($_GET['action'] == 'delete') {
 		if (confirmed($msgkey = 'delete')) {
 			$sql->query("UPDATE pm_posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
@@ -235,6 +340,9 @@
 				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			}
 		}
+		
+		pageheader($windowtitle."Deleting Post");
+		$barlinks = mklinks("Delete post");
 		
 		if ($post['deleted']) {
 			$message = "Do you want to undelete this post?";
@@ -280,6 +388,8 @@
 				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for deleting the post.","showprivate.php?id={$post['thread']}","return to the thread",0);
 			}
 		}
+		pageheader($windowtitle."Erasing Post");
+		$barlinks = mklinks("Erase post");
 		
 		$title   = "Permanent deletion";
 		$message = "Are you sure you want to <b>permanently DELETE</b> this post from the database?";
@@ -300,3 +410,12 @@
 
 	pagefooter();
 	
+	function mklinks($action) {
+		global $thread;
+		$links = array(
+			["Private messages" , "private.php"],
+			[$thread['title']   , "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"],
+			[$action            , NULL],
+		);
+		return dobreadcrumbs($links); 	
+	}

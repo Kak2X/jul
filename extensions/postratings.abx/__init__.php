@@ -103,15 +103,15 @@ hook_add('tlayout-regular', function($_, $set, $post, $data) {
 		<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts' style='height: 1px; width: 80%'>
 			".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."
 		</td>
-	</tr>"); // &nbsp;<b>Post ratings:</b>
+	</tr>", OPTION_ROW_BOTTOM, (int)$data->sidebar_one_cell); // &nbsp;<b>Post ratings:</b>
 });
 hook_add('tlayout-compact', function ($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
-	add_option_row("<tr><td class='tdbg{$set['bg']}' colspan='2'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_TOP);
+	add_option_row("<div>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</div>", OPTION_ROW_TOP);
 });
 hook_add('tlayout-hydra', function ($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
-	add_option_row("<tr><td class='tdbg{$set['bg']}'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_BOTTOM);
+	add_option_row("<tr><td class='tdbg{$set['bg']}'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_BOTTOM, 1);
 });
 hook_add('tlayout-ezboard', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
@@ -122,14 +122,13 @@ hook_add('tlayout-ezboard', function($_, $set, $post, $data) {
 });
 hook_add('tlayout-postwide', function ($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
-	add_option_row("<tr><td class='tdbg{$set['bg']} fonts' colspan='2'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td></tr>", OPTION_ROW_TOP);
+	add_option_row("<div>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</div>", OPTION_ROW_TOP);
 });
 hook_add('tlayout-rpg', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;
 	add_option_row("<tr>
-			
 			<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$data->csskey}_opt fonts'>".ratings_html($post['id'], $post['rating'], $post['myratings'], $set['mode'])."</td>
-		</tr>");
+		</tr>", OPTION_ROW_BOTTOM, 1);
 });
 hook_add('tlayout-ubb', function($_, $set, $post, $data) {
 	if ($post['deleted'] || !$post['id']) return;

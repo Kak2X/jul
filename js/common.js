@@ -6,7 +6,6 @@ window.addEventListener("DOMContentLoaded", (e) => {
 		toHide[i].style.position = "fixed";
 		toHide[i].style.top = "-10000px";
 	}
-	var toShow = document.getElementsByClassName("js");
-	for (var i = 0; i < toShow.length; i++)
-		toShow[i].style.display = "unset";	
+	
+	document.getElementById("jshidecss").remove();
 });

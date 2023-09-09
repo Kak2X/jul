@@ -705,7 +705,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		.js          -> Only shown with JS enabled
 		.nojs-jshide -> Shown with JS disabled, hidden off-screen with JS enabled
 	*/
-	$jscripts = "<style>
+	$jscripts = "<style id='jshidecss'>
 	.js, .nojs-jshide {display: none}
 </style>
 <noscript><style>.nojs-jshide {display: unset}</style></noscript>

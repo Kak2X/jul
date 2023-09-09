@@ -165,8 +165,8 @@
 	// Forum page list at the top & bottom
 	$forumpagelinks = '';
 	if ($opts->threadcount > $tpp) {
-		if (isset($_GET['tpp'])) $pageurl .= "&tpp=$tpp";
-		$forumpagelinks = "<table style='width: 100%'><tr><td class='fonts'>".pagelist("?$pageurl", $opts->threadcount, $tpp, true)."</td></tr></table>";
+		if (isset($_GET['tpp'])) $opts->pageurl .= "&tpp=$tpp";
+		$forumpagelinks = "<table style='width: 100%'><tr><td class='fonts'>".pagelist("?{$opts->pageurl}", $opts->threadcount, $tpp, true)."</td></tr></table>";
     }
 
 	

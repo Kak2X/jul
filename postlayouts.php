@@ -161,7 +161,7 @@
 	<tr><td class="tdbgh center b" colspan=3>CSS</td></tr>
 	<tr>
 		<td class="tdbg1 vatop" colspan="3">
-			<textarea id="css" name="css" rows="10" style="resize:vertical; width: 100%"><?= htmlspecialchars($user['css']) ?></textarea>
+			<textarea id="css" name="css" rows="10"><?= htmlspecialchars($user['css']) ?></textarea>
 		</td>
 	</tr>
 	
@@ -171,10 +171,10 @@
 	</tr>
 	<tr>
 		<td class="tdbg1 vatop">
-			<textarea id="postheader" name="postheader" rows=4 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['postheader']) ?></textarea>
+			<textarea id="postheader" name="postheader" rows="4"><?= htmlspecialchars($user['postheader']) ?></textarea>
 		</td>
 		<td class="tdbg1 vatop" colspan="2">
-			<textarea id="signature" name="signature" rows=4 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['signature']) ?></textarea>
+			<textarea id="signature" name="signature" rows="4"><?= htmlspecialchars($user['signature']) ?></textarea>
 		</td>
 	</tr>
 	
@@ -188,14 +188,14 @@
 			<?= ($sidetype == 2 && file_exists("sidebars/{$_GET['id']}.php")
 			? "<div style='background: #fff; overflow: scroll; width: 50vw; height: 400px; resize: vertical'>".highlight_file("sidebars/{$_GET['id']}.php", true)."</div><div style='display: none'>"
 			: "<div>") ?>
-				<textarea id="signature" name="sidebar" rows=8 style="resize:vertical; width: 100%"><?= htmlspecialchars($user['sidebar']) ?></textarea>
+				<textarea id="signature" name="sidebar" rows="8"><?= htmlspecialchars($user['sidebar']) ?></textarea>
 			</div>
 		</td>
 		<td class="tdbg1 vatop">
 			<?= $sidebartype ?>
 		</td>
-		<td class="tdbg1 vatop">
-			<center><?=mood_layout(0, $user['id'], $_POST['moodid'])?></center>
+		<td class="tdbg1 vamid">
+			<?=mood_preview()?>
 		</td>		
 	</tr>
 	<tr>
@@ -208,7 +208,7 @@
 			Thread layout: <select name="tlayout">
 				<?= $tlayouts ?>
 			</select> | 
-			<?=mood_layout(1, $user['id'], $_POST['moodid'])?>
+			<?=mood_list($user['id'], $_POST['moodid'])?>
 		</td>
 	</tr>
 <?php if (CAN_SAVE_LAYOUT) { ?>

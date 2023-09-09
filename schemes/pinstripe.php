@@ -1,8 +1,7 @@
 <?php
 	$formcss        = 0;        # formcss makes forms black with tableborder borders; using cssextra below is easier
 	$usebtn			= 1;		# enable .button link rendering
-	$numcols        = 100;        # same thing, more or less
-
+	
 	$bgimage        = 'schemes/pinstripe/bluebg.png';
 
 	$bgcolor        = '1d2b4e';   
@@ -82,7 +81,7 @@ textarea,textarea:focus,input,select,button,.button{
 	font: 85% verdana;
 	padding: 2px;
 }
-input[type='radio'], .radio {
+input[type='radio'] {
 	border: none;
 	background: #2e3f68;
 	color: #bfcef2;

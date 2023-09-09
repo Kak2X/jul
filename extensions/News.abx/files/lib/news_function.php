@@ -1,7 +1,8 @@
 <?php
 	
 	const NEWS_VERSION = "v0.91 -- 23/08/23";
-	const COMMENT_AVATAR_SIZE = 100;
+	const MAIN_AVATAR_SIZE = 100;
+	const COMMENT_AVATAR_SIZE = 50;
 	
 	// Load "permissions"
 	if ($banned) $loguser['id'] = 0; // oh dear
@@ -124,7 +125,7 @@
 			// $userpic = "";
 		} else {
 			prepare_avatar($post, $picture, $userpic);
-			$avimg = $picture ? "<img src=\"{$picture}\" style='float:right'>" : "";
+			$avimg = $picture ? "<img src=\"{$picture}\" style='max-width: ".MAIN_AVATAR_SIZE."px; max-height: ".MAIN_AVATAR_SIZE."px; float:right'>" : "";
 			
 			// moved here since it's useless to do for deleted posts
 			//--
@@ -398,18 +399,18 @@
 		<table class='table small-shadow' id='0'>
 			<tr><td class='tdbgh center b' colspan='2'>{$title}</td></tr>
 			<tr>
-				<td class='tdbg2 vatop' id='nwedittd'>
-					<textarea id='nwedittxt' name='text' rows='6' class='w' style='resize:vertical' wrap='virtual' autofocus>".htmlspecialchars($comment['text'])."</textarea>
+				<td class='tdbg2 w vatop' id='nwedittd'>
+					<textarea id='nwedittxt' name='text' rows='12' autofocus>".htmlspecialchars($comment['text'])."</textarea>
 				</td>
-				<td class='tdbg2' style='width: {$config['max-avatar-size-x']}px'>
-					<center>".mood_layout(0, $userid, $comment['moodid'])."</center>
+				<td class='tdbg2 center avatar-preview-parent'>
+					".mood_preview()."
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg2' colspan='2'>
 					<input type='submit' name='submit' value='Submit comment'>
 					<input type='submit' name='preview' value='Preview comment'>
-					| ".mood_layout(1, $userid, $comment['moodid'])."
+					| ".mood_list($userid, $comment['moodid'])."
 					".auth_tag()."
 				</td>
 			</tr>

@@ -9,8 +9,7 @@
 	
 	$formcss		= 1;		# Styles input fields, set to 0 if you want to use system default.
 	$usebtn			= 1;		# Allows rendering links using the .button CSS class as actual buttons. Only has effect when $formcss is set to 0, otherwise the effect is always enabled.
-	$numcols		= 100;		# Width of text entry, just use css extra
-
+	
 	# Banner; comment for default
 	$config['board-title']		= '<img src="schemes/fragmentation2/pointlessbannerv2-2.png" title="Illegal in 10 states!">';
 
@@ -88,6 +87,14 @@
 
 	# Favicon image, if one is provided
 //	$favicon = "favicon2x";
+
+	# Alert colors, used for post warnings and highlights
+/*
+	$errorcolor = "fde9e9 linear-gradient(to bottom, #fcfcfc 0%,#fcd4d4 100%)";
+	$errortextcolor = "c84448";
+	$infocolor = "e9e9fd linear-gradient(to bottom, #fcfcfc 0%,#d4d4fc 100%)";
+	$infotextcolor = "4448C8";
+*/
 
 	# Extra CSS included at the bottom of a page
 

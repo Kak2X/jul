@@ -1,8 +1,7 @@
 <?php
 
 	$formcss		= 1;		# formcss makes forms black with tableborder borders; using cssextra below is easier
-	$numcols		= 100;		# same thing, more or less
-
+	
 	$bgimage		= 'schemes/greennight/gstarsbg.png';
 	#$config['board-title']		= '<img src="images/gn/boobies.png" title="Green Night">';	# comment this out for normal banner
 	$config['board-title']		= '<img src="schemes/greennight/greenbanner.png" title="Green Night">';	# comment this out for normal banner

@@ -47,9 +47,9 @@
 	$inpt='<input type="text" name';
 	$inpp='<input type="password" name';
 	$inph='<input type="hidden" name';
-	$inps='<input type="submit" class=submit name';
+	$inps='<input type="submit" name';
 	$inpc="<input type=checkbox name";
-	$radio='<input type=radio class=radio name';
+	$radio='<input type=radio name';
 	$txta='<textarea wrap=virtual name';
 	$tblstart='<table class="table" cellspacing=0>';
 	$tblend='</table>';

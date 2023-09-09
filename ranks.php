@@ -34,15 +34,15 @@
 	<tr>
 		<td class='tdbg1 center'><b>Users to show</b></td>
 		<td class='tdbg2'>
-			<input type=radio class='radio' name=showall value=0 <?=filter_string($ch[0])?>> Selected rank set only
+			<input type=radio name=showall value=0 <?=filter_string($ch[0])?>> Selected rank set only
 			&nbsp; &nbsp;
-			<input type=radio class='radio' name=showall value=1 <?=filter_string($ch[1])?>> All users
+			<input type=radio name=showall value=1 <?=filter_string($ch[1])?>> All users
 		</td>
 	</tr>
 	<tr><td class='tdbgh center' colspan=2>&nbsp;</td></tr>
 	<tr>
 		<td class='tdbg1 center'>&nbsp;</td>
-		<td class='tdbg2'><input type=submit class=submit value=View></td>
+		<td class='tdbg2'><input type=submit value=View></td>
 	</tr>
 </table>
 </FORM>

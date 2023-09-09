@@ -240,7 +240,7 @@
 				else {
 					$choices .= "Choice $c: <input type='text' name=chtext[$c] SIZE=30 MAXLENGTH=255 VALUE=\"".htmlspecialchars($_POST['chtext'][$c+$d])."\"> &nbsp; ".
 								"Color: <input type='text' name=chcolor[$c] SIZE=7 MAXLENGTH=25 VALUE=\"".htmlspecialchars(filter_string($_POST['chcolor'][$c+$d]))."\"> &nbsp; ".
-								"<input type=checkbox class=radio name=remove[$c] value=1> Remove<br>";
+								"<input type=checkbox name=remove[$c] value=1> Remove<br>";
 					$c++;
 				}
 			}
@@ -248,7 +248,7 @@
 		
 		$choices .= "Choice $c: <input type='text' name=chtext[$c] SIZE=30 MAXLENGTH=255> &nbsp ".
 					"Color: <input type='text' name=chcolor[$c] SIZE=7 MAXLENGTH=25><br>".
-					"<input type='submit' class=submit name=paction VALUE=\"Submit changes\"> and show ".
+					"<input type='submit' name=paction VALUE=\"Submit changes\"> and show ".
 					"<input type='text' name=count size=4 maxlength=2 VALUE=\"".htmlspecialchars($_POST['count'] ? $_POST['count'] : $c)."\"> options";
 		
 		// Multivote selection
@@ -365,15 +365,11 @@
 
 	<form method="POST" action="<?=$formlink?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
+		<tr><td class='tdbgh center' colspan='2'>New thread</td></tr>	
+		<tr>
 			<tr>
-				<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
-				<td class='tdbgh center' colspan=2>&nbsp;</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center b'>
-					<?=$passhint?>
-				</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg1 center b'><?=$passhint?></td>
+				<td class='tdbg2'>
 					<?=$altloginjs?>
 						<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
 						<input style="display:none;" type="text"     name="__f__usernm__">
@@ -387,85 +383,84 @@
 			
 			<tr>
 				<td class='tdbg1 center b'><?= $threadtype ?> icon:</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2'>
 					<?=dothreadiconlist($_POST['iconid'], $_POST['custposticon'])?>
 				</td>
 			</tr>
 			
 			<tr>
 				<td class='tdbg1 center b'><?= $threadtype ?> title:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
+				<td class='tdbg2'>
+					<input type='text' name="subject" size="40" maxlength="100" value="<?=escape_attribute($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'><?= $threadtype ?> description:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['description'])?>">
+				<td class='tdbg2'>
+					<input type='text' name="description" size="100" maxlength="120" value="<?=escape_attribute($_POST['description'])?>">
 				</td>
 			</tr>
 <?php if ($_GET['poll']) { ?>
 			<tr>
 				<td class='tdbg1 center b'>Question:</td>
-				<td class='tdbg2' colspan=2>
-					<input type='text' name=question SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['question'])?>">
+				<td class='tdbg2'>
+					<input type='text' name="question" size="100" maxlength="120" value="<?=escape_attribute($_POST['question'])?>">
 				</td>
 			</tr>			
 			<tr>
 				<td class='tdbg1 center b'>Briefing:</td>
-				<td class='tdbg2' id="brieftd" colspan=2>
-					<textarea wrap=virtual id="brieftxt" name=briefing ROWS=2 COLS=<?=$numcols?> style="resize:vertical;"><?=htmlspecialchars($_POST['briefing'])?></TEXTAREA>
+				<td class='tdbg2' id="brieftd">
+					<textarea id="brieftxt" name="briefing" rows="2"><?=htmlspecialchars($_POST['briefing'])?></textarea>
 				</td>
 			</tr>
 			
 			<tr>
 				<td class='tdbg1 center b'>Multi-voting:</td>
-				<td class='tdbg2' colspan=2>
-					<input type=radio class='radio' name=doublevote value=0 <?=filter_string($seldouble[0])?>> Disabled &nbsp;&nbsp;
-					<input type=radio class='radio' name=doublevote value=1 <?=filter_string($seldouble[1])?>> Enabled
+				<td class='tdbg2'>
+					<input type="radio" name="doublevote" value=0 <?=filter_string($seldouble[0])?>> Disabled &nbsp;&nbsp;
+					<input type="radio" name="doublevote" value=1 <?=filter_string($seldouble[1])?>> Enabled
 				</td>
 			</tr>
 			
 			<tr>
 				<td class='tdbg1 center b'>Choices:</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2'>
 					<?=$choices?>
 				</td>
 			</tr>
 <?php	} ?>
 			<tr>
-				<td class='tdbg1 center b'>Post:</td>
-				<td class='tdbg2 vatop' style='width: 800px' id='msgtd'>
-					<textarea id='msgtxt' wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
+				<td class='tdbg1 center b avatar-preview-parent'>
+					Post:
+					<?=mood_preview()?>
 				</td>
-				<td class='tdbg2' width=*>
-					<?=mood_layout(0, $userid, $_POST['moodid'])?>
+				<td class='tdbg2 vatop' id="msgtd">
+					<textarea id="msgtxt" name="message" rows="21" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
 				</td>
-			</tr>
-			
+			</tr>	
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2'>
 					<?= auth_tag() ?>
 					<?= $input_tid ?>
-					<input type='submit' class=submit name=submit VALUE="Submit <?= lcfirst($threadtype) ?>">
-					<input type='submit' class=submit name=preview VALUE="Preview <?= lcfirst($threadtype) ?>">
+					<input type='submit' name="submit" value="Submit <?= lcfirst($threadtype) ?>">
+					<input type='submit' name="preview" value="Preview <?= lcfirst($threadtype) ?>">
 				</td>
 			</tr>
 			
 			<tr>
 				<td class='tdbg1 center b'>Options:</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2'>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
-					<?=mood_layout(1, $userid, $_POST['moodid'])?>
+					<?=mood_list($userid, $_POST['moodid'])?>
 				</td>
 			</tr>
 <?php if ($ismod) { ?>
 			<tr>
 				<td class='tdbg1 center b'>Moderator Options:</td>
-				<td class='tdbg2' colspan=2>
+				<td class='tdbg2'>
 					<input type='checkbox' name='close' id='close' value="1" <?=$selclosed?>><label for='close'>Close</label> -
 					<input type='checkbox' name='stick' id='stick' value="1" <?=$selsticky?>><label for='stick'>Sticky</label> - 
 					<input type='checkbox' name='tannc' id='tannc' value="1" <?=$seltannc ?>><label for='tannc'>Forum announcement</label>

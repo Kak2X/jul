@@ -84,7 +84,7 @@ if ($isfullmod) {
 	<form method='GET'>
 	<div class='font center'>
 		Forum list: ".doforumlist($_GET['forum'], $name = 'forum', $shownone = '--- Select a forum ---')."
-		<input type='submit' class='submit' value='Go'>
+		<input type='submit' value='Go'>
 	</div>
 	</form>";
 } else {
@@ -107,7 +107,7 @@ if (!$_GET['forum']) {
 		$addlink = "
 		<tr>
 			<td class='tdbgc'>
-				<input type='submit' class='submit' style='padding: 0px; font-size: 10px' name='dodel' value='Delete selected'>
+				<input type='submit' style='padding: 0px; font-size: 10px' name='dodel' value='Delete selected'>
 				".auth_tag()."
 			</td>
 			<td class='tdbgc center' colspan=5>
@@ -237,7 +237,7 @@ if (!$_GET['forum']) {
 		<tr>
 			<td class='tdbg2'></td>
 			<td class='tdbg2'>
-				<input type='submit' class='submit' name='dosearch' value='Search'>
+				<input type='submit' name='dosearch' value='Search'>
 			</td>
 		</tr>
 	</table>
@@ -304,7 +304,7 @@ if (!$_GET['forum']) {
 		<tr>
 			<td class="tdbg1 center b">&nbsp;</td>
 			<td class="tdbg2">
-				<input type="submit" class="submit" name="save" value="Save settings">
+				<input type="submit" name="save" value="Save settings">
 				<?= auth_tag() ?>
 			</td>
 		</tr>

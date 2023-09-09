@@ -2,7 +2,7 @@
 
 function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	global 	$sql, $config, $x_hacks, $loguser, $miscdata, $pwlnames, // globals - external
-			$nmcol, $statusicons, $numdir, $numfil, $barimg, $numcols, $tableborder, $tablebg2, $tableheadtext, // globals - created
+			$nmcol, $statusicons, $numdir, $numfil, $barimg, $tableborder, $tablebg2, $tableheadtext, // globals - created
 			$favicon, $schemepre, $css_layout, $body_extra, $schemerow, // for pageheader only
 			$newpollpic, $newreplypic, $newthreadpic, $closedpic, $nopollpic, $poweredbypic, $warnpic // thread pics
 			;
@@ -61,7 +61,6 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	];
 	//$schemetime  = -1; // mktime(9, 0, 0) - time();
 	$numfil      = 'numnes';
-	$numcols     = 60;
 	$nullscheme  = 0;
 	$schemetype  = 0;
 	$formcss     = 0;
@@ -251,8 +250,6 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	
 	// Is custom CSS defined for form elements?
 	if ($formcss) {
-		$numcols = 80;
-		
 		if (!isset($formtextcolor)) {
 			$formtextcolor = $textcolor;
 		}
@@ -371,7 +368,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 }
 
 function pageheader($windowtitle = '', $mini = false, $centered = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $numcols, $barimg, $isbot, $schemerow,
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $barimg, $isbot, $schemerow,
 			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css_layout, $forcetitle, $warnpic;
 			
 	// Load this if it wasn't explicitly launched

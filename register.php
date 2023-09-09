@@ -387,7 +387,7 @@
 			<td class='tdbg1 center'>&nbsp;</td>
 			<td class='tdbg2'>
 				<input type='hidden' name=action VALUE="Register">
-				<input type='submit' class=submit name=submit VALUE="Register account">
+				<input type='submit' name=submit VALUE="Register account">
 				<?=auth_tag(TOKEN_REGISTER)?>
 			</td>
 		</tr>

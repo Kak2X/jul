@@ -15,7 +15,7 @@
 	if (filter_string($_POST['message'])) {
 		$config['no-redirects'] = true;
 		$lastchance		= "<br><br>You can copy and save what you were <em>going</em> to post, if you want:
-		<br><textarea class='newposttextbox' style='margin: 1em auto;'>". htmlspecialchars($_POST['message'], ENT_QUOTES) ."</textarea>";
+		<br><textarea class='textarea-manual' style='margin: 1em auto;'>". htmlspecialchars($_POST['message'], ENT_QUOTES) ."</textarea>";
 	}
 	
 	//if ($banned) {
@@ -243,7 +243,7 @@
 			<td class='tdbg1 center'>
 				<b>Moderator Options:</b>
 			</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label> -
 				<input type='checkbox' name='stick' id='stick' value=1 $selsticky><label for='stick'>Sticky</label> - 
 				<input type='checkbox' name='tannc' id='tannc' value=1 $seltannc ><label for='tannc'>Forum announcement</label>
@@ -268,15 +268,11 @@
 	?>
 	<form method="POST" action="newreply.php?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
-		<tr>
-			<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
-			<td class='tdbgh center' colspan=2>&nbsp;</td>
-		</tr>
-		
+		<tr><td class='tdbgh center' colspan='2'>New reply</td></tr>	
 		<tr>
 			<td class='tdbg1 center b'><?=$passhint?></td>
-			<td class='tdbg2' colspan=2>
-				<?=$altloginjs?>
+			<td class='tdbg2'>
+					<?=$altloginjs?>
 					<!-- Hack around autocomplete, fake inputs (don't use these in the file) -->
 					<input style="display:none;" type="text"     name="__f__usernm__">
 					<input style="display:none;" type="password" name="__f__passwd__">
@@ -286,33 +282,31 @@
 				</span>
 			</td>
 		</tr>
-		
 		<tr>
-			<td class='tdbg1 center b'>Reply:</td>
-			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
-				<textarea wrap=virtual id="msgtxt" name=message class='newposttextbox' ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
+			<td class='tdbg1 center b avatar-preview-parent'>
+				Reply:
+				<?=mood_preview()?>
 			</td>
-			<td class='tdbg2' width=*>
-				<?=mood_layout(0, $userid, $_POST['moodid'])?>
+			<td class='tdbg2 vatop' id="msgtd">
+				<textarea id="msgtxt" name="message" rows="21" autofocus><?=htmlspecialchars($_POST['message'])?></textarea>
 			</td>
 		</tr>
-		
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<?= auth_tag() ?>
-				<input type='submit' class=submit name=submit VALUE="Submit reply">
-				<input type='submit' class=submit name=preview VALUE="Preview reply">
+				<input type='submit' name="submit" value="Submit reply">
+				<input type='submit' name="preview" value="Preview reply">
 			</td>
 		</tr>
 	
 		<tr>
 			<td class='tdbg1 center b'>Options:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
 				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
-				<?=mood_layout(1, $userid, $_POST['moodid'])?>
+				<?=mood_list($userid, $_POST['moodid'])?>
 			</td>
 		</tr>
 		<?=$modoptions?>

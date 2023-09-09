@@ -179,7 +179,7 @@
 		
 		
 		if ($sysadmin && $config['allow-thread-deletion']) {
-			$delthread = " <input type=checkbox class=radio name=deletethread value=1> Delete thread";
+			$delthread = " <input type=checkbox name=deletethread value=1> Delete thread";
 		} else
 			$delthread = "";
 		
@@ -213,20 +213,20 @@
 			<tr>
 				<td class='tdbg1 center' rowspan='3'>&nbsp;</td>
 				<td class='tdbg2'>
-					<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
-					<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>>Closed
+					<input type=radio name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
+					<input type=radio name=closed value=1 <?=filter_string($check1[1])?>>Closed
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg2'>
-					<input type=radio class='radio' name=sticky value=0 <?=filter_string($check2[0])?>> Normal&nbsp; &nbsp;
-					<input type=radio class='radio' name=sticky value=1 <?=filter_string($check2[1])?>>Sticky
+					<input type=radio name=sticky value=0 <?=filter_string($check2[0])?>> Normal&nbsp; &nbsp;
+					<input type=radio name=sticky value=1 <?=filter_string($check2[1])?>>Sticky
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg2'>
-					<input type=radio class='radio' name=announcement value=0 <?=filter_string($check3[0])?>> Normal Thread&nbsp; &nbsp;
-					<input type=radio class='radio' name=announcement value=1 <?=filter_string($check3[1])?>>Forum Announcement
+					<input type=radio name=announcement value=0 <?=filter_string($check3[0])?>> Normal Thread&nbsp; &nbsp;
+					<input type=radio name=announcement value=1 <?=filter_string($check3[1])?>>Forum Announcement
 				</td>
 			</tr>
 <?php	} ?>
@@ -243,7 +243,7 @@
 				<td class='tdbg1'>&nbsp;</td>
 				<td class='tdbg2'>
 					<?= auth_tag() ?>
-					<input type='submit' class='submit' name='submit' VALUE="Edit thread">
+					<input type='submit' name='submit' VALUE="Edit thread">
 				</td>
 			</tr>
 		</table>

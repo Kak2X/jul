@@ -234,7 +234,7 @@ else if ($_GET['id']) {
 
 		<tr>
 			<td class='tdbgh center'>Forum Name</td>
-			<td class='tdbg1' colspan=4><input type="text" name="forumtitle" value="<?=htmlspecialchars($forum['title'])?>"  style="width: 100%;" maxlength="250"></td>
+			<td class='tdbg1' colspan='4'><input type="text" class="w" name="forumtitle" value="<?=htmlspecialchars($forum['title'])?>" maxlength="250"></td>
 			<td class='tdbg1' width=10%>
 				<label><input type="checkbox" name="hideforum" value="1"<?=($forum['hidden'] ? " checked" : "")?>> Hidden</label>
 				<label><input type="checkbox" name="login" value="1"<?=($forum['login'] ? " checked" : "")?>> Login required</label>
@@ -242,9 +242,9 @@ else if ($_GET['id']) {
 		</tr>
 
 		<tr>
-			<td class='tdbgh center' rowspan=5>Description</td>
-			<td class='tdbg1' rowspan=5 colspan=3><textarea wrap=virtual name=description ROWS=7 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['description'])?></TEXTAREA></td>
-			<td class='tdbgh center' colspan=2>Minimum power needed...</td>
+			<td class='tdbgh center' rowspan='5'>Description</td>
+			<td class='tdbg1' rowspan='5' colspan='3'><textarea class='no-resize' name='description' rows='8'><?=escape_html($forum['description'])?></textarea></td>
+			<td class='tdbgh center' colspan='2'>Minimum power needed...</td>
 		</tr>
 
 		<tr>
@@ -286,7 +286,7 @@ else if ($_GET['id']) {
 		
 		<tr>
 			<td class='tdbgh center' rowspan='2'>Custom header</td>
-			<td class='tdbg1' colspan='3' rowspan='2'><textarea wrap=virtual name=specialtitle ROWS=2 COLS=80 style="width: 100%; resize:none;"><?=htmlspecialchars($forum['specialtitle'])?></TEXTAREA></td>
+			<td class='tdbg1' colspan='3' rowspan='2'><textarea name="specialtitle" rows="2" class="no-resize"><?=escape_html($forum['specialtitle'])?></textarea></td>
 			<td class='tdbgh center'>IRC Channel</td>
 			<td class='tdbg1'><?=int_select("ircchan", $irc_channels, $forum['ircchan'], "*** Disable ***")?></td>
 		</tr>

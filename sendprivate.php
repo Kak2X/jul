@@ -172,7 +172,7 @@ if ($_GET['id']) {
 		$modoptions = 
 		"<tr>
 			<td class='tdbg1 center b'>Extra Options:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<input type='checkbox' name='close' id='close' value=1 $selclosed><label for='close'>Close</label>
 			</td>
 		</tr>";
@@ -193,37 +193,32 @@ if ($_GET['id']) {
 	<?= $barlinks . $forum_error ?>
 	<form method="POST" action="?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
+		<tr><td class='tdbgh center' colspan='2'>New reply</td></tr>
 		<tr>
-			<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
-			<td class='tdbgh center' colspan=2>&nbsp;</td>
-		</tr>
-		
-		<tr>
-			<td class='tdbg1 center b'>Reply:</td>
-			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
-				<textarea id="msgtxt" wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($_POST['message'], ENT_QUOTES)?></textarea>
+			<td class='tdbg1 center b avatar-preview-parent'>
+				Reply:
+				<?=mood_preview()?>
 			</td>
-			<td class='tdbg2' width=*>
-				<?=mood_layout(0, $loguser['id'], $_POST['moodid'])?>
+			<td class='tdbg2 vatop' id="msgtd">
+				<textarea id="msgtxt" name="message" rows="21" autofocus><?=htmlspecialchars($_POST['message'])?></textarea>
 			</td>
 		</tr>
-		
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<?= auth_tag() ?>
-				<input type='submit' class=submit name=submit VALUE="Submit reply">
-				<input type='submit' class=submit name=preview VALUE="Preview reply">
+				<input type='submit' name="submit" value="Submit reply">
+				<input type='submit' name="preview" value="Preview reply">
 			</td>
 		</tr>
 	
 		<tr>
 			<td class='tdbg1 center b'>Options:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
 				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> | 
-				<?=mood_layout(1, $loguser['id'], $_POST['moodid'])?>
+				<?=mood_list($loguser['id'], $_POST['moodid'])?>
 			</td>
 		</tr>
 		<?=$modoptions?>
@@ -429,69 +424,65 @@ else {
 	<?=$barlinks?>
 	<form method="POST" action="?" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>
-		<tr>
-			<td class='tdbgh center' style='width: 150px'>&nbsp;</td>
-			<td class='tdbgh center' colspan=2>&nbsp;</td>
-		</tr>
+		<tr><td class='tdbgh center' colspan='2'>New conversation</td></tr>	
 		<tr>
 			<td class='tdbg1 center b'>Thread icon:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<?=dothreadiconlist($_POST['iconid'], $_POST['custposticon'])?>
 			</td>
 		</tr>
 		
 		<tr>
 			<td class='tdbg1 center b'>Thread title:</td>
-			<td class='tdbg2' colspan=2>
-				<input type='text' name=subject SIZE=40 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
+			<td class='tdbg2'>
+				<input type='text' name="subject" size="40" maxlength="100" value="<?=escape_attribute($_POST['subject'])?>" <?=filter_string($autofocus[0])?>>
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Thread description:</td>
-			<td class='tdbg2' colspan=2>
-				<input type='text' name=description SIZE=100 MAXLENGTH=120 VALUE="<?=htmlspecialchars($_POST['description'])?>">
+			<td class='tdbg2'>
+				<input type='text' name="description" size="100" maxlength="120" value="<?=escape_attribute($_POST['description'])?>">
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Other partecipants:</td>
 			<td class='tdbg2' colspan=2>
-				<input type='text' name=users SIZE=60 MAXLENGTH=100 VALUE="<?=htmlspecialchars($_POST['users'])?>">
+				<input type='text' name="users" size="60" maxlength="100" value="<?=escape_attribute($_POST['users'])?>">
 				<span class='fonts'><?= ($config['pmthread-dest-limit'] > 0 ? "Max {$config['pmthread-dest-limit']} users allowed. " : "") ?>Multiple users separated with a semicolon.</span>
 			</td>
 		</tr>
-		
 		<tr>
-			<td class='tdbg1 center b'>Post:</td>
-			<td class='tdbg2' id="msgtd" style='width: 800px' valign=top>
-				<textarea id="msgtxt" wrap=virtual name=message ROWS=21 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
+			<td class='tdbg1 center b avatar-preview-parent'>
+				Post:
+				<?=mood_preview()?>
 			</td>
-			<td class='tdbg2' width=*>
-				<?=mood_layout(0, $loguser['id'], $_POST['moodid'])?>
+			<td class='tdbg2 vatop' id="msgtd">
+				<textarea id="msgtxt" name="message" rows="21" <?=filter_string($autofocus[1])?>><?=htmlspecialchars($_POST['message'])?></textarea>
 			</td>
 		</tr>
-		
 		<tr>
 			<td class='tdbg1 center'>&nbsp;</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<?= auth_tag() ?>
 				<?= $input_tid ?>
-				<input type='submit' class=submit name=submit VALUE="Submit thread">
-				<input type='submit' class=submit name=preview VALUE="Preview thread">
+				<input type='submit' name="submit" value="Submit thread">
+				<input type='submit' name="preview" value="Preview thread">
 			</td>
 		</tr>
+			
 		<tr>
 			<td class='tdbg1 center b'>Options:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<input type='checkbox' name="nosmilies" id="nosmilies" value="1"<?=$nosmilieschk?>><label for="nosmilies">Disable Smilies</label> -
 				<input type='checkbox' name="nolayout"  id="nolayout"  value="1"<?=$nolayoutchk ?>><label for="nolayout" >Disable Layout</label> -
 				<input type='checkbox' name="nohtml"    id="nohtml"    value="1"<?=$nohtmlchk   ?>><label for="nohtml"   >Disable HTML</label> 
 				<?= $modoptions ?> | 
-				<?=mood_layout(1, $loguser['id'], $_POST['moodid'])?>
+				<?=mood_list($loguser['id'], $_POST['moodid'])?>
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Save in:</td>
-			<td class='tdbg2' colspan=2>
+			<td class='tdbg2'>
 				<?= pm_folder_select('folder', $loguser['id'], $_POST['folder']) ?>
 			</td>
 		</tr>

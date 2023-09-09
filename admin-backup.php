@@ -137,7 +137,7 @@
 						</tr>
 					</table>
 					
-					<br><input type='submit' class='submit' value='Execute action' name='go'>
+					<br><input type='submit' value='Execute action' name='go'>
 					<br><?= auth_tag() ?>&nbsp;
 				</center></td>
 			</tr>

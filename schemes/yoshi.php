@@ -8,8 +8,7 @@
 	**************************************************************************/
 	
 	$formcss		= 1;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
-	$numcols		= 100;		# Width of text entry, just use css extra again
-
+	
 	# Page background color, background image, and text color
 	$bgcolor		= 'E0E0E0';
 	$bgimage		= 'schemes/yoshi/bgnew.jpg';

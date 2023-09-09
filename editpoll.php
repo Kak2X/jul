@@ -186,14 +186,14 @@
 		<tr>
 			<td class='tdbg1 center b'>Question:</td>
 			<td class='tdbg2'>
-				<input style='width: 600px;' type='text' name='question' value="<?=htmlspecialchars($question)?>">
+				<input class='w' type='text' name='question' value="<?=htmlspecialchars($question)?>">
 			</td>
 		</tr>
 		
 		<tr>
 			<td class='tdbg1 center b'>Briefing:</td>
 			<td class='tdbg2'>
-				<textarea name='briefing' rows='2' cols=<?=$numcols?> wrap='virtual'><?=htmlspecialchars($briefing)?></textarea>
+				<textarea name='briefing' rows='2'><?=htmlspecialchars($briefing)?></textarea>
 			</td>
 		</tr>
 		
@@ -234,8 +234,8 @@
 		<tr>
 			<td class='tdbg1'>&nbsp;</td>
 			<td class='tdbg2'>
-				<input type='submit' class='submit' value='Edit poll' name='submit'>&nbsp;
-				<input type='submit' class='submit' value='Preview poll' name='preview'>&nbsp;
+				<input type='submit' value='Edit poll' name='submit'>&nbsp;
+				<input type='submit' value='Preview poll' name='preview'>&nbsp;
 				<?= auth_tag() ?>
 			</td>
 		</tr>
@@ -248,13 +248,13 @@
 	var optid  = <?= $i ?>;
 	var optval = <?= $j ?>;
 	function addchoice() {
-		// Yeah ok
-		area.innerHTML += ""
-			+"<div id='cchoice"+optid+"'>"
-			+"<input name='chtext["+optid+"]' size='30' maxlength='255' value='' type='text'> &nbsp; "
+		var item = document.createElement("div");
+		item.id = "cchoice"+optid+"";
+		item.innerHTML = 
+			 "<input name='chtext["+optid+"]' size='30' maxlength='255' value='' type='text'> &nbsp; "
 			+"Color: <input name='chcolor["+optid+"]' size='7' maxlength='25' value='' type='text'> &nbsp; "
-			+"<input type='button' value='-' onclick='delchoice("+optid+")'><br>"
-			+"</div>";
+			+"<input type='button' value='-' onclick='delchoice("+optid+")'>";
+		area.appendChild(item);
 		optid++;
 		optval++;
 	}

@@ -242,7 +242,7 @@
 				<label><input type="checkbox" name="hideautomatic" value="1"<?= $_POST['hideautomatic'] ? " checked" : ""?>> Hide autobans</label>
 			</td>
 		</tr>
-		<tr><td class='tdbg2' colspan='2'><input type='submit' class='submit' name='dosearch' value='Search'></td></tr>
+		<tr><td class='tdbg2' colspan='2'><input type='submit' name='dosearch' value='Search'></td></tr>
 	</table>
 	<br>
 	<?= $pagectrl ?>
@@ -258,7 +258,7 @@
 			<td class='tdbgh center'>Banned by</td>
 		</tr>
 		<?= $txt ?>
-		<tr><td class='tdbg2' colspan='7'><input type='submit' class='submit' name='dodel' value='Delete selected'></td></tr>
+		<tr><td class='tdbg2' colspan='7'><input type='submit' name='dodel' value='Delete selected'></td></tr>
 	</table>
 	</form>
 	<?= $pagectrl ?>

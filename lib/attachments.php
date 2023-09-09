@@ -82,7 +82,7 @@ function quikattach($thread, $user, $loguser, $powlreq = ATTACH_REQ_DEFAULT, $sh
 	return "
 <tr>
 	<td class='tdbg1 center b'>Attachments:</td>
-	<td class='tdbg2' colspan=2>
+	<td class='tdbg2'>
 		<table class='table' style='border: none !important; width: auto !important'>
 			<tr>
 				<td class='tdbgh center b'>File name</td>

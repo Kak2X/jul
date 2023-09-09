@@ -53,14 +53,14 @@
 		<tr>
 			<td class="tdbg1 center"><input type="checkbox" name="del[<?=$i?>]" value="1"></td>
 			<td class="tdbg1 vatop"><input type="text" name="title[<?=$i?>]" class="w" style="resize: vertical" value="<?=htmlspecialchars($title)?>"></td>
-			<td class="tdbg2"><textarea name="val[]" class="w" style="resize: vertical" rows="1"><?=htmlspecialchars($val)?></textarea></td>
+			<td class="tdbg2"><textarea name="val[]" rows="1"><?=htmlspecialchars($val)?></textarea></td>
 		</tr>
 <?php	++$i;
 	} ?>
 		<tr>
 			<td class="tdbg1 center">-</td>
 			<td class="tdbg1 vatop"><input type="text" name="title[<?=$i?>]" class="w" style="resize: vertical" value=""></td>
-			<td class="tdbg2"><textarea name="val[<?=$i?>]" class="w" style="resize: vertical" rows="1"></textarea></td>
+			<td class="tdbg2"><textarea name="val[<?=$i?>]" rows="1"></textarea></td>
 		</tr>
 		<tr>
 			<td class="tdbg1" colspan=2></td>

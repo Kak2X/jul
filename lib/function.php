@@ -373,7 +373,7 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 			$checked    = '';
 		}
 
-		$posticonlist .= "<input type=radio class=radio name=iconid value=$i $checked>&nbsp;<img src=\"".escape_attribute($posticons[$i])."\" HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
+		$posticonlist .= "<input type=radio name=iconid value=$i $checked>&nbsp;<img src=\"".escape_attribute($posticons[$i])."\" HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
 
 		$i++;
 		if($i % 10 == 0) $posticonlist .= '<br>';
@@ -383,7 +383,7 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 	if (!$selected || $iconid == -1) $checked = 'checked=1';
 	
 	$posticonlist .= 	"<br>".
-						"<input type=radio class='radio' name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
+						"<input type=radio name=iconid value=-1 $checked>&nbsp; None &nbsp; &nbsp;".
 						"Custom: <input type='text' name=custposticon VALUE=\"".htmlspecialchars($customicon)."\" SIZE=40 MAXLENGTH=100>";
 	
 	return $posticonlist;
@@ -1429,7 +1429,7 @@ function confirm_message($key, $text, $title = "", $form_url = "", $buttons = NU
 		}
 		$commands = implode(" - ", $cmd);
 	} else {
-		$commands = "<input type='submit' class='submit' name='cmch_{$key}' value='Yes'> - <a href='#' class='button' onclick='window.history.go(-1); return false;'>No</a>";
+		$commands = "<input type='submit' name='cmch_{$key}' value='Yes'> - <a href='#' class='button' onclick='window.history.go(-1); return false;'>No</a>";
 	}
 	
 	$form_tag = $form_url ? ["<form method='POST' action='{$form_url}'>","</form>"] : ["",""];

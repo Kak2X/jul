@@ -269,73 +269,73 @@
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan='3'>Edit post</td></tr>
 			<tr>
-				<td class='tdbg1 center b' style='width: 150px'>Post:</td>
-				<td class='tdbg2' id="msgtd"  style='width: 800px' valign="top">
-					<textarea id="msgtxt" wrap=virtual name=message ROWS=12 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;" autofocus><?=htmlspecialchars($message)?></textarea>
+				<td class='tdbg1 center b avatar-preview-parent'>
+					Post:
+					<?=mood_preview()?>
 				</td>
-				<td class='tdbg2'>
-					<?=mood_layout(0, $post['user'], $moodid)?>
+				<td class='tdbg2 vatop' id="msgtd">
+					<textarea id="msgtxt" name="message" rows="12" autofocus><?=htmlspecialchars($message)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
-				<td class='tdbg2' colspan='2'>
+				<td class='tdbg2'>
 					<?= auth_tag() ?>
-					<input type='submit' class=submit name=submit VALUE="Edit post">
-					<input type='submit' class=submit name=preview VALUE="Preview post">
+					<input type='submit' name=submit VALUE="Edit post">
+					<input type='submit' name=preview VALUE="Preview post">
 				</td>
 			</tr>	
 			<tr>
 				<td class='tdbg1 center b'>Options:</td>
-				<td class='tdbg2' colspan='2'>
+				<td class='tdbg2'>
 					<input type='checkbox' name="nosmilies" id="nosmilies" value="1" <?=$selsmilies?>><label for="nosmilies">Disable Smilies</label> -
 					<input type='checkbox' name="nohtml"    id="nohtml"    value="1" <?=$selhtml   ?>><label for="nohtml">Disable HTML</label> | 
-					<?=mood_layout(1, $post['user'], $moodid)?>
+					<?=mood_list($post['user'], $moodid)?>
 				</td>
 				<?=quikattach($attach_key, $post['user'], $loguser, ATTACH_REQ_DEFAULT, $post['id'], $attachsel)?>
 			</tr>
 <?php if ($ismod) { ?>
-			<tr><td class="tdbgh center" colspan="3">Moderator options</td></tr>
+			<tr><td class="tdbgh center" colspan="2">Moderator options</td></tr>
 			<tr>
 				<td class="tdbg1 center b" rowspan="2">Warning:</td>
-				<td class="tdbg2" valign="top" colspan="2">
+				<td class="tdbg2" valign="top">
 					Type: <?= input_html("warned", $warned, ['input' => 'select', 'options' => [PWARN_NONE => "None", PWARN_WARN => "Warned", PWARN_WARNREAD => "Warned (read)"]]) ?>
 				</td>
 			</tr>
 			<tr>
-				<td class="tdbg2" id="warntd" valign="top" colspan="2">
-					<textarea id="warntxt" name="warntext" style="resize:vertical; width: 100%"><?=escape_html($warntext)?></textarea>
+				<td class="tdbg2 vatop" id="warntd">
+					<textarea id="warntxt" name="warntext"><?=escape_html($warntext)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class="tdbg1 center b" rowspan="2">Highlight:</td>
-				<td class="tdbg2" valign="top" colspan="2">
+				<td class="tdbg2" valign="top">
 					Type: <?= highlight_type_select("highlighted", $highlighted, $hreadonly) ?>
 				</td>
 			</tr>
 			<tr>
-				<td class="tdbg2" id="hilitd" valign="top" colspan="2">
-					<textarea id="hilitxt" name="highlighttext" <?=($hreadonly ? "readonly" : "")?> style="resize:vertical; width: 100%"><?=escape_html($highlighttext)?></textarea>
+				<td class="tdbg2 vatop" id="hilitd">
+					<textarea id="hilitxt" name="highlighttext" <?=($hreadonly ? "readonly" : "")?>><?=escape_html($highlighttext)?></textarea>
 				</td>
 			</tr>
 <?php } ?>
-			<tr><td class='tdbgh center' colspan='3'>Edit layout specific to this post</td></tr>
+			<tr><td class='tdbgh center' colspan='2'>Edit layout specific to this post</td></tr>
 			<tr>
 				<td class='tdbg1 center b'>CSS:</td>
-				<td class='tdbg2' valign='top' colspan='2'>
-					<textarea wrap=virtual name=css ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($css)?></textarea>
+				<td class='tdbg2 vatop'>
+					<textarea name="css" rows="8"><?=escape_html($css)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Header:</td>
-				<td class='tdbg2' id="headtd" valign='top' colspan='2'>
-					<textarea id="headtxt" wrap=virtual name=head ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($head)?></textarea>
+				<td class='tdbg2 vatop' id="headtd">
+					<textarea id="headtxt" name="head" rows="8"><?=escape_html($head)?></textarea>
 				</td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b'>Signature:</td>
-				<td class='tdbg2' id="signtd" valign='top' colspan='2'>
-					<textarea id="signtxt" wrap=virtual name=sign ROWS=8 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=escape_html($sign)?></textarea>
+				<td class='tdbg2 vatop' id="signtd">
+					<textarea id="signtxt" name="sign" rows="8"><?=escape_html($sign)?></textarea>
 				</td>
 			</tr>
 		</table>
@@ -415,103 +415,6 @@
 			[BTN_URL   , "Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
 		);
 		confirm_message($msgkey, $message, $title, $form_link, $buttons);
-	}
-	else if ($_GET['action'] == 'warn' && $ismod) {
-		// TODO: quickmod
-		if (isset($_POST['submit']) || isset($_POST['preview'])) {
-			$_POST['warntext']	= filter_string($_POST['warntext']);
-			$_POST['warndel']	= filter_bool($_POST['warndel']);
-			$warndate			= $_POST['warndel'] ? null : ($post['warndate'] ? $post['warndate'] : time()); 
-			
-			if (isset($_POST['submit'])) {
-				
-				if ($_POST['warndel']) {
-					$_POST['warntext'] = null;
-				}
-				
-				$pdata = array(
-					'warndate'	=> $warndate,
-					'warntext'	=> $_POST['warntext'],
-				);
-
-				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
-				
-				report_post("Post warned", $forum, [
-					'user'      => $loguser['name'],
-					'thread'	=> $thread['title'],
-					'pid'		=> $_GET['id'],
-				]);
-				
-				if (!$_POST['warndel']) {
-					errorpage("Set a warning to the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
-				} else {
-					errorpage("Warning deleted.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
-				}
-			}
-		} else {
-			$_POST['warntext']	= $post['warntext'];
-			$_POST['warndel']	= false;
-			$warndate			= $post['warndate'];
-		}
-		
-
-		
-		$delcheck = $post['warndate'] ? "<input type='checkbox' id='warndel' name='warndel' value='1' ".($_POST['warndel'] ? "checked" : "")."><label for='warndel'>Delete warning</label>" : "";
-		
-		list($head, $sign, $css) = getpostlayoutforedit($post);
-		$data = array(
-			// Text
-			'message' => $post['text'],	
-			'head'    => $head,
-			'sign'    => $sign,
-			'css'     => $css,
-			// Post metadata
-			'id'      => $post['id'],
-			'forum'   => $thread['forum'],
-			'ip'      => $post['ip'],
-			'num'     => $post['num'],
-			'date'    => $post['date'],
-			// (mod) Options
-			'nosmilies' => $post['nosmilies'],
-			'nohtml'    => $post['nohtml'],
-			'nolayout'  => 0,
-			'moodid'    => $post['moodid'],
-			'noob'      => $post['noob'],
-			// XFMod Options
-			'highlighted'   => $post['highlighted'],
-			'highlighttext' => $post['highlighted'],
-			'highlightdate' => $post['highlightdate'],
-			'warndate'      => $warndate,
-			'warntext'      => $_POST['warntext'],
-		);
-		
-		pageheader($windowtitle."Warn post");
-		$barlinks = mklinks("Warn post"); 
-?>
-		<?= $barlinks . $forum_error . preview_post($post['user'], $data, PREVIEW_EDITED, "Warn Post") ?>
-		<form method="POST" ACTION="editpost.php?action=warn&id=<?=$_GET['id']?>" enctype="multipart/form-data">
-		<table class='table'>
-			<tr><td class='tdbgh center' colspan='2'>Edit Warning</td></tr>
-			<tr>
-				<td class='tdbg1 center b' style='width: 150px'>Text:</td>
-				<td class='tdbg2' id="warntd" valign="top">
-					<textarea id="warntxt" name="warntext" style="resize:vertical; width: 100%" autofocus><?=escape_html($_POST['warntext'])?></textarea>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center'>&nbsp;</td>
-				<td class='tdbg2'>
-					<?= auth_tag() ?>
-					<input type='submit' class="submit" name="submit" VALUE="Edit warning">
-					<input type='submit' class="submit" name="preview" VALUE="Preview warning">
-					<?= $delcheck ?>
-				</td>
-			</tr>	
-		</table>
-		</form>
-<?php
-		$smilies    = readsmilies();
-		replytoolbar('warn', $smilies);
 	}
 	else if ($_GET['action'] == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		

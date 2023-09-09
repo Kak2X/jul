@@ -143,9 +143,7 @@ if (!$_GET['type']) {
 		<tr class='rh'>
 			<td class='tdbgh center b' rowspan='3' colspan='2'>Search for:</td>
 			<td class='tdbg2 vatop' rowspan='3' colspan='3'>
-				<textarea name='source' rows='3' maxlength='127' style='width: 100%; resize:vertical'>".
-					htmlspecialchars($x['source']) 
-				."</textarea>
+				<textarea name='source' rows='3' maxlength='127'>".htmlspecialchars($x['source'])."</textarea>
 			</td>
 			<td class='tdbgh center b' colspan='3'>Options</td>
 		</tr>
@@ -168,9 +166,7 @@ if (!$_GET['type']) {
 		<tr class='rh'>
 			<td class='tdbgh center b' rowspan=3 colspan=2>Replace with:</td>
 			<td class='tdbg2 vatop' rowspan=3 colspan=3>
-				<textarea name='replacement' ROWS=3 maxlength=127 style='width: 100%; resize:vertical'>".
-					htmlspecialchars($x['replacement'])
-				."</textarea>
+				<textarea name='replacement' rows='3' maxlength='127'>".htmlspecialchars($x['replacement'])."</textarea>
 			</td>
 			<td class='tdbgh center b'>Method:</td>
 			<td class='tdbg1' colspan='2'>
@@ -191,7 +187,7 @@ if (!$_GET['type']) {
 			<td class='tdbgh center b'>Priority:</td>
 			<td class='tdbg1' colspan=2>
 				<input type='text' name='ord' value='{$x['ord']}' maxlength=4 size=4>
-				<input type='submit' style='float: right' class='submit' name='edit' value='Save Changes'>
+				<input type='submit' style='float: right' name='edit' value='Save Changes'>
 			</td>
 		</tr>
 		
@@ -201,9 +197,7 @@ if (!$_GET['type']) {
 		<tr class='rh'>
 			<td class='tdbgh center b' colspan=2>Comment:</td>
 			<td class='tdbg2 vatop' colspan=6>
-				<textarea wrap=virtual name='comment' ROWS=1 maxlength=255 style='width: 100%; resize:vertical'>".
-					htmlspecialchars($x['comment'])
-				."</textarea>
+				<textarea name='comment' rows='1' maxlength='255'>".htmlspecialchars($x['comment'])."</textarea>
 			</td>
 		</tr>
 		
@@ -244,8 +238,8 @@ if (!$_GET['type']) {
 				<span style='color:".($x['enabled'] ? "#0F0'>ON" : "#F00'>OFF")."</span>
 			</td>
 			<td class='tdbg1 center b'>{$x['ord']}</td>
-			<td class='tdbg2'><textarea rows='1' style='width: 100%; resize:none' readonly>".htmlspecialchars($x['source'])."</textarea></td>
-			<td class='tdbg2'><textarea rows='1' style='width: 100%; resize:none' readonly>".htmlspecialchars($x['replacement'])."</textarea></td>
+			<td class='tdbg2'><textarea class='fonts no-resize' rows='1' readonly>".htmlspecialchars($x['source'])."</textarea></td>
+			<td class='tdbg2'><textarea class='fonts no-resize' rows='1' readonly>".htmlspecialchars($x['replacement'])."</textarea></td>
 			<td class='tdbg1 center'>".($x['fid'] ? "<a href='forum.php?id={$x['fid']}'>".htmlspecialchars($x['ftitle'])."</a>" : "Global")."</td>
 			<td class='tdbg1 center'>".($x['method'] == 2 ? 'RegEx' : 'Replace').($x['method'] == 1 ? "<div class='fonts'>Case Insensitive</div>" : "")."</td>
 			<td class='tdbg2 center'>".

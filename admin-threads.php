@@ -17,7 +17,7 @@
 				<br>This page is intended to repair threads with broken reply counts. Please don't flood it with requests.
 				<br>This problem causes "phantom pages" (e.g., too few or too many pages displayed).
 				<br>&nbsp;
-				<br><input type='submit' class=submit name="run" value="Start"><?= auth_tag() ?>
+				<br><input type='submit' name="run" value="Start"><?= auth_tag() ?>
 				<br>&nbsp;
 			</td></tr>
 		</table>
@@ -71,12 +71,13 @@
 				else 			$status = "<font color=#ff0000>Error</font>";
 				$count++;
 				$data['replies']++;
+				$data['threadname'] = htmlspecialchars($data['threadname']);
 			}
 
 			?>
 			<tr>
 				<td class='tdbg1 center'><a href="thread.php?id=<?= $data['thread'] ?>"><?= $data['thread'] ?></a></td>
-				<td class='tdbg2'><a href="thread.php?id=<?= $data['thread'] ?>"><?= htmlspecialchars($data['threadname']) ?></a></td>
+				<td class='tdbg2'><a href="thread.php?id=<?= $data['thread'] ?>"><?= $data['threadname'] ?></a></td>
 				<td class='tdbg1 right'><?=$data['replies']?></td>
 				<td class='tdbg1 right'><?=$data['real']?></td>
 				<td class='tdbg2 right'><b><?=$data['offset']?></b></td>

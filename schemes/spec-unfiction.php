@@ -23,5 +23,5 @@
     $tableborder 	= '000000';
     # Extra CSS included at the bottom of a page
 	$css_extra		= "
-		input[type='radio'], .radio { background: #fff0f8 }
+		input[type='radio'] { background: #fff0f8 }
 	";

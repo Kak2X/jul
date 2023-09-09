@@ -142,35 +142,9 @@ function avatar_path($user, $file_id, $weblink = NULL) {return $weblink ? escape
 function dummy_avatar($title, $hidden, $weblink = "") {return ['title' => $title, 'hidden' => $hidden, 'weblink' => $weblink];}
 function set_mood_url_js($moodurl) { return "<script type='text/javascript'>setmoodav(\"".escape_attribute($moodurl)."\")</script>"; }
 
-// 0 -> side
-// 1 -> inline
-// Layout selecttor
-function mood_layout($mode, $user, $sel = 0) {
-	global $config, $loguser;
-	if (!$mode) {
-		return "
-		<table style='border-spacing: 0px'>
-			<tr>
-				<td class='font nobr' style='max-width: 150px'>
-				</td>
-				<td>
-					<img src='images/_.gif' id='prev'>
-				</td>
-			</tr>
-		</table>";
-	} else {
-		return mood_list($user, $sel);
-	}
-	return "";
+function mood_preview() {
+	return "<img src='images/_.gif' class='avatar-preview' id='prev'>";
 }
-
-/*function mood_layout_fixed($mode, $user, $sel = 0) {
-	if (!$mode) {
-		return "<img src='images/_.gif' id='prev'>";
-	} else {
-		return mood_list($user, $sel);
-	}
-}*/
 
 function mood_list($user, $sel = 0, $return = false) {
 	global $config, $loguser;

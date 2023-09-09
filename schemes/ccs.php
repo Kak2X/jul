@@ -1,8 +1,7 @@
 <?php
 	$formcss		= 1;		# formcss makes forms black with tableborder borders; using cssextra below is easier
 	$usebtn			= 1;		# enable .button link rendering
-	$numcols		= 100;		# same thing, more or less
-
+	
 	$bgimage		= 'schemes/ccs/bg.png';
 	$config['board-title']		= '<img src="schemes/ccs/banner.png" title="The Horrible Forced Scheme 4/01/2009">';	# comment this out for normal banner
 

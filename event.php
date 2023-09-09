@@ -100,7 +100,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Message:</td>
-			<td class='tdbg2'><textarea wrap=virtual name=message ROWS=6 COLS=<?=$numcols?> style="width: 100%; max-width: 800px; resize:vertical;"><?=htmlspecialchars($event['text'])?></textarea></td>
+			<td class='tdbg2'><textarea name="message" rows="6"><?=htmlspecialchars($event['text'])?></textarea></td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center b'>Event date:</td>
@@ -115,7 +115,7 @@
 			<td class='tdbg1 center'>&nbsp;</td>
 			<td class='tdbg2'>
 				<?= auth_tag() ?>
-				<input type='submit' class=submit name=submit VALUE="Edit event">
+				<input type='submit' name=submit VALUE="Edit event">
 			</td>
 		</tr>		
 		<tr>

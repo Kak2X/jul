@@ -262,7 +262,7 @@
 		<tr>
 			<td class="tdbg1 center b">&nbsp;</td>
 			<td class="tdbg2">
-				<input type="submit" class="submit" name="save" value="Save changes">
+				<input type="submit" name="save" value="Save changes">
 				<?= auth_tag() ?>
 			</td>
 		</tr>	

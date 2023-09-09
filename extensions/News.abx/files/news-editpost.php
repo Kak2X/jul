@@ -299,32 +299,32 @@
 	<form method='POST' action="<?=actionlink("news-editpost.php?id={$_GET['id']}{$action}")?>">
 	
 	<table class='table'>
-		<tr><td class='tdbgh center b' colspan='3'>Create post</td></tr>		
+		<tr><td class='tdbgh center b' colspan='2'><?= $windowtitle ?></td></tr>		
 		<tr>
-			<td class='tdbg1 center b' style="width: 150px">Title:</td>
-			<td class='tdbg2' colspan="2">
+			<td class='tdbg1 center b'>Title:</td>
+			<td class='tdbg2'>
 				<input type='text' name='title' style='width: 580px' value="<?= htmlspecialchars($_POST['title']) ?>">
 			</td>
 		</tr>
 		<tr>
-			<td class='tdbg1 center b'>Message:</td>
-			<td class="tdbg2 vatop" id='msgtd'>
-				<textarea id='msgtxt' name='text' rows='21' class="w" style='resize:both' wrap='virtual' autofocus><?= htmlspecialchars($_POST['text']) ?></textarea>
+			<td class='tdbg1 center b avatar-preview-parent'>
+				Message:
+				<?=mood_preview()?>
 			</td>
-			<td class="tdbg2">
-				<?=mood_layout(0, $userid, $_POST['moodid'])?>
+			<td class="tdbg2 vatop" id='msgtd'>
+				<textarea id='msgtxt' name='text' rows='21' autofocus><?= htmlspecialchars($_POST['text']) ?></textarea>
 			</td>
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Tags:</b><div class="fonts">hold CTRL to select multiple</div></td>
-			<td class='tdbg2' colspan="2"><?= tag_select($_POST['tags'], $_POST['customtags']) ?></td>
+			<td class='tdbg2'><?= tag_select($_POST['tags'], $_POST['customtags']) ?></td>
 		</tr>	
 		<tr>
 			<td class='tdbg1 center b'>Options:</td>
-			<td class='tdbg2' colspan="2">
+			<td class='tdbg2'>
 				<label><input type="checkbox" name="nosmilies" value=1 <?= $nosmilies_chk ?>> Disable smilies</label> &nbsp;
 				<label><input type="checkbox" name="nohtml" value=1 <?= $nohtml_chk ?>> Disable HTML</label>
-				| <?=mood_layout(1, $userid, $_POST['moodid'])?>
+				| <?=mood_list($userid, $_POST['moodid'])?>
 			</td>
 		</tr>
 		<tr>

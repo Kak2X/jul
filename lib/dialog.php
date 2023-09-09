@@ -45,12 +45,12 @@ if ($pagetitle === NULL) $pagetitle = $title;
 			  background:#000000;
 			  color:	#DDDDDD;
 			  font:	100 verdana;}
-			.radio{
+			input[type='radio']{
 			  border:	none;
 			  background:none;
 			  color:	#DDDDDD;
 			  font:	100 verdana;}
-			.submit{
+			input[type='submit']{
 			  border:	#663399 solid 2px;
 			  font:	100 verdana;}
 			body, #w {

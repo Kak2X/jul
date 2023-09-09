@@ -72,8 +72,8 @@
 		<td class='tdbg1 center'>&nbsp;</td>
 		<td class='tdbg2'>
 			<?= auth_tag() ?>
-			<input type='submit' class=submit name=submit1 VALUE="Submit and continue">
-			<input type='submit' class=submit name=submit2 VALUE="Submit and finish">
+			<input type='submit' name=submit1 VALUE="Submit and continue">
+			<input type='submit' name=submit2 VALUE="Submit and finish">
 		</td>
 	</tr>
 </table>

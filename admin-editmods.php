@@ -86,15 +86,15 @@ if (isset($_POST['action'])) {
 		<td class='tdbg2' width=85%>
 			<?= user_select('addmoduser', 0, 'powerlevel > '.(isset($_POST['showall']) ? '-1' : '0')) ?>
 			<?=(isset($_POST['showall']) ? 
-				"<input type='submit' class='submit' name='hidesome' value='Show Normal+ and above'>" : 
-				"<span class='fonts'>(note: this only shows Member+ and above)</span> <input type='submit' class='submit' name='showall' value='Show All'>")
+				"<input type='submit' name='hidesome' value='Show Normal+ and above'>" : 
+				"<span class='fonts'>(note: this only shows Member+ and above)</span> <input type='submit' name='showall' value='Show All'>")
 			?>
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center' width=15%>&nbsp;</td>
 		<td class='tdbg2' width=85%>
-			<input type='submit' class=submit name="action" value="Add Moderator">
+			<input type='submit' name="action" value="Add Moderator">
 		</td>
 	</tr>
 </table>
@@ -116,7 +116,7 @@ if (isset($_POST['action'])) {
 		<tr>
 			<td class='tdbg1 center' width=15%>&nbsp;</td>
 			<td class='tdbg2' width=85%>
-				<input type='submit' class=submit name="action" value="Remove Moderator">
+				<input type='submit' name="action" value="Remove Moderator">
 			</td>
 		</tr>
 	</table>

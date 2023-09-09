@@ -49,35 +49,35 @@
 	<tr>
 		<td class='tdbg1 center b'>Sort users by:</td>
 		<td class='tdbg2'>
-			<input type=radio class='radio' name=su value=n<?=filter_string($ch1['n'])?>> Name &nbsp; &nbsp;
-			<input type=radio class='radio' name=su value=p<?=filter_string($ch1['p'])?>> Posts &nbsp; &nbsp;
-			<input type=radio class='radio' name=su value=r<?=filter_string($ch1['r'])?>> Registration &nbsp; &nbsp;
-			<input type=radio class='radio' name=su value=s<?=filter_string($ch1['s'])?>> Last post &nbsp; &nbsp;
-			<input type=radio class='radio' name=su value=a<?=filter_string($ch1['a'])?>> Last activity &nbsp; &nbsp;
-			<input type=radio class='radio' name=su value=i<?=filter_string($ch1['i'])?>> Last IP
+			<input type=radio name=su value=n<?=filter_string($ch1['n'])?>> Name &nbsp; &nbsp;
+			<input type=radio name=su value=p<?=filter_string($ch1['p'])?>> Posts &nbsp; &nbsp;
+			<input type=radio name=su value=r<?=filter_string($ch1['r'])?>> Registration &nbsp; &nbsp;
+			<input type=radio name=su value=s<?=filter_string($ch1['s'])?>> Last post &nbsp; &nbsp;
+			<input type=radio name=su value=a<?=filter_string($ch1['a'])?>> Last activity &nbsp; &nbsp;
+			<input type=radio name=su value=i<?=filter_string($ch1['i'])?>> Last IP
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center b'>Sort posts by:</td>
 		<td class='tdbg2'>
-			<input type=radio class='radio' name=sp value=u<?=filter_string($ch2['u'])?>> User &nbsp; &nbsp;
-			<input type=radio class='radio' name=sp value=d<?=filter_string($ch2['d'])?>> Date &nbsp; &nbsp;
-			<input type=radio class='radio' name=sp value=i<?=filter_string($ch2['i'])?>> IP
+			<input type=radio name=sp value=u<?=filter_string($ch2['u'])?>> User &nbsp; &nbsp;
+			<input type=radio name=sp value=d<?=filter_string($ch2['d'])?>> Date &nbsp; &nbsp;
+			<input type=radio name=sp value=i<?=filter_string($ch2['i'])?>> IP
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center b'>Sort private messages by:</td>
 		<td class='tdbg2'>
-			<input type=radio class='radio' name=sm value=n<?=filter_string($ch3['n'])?>> Sent by &nbsp; &nbsp;
-			<input type=radio class='radio' name=sm value=d<?=filter_string($ch3['d'])?>> Date &nbsp; &nbsp;
-			<input type=radio class='radio' name=sm value=i<?=filter_string($ch3['i'])?>> IP
+			<input type=radio name=sm value=n<?=filter_string($ch3['n'])?>> Sent by &nbsp; &nbsp;
+			<input type=radio name=sm value=d<?=filter_string($ch3['d'])?>> Date &nbsp; &nbsp;
+			<input type=radio name=sm value=i<?=filter_string($ch3['i'])?>> IP
 		</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center b'>Distinct users and IP's:</td>
 		<td class='tdbg2'>
-			<input type=radio class='radio' name=d value=y<?=filter_string($ch4['y'])?>> Yes &nbsp; &nbsp;
-			<input type=radio class='radio' name=d value=n<?=filter_string($ch4['n'])?>> No
+			<input type=radio name=d value=y<?=filter_string($ch4['y'])?>> Yes &nbsp; &nbsp;
+			<input type=radio name=d value=n<?=filter_string($ch4['n'])?>> No
 		</td>
 	</tr>
 	<tr>
@@ -95,7 +95,7 @@
 	</tr>
 	<tr>
 		<td class='tdbg1 center'>&nbsp;</td>
-		<td class='tdbg1'><input type='submit' class="submit" value="Submit"></td>
+		<td class='tdbg1'><input type='submit' value="Submit"></td>
 	</tr>
 </table>
 <?php
@@ -158,13 +158,13 @@
 		// Somewhat wonky _POST pagination system, but better than nothing for now
 		$pagectrl = "";
 		if ($_POST['page'] > 0) {
-			$pagectrl .= "<button type='submit' class='submit' name='page' value='".($_POST['page']-1)."'>&lt;-</button>";
+			$pagectrl .= "<button type='submit' name='page' value='".($_POST['page']-1)."'>&lt;-</button>";
 		} else {
-			$pagectrl .= "<button type='submit' class='submit' disabled>&lt;-</button>";
+			$pagectrl .= "<button type='submit' disabled>&lt;-</button>";
 		}
 		$pagectrl = "<br>
 		<table class='table'><tr><td class='tdbg1 center'>
-		{$pagectrl} &mdash; Page ".($_POST['page']+1)." &mdash; <button type='submit' class='submit' name='page' value='".($_POST['page']+1)."'>-&gt;</button>
+		{$pagectrl} &mdash; Page ".($_POST['page']+1)." &mdash; <button type='submit' name='page' value='".($_POST['page']+1)."'>-&gt;</button>
 		</td></tr></table>";
 		
 ?>

@@ -8,8 +8,7 @@
 	**************************************************************************/
 	
 	$formcss		= 1;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
-	$numcols		= 100;		# Width of text entry, just use css extra again
-
+	
 	# Banner; comment for default
 	$config['board-title']		= '<img src="schemes/fragmentation2/pointlessbannerv2-2.png" title="Illegal in 10 states!">';
 

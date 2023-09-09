@@ -165,7 +165,7 @@
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2' colspan=3>
 					<input type='hidden' name=action VALUE=login>
-					<input type='submit' class=submit name=submit VALUE=Login>
+					<input type='submit' name=submit VALUE=Login>
 					".auth_tag(TOKEN_LOGIN)."
 				</td>
 			</tr>

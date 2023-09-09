@@ -68,7 +68,7 @@
 		<br/>
 		You can customize the message options, or leave the defaults in.<br/>
 		<br/>
-		<table class='table'>
+		<table class='table left'>
 			<tr>
 				<td class='tdbgh center b' colspan='2'>Message options</td>
 			</tr>
@@ -78,7 +78,7 @@
 			</tr>
 			<tr>
 				<td class='tdbg1 center b vatop'>Message</td>
-				<td class='tdbg2'><textarea name='message' class='w' style='resize: vertical'>"._NUKE_DEFAULT_MESSAGE."</textarea></td>
+				<td class='tdbg2'><textarea name='message'>"._NUKE_DEFAULT_MESSAGE."</textarea></td>
 			</tr>
 			<tr>
 				<td class='tdbg1 center b vatop'>Options</td>

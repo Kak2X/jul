@@ -1,7 +1,6 @@
 <?php
 	$formcss		= 1;		# formcss makes forms black with tableborder borders; using cssextra below is easier
-	$numcols		= 100;		# same thing, more or less
-
+	
 	$bgimage		= 'schemes/ymar/beegee.png';
 	$config['board-title']		= '<img src="schemes/ymar/title.jpg" title="Hello! (Image source: http://tinyurl.com/267s62v)">';	# comment this out for normal banner
 
@@ -60,6 +59,6 @@
 	
 	# Extra CSS included at the bottom of a page
 	$css_extra		= "
-		input[type='radio'], .radio { background: #ecd7b2;}
+		input[type='radio'] { background: #ecd7b2;}
 	";
 	

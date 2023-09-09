@@ -471,11 +471,11 @@
 			}
 
 			$namecolor = " 
-			<input type=radio class='radio' name=colorspec value=0 ".filter_string($sel_color[0]).">None 
-			<input type=radio class='radio' name=colorspec value=1 ".filter_string($sel_color[1]).">Defined: <input type='color' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=7 MAXLENGTH=7> 
-			<input type=radio class='radio' name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
-			<input type=radio class='radio' name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
-			<input type=radio class='radio' name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
+			<input type=radio name=colorspec value=0 ".filter_string($sel_color[0]).">None 
+			<input type=radio name=colorspec value=1 ".filter_string($sel_color[1]).">Defined: <input type='color' name=namecolor VALUE=\"{$userdata['namecolor']}\" SIZE=7 MAXLENGTH=7> 
+			<input type=radio name=colorspec value=2 ".filter_string($sel_color[2]).">Random 
+			<input type=radio name=colorspec value=3 ".filter_string($sel_color[3]).">Time-dependent 
+			<input type=radio name=colorspec value=4 ".filter_string($sel_color[4]).">Rainbow";
 		}
 		
 		// Upload a new minipic / Remove the existing one
@@ -553,7 +553,7 @@
 				}
 				else if ($data[0] == 1) { // large
 					if (!isset($data[3])) $data[3] = 8; // Rows
-					$input = "<textarea name='$data[1]' rows={$data[3]} style='width: 100%' wrap='virtual'>".(isset($userdata[$data[1]]) ? htmlspecialchars($userdata[$data[1]]) : "")."</textarea>";
+					$input = "<textarea name='$data[1]' rows='{$data[3]}'>".(isset($userdata[$data[1]]) ? htmlspecialchars($userdata[$data[1]]) : "")."</textarea>";
 				}
 				else if ($data[0] == 2){ // radio
 					$ch[$userdata[$data[1]]] = "checked"; //example $sex[$user['sex']]
@@ -598,7 +598,7 @@
 			<td class='tdbg1 center' style='width: 40%'>&nbsp;</td>
 			<td class='tdbg2' style='width: 60%'>
 		<?= auth_tag() ?>
-		<input type='submit' class=submit name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
+		<input type='submit' name=submit VALUE="Edit <?=($edituser ? "user" : "profile")?>">
 		</td>
 	</table>
 	</form>

@@ -1,8 +1,7 @@
 <?php
 	
 	$formcss		= 1;		# Makes form and inputs white on black, set to 0 if you want to custom style them (use css_extra below)
-	$numcols		= 100;		# Width of text entry, just use css extra again
-
+	
 	# Banner; comment for default
 	// I don't have a version without text. There're just lame photoshop effects, you can make your own banner.
 	// $config['board-title']      = '<img src="schemes/ruggedb/banner2.gif">';

@@ -252,7 +252,7 @@
 			<tr>
 				<td class="tdbg1 center b" rowspan=3>Description:</td>
 				<td class="tdbg2" rowspan=3>
-					<textarea wrap="virtual" name="description" rows="2" cols="80" style="width: 100%; resize:none"><?= htmlspecialchars($item['description']) ?></textarea>
+					<textarea name="description" cols="80" rows="2"><?= htmlspecialchars($item['description']) ?></textarea>
 				</td>
 				<td class="tdbg1 center b lh">Power level required:</td>
 				<td class="tdbg2"><?= power_select('minpower', $item['minpower']) ?></td>
@@ -268,7 +268,7 @@
 			<tr>
 				<td class="tdbg1 center b" rowspan=3>Features:</td>
 				<td class="tdbg2 vatop" id="feattd" rowspan=3>
-					<textarea wrap="virtual" id="feattxt" name="features" rows="20" cols="80" style="width: 100%; resize:vertical; white-space: pre; overflow-x: scroll"><?= htmlspecialchars($item['features']) ?></textarea>
+					<textarea id="feattxt" name="features" rows="20" style="white-space: pre; overflow-x: scroll"><?= htmlspecialchars($item['features']) ?></textarea>
 				</td>
 				<td class="tdbg1 center b lh">Built on:</td>
 				<td class="tdbg2"><?= datetofields($item['date'], 'date', DTF_DATE) ?></td>
@@ -284,7 +284,7 @@
 			<tr>
 				<td class="tdbg1 center b">Links:<div class="fonts">One for each line</div></td>
 				<td class="tdbg2">
-					<textarea wrap="virtual" name="links" rows="2" cols="60" style="width: 100%; resize:vertical"><?= htmlspecialchars($item['links']) ?></textarea>
+					<textarea name="links" rows="2"><?= htmlspecialchars($item['links']) ?></textarea>
 				</td>
 				<td class="tdbg1 center b"></td>
 				<td class="tdbg2"></td>

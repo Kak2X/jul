@@ -234,8 +234,8 @@ hook_add('thread-edit-form-flag', function() {
 	<tr>
 		<td class='tdbg1'></td>
 		<td class='tdbg2'>
-			<input type="radio" class="radio" name="featured" value="0" <?=filter_string($check[0])?> onclick="hideArch(0)"> Unfeatured &nbsp; &nbsp;
-			<input type="radio" class="radio" name="featured" value="1" <?=filter_string($check[1])?> onclick="hideArch(1)"> Featured &nbsp; &nbsp;
+			<input type="radio" name="featured" value="0" <?=filter_string($check[0])?> onclick="hideArch(0)"> Unfeatured &nbsp; &nbsp;
+			<input type="radio" name="featured" value="1" <?=filter_string($check[1])?> onclick="hideArch(1)"> Featured &nbsp; &nbsp;
 			<input type="checkbox" name="fdelarch" id="fdelarch" value="1"> Delete from archives
 			
 			<script type="text/javascript">

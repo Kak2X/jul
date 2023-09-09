@@ -188,7 +188,7 @@
 		
 		$check1[$thread['closed']]='checked=1';
 		if ($sysadmin && $config['allow-thread-deletion']) {
-			$delthread = " <input type='checkbox' class='radio' name='deletethread' value=1> Delete thread";
+			$delthread = " <input type='checkbox' name='deletethread' value=1> Delete thread";
 		} else
 			$delthread = "";
 		
@@ -246,8 +246,8 @@
 			<tr>
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2'>
-					<input type=radio class='radio' name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
-					<input type=radio class='radio' name=closed value=1 <?=filter_string($check1[1])?>> Closed&nbsp; &nbsp;
+					<input type=radio name=closed value=0 <?=filter_string($check1[0])?>> Open&nbsp; &nbsp;
+					<input type=radio name=closed value=1 <?=filter_string($check1[1])?>> Closed&nbsp; &nbsp;
 					<?= $delthread ?>
 				</td>
 			</tr>

@@ -157,9 +157,16 @@ input[type=radio] {
 	padding: 2px;
 	text-align:	center;
 }
+
 .mobile-avatar > .avatar, .rpg-avatar > .avatar {
 	max-height:	100%;
 	max-width:	100%;
+}
+.avatar-preview-parent { min-width: 155px }
+.avatar-preview {
+	max-width: 150px;
+	display: block;
+	margin: auto;
 }
 
 /* Prevent huge thread icons from breaking the layout */
@@ -288,13 +295,22 @@ input[type=radio] {
 .imgtag { max-width: 100%; }
 .post { position: relative; }
 
-/* Mostly for use within the newreply / newthread form */
-textarea.newposttextbox {
+
+/* All textareas automatically take up the max width possible */
+textarea {
+	width: 100%;
+	resize: vertical;
+}
+textarea.no-resize {
+	resize: none;
+}
+textarea.textarea-manual {
 	max-width: 100%;
 	width: 800px;
 	height: 20em;
 	resize: both;
 }
+
 table.table-fixed {
 	table-layout: fixed;
 }

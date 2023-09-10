@@ -352,7 +352,7 @@
 		} else {
 			prepare_avatar($comment, $picture, $userpic);
 			$ctext = dofilters(domarkup($comment['text']));
-			$cimg  = "<img src=\"{$picture}\" style='max-width: ".COMMENT_AVATAR_SIZE."px; max-height: ".COMMENT_AVATAR_SIZE."px' />";
+			$cimg  = $picture ? "<img src=\"{$picture}\" style='max-width: ".COMMENT_AVATAR_SIZE."px; max-height: ".COMMENT_AVATAR_SIZE."px' />" : "";
 		}
 		
 		if ($comment['lastedituser'])

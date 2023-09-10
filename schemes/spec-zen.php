@@ -12,13 +12,14 @@
 	$linkcolor3 = 'CFFFBE';
 	$linkcolor4 = 'CEFECA';
 
-	$scr1='';
-	$scr2='';
-	$scr3='';
-	$scr4='';
-	$scr5='';
-	$scr6='';
-	$scr7='';
+	# Scrollbar colors...
+	$scr1			= 'D3EBD3';	# top-left outer highlight
+	$scr2			= 'D3EBD3'; # top-left inner highlight
+	$scr3			= '7BC17B'; # middle face
+	$scr4			= '4FAD4F'; # bottom-right inner shadow
+	$scr5			= '2D7D2E'; # bottom-right outer shadow
+	$scr6			= '04561E'; # button arrows
+	$scr7			= '012000'; # track
 
 	$tablebg1      = '005028';
 	$tablebg2      = '104830';

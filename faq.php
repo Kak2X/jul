@@ -286,11 +286,11 @@
 	"));
 
 	$faq	.= _faqformat("halp", "I've got a question and I need some help, or I found a bug somewhere.", "
-		<a href='forum.php?id=39'>Post it in the forum here</a>, or alternatively just message the <a href='sendprivate.php?userid=1'>main administrator</a>. If it's a security bug in the code, we <i>really</i> recommend the latter.
+		<a href='forum.php?id=39'>Post it in the forum here</a>, or alternatively just message the <a href='newpmthread.php?userid=1'>main administrator</a>. If it's a security bug in the code, we <i>really</i> recommend the latter.
 	");
 
 	$faq	.= _faqformat("band", "I've been banned. Now what?", "
-		You can try checking your title (under your username in your posts) to find out the reason and when it expires. If there's no expiration, it's probably <i>permanent</i>. If you're post due for unbanning, <a href='sendprivate.php?userid=1'>let an admin know</a> and they'll take care of it.
+		You can try checking your title (under your username in your posts) to find out the reason and when it expires. If there's no expiration, it's probably <i>permanent</i>. If you're post due for unbanning, <a href='newpmthread.php?userid=1'>let an admin know</a> and they'll take care of it.
 		<br>
 		<br>On the other hand, if it's permanent, you can always try to show us you've changed and request a <i>second chance</i>... but any further antics after that will usually get your account <b>deleted</b>.
 	");

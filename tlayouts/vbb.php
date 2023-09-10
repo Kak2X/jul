@@ -70,8 +70,7 @@ function postcode($post, $set){
 			<td class='tdbg{$set['bg']} fonts sidebar{$post['uid']}{$csskey}_opt'>{$set['new']}{$postdate}</td>
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
 				<table class='w fonts'><tr>
-				
-					<td>[<a href='profile.php?id=$u'>Profile</a>] [<a href='sendprivate?userid=$u'>Send PM</a>]{$homepage} [<a href='thread.php?user=$u'>Search</a>]{$threadlink}</td>
+					<td>[<a href='profile.php?id={$u}'>Profile</a>] [<a href='newpmthread?userid={$u}'>Send PM</a>]{$homepage} [<a href='thread.php?user={$u}'>Search</a>]{$threadlink}</td>
 					<td class='nobr right'>{$post['edited']} {$controls['quote']} {$controls['edit']} {$controls['ip']}</td>
 				</tr></table>
 			</td>

@@ -124,7 +124,7 @@ function postcode($post,$set){
 			<tr>
 				<td class='tdbg{$set['bg']} sidebar{$post['uid']}{$csskey}_opt fonts'><b>Status</b>: {$status}</td>
 				<td class='tdbg{$set['bg']} mainbar{$post['uid']}{$csskey}_opt fonts' style='width: 80%'>&nbsp;<b>Options</b>:
-					<a href='sendprivate.php?userid={$post['uid']}'>Send PM</a> - 
+					<a href='newpmthread.php?userid={$post['uid']}'>Send PM</a> - 
 					<a href='blocklayout.php?action=block&id={$post['uid']}{$tokenstr}'>{$un_b}lock layout</a> - 
 					<a href='forum.php?user={$post['uid']}'>Threads by user</a> - 
 					<a href='thread.php?user={$post['uid']}'>Posts by user</a>

@@ -1,18 +1,17 @@
 <?php
-
-	require "lib/common.php";
-
 	$meta['noindex'] = true;
 	
-	if (!$loguser['id'])
-		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
-	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'])
-		errorpage("You are not allowed to edit your posts.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
-	if (!$_GET['id'])
-		errorpage("No post ID specified.",'index.php', 'return to the board');
-	
+	require "lib/common.php";
+
 	$_GET['id']     = filter_int($_GET['id']);
 	$_GET['action'] = filter_string($_GET['action']);
+	$reply_error    = "";
+	if (!$loguser['id'])
+		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
+	if (!$_GET['id'])
+		errorpage("No post ID specified.",'index.php', 'return to the board');
+	if ((!$isadmin && !$config['allow-pmthread-edit']) || $loguser['editing_locked'])
+		$reply_error .= "You are not allowed to edit your posts.";
 
 	$post     = $sql->fetchq("SELECT * FROM pm_posts WHERE id = {$_GET['id']}");
 	if (!$post) {
@@ -21,27 +20,34 @@
 	
 	load_pm_thread($post['thread']);
 	load_layout();
-	if (!$isadmin && ($post['user'] != $loguser['id'] || $post['warndate'])) {
-		errorpage("You are not allowed to edit this post.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'the post');
+	
+	// Only applicable for the edit action, doesn't matter with others
+	$submitted = isset($_POST['submit']) || isset($_POST['preview']);
+	
+	if (!$isadmin) {
+		if ($loguser['id'] != $post['user'])
+			errorpage("This isn't one of your posts!");
+		if ($thread['closed'])
+			$reply_error .= "The thread is closed.<br>";
+		if ($post['warned']) // no editing "evidence"
+			$reply_error .= "This post has received a warning, you can't edit it.<br>";
 	}
-	if ($forum_error) {
-		$forum_error = "<br><table class='table'>{$forum_error}</table>";
-	}
+	if ($reply_error && !$submitted)
+		errorpage("You are not allowed to edit this post:<br>{$reply_error}", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
+	
 	$windowtitle = "Private Messages: ".htmlspecialchars($thread['title'])." -- ";
 	
 	/*
 		Editing a post?
 	*/
 	if (!$_GET['action']) {
+		$postpreview = "";
+		$smilies     = readsmilies();
+		$attachsel   = array();
+		$attach_key  = "pm{$post['thread']}_{$_GET['id']}";
 		
-		$smilies    = readsmilies();
-		$attachsel  = array();
-		$attach_key = "pm{$post['thread']}_{$_GET['id']}";
-		
-		if (isset($_POST['submit']) || isset($_POST['preview'])) {
-			
-			$can_attach = can_use_attachments($loguser);
-			
+		if ($submitted) {
+
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
@@ -64,127 +70,140 @@
 			}
 			//--
 			
-			if ($can_attach) {
-				list($attachsel, $total) = process_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
-			}
-			
-			if (isset($_POST['submit'])) {
-				check_token($_POST['auth']);
-				
+			if (!$reply_error) {
 				if (!trim($_POST['message']))
-					errorpage("You didn't enter anything in the post.");
+					$reply_error .= "You didn't enter anything in the post.<br>";
 				if ($ismod) {
 					if (!can_edit_highlight($post, $highlighted, $highlighttext))
-						errorpage("You aren't allowed to change this featured content.");
-					if ($post['highlighted'] == PHILI_SUPER && !trim($highlighttext))
-						errorpage("Featured posts must contain an highlight text.");
+						$reply_error .= "You aren't allowed to change this featured content.<br>";
+					if ($highlighted == PHILI_SUPER && !trim($highlighttext))
+						$reply_error .= "Featured posts must contain an highlight text.<br>";
 				}
-				
-				$gtopt = array(
-					'mood' => $moodid,
-				);
-				$message 	= replace_tags($message, get_tags($loguser, $gtopt));
-				$edited 	= getuserlink($loguser);
-				
-
-				if ($headid = getpostlayoutid($head, false)) $head = "";
-				if ($signid = getpostlayoutid($sign, false)) $sign = "";
-				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
-
-				
-				$data = [
-					'text'		=> $message,
-					'headtext'	=> $head,
-					'signtext'	=> $sign,
-					'csstext'	=> $css,
-					
-					
-					'nosmilies' => $nosmilies,
-					'nohtml'	=> $nohtml,
-					
-					'headid'	=> $headid,
-					'signid'	=> $signid,
-					'cssid'		=> $cssid,
-					'moodid'	=> $moodid,		
-				];
-				
-				// Copied from editpost, which actually used post revisions
-				$create_rev = 
-					   $post['text']     != $message 
-					|| $post['headtext'] != $head || $post['headid'] != $headid 
-					|| $post['signtext'] != $sign || $post['signid'] != $signid  
-					|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
-					
-				$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
-				if ($flag_as_edited) {
-					// This now only gets updated when a revision is added
-					$data['edited']	= $edited;
-					$data['editdate'] 	= time();
-				}
-				
-				//--
-				if ($ismod) {
-					$data['warned'] = $warned;
-					$data['warntext'] = $warntext;
-					// Only update the date when switching 
-					if (!$post['warned'] && $warned != $post['warned'])
-						$data['warndate'] = time();
-					
-					$data['highlighted'] = $highlighted;
-					$data['highlighttext'] = $highlighttext;
-					// Only update the date when going from nohighlight->highlight.
-					if (!$post['highlighted'] && $highlighted != $post['highlighted'])
-						$data['highlightdate'] = time();
-				}
-				//--
-				$sql->beginTransaction();
-				$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
-				$sql->commit();
-				if ($can_attach) {
-					confirm_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM, $attachsel);
-				}
-				errorpage("Post edited successfully.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
-				
-			} else {
-				/*
-					Edit preview
-				*/
-				$preview_msg = $message;
-				if ($can_attach) {
-					$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
-				}
-				
-				$data = array(
-					// Text
-					'message' => $preview_msg,	
-					'head'    => $head,
-					'sign'    => $sign,
-					'css'     => $css,
-					// Post metadata
-					'id'      => $post['id'],
-					'forum'   => -1,
-					'ip'      => $post['ip'],
-					//'num'     => $post['num'],
-					'date'    => $post['date'],
-					// (mod) Options
-					'nosmilies' => $nosmilies,
-					'nohtml'    => $nohtml,
-					'nolayout'  => 0,
-					'moodid'    => $moodid,
-					'noob'      => $post['noob'],
-					// XFMod Options
-					'highlighted'   => $highlighted,
-					'highlighttext' => $highlighttext,
-					'warned'        => $warned,
-					'warntext'      => $warntext,
-					// Attachments
-					'attach_key' => $attach_key,
-					'attach_sel' => $attachsel,
-					'attach_pm'  => true, // temp measure probably
-				);
-				$preview = preview_post($post['user'], $data, PREVIEW_EDITED);
 			}
 			
+			if (!$reply_error) {
+				$can_attach = can_use_attachments($loguser);
+				
+				if ($can_attach) {
+					list($attachsel, $total) = process_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM); // Returns attachments marked for removal
+				}
+				
+				if (isset($_POST['submit'])) {
+					check_token($_POST['auth']);
+					
+					if (!trim($_POST['message']))
+						errorpage("You didn't enter anything in the post.");
+					if ($ismod) {
+						if (!can_edit_highlight($post, $highlighted, $highlighttext))
+							errorpage("You aren't allowed to change this featured content.");
+						if ($post['highlighted'] == PHILI_SUPER && !trim($highlighttext))
+							errorpage("Featured posts must contain an highlight text.");
+					}
+					
+					$gtopt = array(
+						'mood' => $moodid,
+					);
+					$message 	= replace_tags($message, get_tags($loguser, $gtopt));
+					$edited 	= getuserlink($loguser);
+					
+
+					if ($headid = getpostlayoutid($head, false)) $head = "";
+					if ($signid = getpostlayoutid($sign, false)) $sign = "";
+					if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
+
+					
+					$pdata = [
+						'text'		=> $message,
+						'headtext'	=> $head,
+						'signtext'	=> $sign,
+						'csstext'	=> $css,
+						
+						'nosmilies' => $nosmilies,
+						'nohtml'	=> $nohtml,
+						
+						'headid'	=> $headid,
+						'signid'	=> $signid,
+						'cssid'		=> $cssid,
+						'moodid'	=> $moodid,		
+					];
+					
+					// Copied from editpost, which actually used post revisions
+					$create_rev = 
+						   $post['text']     != $message 
+						|| $post['headtext'] != $head || $post['headid'] != $headid 
+						|| $post['signtext'] != $sign || $post['signid'] != $signid  
+						|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
+						
+					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
+					if ($flag_as_edited) {
+						// This now only gets updated when a revision is added
+						$pdata['edited']	    = $edited;
+						$pdata['editdate'] 	= time();
+					}
+					
+					//--
+					if ($ismod) {
+						$pdata['warned'] = $warned;
+						$pdata['warntext'] = $warntext;
+						// Only update the date when switching 
+						if (!$post['warned'] && $warned != $post['warned'])
+							$pdata['warndate'] = time();
+						
+						$pdata['highlighted'] = $highlighted;
+						$pdata['highlighttext'] = $highlighttext;
+						// Only update the date when going from nohighlight->highlight.
+						if (!$post['highlighted'] && $highlighted != $post['highlighted'])
+							$pdata['highlightdate'] = time();
+					}
+					//--
+					$sql->beginTransaction();
+					$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
+					$sql->commit();
+					if ($can_attach) {
+						confirm_attachments($attach_key, $post['user'], $_GET['id'], ATTACH_PM, $attachsel);
+					}
+					errorpage("Post edited successfully.", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
+					
+				} else {
+					/*
+						Edit preview
+					*/
+					$preview_msg = $message;
+					if ($can_attach) {
+						$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
+					}
+					
+					$data = array(
+						// Text
+						'message' => $preview_msg,	
+						'head'    => $head,
+						'sign'    => $sign,
+						'css'     => $css,
+						// Post metadata
+						'id'      => $post['id'],
+						'forum'   => -1,
+						'ip'      => $post['ip'],
+						//'num'     => $post['num'],
+						'date'    => $post['date'],
+						// (mod) Options
+						'nosmilies' => $nosmilies,
+						'nohtml'    => $nohtml,
+						'nolayout'  => 0,
+						'moodid'    => $moodid,
+						'noob'      => $post['noob'],
+						// XFMod Options
+						'highlighted'   => $highlighted,
+						'highlighttext' => $highlighttext,
+						'warned'        => $warned,
+						'warntext'      => $warntext,
+						// Attachments
+						'attach_key' => $attach_key,
+						'attach_sel' => $attachsel,
+						'attach_pm'  => true, // temp measure probably
+					);
+					$postpreview = preview_post($post['user'], $data, PREVIEW_EDITED);
+				}
+			}
 		} else {
 			// Replace the default variables with the original ones from the thread
 			$message = $post['text'];
@@ -192,7 +211,6 @@
 			$nosmilies 	= $post['nosmilies'];
 			$nohtml		= $post['nohtml'];
 			$moodid		= $post['moodid'];
-			$preview 	= "";
 			
 			$warned			= $post['warned'];
 			$warntext		= $post['warntext'];
@@ -205,12 +223,19 @@
 		$hreadonly = !can_edit_highlight($post);
 		
 		pageheader($windowtitle."Editing Post");
-		$barlinks = mklinks("Edit post");
 		
-
-
+		if ($forum_error)
+			$forum_error = "<table class='table'>{$forum_error}</table>";
+		
+		$barlinks = mklinks("Edit post"); 
+		
+		print $barlinks . $forum_error;
+		// In case something happened, show a message *over the reply box*, to allow fixing anything important.
+		if ($reply_error) {
+			boardmessage("Couldn't preview or submit the reply. One or more errors occurred:<br><br>".$reply_error, "Error", false);
+		}
+		print "<br>".$postpreview;
 		?>
-		<?= $barlinks . $forum_error . $preview ?>
 		<form method="POST" ACTION="?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan='2'>Edit post</td></tr>

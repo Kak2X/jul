@@ -1,44 +1,31 @@
 <?php
-	// die("Disabled.");
-	
+
 	// Just in case, allow caching to return safely without losing anything.
 	$meta['cache'] = true;
-	
-	require "lib/common.php";
-	
 	// Stop this insanity.  Never index newreply.
 	$meta['noindex'] = true;
 	
-	// Give failed replies a last-chance to copy and save their work,
-	// as way too often you'll miss and then it's just gone forever
-	$lastchance		= null;
-	if (filter_string($_POST['message'])) {
-		$config['no-redirects'] = true;
-		$lastchance		= "<br><br>You can copy and save what you were <em>going</em> to post, if you want:
-		<br><textarea class='textarea-manual' style='margin: 1em auto;'>". htmlspecialchars($_POST['message'], ENT_QUOTES) ."</textarea>";
-	}
+	require "lib/common.php";
 	
-	//if ($banned) {
-	//	errorpage("Sorry, but you are banned from the board, and can not post.","thread.php?id={$_GET['id']}",$thread['title'],0);
-	//}
 	
 	$_GET['id']         = filter_int($_GET['id']);
 	$_GET['postid']     = filter_int($_GET['postid']);
+	$submitted          = isset($_POST['submit']) || isset($_POST['preview']);
 	
 	load_thread($_GET['id']);
 	check_forumban($forum['id'], $loguser['id']);
 	$ismod = ismod($forum['id']);
 	
 	// load_thread takes care of view permissions, but the reply permissions still need to be checked
+	$reply_error = "";
 	if (!$ismod && $thread['closed']) {
-		errorpage("Sorry, but this thread is closed, and no more replies can be posted in it.{$lastchance}","thread.php?id={$_GET['id']}",htmlspecialchars($thread['title']),0);
+		$reply_error = "The thread is closed and no more replies can be posted.<br>";
 	} else if ($loguser['powerlevel'] < $forum['minpowerreply'] || $banned) {
-		errorpage("You are not allowed to reply to this thread.{$lastchance}","thread.php?id={$_GET['id']}",htmlspecialchars($thread['title']),0);
+		$reply_error = "Replying in this forum is restricted, and you are not allowed to post in this forum.<br>";
 	}
-	
-	if ($forum_error) {
-		$forum_error = "<table class='table'>{$forum_error}</table>";
-	}
+	// Error out immediately if we didn't submit anything
+	if ($reply_error && !$submitted)
+		errorpage($reply_error, "thread.php?id={$_GET['id']}", htmlspecialchars($thread['title']), 0);
 	
 	$_POST['username'] 	= filter_string($_POST['username']);
 	$_POST['password'] 	= filter_string($_POST['password']);
@@ -50,21 +37,18 @@
 	$_POST['nolayout']	= filter_int($_POST['nolayout']);
 	$_POST['nohtml']    = filter_int($_POST['nohtml']);
 	
-	$_POST['stick'] = filter_int($_POST['stick']);
-	$_POST['close'] = filter_int($_POST['close']);
-	$_POST['tannc'] = filter_int($_POST['tannc']);
+	$_POST['stick']     = filter_int($_POST['stick']);
+	$_POST['close']     = filter_int($_POST['close']);
+	$_POST['tannc']     = filter_int($_POST['tannc']);
 	
 	$error       = false;
 	$login_error = "";
-	$reply_error = "";
 	$postpreview = "";
-	$attach_key = $_GET['id'];
+	$attach_key  = $_GET['id'];	
+	$userid      = $loguser['id'];
+	$user        = $loguser;
 	
-	$userid     = $loguser['id'];
-	$user       = $loguser;
-	
-	if (isset($_POST['submit']) || isset($_POST['preview'])) {
-
+	if ($submitted) {
 		// Trying to post as someone else?
 		if (!$loguser['id'] || $_POST['password']) {
 			$userid = checkuser($_POST['username'], $_POST['password']);
@@ -75,7 +59,7 @@
 			}
 		}
 		
-		if (!$login_error) {
+		if (!$login_error && !$reply_error) {
 			if ($userid != $loguser['id']) {
 				check_forumban($forum['id'], $userid);
 				$ismod = ismod($forum['id'], $user);
@@ -158,14 +142,11 @@
 		Main page
 	*/
 	
-	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
-	pageheader($windowtitle);
-	
 	$ppp      = get_ppp();	
 	$smilies  = readsmilies();
 	$postlist = thread_history($_GET['id'], $ppp + 1, $forum['id']);
 	
-	// Post preview (it must be after the page header, otherwise bar images aren't initialized)
+	// Post preview
 	if (!$error && isset($_POST['preview'])) {
 		
 		$preview_msg = $_POST['message'];
@@ -215,22 +196,17 @@
 		$post = $sql->fetchq("
 			SELECT user, text, thread 
 			FROM posts 
-			WHERE id = {$_GET['postid']} AND (".((int) $ismod)." OR deleted = 0)
+			WHERE id = {$_GET['postid']} 
+			  AND thread = {$_GET['id']}
+			  AND (".((int) $ismod)." OR deleted = 0)
 		");
-		if ($post && $post['thread'] == $_GET['id']) { // Make sure the quote is in the same thread
+		if ($post) {
 			$post['text'] = str_replace('<br>','\n',$post['text']);
 			$quoteuser = $sql->resultq("SELECT name FROM users WHERE id = {$post['user']}");
 			$_POST['message'] = "[quote={$quoteuser}]{$post['text']}[/quote]\r\n";
 			unset($post, $quoteuser);
 		}
 	}
-	
-	$links = array(
-		[$forum['title']  , "forum.php?id={$forum['id']}"],
-		[$thread['title'] , "thread.php?id={$_GET['id']}"],
-		["New reply"      , NULL],
-	);
-	$barlinks = dobreadcrumbs($links); 
 	
 	$modoptions	= "";
 	if ($ismod) {
@@ -256,6 +232,19 @@
 	$nolayoutchk    = $_POST['nolayout']  ? "checked" : "";
 	$nohtmlchk      = $_POST['nohtml']    ? "checked" : "";
 	
+	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- New Reply";
+	pageheader($windowtitle);
+		
+	if ($forum_error)
+		$forum_error = "<table class='table'>{$forum_error}</table>";
+	
+	$links = array(
+		[$forum['title']  , "forum.php?id={$forum['id']}"],
+		[$thread['title'] , "thread.php?id={$_GET['id']}"],
+		["New reply"      , NULL],
+	);
+	$barlinks = dobreadcrumbs($links); 
+	
 	print $barlinks . $forum_error;
 	// In case something happened, show a message *over the reply box*, to allow fixing anything important.
 	if ($reply_error) {
@@ -263,8 +252,6 @@
 	}
 	print "<br>".$postpreview;
 	
-	// TODO: Change this to the updated layout as seen in the actual Jul code.
-	//       The avatar preview gets in the way, but I don't want to (re)move it...
 	?>
 	<form method="POST" action="newreply.php?id=<?=$_GET['id']?>" enctype="multipart/form-data" autocomplete=off>
 	<table class='table'>

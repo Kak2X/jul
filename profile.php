@@ -324,7 +324,7 @@
 		$token = generate_token(TOKEN_MGET);
 		$un_b = ($layoutblocked ? "Unb" : "B");
 		
-		$options[0]["Send private message"] = ["sendprivate.php?userid={$_GET['id']}"];
+		$options[0]["Send private message"] = ["newpmthread.php?userid={$_GET['id']}"];
 		$options[0]["{$un_b}lock layout"]   = ["blocklayout.php?id={$_GET['id']}&action=block&auth={$token}"];
 		if ($config['enable-ratings'] && $loguser['id'] != $_GET['id']) {
 			$options[0]["Rate user"] = ["rateuser.php?id={$_GET['id']}"];

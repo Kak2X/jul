@@ -2,36 +2,35 @@
 
 	// Just in case, allow caching to return safely without losing anything.
 	$meta['cache'] = true;
+	// Stop this insanity.  Never index newthread.
+	$meta['noindex'] = true;
 	
 	require "lib/common.php";
 	
-	
 	$_GET['id']           = filter_int($_GET['id']);
 	$_GET['poll']         = filter_int($_GET['poll']);
+	$submitted            = isset($_POST['submit']) || isset($_POST['preview']);
 	
-	// Stop this insanity.  Never index newthread.
-	$meta['noindex'] = true;	
-
 	load_forum($_GET['id']);
 	check_forumban($_GET['id'], $loguser['id']);
 	
 	$windowtitle = htmlspecialchars($forum['title'])." -- New Thread";
-	pageheader($windowtitle);
+
 	
 	$smilies = readsmilies();
 	
-	if (isset($forum['error']))
-		errorpage("You cannot post new threads in invalid forums.");
-	if ($banned || $loguser['powerlevel'] < $forum['minpowerthread'])
-		errorpage("You aren't allowed to post new threads in this forum.");
-	if ($_GET['id'] == $config['trash-forum'])
-		errorpage("No. Stop that, you idiot.");
-	if ($forum['pollstyle'] == '-2' && $_GET['poll'])
-		errorpage("A for effort, but F for still failing.");
-	
-	if ($forum_error) {
-		$forum_error = "<table class='table'>{$forum_error}</table>";
-	}
+	$reply_error = "";
+	if (isset($forum['error'])) // for admins
+		$reply_error = "You cannot post new threads in invalid forums.<br>";
+	else if ($banned || $loguser['powerlevel'] < $forum['minpowerthread'])
+		$reply_error = "You aren't allowed to post new threads in this forum.<br>";
+	else if ($_GET['id'] == $config['trash-forum'])
+		$reply_error = "No. Stop that, you idiot.<br>";
+	else if ($forum['pollstyle'] == '-2' && $_GET['poll'])
+		$reply_error = "A for effort, but F for still failing.<br>";
+	// Error out immediately if we didn't submit anything
+	if ($reply_error && !$submitted)
+		errorpage($reply_error);
 
 	/*
 		Variable initialization
@@ -48,8 +47,6 @@
 		$_POST['question']   = filter_string($_POST['question']);
 		$_POST['briefing']   = filter_string($_POST['briefing']);
 	}
-	$posticons		= file('posticons.dat');
-	$iconpreview    = "";
 	$_POST['iconid'] 		= (isset($_POST['iconid']) ? (int) $_POST['iconid'] : -1); // 'None' should be the default value
 	$_POST['custposticon'] 	= filter_string($_POST['custposticon']);
 	
@@ -66,24 +63,18 @@
 	$_POST['close'] = filter_int($_POST['close']);
 	$_POST['tannc'] = (int) (filter_int($_POST['tannc']) || isset($_GET['a']));
 	
-	$error       = false;
-	$login_error = "";
-	$reply_error = "";
-	$postpreview = "";
-	
-	$userid = $loguser['id'];
-	$user   = $loguser;
-	
+	$error          = false;
+	$login_error    = "";
+	$postpreview    = "";
+	$posticons      = file('posticons.dat');
+	$iconpreview    = "";
+	$userid         = $loguser['id'];
+	$user           = $loguser;
 	// Attachment preview stuff
-	$input_tid  = "";
-	$attach_key = "";
+	$input_tid      = "";
+	$attach_key     = "";
 	
-	if (isset($_POST['preview']) || isset($_POST['submit'])) {
-		// check alternate login info
-		$_POST['username'] = filter_string($_POST['username']);
-		$_POST['password'] = filter_string($_POST['password']);
-		
-		$error = '';
+	if ($submitted) {
 		// Trying to post as someone else?
 		if (!$loguser['id'] || $_POST['password']) {
 			$userid = checkuser($_POST['username'], $_POST['password']);
@@ -95,7 +86,7 @@
 		}
 		
 		// some consistency with newreply.php
-		if (!$error) {
+		if (!$login_error && !$reply_error) {
 			if ($userid != $loguser['id']) {
 				check_forumban($forum['id'], $userid);
 				$ismod = ismod($forum['id'], $user);
@@ -124,9 +115,6 @@
 		// ---*/
 		
 		$error = ($reply_error || $login_error);
-		//if ($error) {
-		//	errorpage("Couldn't post the thread. $error", "forum.php?id={$_GET['id']}", $forum['title'], 2);
-		//}
 		
 		if (!$error) {
 			// All OK!
@@ -218,8 +206,7 @@
 				errorpage("$whatisthis posted successfully!", "thread.php?id={$treq->id}", $_POST['subject'], 0);
 				
 			}
-		}
-		
+		}	
 	}
 	
 	/*
@@ -263,12 +250,6 @@
 		$selclosed  = $_POST['close'] ? "checked" : "";
 		$seltannc   = $_POST['tannc'] ? "checked" : "";
 	}
-	
-	$links = array(
-		[$forum['title']  , "forum.php?id={$_GET['id']}"],
-		["New thread"     , NULL],
-	);
-	$barlinks = dobreadcrumbs($links); 
 
 	if ($loguser['id']) {
 		$_POST['username'] = $loguser['name'];
@@ -327,35 +308,45 @@
 			#'attach_sel'  => "",
 		);
 
-			?>
+		$postpreview = "
 	<table class='table'>
 		<tr>
 			<td class='tdbgh center'>
-				<?= $threadtype ?> preview
+			{$threadtype} preview
 			</td>
 		</tr>
 	</table>
-	<?=$pollpreview?>
+	{$pollpreview}
 	<table class='table'>
 		<tr>
 			<td class='tdbg2 center' style='width: 4%'>
-				<?=$iconpreview?>
+				{$iconpreview}
 			</td>
 			<td class='tdbg1'>
-				<b><?=htmlspecialchars($_POST['subject'])?></b>
-				<span class='fonts'><br><?=htmlspecialchars($_POST['description'])?></span>
+				<b>".htmlspecialchars($_POST['subject'])."</b>
+				<span class='fonts'><br>".htmlspecialchars($_POST['description'])."</span>
 			</td>
 		</tr>
 	</table>
-	<?= preview_post($user, $data, PREVIEW_NEW, NULL) ?>
-		<?php
+	".preview_post($user, $data, PREVIEW_NEW, NULL);	
 			$autofocus[1] = 'autofocus'; // for 'message'
 		} else {
+			$postpreview = "";
 			$autofocus[0] = 'autofocus'; // for 'subject'
 		}
 
+	pageheader($windowtitle);
 		
-	print $barlinks . $forum_error;
+	if ($forum_error)
+		$forum_error = "<table class='table'>{$forum_error}</table>";
+	
+	$links = array(
+		[$forum['title']  , "forum.php?id={$_GET['id']}"],
+		["New thread"     , NULL],
+	);
+	$barlinks = dobreadcrumbs($links); 
+	
+	print $barlinks . $forum_error . $postpreview;
 	// In case something happened, show a message *over the reply box*, to allow fixing anything important.
 	if ($reply_error) {
 		boardmessage("Couldn't preview or submit the thread. One or more errors occurred:<br><br>".$reply_error, "Error", false);

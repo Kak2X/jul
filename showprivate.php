@@ -242,9 +242,9 @@
 		$newxlinks[] = "<a href='?{$baseparams}&warn=1'>View warnings</a>";
 	
 	
-	$newxlinks[] = "<a href='sendprivate.php'>New conversation</a>";
+	$newxlinks[] = "<a href='newpmthread.php'>New conversation</a>";
 	if (!$thread['closed']) {
-		$newxlinks[] = "<a href='sendprivate.php?id={$_GET['id']}'>{$newreplypic}</a>";
+		$newxlinks[] = "<a href='newpmreply.php?id={$_GET['id']}'>{$newreplypic}</a>";
 	}
 	
 	preplayouts($posts);
@@ -273,7 +273,7 @@
 		
 		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
 		if (!$post['deleted'] && !$thread['closed']) {
-			$controls['quote'] .= " | <a href='sendprivate.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
+			$controls['quote'] .= " | <a href='newpmreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
 		}
 		
 		$controls['edit'] = '';

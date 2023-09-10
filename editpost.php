@@ -1,24 +1,30 @@
 <?php
-	// (fat catgirl here)
-	require "lib/common.php";
-
 	// Stop this insanity.  Never index editpost...
 	$meta['noindex'] = true;
 	
-	$_GET['id'] 	= filter_int($_GET['id']);
-	$_GET['action'] = filter_string($_GET['action']);
+	// (fat catgirl here)
+	require "lib/common.php";
+
 
 	
-	if (!$loguser['id']) {
-		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
-	}
-	if ($loguser['editing_locked'] == 1) {
-		errorpage("You are not allowed to edit your posts.", 'index.php', 'return to the board');
-	}
-	if (!$_GET['id']) {	// You dummy
+	$_GET['id'] 	= filter_int($_GET['id']);
+	$_GET['action'] = filter_string($_GET['action']);
+	$reply_error    = "";
+	if (!$_GET['id']) // You dummy
 		errorpage("No post ID specified.",'index.php', 'return to the board');
-	}
+	if (!$loguser['id'])
+		errorpage("You are not logged in.",'login.php', 'log in (then try again)');
+	if ($loguser['editing_locked'] == 1)
+		$reply_error .= "You are not allowed to edit your posts.";
 
+	// When post editing is silently disabled (opt 2)
+	if ($loguser['editing_locked'] > 1) {
+		// Disable attachments and only allow read access to 'edit' and 'delete' modes 
+		$config['allow-attachments'] = false;
+		if ($_GET['action'] && $_GET['action'] != 'delete')
+			$reply_error .= "You are not allowed to edit your posts.";
+	}
+	
 	$post     = $sql->fetchq("SELECT * FROM posts WHERE id = {$_GET['id']}");
 	if (!$post) {
 		errorpage("Post ID #{$_GET['id']} doesn't exist.",'index.php', 'return to the board');
@@ -26,20 +32,20 @@
 	load_thread($post['thread']);
 	check_forumban($forum['id'], $loguser['id']);
 	$ismod = ismod($forum['id']);
-	if ($forum_error) {
-		$forum_error = "<table class='table'>{$forum_error}</table>";
-	}
 	
-	if (!$ismod && ($loguser['id'] != $post['user'] || $thread['closed'] || $post['warndate'])) // no editing "evidence"
-		errorpage("You are not allowed to edit this post.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
+	// Only applicable for the edit action, doesn't matter with others
+	$submitted = isset($_POST['submit']) || isset($_POST['preview']);
 	
-	// When post editing is silently disabled (opt 2)
-	if ($loguser['editing_locked']) {
-		// Disable attachments and only allow read access to 'edit' and 'delete' modes 
-		$config['allow-attachments'] = false;
-		if ($_GET['action'] && $_GET['action'] != 'delete')
-			errorpage("You are not allowed to edit your posts.", 'index.php', 'return to the board');
+	if (!$ismod) {
+		if ($loguser['id'] != $post['user'])
+			errorpage("This isn't one of your posts!");
+		if ($thread['closed'])
+			$reply_error .= "The thread is closed.<br>";
+		if ($post['warned']) // no editing "evidence"
+			$reply_error .= "This post has received a warning, you can't edit it.<br>";
 	}
+	if ($reply_error && !$submitted)
+		errorpage("You are not allowed to edit this post:<br>{$reply_error}", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the post');
 	
 	$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title'])." -- ";
 
@@ -49,14 +55,12 @@
 		Editing a post?
 	*/
 	if (!$_GET['action']) {
-		$smilies    = readsmilies();
-		$attachsel  = array();
-		$attach_key = "{$thread['id']}_{$_GET['id']}";
+		$postpreview = "";
+		$smilies     = readsmilies();
+		$attachsel   = array();
+		$attach_key  = "{$thread['id']}_{$_GET['id']}";
 	
-		if (isset($_POST['submit']) || isset($_POST['preview'])) {
-			
-			$can_attach = can_use_attachments($loguser, $forum['attachmentmode']);
-			
+		if ($submitted) {
 			$message 	= filter_string($_POST['message']);
 			$head 		= filter_string($_POST['head']);
 			$sign 		= filter_string($_POST['sign']);
@@ -65,7 +69,7 @@
 			$nosmilies	= filter_int($_POST['nosmilies']);
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
-			
+
 			//--
 			if ($ismod) {			
 				$warned			= numrange(filter_int($_POST['warned']), PWARN_MIN, PWARN_MAX);
@@ -79,166 +83,175 @@
 				$highlighttext	= $post['highlighttext'];
 			}
 			//--
-			
-			if ($can_attach) {
-				list($attachsel, $total) = process_attachments($attach_key, $post['user'], $_GET['id']); // Returns attachments marked for removal
-			}
-			
-			if (isset($_POST['submit'])) {
 				
-				// :^)
-				if ($loguser['editing_locked']) {
-					report_send(IRC_STAFF, "'{$loguser['name']}' tried to edit post #{$_GET['id']}");
-					errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
-				}
+			if (!$reply_error) {
 				if (!trim($_POST['message']))
-					errorpage("You didn't enter anything in the post.");
+					$reply_error .= "You didn't enter anything in the post.<br>";
 				if ($ismod) {
 					if (!can_edit_highlight($post, $highlighted, $highlighttext))
-						errorpage("You aren't allowed to change this featured content.");
-					if ($post['highlighted'] == PHILI_SUPER && !trim($highlighttext))
-						errorpage("Featured posts must contain an highlight text.");
+						$reply_error .= "You aren't allowed to change this featured content.<br>";
+					if ($highlighted == PHILI_SUPER && !trim($highlighttext))
+						$reply_error .= "Featured posts must contain an highlight text.<br>";
 				}
-				
-				check_token($_POST['auth']);
-				
-				$gtopt = array(
-					'mood' => $moodid,
-				);
-				$message 	= replace_tags($message, get_tags($loguser, $gtopt));
-				$edited 	= getuserlink($loguser);
-				
-				/*
-				if ($loguserid == 1162) {
-					report_send(IRC_STAFF, "The jceggbert5 dipshit tried to edit another post: ". $_GET['id']);
-					errorpage("");
-				}
-				
-				if (($message == "COCKS" || $head == "COCKS" || $sign == "COCKS") || ($message == $head && $head == $sign)) {
-					$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."'");
-					errorpage("NO BONUS");
-				}
-				*/				
-				// Check if we have already stored this layout, so we won't have to duplicate it
-				if ($headid = getpostlayoutid($head, false)) $head = "";
-				if ($signid = getpostlayoutid($sign, false)) $sign = "";
-				if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
-					
-				$sql->beginTransaction();
-				
-				// Post update data which does not trigger a new revision
-				$pdata = array(
-					'nosmilies' => $nosmilies,
-					'nohtml'    => $nohtml,
-					'moodid'	=> $moodid,
-				);
-
-				//--
-				if ($ismod) {
-					$pdata['warned'] = $warned;
-					$pdata['warntext'] = $warntext;
-					// Only update the date when switching 
-					if (!$post['warned'] && $warned != $post['warned'])
-						$pdata['warndate'] = time();
-					
-					$pdata['highlighted'] = $highlighted;
-					$pdata['highlighttext'] = $highlighttext;
-					// Only update the date when going from nohighlight->highlight.
-					if (!$post['highlighted'] && $highlighted != $post['highlighted'])
-						$pdata['highlightdate'] = time();
-				}
-				//--
-				
-				$create_rev = 
-					   $post['text']     != $message 
-					|| $post['headtext'] != $head || $post['headid'] != $headid 
-					|| $post['signtext'] != $sign || $post['signid'] != $signid  
-					|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
-					
-				$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
-				
-				if ($create_rev) {
-					// Old revisions are stored in their own containment area, and not in the same table
-					$save = array(
-						'pid'      => $_GET['id'],
-						'revdate'  => $post['date'],   // Revision dated
-						'revuser'  => ($post['revision'] > 1 ? $loguser['id'] : $post['user']), // Revision edited by
-						'text'     => $post['text'],
-						'headtext' => $post['headtext'],
-						'signtext' => $post['signtext'],
-						'csstext'  => $post['csstext'],
-						'headid'   => $post['headid'],
-						'signid'   => $post['signid'],
-						'cssid'    => $post['cssid'],
-						'revision' => $post['revision'],
-					);
-					$sql->queryp("INSERT INTO posts_old SET ".mysql::setplaceholders($save), $save);
-					// The post update query now updates these as well
-					$pdata['text']     = $message;
-					$pdata['headtext'] = $head;
-					$pdata['signtext'] = $sign;
-					$pdata['csstext']  = $css;
-					$pdata['headid']   = $headid;
-					$pdata['signid']   = $signid;
-					$pdata['cssid']    = $cssid;
-					$pdata['revision'] = $post['revision'] + 1;
-				}
-				
-				
-				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
-				$sql->commit();
-				
-				if ($can_attach) {
-					confirm_attachments($attach_key, $post['user'], $_GET['id'], 0, $attachsel);
-				}
-				
-				report_post("Post edited", $forum, [
-					'user'      => $loguser['name'],
-					'thread'	=> $thread['title'],
-					'pid'		=> $_GET['id'],
-				]);
-				
-				errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
-				
-			} else {
-				/*
-					Edit preview
-				*/
-				$preview_msg = $message;
-				if ($can_attach) {
-					$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
-				}
-				
-				$data = array(
-					// Text
-					'message' => $preview_msg,	
-					'head'    => $head,
-					'sign'    => $sign,
-					'css'     => $css,
-					// Post metadata
-					'id'      => $post['id'],
-					'forum'   => $thread['forum'],
-					'ip'      => $post['ip'],
-					'num'     => $post['num'],
-					'date'    => $post['date'],
-					// (mod) Options
-					'nosmilies' => $nosmilies,
-					'nohtml'    => $nohtml,
-					'nolayout'  => 0,
-					'moodid'    => $moodid,
-					'noob'      => $post['noob'],
-					// XFMod Options
-					'highlighted'   => $highlighted,
-					'highlighttext' => $highlighttext,
-					'warned'        => $warned,
-					'warntext'      => $warntext,
-					// Attachments
-					'attach_key' => $attach_key,
-					'attach_sel' => $attachsel,
-				);
-				$preview = preview_post($post['user'], $data, PREVIEW_EDITED);
 			}
-			
+
+			if (!$reply_error) {
+				$can_attach = can_use_attachments($loguser, $forum['attachmentmode']);
+
+				if ($can_attach) {
+					list($attachsel, $total) = process_attachments($attach_key, $post['user'], $_GET['id']); // Returns attachments marked for removal
+				}
+				
+				if (isset($_POST['submit'])) {
+					
+					// :^)
+					if ($loguser['editing_locked']) {
+						report_send(IRC_STAFF, "'{$loguser['name']}' tried to edit post #{$_GET['id']}");
+						errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
+					}
+					
+					check_token($_POST['auth']);
+					
+					$gtopt = array(
+						'mood' => $moodid,
+					);
+					$message 	= replace_tags($message, get_tags($loguser, $gtopt));
+					$edited 	= getuserlink($loguser);
+					
+					/*
+					if ($loguserid == 1162) {
+						report_send(IRC_STAFF, "The jceggbert5 dipshit tried to edit another post: ". $_GET['id']);
+						errorpage("");
+					}
+					
+					if (($message == "COCKS" || $head == "COCKS" || $sign == "COCKS") || ($message == $head && $head == $sign)) {
+						$sql->query("INSERT INTO `ipbans` SET `reason` = 'Idiot hack attempt', `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."'");
+						errorpage("NO BONUS");
+					}
+					*/				
+					// Check if we have already stored this layout, so we won't have to duplicate it
+					if ($headid = getpostlayoutid($head, false)) $head = "";
+					if ($signid = getpostlayoutid($sign, false)) $sign = "";
+					if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
+						
+					$sql->beginTransaction();
+					
+					// Post update data which does not trigger a new revision
+					$pdata = array(
+						'nosmilies' => $nosmilies,
+						'nohtml'    => $nohtml,
+						'moodid'	=> $moodid,
+					);
+
+					//--
+					if ($ismod) {
+						$pdata['warned'] = $warned;
+						$pdata['warntext'] = $warntext;
+						// Only update the date when switching 
+						if (!$post['warned'] && $warned != $post['warned'])
+							$pdata['warndate'] = time();
+						
+						$pdata['highlighted'] = $highlighted;
+						$pdata['highlighttext'] = $highlighttext;
+						// Only update the date when going from nohighlight->highlight.
+						if (!$post['highlighted'] && $highlighted != $post['highlighted'])
+							$pdata['highlightdate'] = time();
+					}
+					//--
+					
+					$create_rev = 
+						   $post['text']     != $message 
+						|| $post['headtext'] != $head || $post['headid'] != $headid 
+						|| $post['signtext'] != $sign || $post['signid'] != $signid  
+						|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
+						
+					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
+					if ($flag_as_edited) {
+						$pdata['edited']   = $edited;
+						$pdata['editdate'] = time();
+					}
+					if ($create_rev) {
+						// Old revisions are stored in their own containment area, and not in the same table
+						$save = array(
+							'pid'      => $_GET['id'],
+							'revdate'  => $post['date'],   // Revision dated
+							'revuser'  => ($post['revision'] > 1 ? $loguser['id'] : $post['user']), // Revision edited by
+							'text'     => $post['text'],
+							'headtext' => $post['headtext'],
+							'signtext' => $post['signtext'],
+							'csstext'  => $post['csstext'],
+							'headid'   => $post['headid'],
+							'signid'   => $post['signid'],
+							'cssid'    => $post['cssid'],
+							'revision' => $post['revision'],
+						);
+						$sql->queryp("INSERT INTO posts_old SET ".mysql::setplaceholders($save), $save);
+						// The post update query now updates these as well
+						$pdata['text']     = $message;
+						$pdata['headtext'] = $head;
+						$pdata['signtext'] = $sign;
+						$pdata['csstext']  = $css;
+						$pdata['headid']   = $headid;
+						$pdata['signid']   = $signid;
+						$pdata['cssid']    = $cssid;
+						$pdata['revision'] = $post['revision'] + 1;
+					}
+					
+					
+					$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($pdata)." WHERE id = {$_GET['id']}", $pdata);
+					$sql->commit();
+					
+					if ($can_attach) {
+						confirm_attachments($attach_key, $post['user'], $_GET['id'], 0, $attachsel);
+					}
+					
+					report_post("Post edited", $forum, [
+						'user'      => $loguser['name'],
+						'thread'	=> $thread['title'],
+						'pid'		=> $_GET['id'],
+					]);
+					
+					errorpage("Post edited successfully.", "thread.php?pid={$_GET['id']}#{$_GET['id']}", 'return to the thread', 0);
+					
+				} else {
+					/*
+						Edit preview
+					*/
+					$preview_msg = $message;
+					if ($can_attach) {
+						$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
+					}
+					
+					$data = array(
+						// Text
+						'message' => $preview_msg,	
+						'head'    => $head,
+						'sign'    => $sign,
+						'css'     => $css,
+						// Post metadata
+						'id'      => $post['id'],
+						'forum'   => $thread['forum'],
+						'ip'      => $post['ip'],
+						'num'     => $post['num'],
+						'date'    => $post['date'],
+						// (mod) Options
+						'nosmilies' => $nosmilies,
+						'nohtml'    => $nohtml,
+						'nolayout'  => 0,
+						'moodid'    => $moodid,
+						'noob'      => $post['noob'],
+						// XFMod Options
+						'highlighted'   => $highlighted,
+						'highlighttext' => $highlighttext,
+						'warned'        => $warned,
+						'warntext'      => $warntext,
+						// Attachments
+						'attach_key' => $attach_key,
+						'attach_sel' => $attachsel,
+					);
+					$postpreview = preview_post($post['user'], $data, PREVIEW_EDITED);
+				}
+			}
 		} else {	
 			// Replace the default variables with the original ones from the thread
 			$message = $post['text'];
@@ -246,7 +259,6 @@
 			$nosmilies  = $post['nosmilies'];
 			$nohtml     = $post['nohtml'];
 			$moodid		= $post['moodid'];
-			$preview    = "";
 			
 			$warned			= $post['warned'];
 			$warntext		= $post['warntext'];
@@ -260,11 +272,19 @@
 		$hreadonly = !can_edit_highlight($post);
 		
 		pageheader($windowtitle."Editing Post");
+		
+		if ($forum_error)
+			$forum_error = "<table class='table'>{$forum_error}</table>";
+		
 		$barlinks = mklinks("Edit post"); 
 		
+		print $barlinks . $forum_error;
+		// In case something happened, show a message *over the reply box*, to allow fixing anything important.
+		if ($reply_error) {
+			boardmessage("Couldn't preview or submit the reply. One or more errors occurred:<br><br>".$reply_error, "Error", false);
+		}
+		print "<br>".$postpreview;
 		?>
-		
-		<?= $barlinks . $forum_error . $preview ?>
 		<form method="POST" ACTION="editpost.php?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan='3'>Edit post</td></tr>
@@ -281,8 +301,8 @@
 				<td class='tdbg1 center'>&nbsp;</td>
 				<td class='tdbg2'>
 					<?= auth_tag() ?>
-					<input type='submit' name=submit VALUE="Edit post">
-					<input type='submit' name=preview VALUE="Preview post">
+					<input type='submit' name="submit" VALUE="Edit post">
+					<input type='submit' name="preview" VALUE="Preview post">
 				</td>
 			</tr>	
 			<tr>

@@ -129,7 +129,7 @@ $links = array(
 	["{$users_p}rivate messages", "private.php?{$idparam}"],
 	["Manage folders", NULL],
 );
-$right = "<a href='sendprivate.php?'>New conversation</a> - Manage folders";
+$right = "<a href='newpmthread.php?'>New conversation</a> - Manage folders";
 ?>
 	<form method="POST" action="?<?=$idparam?>">
 	<?= dobreadcrumbs($links, $right) ?>

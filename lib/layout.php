@@ -34,7 +34,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	$closedpic		= '<img class="pixel" src="schemes/default/status/threadclosed.png" alt="Thread closed" align="absmiddle">';
 	$nopollpic      = '<img class="pixel" src="schemes/default/status/nopolls.png" alt="No more fucking polls" align="absmiddle">';
 	$poweredbypic   = '<img class="pixel" src="images/poweredbyacmlm.gif">';
-	$warnpic        = '<img class="vamid" src="images/warn.png">';
+	$warnpic        = '<img class="vamid" src="images/warn.png" alt="WARNING!">';
 	$numdir			= 'jul/';
 
 	$statusicons = [
@@ -368,7 +368,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 }
 
 function pageheader($windowtitle = '', $mini = false, $centered = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $barimg, $isbot, $schemerow,
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $barimg, $isbot, $schemerow, $statusicons,
 			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css_layout, $forcetitle, $warnpic;
 			
 	// Load this if it wasn't explicitly launched

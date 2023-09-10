@@ -225,7 +225,7 @@
 		["{$users_p}rivate messages", NULL],
 	);
 	$right = pm_folder_select('dir', $u, $_GET['dir'], PMSELECT_ALL | PMSELECT_JS | PMSELECT_SHOWCNT)." - 
-		<a href='sendprivate.php?dir={$_GET['dir']}'>New conversation</a> - 
+		<a href='newpmthread.php?dir={$_GET['dir']}'>New conversation</a> - 
 		<a href='privatefolders.php'>Manage folders</a>";
 	$infotable = dobreadcrumbs($links, $right);
 	

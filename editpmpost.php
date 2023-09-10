@@ -19,7 +19,6 @@
 	}
 	
 	load_pm_thread($post['thread']);
-	load_layout();
 	
 	// Only applicable for the edit action, doesn't matter with others
 	$submitted = isset($_POST['submit']) || isset($_POST['preview']);

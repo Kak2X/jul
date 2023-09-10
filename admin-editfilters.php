@@ -1,7 +1,6 @@
 <?php
 
 require "lib/common.php";
-require "lib/TreeView.php";
 
 admincheck();	
 
@@ -270,10 +269,8 @@ if (!$_GET['type']) {
 	</tr>";
 }
 
-$extramenu = TreeView::ParseSubmenu($filter_types, 'admin-editfilters.php?type=');
-
 pageheader("Board Filters");
-print adminlinkbar($scriptname, "?type={$_GET['type']}", $extramenu);
+print adminlinkbar($_GET['type'] ? "{$scriptname}?type={$_GET['type']}" : null);
 
 print "
 <form method='POST' action=\"{$redirurl}&id={$_GET['id']}\">

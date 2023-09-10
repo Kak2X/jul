@@ -291,6 +291,18 @@ input[type=radio] {
 	padding: 5px 15px;
 }
 
+/* Could have been display:flex but oh well */
+.pane-table {
+	border-spacing: 0;
+}
+.pane-table  > tbody > tr > td {
+	padding: 0;
+	vertical-align: top;
+}
+.pane-table  > tbody > tr > td:first-child {
+	padding-right: 5px;
+}
+
 /* */
 .imgtag { max-width: 100%; }
 .post { position: relative; }

@@ -1512,125 +1512,118 @@ function admincheck() {
 	}
 }
 
-function adminlinkbar($sel = NULL, $subsel = "", $extraopt = NULL) {
+function tree_draw($cats, $sel, $catlink = null, $pad = 0) {
+	$res   = "";
+	foreach ($cats as $catlbl => $cat) {
+		
+		$hastitle = is_string($catlbl);
+		if ($hastitle) {
+			if (!$catlink) // no URL? (topmost level)
+				$title = "<b>{$catlbl}</b>";
+			else if ($catlink == $sel) // Currently selected page?
+				$title = "<b><i>{$catlbl}</i></b>";
+			else // Selectable page?
+				$title = "<a href='{$catlink}'>{$catlbl}</a>";
+			$res .= "<div style='padding-left:{$pad}px'>&bull; {$title}</div>";
+			$pad += 20;
+		}
+		
+		foreach ($cat as $link => $item) {
+			if (is_array($item)) // nested list?
+				$res .= tree_draw($item, $sel, $link, $pad);
+			else {
+				if ($link == $sel)
+					$itemurl = "<b><i>{$item}</i></b>";
+				else
+					$itemurl = "<a href='{$link}'>{$item}</a>";
+				$res .= "<div style='padding-left:{$pad}px'>&bull; {$itemurl}</div>";
+			}
+		}
+		
+		if ($hastitle) {
+			$pad -= 20;
+		}
+	}
+	
+	return $res;
+}
+
+function adminlinkbar($sel = null, $args = "") {
 	global $isadmin;
 	if (!$isadmin) return;
-	require_once "lib/TreeView.php";
 	
 	if (!$sel) {
 		// If no selection is passed, default to the current script
-		global $scriptname;
-		$sel = $scriptname;
+		global $scriptpath;
+		$sel = $scriptpath;
 	}
+	$sel .= $args;
 	
 	global $_adminlinks;
-	$_adminlinks = array(
-		array(
+	$_adminlinks = [
+		[
 			'admin.php'	              => "Admin Control Panel",
-//			'admin-todo.php'          => "To-do list",
+//			'admin-todo.php'          => "To-do list"],
 			'admin-extensions.php'    => "Extensions manager",
 			'admin-reporting.php'     => "Post Reporting",
-		),
-		'Quick jump' => array(
+		],
+		'Quick jump' => [
 			'announcement.php'        => "Go to Announcements",
-		),
-		'Configuration' => array(
-			'admin-editresources.php' => "Edit Resources",
-			'admin-editfilters.php'   => "Edit Filters",
+		],
+		'Configuration' => [
+			'admin-editresources.php' => [
+				"Edit Resources" => [
+					'admin-editresources.php?type=1'  => "Smilies",
+					'admin-editresources.php?type=2'  => "Post icons",
+					'admin-editresources.php?type=3'  => "Syndromes/CSS",
+				],
+			],
+			'admin-editfilters.php'   => [
+				"Edit Filters" => [
+					'admin-editfilters.php?type=1'  => "Generic",
+					'admin-editfilters.php?type=2'  => "URLs",
+					'admin-editfilters.php?type=3'  => "HTML/CSS",
+					'admin-editfilters.php?type=4'  => "Bad words",
+					'admin-editfilters.php?type=5'  => "Joke/Idiocy",
+					'admin-editfilters.php?type=6'  => "Hidden Smilies",
+					'admin-editfilters.php?type=7'  => "Security",
+					//'admin-editfilters.php?type=99' => "Test",
+				],
+			],
 			'admin-editforums.php'    => "Edit Forum List",
 			'admin-editmods.php'      => "Edit Forum Moderators",
 			'admin-forumbans.php'     => "Edit Forum Bans",
 			'admin-editmods.php'      => "Edit Forum Moderators",
 			'admin-forumbans.php'     => "Edit Forum Bans",
 			'admin-attachments.php'   => "Edit Attachments",
-		),
-		'Management' => array(
+		],
+		'Management' => [
 			'admin-repair.php'        => "Repair System",
 			'admin-backup.php'        => "Board Backups",
-		),
-//		'Security' => array(
+		],
+//		'Security' => [
 //			'admin-downloader.php'    => "?",	// coming never ever
-//			'admin-showlogs.php'      => "Log Viewer",	
-//			'shitbugs.php'            => "?"
-//		),
-		'IP management' => array(
+//			'admin-showlogs.php'      => "Log Viewer",
+//		],
+		'IP management' => [
 			'admin-ipsearch.php'      => "IP Search",
 			'admin-ipbans.php'        => "IP Bans",
-		),
-		'User management' => array(
+		],
+		'User management' => [
 			'admin-pendingusers.php'  => "Pending Users",
 			'admin-slammer.php'       => "EZ Ban Button",
 			'admin-deluser.php'       => "Delete User",
-		)
-	);
+		]
+	];
 	hook_use('adminlinkbar');
 	
-	$oldbar = filter_int($_COOKIE['linkbar']);	
-	if (!$oldbar) {
-		global $_adminsidebar;
-		$_adminsidebar = new TreeView("Admin Functions", $_adminlinks); 
-		return $_adminsidebar->DisplaySidebar($sel, $subsel, $extraopt);
-	} else {
-		// ...
-		$_adminlinks['Quick jump'] = array_merge($_adminlinks['Quick jump'], $_adminlinks['Configuration']);
-		//$_adminlinks['ThreadFix'] = array_merge($_adminlinks['ThreadFix'], $_adminlinks['Security']);
-		$_adminlinks['IP management'] = array_merge($_adminlinks['IP management'], $_adminlinks['User management']);
-		unset($_adminlinks['Configuration'], $_adminlinks['Security'], $_adminlinks['User management']);
-		
-		
-		$r = "<div style='padding:0px;margins:0px;'>
-				<table class='table'>
-					<tr>
-						<td class='tdbgh center b'>
-							Admin Functions
-						</td>
-					</tr>
-				</table>";
-		foreach ($_adminlinks as $rownum => $linkrow) {
-			$c	= count($linkrow);
-			$w	= floor(1 / $c * 100);
-
-			$r .= "<table class='table' style='border-top: 0'><tr>";
-
-			foreach($linkrow as $link => $name) {
-				$cell = '1';
-				if ($link == $sel) $cell = 'c';
-				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px; border-top: 0' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
-			}
-
-			$r .= "</tr></table>";
-		}
-		
-		//--
-		// Do the same (more or less) for the page-specific link bar
-		if ($extraopt) {
-			$c	= count($extraopt);
-			$w	= floor(1 / $c * 100);
-			
-			$r .= "
-				<table class='table' style='border-top: 0'>
-					<tr>
-						<td class='tdbgh center b' colspan='{$c}'>
-							Page Selection
-						</td>
-					</tr>
-					<tr>";
-					
-			$sel .= $subsel;
-			foreach($extraopt as $link => $name) {
-				$cell = '1';
-				if ($link == $sel) $cell = 'c';
-				$r .= "<td class='tdbg{$cell} center nobr' style='padding: 1px 10px' width=\"{$w}%\"><a href=\"{$link}\">{$name}</a></td>";
-			}
-			$r.= "</tr></table>";
-		}
-		//--
-		
-		$r .= "</div><br>";
-		
-		return $r;
-	}
-	
+	register_pagefooter_html("</td></tr></table>");
+	return "<table class='pane-table w'><tr><td class='nobr'>
+<table class='table'>
+	<tr><td class='tdbgh center b'>Admin Functions</td></tr>
+	<tr><td class='tdbg1 left vatop' style='padding-right: 15px'>".tree_draw($_adminlinks, $sel)."</td></tr>
+</table>
+	</td><td class='w'>";
 }
 
 function adminlinkbar_add($catname, $contents) {
@@ -1681,15 +1674,23 @@ function include_js($fn, $as_tag = false) {
 	}
 }
 
+function register_pagefooter_html($str) {
+	global $footer_extra;
+	if (!isset($footer_extra))
+		$footer_extra = $str;
+	else
+		$footer_extra .= $str;
+}
+
 function register_js($fn, $link = true) {
-	global $js_extra;
-	if (!$js_extra)
-		$js_extra = "";
+	global $footer_extra;
+	if (!$footer_extra)
+		$footer_extra = "";
 	
 	if ($link) {
-		$js_extra .= "<script src='$fn' type='text/javascript'></script>";
+		$footer_extra .= "<script src='$fn' type='text/javascript'></script>";
 	} else {
-		$js_extra .= "<script type='text/javascript'>$fn</script>";
+		$footer_extra .= "<script type='text/javascript'>$fn</script>";
 	}
 }
 

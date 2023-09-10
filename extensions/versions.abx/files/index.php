@@ -13,8 +13,6 @@
 		return header("Location: ?{$redirStr}");
 	}
 	
-	require "lib/TreeView.php";
-	
 	$windowtitle = "Version history";
 	
 	$_GET['action'] = filter_string($_GET['action']);
@@ -401,11 +399,22 @@
 			
 			// Sidebar selection code (to save vertical space when a category is selected)
 			$urlformat = actionlink(null, "?cat=");
-			$sidebar = new TreeView("Categories", TreeView::ParseSubmenu($catlist, $urlformat)); 
-			
+			$tree = [];
+			foreach ($catlist as $k => $v)
+				$tree[$urlformat.$k] = $v;
 ?>
+
+	
 			<style>ul {padding-left: 20px} </style>
-			<?= $barlinks . $sidebar->DisplaySidebar($urlformat.$_GET['cat']) ?>
+			<?= $barlinks ?>
+			
+<table class='pane-table w'><tr><td class='nobr'>
+			<table class='table'>
+				<tr><td class='tdbgh center b'>Categories</td></tr>
+				<tr><td class='tdbg1 left vatop' style='padding-right: 15px'><?=tree_draw([$tree], $urlformat.$_GET['cat'])?></td></tr>
+			</table>
+</td><td class='w'>	
+			
 			<table class="table">
 				<tr><td class="tdbgh center b" colspan="3"><?= $cattitle ?> | Viewable items: <?= $i ?></td></tr>
 				<tr>
@@ -416,7 +425,10 @@
 				
 				<?= $txt ?>
 			</table>
-			<?= $sidebar->DisplayBottom() . $barlinks ?>
+</td></tr></table>
+			<?= $barlinks ?>
+			
+
 <?php
 		//}
 	} else {

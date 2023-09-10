@@ -135,7 +135,7 @@ $windowtitle = "Editing Forum List";
 
 pageheader($windowtitle);
 
-print adminlinkbar('admin-editforums.php');
+print adminlinkbar();
 
 
 $attachmodes = array(-2 => 'Disallowed',

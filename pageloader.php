@@ -120,6 +120,7 @@
 				die;
 			}
 			
+			$scriptname = $extFile;
 			$scriptpath = "{$extName}/".(isset($_virtualFile) ? $_virtualFile : $extFile); // For relative links to the current extension (with actionlink)
 			$meta['base'] = "{$boardurl}/"; // Enable base href tag to point to correct images/CSS
 			

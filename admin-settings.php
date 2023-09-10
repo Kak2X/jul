@@ -28,7 +28,7 @@
 	$xname = htmlspecialchars($info['name']);
 	
 	pageheader("{$xname}: Settings");
-	print adminlinkbar("admin-extensions.php");
+	print adminlinkbar();
 
 	$links = array(
 		["Optional features", "admin-extensions.php"],

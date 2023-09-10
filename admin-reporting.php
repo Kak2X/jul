@@ -120,7 +120,7 @@ else if ($_GET['action'] == "ircedit") {
 	}
 	
 	pageheader("Post Reporting - IRC Channel");
-	print adminlinkbar("admin-reporting.php");
+	print adminlinkbar();
 	
 	if ($_GET['id'] == -1) {
 		$title = "Adding new IRC channel";
@@ -240,7 +240,7 @@ else if ($_GET['action'] == "discedit") {
 	}
 	
 	pageheader("Post Reporting - Discord Webhook");
-	print adminlinkbar("admin-reporting.php");
+	print adminlinkbar();
 	
 	?>	
 	<form method="POST" action="?action=<?=$_GET['action']?>&id=<?=$_GET['id']?>">
@@ -330,7 +330,7 @@ else {
 	} 
 
 	pageheader("Post Reporting");
-	print adminlinkbar("admin-reporting.php");
+	print adminlinkbar();
 	
 	$settings = $sql->fetchq("SELECT * FROM irc_settings");
 ?>	

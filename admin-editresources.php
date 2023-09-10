@@ -1,7 +1,6 @@
 <?php
 
 require "lib/common.php";
-require "lib/TreeView.php";
 
 $resource_types = array(
 	1 => "Smilies",
@@ -265,12 +264,8 @@ if (!isset($html)) {
 	$html = row_display($headers, $values, $strings, $_GET['id']); //, $_GET['page'], $_GET['fpp'], count($values));
 }
 
-
-
-$extramenu = TreeView::ParseSubmenu($resource_types, 'admin-editresources.php?type=');
-
 pageheader("Edit resources");
-print adminlinkbar($scriptname, "?type={$_GET['type']}", $extramenu)
+print adminlinkbar($_GET['type'] ? "{$scriptname}?type={$_GET['type']}" : null)
 . "<form method='POST' action='{$redir_url}".(isset($_GET['id']) ? "&id={$_GET['id']}" : "")."' enctype='multipart/form-data'>"
 . $html 
 . "</form>";

@@ -105,10 +105,7 @@
 	pageheader("Uploader Manager");
 	
 	if ($isadmin && !isset($_GET['noadmin'])) {
-		print adminlinkbar($scriptpath, $_GET['mode'] ? "?mode={$_GET['mode']}" : "?", [
-			actionlink(null,"?") => "Shared folders",
-			actionlink(null,"?mode=u") => "Personal folders",
-		]);
+		print adminlinkbar($_GET['mode'] ? "{$scriptpath}?mode={$_GET['mode']}" : null);
 	}
 
 	$links = uploader_breadcrumbs_links($cat, $user, [["Manager", NULL]]);

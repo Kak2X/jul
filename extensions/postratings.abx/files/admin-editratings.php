@@ -111,7 +111,7 @@
 	}
 	
 	pageheader("Ratings editor");
-	print adminlinkbar($scriptpath);
+	print adminlinkbar("{$extName}/admin-editratings.php");
 	
 	$ratings = get_ratings(true);
 	if ($_GET['id']) {

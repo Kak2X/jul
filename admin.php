@@ -7,13 +7,6 @@
 	if (!$isadmin) {
 		errorpage("Uh oh, you are not the admin go away.");
 	}
-	
-	// Admin bar type toogle code
-	if (toggle_board_cookie($_GET['togglebar'], 'linkbar')) {
-		die(header("Location: admin.php"));
-	}
-	$oldbar = filter_bool($_COOKIE['linkbar']);
-	
 		
 	pageheader($windowtitle);
 	
@@ -22,7 +15,6 @@
 	if (isset($_POST['submit'])) {
 		// Token check
 		check_token($_POST['auth']);
-		
 		
 		// The query
 		$settings = [
@@ -78,18 +70,15 @@
 	$reg_sel[$misc['regmode']] = 'selected';
 	$prv_sel[$misc['private']] = 'selected';
 
-	print adminlinkbar("admin.php");
+	print adminlinkbar();
 	
 	?>
 	<table class='table'>
 		<tr><td class='tdbgh center'><b>Panel de Admin<br></td></tr>
 		<tr><td class='tdbg1 center'>
 			&nbsp;<br>
-			There are a few features you can use. Select one from the panel on the <?= $oldbar ? "top" : "left" ?>.<br>
+			There are a few features you can use. Select one from the panel on the left.<br>
 			Alternatively you can change some general board options in the section below.
-			<br>
-			<br>
-			<small>(Click <a href="?togglebar=1">here</a> to use the <?= $oldbar ? "new" : "old" ?> style panel)</small>
 			<?= ($sysadmin ? "<br><br>To change the hard configuration, click <a href='install/'>here</a>." : "") ?>
 			<br>&nbsp;
 		</td></tr>

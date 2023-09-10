@@ -29,11 +29,11 @@
 		date_default_timezone_set($config['timezone']);
 	}
 
-	$scriptname = basename($_SERVER['PHP_SELF']);
-	// If not previously defined, calculate the root page and script path.
+	// If not previously defined, calculate the root page and script path/name.
 	if (!isset($root)) {
 		fetch_root($root, $boardurl);
-		$scriptpath = $scriptname;
+		$scriptname = basename($_SERVER['PHP_SELF']);
+		$scriptpath = $scriptname;	
 	} else {
 		// Otherwise, we're definitely running an extension script. Load the current extension config.
 		$xconf = ext_read_config($extName);

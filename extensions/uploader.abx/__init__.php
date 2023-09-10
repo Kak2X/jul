@@ -9,7 +9,12 @@ hook_add('header-links-2', function() use ($extName) {
 hook_add('adminlinkbar', function() use ($extName) {
 	adminlinkbar_add('File uploader', array(
 		"{$extName}/uploader-countfix.php"   => "File Count Fix",
-		"{$extName}/uploader-catman.php"     => "Folder Manager",
+		[
+			"Folder Manager" => [
+				"{$extName}/uploader-catman.php" => "Shared folders",
+				"{$extName}/uploader-catman.php?mode=u" => "Personal folders",
+			],
+		],
 	));
 });
 

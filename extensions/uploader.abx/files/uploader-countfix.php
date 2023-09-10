@@ -6,7 +6,7 @@
 	
 	pageheader("Uploader - File Count Fix");
 	
-	print adminlinkbar($scriptpath);
+	print adminlinkbar();
 
 	if (!isset($_POST['run'])) {
 		?>

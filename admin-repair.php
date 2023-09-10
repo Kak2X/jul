@@ -11,7 +11,7 @@ if ($_POST['run'])
 	check_token($_POST['auth']);
 
 pageheader("Thread Repair System");
-print adminlinkbar("admin-repair.php");
+print adminlinkbar();
 
 switch ($_POST['run']) {
 	case 0:	

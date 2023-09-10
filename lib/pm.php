@@ -411,9 +411,9 @@ function create_pm_post($preq) {
 		$modq = ($preq->threadupdate ? mysql::setplaceholders($preq->threadupdate)."," : "");
 		$sql->queryp("UPDATE `pm_threads` SET {$modq} `replies` =  `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $preq->threadupdate);
 		$sql->query("UPDATE `pm_threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
-		$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
-		$sql->query("UPDATE `users` SET `lastpmtime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
 	}
+	$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
+	$sql->query("UPDATE `users` SET `lastpmtime` = '{$currenttime}' WHERE `id` = '{$user['id']}'");
 	return $pid;
 }
 

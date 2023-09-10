@@ -462,9 +462,9 @@
 			// Not the first post: update other stats
 			$modq = ($preq->threadupdate ? mysql::setplaceholders($preq->threadupdate)."," : "");
 			$sql->queryp("UPDATE `threads` SET {$modq} `replies` = `replies` + 1, `lastpostdate` = '{$currenttime}', `lastposter` = '{$user['id']}' WHERE `id` = '{$preq->vals['thread']}'", $preq->threadupdate);
-			$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
-			$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
 		}
+		$sql->query("UPDATE `threadsread` SET `read` = '0' WHERE `tid` = '{$preq->vals['thread']}'");
+		$sql->query("REPLACE INTO threadsread SET `uid` = '{$user['id']}', `tid` = '{$preq->vals['thread']}', `time` = '{$currenttime}', `read` = '1'");
 		return $pid;	
 	}
 	

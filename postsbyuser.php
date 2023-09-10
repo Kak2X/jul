@@ -174,7 +174,7 @@ function drawtable($posts, $page, $type, $ispm) {
 			<td class='tdbg1 fonts center'>".printdate($post['date'])."</td>
 			<td class='tdbg1 fonts'{$strike}>#{$threadlink} - {$postlink}</td>
 			<td class='tdbg1 fonts'>".($post['warned'] ? printdate($post['warndate']) : "")."</td>
-			<td class='tdbg1 fonts'>".($post['warned'] ? dofilters($post['warntext']) : "")."</td>
+			<td class='tdbg1 fonts'>".($post['warned'] ? dofilters(domarkup($post['warntext'])) : "")."</td>
 			".($isadmin ? "<td class='tdbg1 fonts center'>".htmlspecialchars($post['ip'])."</td>" : "")."
 		</tr>";
 	}

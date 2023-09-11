@@ -320,7 +320,17 @@
 			$post['attach'] = $attachments[$post['id']];
 		}
 		hook_use_ref('pm-extra-fields', $post);
+		// "new" indicator for individual posts
+		$threadread = $thread['treadtime'] ? $thread['treadtime'] : $readdate;
+		$post['new'] = $post['date'] > $threadread;
 		
+		// Highlight arrow links
+		if ($_GET['id'] && !$_GET['hi'] && $post['highlighted']) {
+			$hkey = array_search($post['id'], $highlights);
+			$post['highlightprev'] = $hkey ? "#".$highlights[$hkey-1] : ($hprev ? "showprivate.php?pid={$hprev}#{$hprev}" : null);
+			$post['highlightnext'] = $hkey != count($highlights) - 1 ? "#".$highlights[$hkey+1] : ($hnext ? "showprivate.php?pid={$hnext}#{$hnext}" : null);
+		}
+			
 		$post['act']     = filter_int($act[$post['user']]);	
 		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";
 	}

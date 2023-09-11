@@ -435,6 +435,35 @@
 			}
 		},
 		{
+			"title":"Logging",
+			"fields":{
+				"log-referers":{
+					"title":"Log external referers",
+					"desc":"Logs the referer URLs that don't come from the same origin as the board. There's no interface to view them, but they get logged to the 'referer' table.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"log-useragents":{
+					"title":"Log user agents",
+					"desc":"Logs the user agent history for the logged in users.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
+				"log-rendertime":{
+					"title":"Log render times",
+					"desc":"Logs the rendering times for the index page and a few others. They can be viewed through the \"ext/rendertime*.php\" scripts.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				}
+			}
+		},
+		{
 			"title":"Chat page settings",
 			"fields":{
 				"irc-server-title":{
@@ -566,14 +595,6 @@
 				"allow-rereggie":{
 					"title":"Allow re-registrations",
 					"desc":"Allow non-admins to re-register multiple accounts.<!-- if you enable this to accomodate certain users you're a damn dumbass. do not ever enable this outside of testboards -->",
-					"input":"radio",
-					"type":"bool",
-					"default":0,
-					"special":"yesno"
-				},
-				"log-rendertime":{
-					"title":"Log render times",
-					"desc":"Logs the rendering times for the index page and a few others.",
 					"input":"radio",
 					"type":"bool",
 					"default":0,

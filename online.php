@@ -55,7 +55,7 @@
 	
 	// Logged in users
 	$posters = $sql->query("
-		SELECT $userfields, u.posts, lastactivity, lastip, lastposttime, lasturl, hideactivity
+		SELECT $userfields, u.posts, lastactivity, ".($isadmin ? "lastip, lastua," : "")." lastposttime, lasturl, hideactivity
 		FROM users u
 		WHERE lastactivity > ".(time()-$_GET['time'])." AND ($ismod OR !hideactivity)
 		ORDER BY ".($ipsort ? 'lastip' : 'lastactivity DESC')
@@ -71,11 +71,12 @@
 			<td class="tdbgh center" style="width: 200px">Username</td>
 			<td class="tdbgh center" style="width: 120px">Last activity</td>
 			<td class="tdbgh center" style="width: 180px">Last post</td>
+			<td class="tdbgh center" style="width: 60px"> Posts</td>
 			<td class="tdbgh center">URL</td>
 <?php if ($isadmin) { ?>
+			<td class="tdbgh center" style="width: 300px">User Agent</td>
 			<td class="tdbgh center" style="width: 120px">IP address</td>
 <?php } ?>
-			<td class="tdbgh center" style="width: 60px"> Posts</td>
 		</tr>
 	<?php
 
@@ -85,7 +86,6 @@
 		if (!$user['posts'])       $user['lastposttime'] = getblankdate();
 		else                       $user['lastposttime'] = printdate($user['lastposttime']);
 
-		$user['lastip']  = htmlspecialchars($user['lastip'], ENT_QUOTES);
 		$user['lasturl'] = str_replace('shop?h&','shop?',$user['lasturl']);
 		$user['lasturl'] = preg_replace('/[\?\&]debugsql(=[0-9]+)/i','',$user['lasturl']); // let's not give idiots any ideas
 		$user['lasturl'] = preg_replace('/[\?\&]auth(=[0-9a-z]+)/i','',$user['lasturl']); // don't reveal the token
@@ -102,14 +102,17 @@
 		//		<td class='tdbg1 right'>". $user['ipmatches'] ." <img src='". ($user['ipmatches'] > 0 ? "images/dot2.gif" : "images/dot5.gif") ."' align='absmiddle'></td>";
 		?>
 		<tr style="height:24px">
-			<td class="tdbg1 center"><?=$i?></td>
+			<td class="tdbg1 center" <?= ($isadmin ? "rowspan='2'" : "" )?>><?=$i?></td>
 			<td class="tdbg2"><?=$userlink?></td>
 			<td class="tdbg1 center"><?=date('h:i:s A',$user['lastactivity']+$loguser['tzoff'])?></td>
 			<td class="tdbg1 center"><?=$user['lastposttime']?></td>
+			<td class="tdbg2 center"><?=$user['posts']?></td>
 			<td class="tdbg2"><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$user['lasturl']?></td>
 
 <?php	if ($isadmin) { 
-
+			$user['lastip']  = htmlspecialchars($user['lastip'], ENT_QUOTES);
+			$user['lastua']  = escape_html($user['lastua']);
+			
 			if ($banorama && !$user['banned'])
 				$ipban	= "<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=" . generate_token(TOKEN_BANNER, $user['lastip']) ."'>Ban</a> - ";
 			elseif ($user['banned'])
@@ -117,6 +120,7 @@
 			else
 				$ipban	= "";
 ?>
+			<td class="tdbg2 center fonts"><?= $user['lastua'] ?></td>
 			<td class="tdbg1 center">
 				<a href="admin-ipsearch.php?ip=<?=$user['lastip']?>"><?=$user['lastip']?></a>
 				<div class="fonts">
@@ -124,9 +128,10 @@
 				</div>
 			</td>
 <?php	} ?>
-			<td class="tdbg2 center"><?=$user['posts']?></td>
-<?php }	?>
 		</tr>
+<?php }	?>
+
+
 	</table>
 <?php
 	

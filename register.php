@@ -5,11 +5,12 @@
 		die();
 	}
 */
-
-	require "lib/common.php";
-	
-	
 	$meta['noindex'] = true;
+	
+	require "lib/common.php";
+	load_layout();
+	
+
 	
 	$regmode = $sql->resultq("SELECT regmode FROM misc");
 	
@@ -219,12 +220,13 @@
 			if (!$x_hacks['host'] && $regmode == 2) { // || $flagged
 				
 				$sql->queryp("
-					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `date` = :date, `email` = :email",
+					INSERT INTO `pendingusers` SET `name` = :name, `password` = :password, `ip` = :ip, `ua` = :ua, `date` = :date, `email` = :email",
 					[
 						'name'		=> $_POST['name'],
 						'password'	=> getpwhash($_POST['pass'], $newuserid),
 						'email'		=> $_POST['email'],
 						'ip'		=> $_SERVER['REMOTE_ADDR'],
+						'ua'		=> $_SERVER['HTTP_USER_AGENT'],
 						'date'		=> $currenttime,
 					]);
 				$newuserid  = $sql->insert_id();
@@ -245,6 +247,7 @@
 					'email'             => $_POST['email'],
 					'powerlevel'        => $userlevel,
 					'lastip'            => $_SERVER['REMOTE_ADDR'],
+					'lastua'			=> $_SERVER['HTTP_USER_AGENT'],
 					'lastactivity'      => $currenttime,
 					'regdate'           => $currenttime,
 					'threadsperpage'    => $config['default-tpp'],
@@ -252,9 +255,10 @@
 					'scheme'            => $miscdata['defaultscheme'],
 				);
 				$sql->queryp("INSERT INTO users SET ".mysql::setplaceholders($data), $data);
-				
+				log_useragent($newuserid);
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
 				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, {$currenttime} FROM forums");
+				
 				
 				$ircout = array (
 					'id'	=> $newuserid,
@@ -262,6 +266,8 @@
 					'ip'	=> $_SERVER['REMOTE_ADDR'],
 				);
 				report_new_user("user", $ircout);
+				
+				
 				
 				// If the next user is the deleted user ID, make sure to automatically register it
 				if ($makedeluser) {
@@ -306,7 +312,7 @@
 	if ($regerrors['main']) { ?> 
 	<table class='table'>
 		<tr><td class='tdbgh center'>Error registering account</td></tr>
-		<tr><td class='tdbg1 center'><ul><?= $regerrors['main'] ?> </ul></td></tr>
+		<tr><td class='tdbg1 center'><ul style='list-style: none'><?= $regerrors['main'] ?> </ul></td></tr>
 	</table>
 <?php } ?>
 <form method="POST" action="register.php">

@@ -380,18 +380,80 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 	$runtime['show-log'] = 1;
 	
 	/*
-		Track activity only for pages that render the main header
+		Track activity only for pages that render the main header.
 	*/
+	if ($loguser['id'] && !$runtime['ajax-request']) { //  && $loguser['powerlevel'] <= 5
+		
+		$kill_script = false;
+		$update_list = [];
+		
+		// Alert the admin channel for IP changes, instead of just writing these out in the open, on ipchanges.log
+		if ($loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
+			$update_list['lastip'] = $_SERVER['REMOTE_ADDR'];
+
+			// Determine IP block differences
+			$ip1 = explode(".", $loguser['lastip']);
+			$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
+			for ($diff = 0; $diff < 3; ++$diff)
+				if ($ip1[$diff] != $ip2[$diff]) break;
+			if ($diff == 0) $color = xk(4);	// IP completely different
+			else            $color = xk(8); // Not all blocks changed
+			$diff = "/".($diff+1)*8;
+
+			report_send(
+				IRC_ADMIN, xk(7)."User {$loguser['name']} (id {$loguser['id']}) changed from IP ".xk(8)."{$loguser['lastip']}".xk(7)." to ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." ({$color}{$diff}".xk(7).")",
+				IRC_ADMIN, "User {$loguser['name']} (id {$loguser['id']}) changed from IP **{$loguser['lastip']}** to **{$_SERVER['REMOTE_ADDR']}** (**{$diff}**)"
+			);
+
+			// "Transfer" the IP bans just in case
+			$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
+			if ($oldban){
+				ipban(
+					$_SERVER['REMOTE_ADDR'],  // IP to ban
+					$oldban['reason'], // Copy over the ban reason
+					"Previous IP address was IP banned - updated IP bans list.", // IRC Message
+					IRC_ADMIN // IRC Channel
+				);
+				$kill_script = true;
+			}
+			unset($oldban);
+
+			// optionally force log out
+			if ($config['force-lastip-match']) {
+				remove_board_cookie('loguserid');
+				remove_board_cookie('logverify');
+				$kill_script = true;
+			}
+		}
+		
+		// Track/log last user agent info
+		if ($loguser['lastua'] != $_SERVER['HTTP_USER_AGENT']) {
+			$update_list['lastua'] = $_SERVER['HTTP_USER_AGENT'];
+			log_useragent($loguser['id']);
+		}
+		
+		// Update both of them
+		if (count($update_list)) {
+			$sql->queryp("UPDATE users SET ".mysql::setplaceholders($update_list)." WHERE id = {$loguser['id']}", $update_list);
+		}
+		
+		// Attempt to preserve current page
+		if ($kill_script)	
+			die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
+
+		unset($kill_script, $update_list);
+	}
+	
+	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(time() - 300));
 	if ($loguser['id']) {
 		if (!filter_bool($meta['notrack'])) {
 			$influencelv = calclvl(calcexp($loguser['posts'], (time() - $loguser['regdate']) / 86400));
 			$sql->queryp("
 				UPDATE users
-				SET lastactivity = :lastactivity, lastip = :lastip, lasturl = :lasturl ,lastforum = :lastforum, influence = :influence
+				SET lastactivity = :lastactivity, lasturl = :lasturl, lastforum = :lastforum, influence = :influence
 				WHERE id = {$loguser['id']}",
 				[
 					'lastactivity' 	=> time(),
-					'lastip' 		=> $_SERVER['REMOTE_ADDR'],
 					'lasturl' 		=> $url,
 					'lastforum'		=> 0,
 					'influence'		=> $influencelv,
@@ -409,7 +471,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 				'flags'			=> $bpt_flags,
 			]);
 	}
-	$sql->query("DELETE FROM guests WHERE ip = '{$_SERVER['REMOTE_ADDR']}' OR date < ".(time() - 300));
+	
 	
 
 	/*

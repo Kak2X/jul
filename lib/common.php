@@ -152,6 +152,7 @@
 		// Forcing the user id?
 		$loguser = $sql->fetchq("SELECT * FROM `users` WHERE `id` = {$config['force-user-id']}");
 		$loguser['lastip'] = $_SERVER['REMOTE_ADDR']; // since these now match, it will not update the lastip value on the db
+		$loguser['lastua'] = $_SERVER['HTTP_USER_AGENT']; // here too	
 	} else if (isset($_COOKIE['loguserid']) && isset($_COOKIE['logverify'])) {
 		// Are we logged in?
 		$loguserid 	= (int) $_COOKIE['loguserid'];
@@ -350,7 +351,7 @@
 		$bpt_flags = $bpt_flags & BPT_BOT;
 	}
 
-	if ($origin && !$runtime['same-origin']) {
+	if ($origin && !$runtime['same-origin'] && $config['log-referers']) {
 		$sql->queryp("INSERT INTO referer (time, url, ref, ip) VALUES (:time,:url,:ref,:ip)",
 		[
 			'time' => time(),
@@ -358,44 +359,6 @@
 			'ref'	=> $_SERVER['HTTP_REFERER'],
 			'ip'	=> $_SERVER['REMOTE_ADDR']
 		]);
-	}
-	
-	// Alert the admin channel for IP changes, instead of just writing these out in the open, on ipchanges.log
-	if ($loguser['id'] && $loguser['powerlevel'] <= 5 && !$runtime['ajax-request'] && $loguser['lastip'] != $_SERVER['REMOTE_ADDR']) {
-		// Determine IP block differences
-		$ip1 = explode(".", $loguser['lastip']);
-		$ip2 = explode(".", $_SERVER['REMOTE_ADDR']);
-		for ($diff = 0; $diff < 3; ++$diff)
-			if ($ip1[$diff] != $ip2[$diff]) break;
-		if ($diff == 0) $color = xk(4);	// IP completely different
-		else            $color = xk(8); // Not all blocks changed
-		$diff = "/".($diff+1)*8;
-
-		report_send(
-			IRC_ADMIN, xk(7)."User {$loguser['name']} (id {$loguser['id']}) changed from IP ".xk(8)."{$loguser['lastip']}".xk(7)." to ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." ({$color}{$diff}".xk(7).")",
-			IRC_ADMIN, "User {$loguser['name']} (id {$loguser['id']}) changed from IP **{$loguser['lastip']}** to **{$_SERVER['REMOTE_ADDR']}** (**{$diff}**)"
-		);
-
-		// "Transfer" the IP bans just in case
-		$oldban = $sql->fetchq("SELECT 1, reason FROM ipbans WHERE ip = '{$loguser['lastip']}'");
-		if ($oldban){
-			ipban(
-				$_SERVER['REMOTE_ADDR'],  // IP to ban
-				$oldban['reason'], // Copy over the ban reason
-				"Previous IP address was IP banned - updated IP bans list.", // IRC Message
-				IRC_ADMIN // IRC Channel
-			);
-			die;
-		}
-		unset($oldban);
-
-		// optionally force log out
-		if ($config['force-lastip-match']) {
-			remove_board_cookie('loguserid');
-			remove_board_cookie('logverify');
-			// Attempt to preserve current page
-			die(header("Location: ?{$_SERVER['QUERY_STRING']}"));
-		}
 	}
 
 	if ($ipbanned) {

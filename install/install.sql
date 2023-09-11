@@ -399,6 +399,7 @@ CREATE TABLE `delusers` (
   `lastpmtime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastactivity` int(10) unsigned NOT NULL DEFAULT '0',
   `lastip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastua` text DEFAULT NULL,
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `lastthread` int(10) unsigned NOT NULL DEFAULT '0',
@@ -1048,6 +1049,36 @@ LOCK TABLES `log` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `log_useragent`
+--
+
+DROP TABLE IF EXISTS `log_useragent`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `log_useragent` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `ip` varchar(46) NOT NULL DEFAULT '',
+  `creationdate` int(10) unsigned NOT NULL,
+  `lastchange` int(10) unsigned NOT NULL DEFAULT 0,
+  `useragent` text DEFAULT NULL,
+  `hash` char(32) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `userhash` (`user`,`hash`) USING BTREE,
+  KEY `user` (`user`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `log_useragent`
+--
+
+LOCK TABLES `log_useragent` WRITE;
+/*!40000 ALTER TABLE `log_useragent` DISABLE KEYS */;
+/*!40000 ALTER TABLE `log_useragent` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `minilog`
 --
 
@@ -1243,6 +1274,7 @@ CREATE TABLE `pendingusers` (
   `name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ua` text DEFAULT NULL,
   `date` int(11) unsigned NOT NULL,
   `email` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
@@ -2512,6 +2544,7 @@ CREATE TABLE `users` (
   `lastpmtime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastactivity` int(10) unsigned NOT NULL DEFAULT '0',
   `lastip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastua` text DEFAULT NULL,
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `lastthread` int(10) unsigned NOT NULL DEFAULT '0',

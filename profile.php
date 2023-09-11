@@ -175,6 +175,12 @@
 		$lastip = htmlspecialchars($user['lastip']);
 		$lastip = " <br>with IP: <a href='admin-ipsearch.php?ip={$lastip}' style='font-style:italic;'>{$lastip}</a>";
 	}
+	
+	// Last user agent
+	$lastua = null;
+	if ($isadmin) {
+		$lastua = ($user['lastua'] ? htmlspecialchars($user['lastua']) : "<i>None</i>")." <a class='nobr' href='admin-useragents.php?id={$_GET['id']}'>(View History)</a>";
+	}
 
 	// Email address
 	$email = "<a href=\"mailto:".urlencode($user['email'])."\">".htmlspecialchars($user['email'])."</a>";
@@ -233,6 +239,7 @@
 			'Registered on' => printdate($user['regdate'])." (".floor($numdays)." days ago)",
 			'Last post'     => "{$lastpostdate}{$lastpostlink}",
 			'Last activity' => printdate($user['lastactivity']).$lastip,	
+			'Last user agent' => $lastua,
 		],
 		
 		'Contact information' => [

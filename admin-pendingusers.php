@@ -24,12 +24,25 @@ if (isset($_POST['act'])){
 		*/
 		$sql->beginTransaction();
 		
-		$newuser = $sql->prepare("INSERT INTO users (name, password, email, lastip, regdate, postsperpage, threadsperpage, scheme) VALUES (?,?,?,?,?,?,?,?)");
-		$sql->execute($newuser, [$data['name'], $data['password'], $data['email'], $data['ip'], $data['date'], $config['default-ppp'], $config['default-tpp'], $miscdata['defaultscheme']]);
+		$newuser = $sql->prepare("INSERT INTO users (name, password, email, lastip, lastua, regdate, postsperpage, threadsperpage, scheme) VALUES (?,?,?,?,?,?,?,?,?)");
+		$sql->execute($newuser, [$data['name'], $data['password'], $data['email'], $data['ip'], $data['ua'], time(), $config['default-ppp'], $config['default-tpp'], $miscdata['defaultscheme']]);
 		$newuserid	= $sql->insert_id();
 		$sql->query("DELETE FROM pendingusers WHERE id = {$_GET['id']}");
 		$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, ".time()." FROM forums");
 		$sql->query("INSERT INTO users_rpg (uid) VALUES ({$newuserid})");
+		
+		if ($config['log-useragents']) {
+			$ldata = [
+				'user'         => $newuserid,
+				'ip'           => $data['ip'],
+				'creationdate' => $data['date'],
+				'lastchange'   => $data['date'],
+				'useragent'    => $data['ua'],
+				'hash'         => md5($data['ua']),
+			];
+			$sql->queryp("INSERT INTO log_useragent SET ".mysql::setplaceholders($ldata)."", $ldata);
+		}
+
 		$sql->commit();
 		
 		report_new_user("approved pending user", [
@@ -70,12 +83,13 @@ if (isset($_POST['act'])){
 		$txt    = "";
 		$token  = auth_tag();
 		while ($u = $sql->fetch($users)) {
+			$ip = htmlspecialchars($u['ip']);
 			$txt .= "
 			<tr>
-				<td class='tdbg1 center'>{$u['id']}</td>
-				<td class='tdbg2 center'>".htmlspecialchars($u['name'])."</td>
+				<td class='tdbg1 center' rowspan='2'>{$u['id']}</td>
+				<td class='tdbg2'>".htmlspecialchars($u['name'])."</td>
 				<td class='tdbg2 center'>".printdate($u['date'])."</td>
-				<td class='tdbg1 center'>".htmlspecialchars($u['ip'])."</td>
+				<td class='tdbg1 center'><a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a></td>
 				<td class='tdbg2 center'>
 					<form method='POST' action='?id={$u['id']}' style='display: inline'>
 						{$token}
@@ -84,7 +98,9 @@ if (isset($_POST['act'])){
 						<input type='submit' name='act' value='IP Ban'>
 					</form>
 				</td>
-			</tr>";
+			</tr>
+			<tr><td class='tdbg2 fonts' colspan='4'>".escape_html($u['ua'])."</td></tr>
+			";
 		}
 	} else {
 		$txt = "<tr><td class='tdbg1 center' colspan='5'>There are no pending users to be judged.</td></tr>";

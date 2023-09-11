@@ -782,9 +782,9 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		}
 	}
 	
-	// When the username is null it typically means the user has been deleted.
+	// When the user is null it typically means the user has been deleted.
 	// Print this so we don't just end up with a blank link.
-	if ($u['name'] == NULL) {
+	if (!$u) {
 		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
 	}
 	
@@ -1611,6 +1611,7 @@ function adminlinkbar($sel = null, $args = "") {
 		],
 		'User management' => [
 			'admin-pendingusers.php'  => "Pending Users",
+			'admin-useragents.php'    => "User Agent History",
 			'admin-slammer.php'       => "EZ Ban Button",
 			'admin-deluser.php'       => "Delete User",
 		]
@@ -2355,6 +2356,22 @@ function gethttpheaders() {
 	}
 
 	return $ret;
+}
+
+function log_useragent($userid) {
+	global $sql, $config;
+	if (!$config['log-useragents'])
+		return;
+	
+	$data = [
+		'user'         => $userid,
+		'ip'           => $_SERVER['REMOTE_ADDR'],
+		'creationdate' => time(),
+		'lastchange'   => time(),
+		'useragent'    => $_SERVER['HTTP_USER_AGENT'],
+		'hash'         => md5($_SERVER['HTTP_USER_AGENT']),
+	];
+	$sql->queryp("INSERT INTO log_useragent SET ".mysql::setplaceholders($data)." ON DUPLICATE KEY UPDATE ip = VALUES(ip), lastchange = VALUES(lastchange)", $data);
 }
 	
 function do404() {

@@ -398,7 +398,7 @@ CREATE TABLE `delusers` (
   `lastposttime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastpmtime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastactivity` int(10) unsigned NOT NULL DEFAULT '0',
-  `lastip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `lastthread` int(10) unsigned NOT NULL DEFAULT '0',
@@ -513,7 +513,7 @@ CREATE TABLE `failedlogins` (
   `time` int(11) NOT NULL,
   `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   KEY `time` (`time`,`username`(191),`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -540,7 +540,7 @@ CREATE TABLE `failedregs` (
   `time` int(11) NOT NULL,
   `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `regcode` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email` varchar(60) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -565,7 +565,7 @@ DROP TABLE IF EXISTS `failsupress`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `failsupress` (
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `cnt` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -768,7 +768,7 @@ DROP TABLE IF EXISTS `guests`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `guests` (
   `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `useragent` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `date` int(11) NOT NULL DEFAULT '0',
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -798,7 +798,7 @@ DROP TABLE IF EXISTS `hits`;
 CREATE TABLE `hits` (
   `num` int(11) NOT NULL DEFAULT '0',
   `user` mediumint(8) NOT NULL DEFAULT '0',
-  `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0',
   KEY `num` (`num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -821,7 +821,7 @@ DROP TABLE IF EXISTS `ipbans`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `ipbans` (
-  `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `reason` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `perm` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
@@ -999,7 +999,7 @@ DROP TABLE IF EXISTS `jstrap`;
 CREATE TABLE `jstrap` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `loguser` smallint(5) NOT NULL,
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `text` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `filtered` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1025,7 +1025,7 @@ DROP TABLE IF EXISTS `log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `log` (
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `time` int(11) unsigned DEFAULT NULL,
   `get` text COLLATE utf8mb4_unicode_ci,
   `post` text COLLATE utf8mb4_unicode_ci,
@@ -1055,7 +1055,7 @@ DROP TABLE IF EXISTS `minilog`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `minilog` (
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `time` int(11) unsigned NOT NULL,
   `banflags` mediumint(8) unsigned NOT NULL,
   KEY `time` (`time`)
@@ -1242,7 +1242,7 @@ CREATE TABLE `pendingusers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `date` int(11) unsigned NOT NULL,
   `email` varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
@@ -1354,7 +1354,7 @@ CREATE TABLE `pm_posts` (
   `thread` int(10) unsigned NOT NULL DEFAULT '0',
   `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
-  `ip` char(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0.0.0.0',
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `noob` tinyint(1) NOT NULL DEFAULT '0',
   `moodid` tinyint(4) NOT NULL DEFAULT '0',
   `nosmilies` tinyint(1) NOT NULL DEFAULT '0', 
@@ -1654,7 +1654,7 @@ CREATE TABLE `posts` (
   `thread` int(10) unsigned NOT NULL DEFAULT '0',
   `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
-  `ip` char(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0.0.0.0',
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `num` mediumint(8) NOT NULL DEFAULT '0',
   `noob` tinyint(1) NOT NULL DEFAULT '0',
   `moodid` tinyint(4) NOT NULL DEFAULT '0',
@@ -1923,7 +1923,7 @@ CREATE TABLE `referer` (
   `time` int(11) NOT NULL,
   `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `ref` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -2239,7 +2239,7 @@ DROP TABLE IF EXISTS `tor`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tor` (
-  `ip` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL,
   `allowed` tinyint(4) NOT NULL DEFAULT '0',
   `hits` int(11) NOT NULL,
   PRIMARY KEY (`ip`)
@@ -2511,7 +2511,7 @@ CREATE TABLE `users` (
   `lastposttime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastpmtime` int(10) unsigned NOT NULL DEFAULT '0',
   `lastactivity` int(10) unsigned NOT NULL DEFAULT '0',
-  `lastip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `lastip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lasturl` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `lastforum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `lastthread` int(10) unsigned NOT NULL DEFAULT '0',

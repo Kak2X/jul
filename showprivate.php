@@ -70,25 +70,6 @@
 			$access['folder'] = PMFOLDER_MAIN;
 			$sql->query("UPDATE pm_access SET folder = ".PMFOLDER_MAIN." WHERE thread = {$_GET['id']} AND user = {$loguser['id']}");
 		}
-		
-		// Unread posts count
-		$readdate = (int) $sql->resultq("SELECT `readdate` FROM `pm_foldersread` WHERE `user` = '{$loguser['id']}' AND folder = {$access['folder']}");
-		if ($thread['lastpostdate'] > $readdate) {
-			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".time()."', `read` = '1'");
-		}	
-		// See if it's possible to merge in the folderread
-		$unreadthreads = $sql->resultq("
-			SELECT COUNT(*) 
-			FROM pm_access a 
-			LEFT JOIN pm_threads t ON a.thread = t.id 
-			LEFT JOIN pm_threadsread r ON a.thread = r.tid AND r.uid = {$loguser['id']}
-			WHERE a.user = {$loguser['id']} AND a.folder = {$access['folder']}
-			  AND (!r.read OR r.read IS NULL) 
-			  AND t.lastpostdate > {$readdate} 
-		");
-		if (!$unreadthreads) { // All threads in the folder have been read; we can merge
-			$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".time().")");
-		}
 	}
 
 	/*
@@ -190,9 +171,12 @@
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
 				p.text$sfields, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, 0 revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
+				r.read tread, r.time treadtime,
 				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
 		FROM pm_posts p
 		
+		LEFT JOIN pm_threads     t ON p.thread = t.id
+		LEFT JOIN pm_threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
 		LEFT JOIN users u ON p.user = u.id
 		{%AVJOIN%}
 		WHERE {$searchon}
@@ -321,8 +305,7 @@
 		}
 		hook_use_ref('pm-extra-fields', $post);
 		// "new" indicator for individual posts
-		$threadread = $thread['treadtime'] ? $thread['treadtime'] : $readdate;
-		$post['new'] = $post['date'] > $threadread;
+		$post['new'] = $post['date'] > $post['treadtime'];
 		
 		// Highlight arrow links
 		if ($_GET['id'] && !$_GET['hi'] && $post['highlighted']) {
@@ -337,6 +320,26 @@
 	// Automark unread warnings
 	if (count($warnings_read)) {
 		$sql->query("UPDATE pm_posts SET warned = ".PWARN_WARNREAD." WHERE id IN (".implode(",", $warnings_read).")");
+	}
+	if ($access) {
+		// Unread posts count
+		$readdate = (int) $sql->resultq("SELECT `readdate` FROM `pm_foldersread` WHERE `user` = '{$loguser['id']}' AND folder = {$access['folder']}");
+		if ($thread['lastpostdate'] > $readdate) {
+			$sql->query("REPLACE INTO pm_threadsread SET `uid` = '{$loguser['id']}', `tid` = '{$thread['id']}', `time` = '".time()."', `read` = '1'");
+		}	
+		// See if it's possible to merge in the folderread
+		$unreadthreads = $sql->resultq("
+			SELECT COUNT(*) 
+			FROM pm_access a 
+			LEFT JOIN pm_threads t ON a.thread = t.id 
+			LEFT JOIN pm_threadsread r ON a.thread = r.tid AND r.uid = {$loguser['id']}
+			WHERE a.user = {$loguser['id']} AND a.folder = {$access['folder']}
+			  AND (!r.read OR r.read IS NULL) 
+			  AND t.lastpostdate > {$readdate} 
+		");
+		if (!$unreadthreads) { // All threads in the folder have been read; we can merge
+			$sql->query("REPLACE INTO pm_foldersread VALUES ({$loguser['id']}, {$access['folder']}, ".time().")");
+		}
 	}
 		
 	// Strip _GET variables that can set the page number

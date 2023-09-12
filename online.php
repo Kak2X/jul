@@ -102,7 +102,7 @@
 		//		<td class='tdbg1 right'>". $user['ipmatches'] ." <img src='". ($user['ipmatches'] > 0 ? "images/dot2.gif" : "images/dot5.gif") ."' align='absmiddle'></td>";
 		?>
 		<tr style="height:24px">
-			<td class="tdbg1 center" <?= ($isadmin ? "rowspan='2'" : "" )?>><?=$i?></td>
+			<td class="tdbg1 center"><?=$i?></td>
 			<td class="tdbg2"><?=$userlink?></td>
 			<td class="tdbg1 center"><?=date('h:i:s A',$user['lastactivity']+$loguser['tzoff'])?></td>
 			<td class="tdbg1 center"><?=$user['lastposttime']?></td>

@@ -221,6 +221,7 @@
 			'pollstyle'     => 0,
 			'splitcat'      => 0,
 			'posttool'      => 1, // Sure, why not
+			'ajax'          => 0,
 		);
 		
 		if ($miscdata['private'] == 2) {

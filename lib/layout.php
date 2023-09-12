@@ -367,17 +367,8 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	$GLOBALS['forcetitle'] = $forcetitle;
 }
 
-function pageheader($windowtitle = '', $mini = false, $centered = false) {
-	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $barimg, $isbot, $schemerow, $statusicons,
-			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css_layout, $forcetitle, $warnpic;
-			
-	// Load this if it wasn't explicitly launched
-	if (!isset($nmcol)) {
-		load_layout();
-	}
-	
-	// Allow eof_printer to show the logs if we printed out the header
-	$runtime['show-log'] = 1;
+function track_activity() {
+	global $sql, $config, $runtime, $loguser, $views, $miscdata, $url, $isbot, $bpt_flags;
 	
 	/*
 		Track activity only for pages that render the main header.
@@ -480,9 +471,9 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 
 	$views = $miscdata['views'] + 1;
 
-	if (!filter_bool($meta['notrack'])) {
+	if (!filter_bool($meta['notrack']) && !$runtime['ajax-request']) {
 		
-		if (!$isbot && !$runtime['ajax-request']) {
+		if (!$isbot) {
 
 			// Don't increment the view counter for bots
 			$sql->query("UPDATE misc SET views = views + 1");
@@ -511,10 +502,8 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		$sql->query("INSERT INTO dailystats (date, users, threads, posts, views) " .
 					 "VALUES ('".date('m-d-y',time())."', (SELECT COUNT(*) FROM users), (SELECT COUNT(*) FROM threads), (SELECT COUNT(*) FROM posts), $views) ".
 					 "ON DUPLICATE KEY UPDATE users=VALUES(users), threads=VALUES(threads), posts=VALUES(posts), views=$views");
-	}
-	
-	// Only here to skip executing it when the header doesn't get rendered.
-	if (!filter_bool($meta['notrack'])) {
+					 
+		// Only here to skip executing it when the header doesn't get rendered.
 		// Delete expired bans
 		$sql->query("
 			UPDATE `users` SET
@@ -525,6 +514,21 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 				  `ban_expire` < ".time()
 		);		
 	}
+}
+
+function pageheader($windowtitle = '', $mini = false, $centered = false) {
+	global 	$sql, $loguser, $config, $x_hacks, $miscdata, $runtime, $scriptname, $meta, $userfields, $barimg, $isbot, $schemerow, $statusicons, $views,
+			$isadmin, $issuper, $sysadmin, $isChristmas, $nmcol, $favicon, $url, $bpt_flags, $body_extra, $schemepre, $css_layout, $forcetitle, $warnpic;
+			
+	// Load this if it wasn't explicitly launched
+	if (!isset($nmcol)) {
+		load_layout();
+	}
+	
+	// Allow eof_printer to show the logs if we printed out the header
+	$runtime['show-log'] = 1;
+	
+	track_activity();
 		
 	// UTF-8 time?
 	header("Content-type: text/html; charset=utf-8'");

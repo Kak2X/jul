@@ -184,6 +184,7 @@
 			'splitcat' 			=> filter_int($_POST['splitcat']),
 			'schemesort' 		=> filter_int($_POST['schemesort']),
 			'comments' 			=> filter_int($_POST['comments']),
+			'ajax' 				=> filter_int($_POST['ajax']),
 		);
 		
 		if ($config['allow-avatar-storage']) {
@@ -413,6 +414,7 @@
 			"Font size"	 					=> [4, "fontsize", "Change the default font size of the forum."],
 			"Hide activity"			 		=> [2, "hideactivity", "You can choose to hide your online status.", "Show|Hide"],
 			"Profile comments"			 	=> [2, "comments", "You can disable them here.", "Disable|Enable"],
+			"Enable AJAX"			 		=> [2, "ajax", "Enables experimental AJAX features.", "No|Yes"],
 		));
 		if ($edituser){
 			_table_format("Options", array(

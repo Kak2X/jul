@@ -80,8 +80,7 @@
 		die(header("Location: index.php"));
 	}
 	
-	// Move it after the auto-redirect actions, otherwise the redirect breaks
-	pageheader();
+	load_layout();
 	
 	$postread = readpostread($loguser['id']);
 	
@@ -160,6 +159,16 @@
 	}
 	// print_r($sprk);
 	$sprk = implode(",",$sprk); */
+
+
+	if (!$runtime['ajax-request']) {
+		if ($loguser['ajax'])
+			register_js("js/index.js");
+		pageheader();
+		print '<div id="page-content">';
+	} else {
+		track_activity();
+	}
 
 	/*
 		Recent posts counter
@@ -569,7 +578,10 @@
 	</table>
 	<?php
 	
-	pagefooter();
+	if (!$runtime['ajax-request']) {
+		print '</div>';
+		pagefooter();
+	}
 	
 
 function _collapse_toggle($cat, $hidden) {

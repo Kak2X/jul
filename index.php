@@ -80,7 +80,16 @@
 		die(header("Location: index.php"));
 	}
 	
-	load_layout();
+	
+	if (!$runtime['ajax-request']) {
+		if ($loguser['ajax'])
+			register_js("js/index.js");
+		pageheader();
+		print '<div id="page-content">';
+	} else {
+		load_layout();
+		track_activity();
+	}
 	
 	$postread = readpostread($loguser['id']);
 	
@@ -159,16 +168,6 @@
 	}
 	// print_r($sprk);
 	$sprk = implode(",",$sprk); */
-
-
-	if (!$runtime['ajax-request']) {
-		if ($loguser['ajax'])
-			register_js("js/index.js");
-		pageheader();
-		print '<div id="page-content">';
-	} else {
-		track_activity();
-	}
 
 	/*
 		Recent posts counter

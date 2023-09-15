@@ -3,16 +3,17 @@
 	require_once "lib/common.php";
 
 	
+	// Main filters that stack on top of each other
 	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
-	$_GET['pid']         = filter_int($_GET['pid']); // Post ID
-	$_GET['pin']         = filter_int($_GET['pin']); // Selected post ID for peeking (when a post is soft deleted)
-	$_GET['rev']         = filter_int($_GET['rev']); // Post revision of pinned post
 	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
 	$_GET['hi']          = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
 	$_GET['warn']        = filter_bool($_GET['warn']); // Warn filter for Thread/User modes
-	$_GET['vact']        = filter_string($_GET['vact']); // Vote action
-	$_GET['vote']        = filter_int($_GET['vote']); // Vote choice ID
-
+	// Additional filters (todo)...
+	
+	// Extra options
+	$_GET['pid']         = filter_int($_GET['pid']); // Post ID
+	$_GET['pin']         = filter_int($_GET['pin']); // Selected post ID for peeking (when a post is soft deleted)
+	$_GET['rev']         = filter_int($_GET['rev']); // Post revision of pinned post
 	
 	// Skip to last post/end thread
 	$gotopost	= null;
@@ -23,23 +24,6 @@
 	}
 	if ($gotopost) {
 		return header("Location: ?pid={$gotopost}#{$gotopost}");
-	}
-	
-	
-	// Poll votes
-	if ($loguser['id'] && $_GET['id'] && $_GET['vact']) {
-		check_token($_GET['auth'], TOKEN_VOTE);
-		load_thread($_GET['id']); // Prevent voting on restricted threads
-				
-		$pollid = get_poll_from_thread($_GET['id']);
-		if (!$pollid) {
-			errorpage("Could not vote, because this thread is not a poll.", 'index.php', 'the index page');
-		}
-		$res = vote_poll($pollid, $_GET['vote'], $loguser['id'], $_GET['vact']);
-		if (!$res) {
-			errorpage("Could not vote on this poll.", 'index.php', 'the index page');
-		}
-		die(header("Location: ?id={$_GET['id']}"));
 	}
 
 	$ppp	= get_ppp();

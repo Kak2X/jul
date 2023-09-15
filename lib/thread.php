@@ -312,7 +312,7 @@
 				}
 
 				if ($loguser['id'] && !$poll['closed']) {
-					$link = "<a href='thread.php?id={$thread['id']}&auth={$confirm}&vact={$linkact}&vote={$id}'>";
+					$link = "<a href='poll.php?id={$thread['id']}&auth={$confirm}&act={$linkact}&vote={$id}'>";
 				}
 				
 				// Edit poll linkery

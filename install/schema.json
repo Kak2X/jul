@@ -199,6 +199,14 @@
 					"default":20,
 					"width":"50px"
 				},
+				"view-online-minpower":{
+					"title":"Powerlevel required to view Online users page",
+					"desc":"Minimum power required to view the online users page.",
+					"input":"select",
+					"type":"int",
+					"default":-2,
+					"special":"powerlevel"
+				},
 				"view-super-minpower":{
 					"title":"Powerlevel required to view Normal+ users",
 					"desc":"Mostly an holdover from the original Jul code, where only Normal+ users or above can see who is part of the group. Can be set to the lowest level if this group is used for other purposes (ie: 'Local Moderator', 'Developer')",

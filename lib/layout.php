@@ -629,9 +629,9 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		- <a href='memberlist.php'>Memberlist</a>
 		- <a href='activeusers.php'>Active users</a>
 		- <a href='calendar.php'>Calendar</a>
-		<!-- - <a href='http://tcrf.net'>Wiki</a> -->
+		"/*.<a href='http://tcrf.net'>Wiki</a>*/."
 		- <a href='chat.php'>Chat</a>
-		- <a href='online.php'>Online users</a>
+		".($loguser['powerlevel'] >= $config['view-online-minpower'] ? " - <a href='online.php'>Online users</a>" : "")."
 		".hook_print('header-links-2')."
 		<br>
 		<a href='ranks.php'>Ranks</a>

@@ -1,5 +1,8 @@
 <?php
 	require "lib/common.php";
+	
+	if ($loguser['powerlevel'] < $config['view-online-minpower'])
+		notAuthorizedError("page");
 
 	$windowtitle = "Online users";
 

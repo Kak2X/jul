@@ -2,7 +2,7 @@
 
 	require_once "lib/common.php";
 
-	
+
 	// Main filters that stack on top of each other
 	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
 	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
@@ -14,6 +14,7 @@
 	$_GET['pid']         = filter_int($_GET['pid']); // Post ID
 	$_GET['pin']         = filter_int($_GET['pin']); // Selected post ID for peeking (when a post is soft deleted)
 	$_GET['rev']         = filter_int($_GET['rev']); // Post revision of pinned post
+	
 	
 	// Skip to last post/end thread
 	$gotopost	= null;
@@ -169,7 +170,7 @@
 	$polltbl = "";
 	if ($_GET['id'] && $forum['pollstyle'] != -2 && $thread['poll']) {
 		if (load_poll($thread['poll'], $forum['pollstyle'])) {
-			$polltbl = print_poll($poll, $thread, $forum['id']);
+			$polltbl = print_poll($poll, $thread, $forum['id'])."<br/>";
 		}
 	}
 

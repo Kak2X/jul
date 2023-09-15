@@ -85,11 +85,7 @@ if ($xconf['index-window'] || $xconf['index-force-thread']) {
 			$polltbl = "";
 			if ($fthread['pollstyle'] != -2 && $fthread['poll']) {
 				if (load_poll($fthread['poll'], $fthread['pollstyle'])) {
-					// CSS Hack around removing the <br> tag, which is unnecessary here
-					$polltbl = "<tr><td class='tdbg2 welp' colspan='2'>
-						".print_poll($poll, $fthread, $fthread['forum'])."
-						<style>.welp > br {display: none}</style>
-					</td></tr>";
+					$polltbl = "<tr><td class='tdbg2' colspan='2'>".print_poll($poll, $fthread, $fthread['forum'])."</td></tr>";
 				}
 			}
 			ob_start();

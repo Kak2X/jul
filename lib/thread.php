@@ -189,8 +189,8 @@
 		return THREAD_OK;
 	}
 	
-	function load_poll($id, $pollstyle = -1) {
-		global $sql, $poll, $loguser;
+	function load_poll($id, $pollstyle = -1, $showusers = false) {
+		global $sql, $poll, $loguser, $userfields;
 		$poll = $sql->fetchq("SELECT * FROM poll WHERE id = '{$id}'");
 		if (!$poll) return NULL;
 		
@@ -203,6 +203,16 @@
 		
 		// If we're not forcing a poll style, use the user provided one
 		$poll['style'] = ($pollstyle >= 0) ? $pollstyle : $loguser['pollstyle'];
+		
+		
+		if ($showusers) {
+			$poll['users'] = $sql->fetchq("
+				SELECT p.choice, {$userfields}
+				FROM pollvotes p
+				LEFT JOIN users u ON p.user = u.id
+				WHERE poll = {$poll['id']}
+			", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+		}
 		
 		// Get normal poll data (blank index will contain total)
 		$poll['votes'] = $sql->getresultsbykey("
@@ -274,8 +284,10 @@
 	function print_poll($poll, $thread = 0, $forum = 0) {
 		global $loguser, $ismod;
 		
-		$confirm = generate_token(TOKEN_VOTE);
-		$choices = "";
+		$confirm    = generate_token(TOKEN_VOTE);
+		$showusers  = isset($poll['users']);
+		$redir      = $showusers ? "poll" : "thread";
+		$choices    = "";
 		// For each choice calculate the votes
 		foreach ($poll['choices'] as $id => $choice) {
 			if (filter_bool($choice['remove'])) continue; // Edit poll support
@@ -312,16 +324,17 @@
 				}
 
 				if ($loguser['id'] && !$poll['closed']) {
-					$link = "<a href='poll.php?id={$thread['id']}&auth={$confirm}&act={$linkact}&vote={$id}'>";
+					$link = "<a href='poll.php?id={$thread['id']}&auth={$confirm}&act={$linkact}&vote={$id}&redir={$redir}'>";
 				}
 				
 				// Edit poll linkery
+				$polledit = "";
+				if (!$showusers)
+					$polledit .= "-- <a href='poll.php?id={$thread['id']}'>View votes</a> ";
 				if ($ismod) {
-					$polledit = "-- <a href='editpoll.php?id={$thread['id']}'>Edit poll</a>";
+					$polledit .= "-- <a href='editpoll.php?id={$thread['id']}'>Edit poll</a>";
 				} else if ($loguser['id'] == $thread['user']) {
-					$polledit = "-- <a href='editpoll.php?id={$thread['id']}&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
-				} else {
-					$polledit = "";
+					$polledit .= "-- <a href='editpoll.php?id={$thread['id']}&close&auth=".generate_token(TOKEN_MGET)."'>".($poll['closed'] ? "Open" : "Close")." poll</a>";
 				}
 				
 			} else {
@@ -345,6 +358,19 @@
 				<td class='tdbg2' width=60%>{$barpart}</td>
 				<td class='tdbg1 center' width=20%>".($poll['doublevote'] ? "{$pct}% of users, {$votes} ({$pct2}%)" : "{$pct}%, {$votes}")."</td>
 			</tr>";
+			
+			// User list below, if requested
+			if ($showusers) {
+				$choices .= "<tr><td class='tdbg2' colspan='3'>";
+				if (isset($poll['users'][$id])) {
+					foreach ($poll['users'][$id] as $i => $user) {
+						$choices .= ($i ? ", " : "").getuserlink($user);
+					}	
+				} else {
+					$choices .= "<i>No users</i>";
+				}
+				$choices .= "</td></tr>";
+			}
 		}
 
 
@@ -365,13 +391,7 @@
 				<tr><td class='tdbg2 fonts' colspan=3>".nl2br(dofilters($poll['briefing']), $forum)."</td></tr>
 				{$choices}
 				<tr><td class='tdbg2 fonts' colspan=3>&nbsp;{$polltext} {$poll['usertotal']} user{$s_have} voted. {$polledit}</td></tr>
-			</table>
-			<br>";
-	}
-	
-	function get_poll_from_thread($id) {
-		global $sql;
-		return $sql->resultq("SELECT poll FROM threads WHERE id = {$id}");
+			</table>";
 	}
 	
 	function vote_poll($pollid, $choice, $user, $action) {

@@ -603,12 +603,22 @@
 			}
 			
 			if ($multiforum) {
-				$curpthread = filter_array($pthread[$post['thread']]); // may be invalid thread
-				if (!can_view_forum($curpthread)) {
-					$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
-					continue;
+				// Admins can see bad posts
+				if (!isset($pthread[$post['thread']])) {
+					if (!$isadmin) {
+						$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
+						continue;
+					}
+					$curpthread = ['tid' => $post['thread'], 'title' => "[INVALID THREAD #{$post['thread']}]"];
+					$forum['id'] = 0;
+				} else {
+					$curpthread = $pthread[$post['thread']];
+					if (!can_view_forum($curpthread)) {
+						$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
+						continue;
+					}
+					$forum['id'] = $curpthread['forum'];
 				}
-				$forum['id'] = $curpthread['forum'];
 			}
 			$post['act']     = filter_int($act[$post['user']]);		
 			$postlist .= threadpost($post, $bg, MODE_POST, $forum['id'], $curpthread, $multiforum);

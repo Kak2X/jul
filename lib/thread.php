@@ -24,11 +24,11 @@
 	}
 	
 	function get_thread_from_post($pid, $prefix = '') {
-		global $sql, $meta;
+		global $sql, $meta, $isadmin;
 		
 		// Linking to a post ID
 		$id		= $sql->resultq("SELECT `thread` FROM `{$prefix}posts` WHERE `id` = '{$pid}'");
-		if (!$id) {
+		if ($id === null || (!$isadmin && !$id)) { // thread might be 0
 			$meta['noindex'] = true; // prevent search engines from indexing
 			errorpage("Couldn't find a post with ID #{$pid}. Perhaps it's been deleted?", "index.php", 'the index page');
 		}

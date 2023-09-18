@@ -149,12 +149,20 @@ return "
 		<td class='tdbg1 center b'>Post flags:</td>
 		<td class='tdbg2'>
 			Highlights: ".input_html("hi", $_GET['hi'], ['input' => 'select', 'options' => [
-				0 => 'Show all',
+				0 => '*** No filter ***',
 				1 => 'Only highlights and featured',
 				2 => 'Only featured'
 			]])." 
 			&mdash; ".input_html("warn", $_GET['warn'], ['input' => 'checkbox', 'label' => 'Only warned'])."
 		</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center b'>Highlight text:</td>
+		<td class='tdbg2'>".input_html("htxt", $_GET['htxt'], ['input' => 'text', 'width' => '450px'])."</td>
+	</tr>
+	<tr>
+		<td class='tdbg1 center b'>Warning text:</td>
+		<td class='tdbg2'>".input_html("wtxt", $_GET['wtxt'], ['input' => 'text', 'width' => '450px'])."</td>
 	</tr>
 	<tr>
 		<td class='tdbg1 center b'>Order:</td>

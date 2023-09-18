@@ -19,15 +19,18 @@
 		return header("Location: ?pid={$gotopost}#{$gotopost}");
 	//--
 	
-	$_GET['mode']        = filter_string($_GET['mode']); // Layout Mode ("", "user", "hi", "warn", "search")
+	// Layout mode
+	$_GET['mode']        = filter_string($_GET['mode']); // ("", "user", "hi", "warn", "search")
 	
 	// Main filters that stack on top of each other	
-	$_GET['hi']          = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
-	//--
 	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
+	$_GET['hi']          = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
 	$_GET['warn']        = filter_bool($_GET['warn']); // Warn filter for Thread/User modes
 	$_GET['text']        = filter_string($_GET['text']); // Posts text
 	$_GET['title']       = filter_string($_GET['title']); // Thread title (only makes sense in non-id mode)
+	$_GET['wtxt']        = filter_string($_GET['wtxt']); // Highlight text
+	$_GET['htxt']        = filter_string($_GET['htxt']); // Warning text
+	
 	$_GET['ipmask']      = filter_string($_GET['ipmask']); // IP Mask (admin-only)
 	$_GET['forum']       = filter_int($_GET['forum']); // Forum filter (only makes sense in non-id mode)
 	
@@ -40,7 +43,7 @@
 	
 	// 'id' and 'hi' are the only two fields that don't trigger search mode.
 	// In search mode, posts aren't marked as read.
-	$search_mode = $_GET['warn'] || $_GET['user'] || $_GET['text'] || $_GET['title'] || $_GET['ipmask'] || $_GET['forum'] || $_GET['date'] || $_GET['datedays'] || $datefrom || $dateto || $_GET['order'] || $_GET['dir'];
+	$search_mode = $_GET['warn'] || $_GET['user'] || $_GET['text'] || $_GET['title'] || $_GET['htxt'] || $_GET['wtxt'] || $_GET['ipmask'] || $_GET['forum'] || $_GET['date'] || $_GET['datedays'] || $datefrom || $dateto || $_GET['order'] || $_GET['dir'];
 	// Also keep track if there are any filters outside of $_GET['id'], since some optimizations can be made
 	$nonid_filters = $_GET['hi'] || $search_mode;
 	
@@ -83,7 +86,15 @@
 	}
 	if ($_GET['title']) {
 		if (!parse_search($_GET['title'], "t.title", $qwhere, $qvals))
-			errorpage("Search failure: ".htmlspecialchars($_GET['text']));
+			errorpage("Search failure: ".htmlspecialchars($_GET['title']));
+	}
+	if ($_GET['htxt']) {
+		if (!parse_search($_GET['htxt'], "p.highlighttext", $qwhere, $qvals))
+			errorpage("Search failure: ".htmlspecialchars($_GET['htxt']));
+	}
+	if ($_GET['wtxt']) {
+		if (!parse_search($_GET['wtxt'], "p.warntext", $qwhere, $qvals))
+			errorpage("Search failure: ".htmlspecialchars($_GET['wtxt']));
 	}
 	if ($_GET['forum']) {
 		$qwhere[]   = "t.forum = ?";

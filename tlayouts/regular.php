@@ -11,51 +11,9 @@ function postcode($post,$set){
 	$exp		= calcexp($post['posts'],(time()-$post['regdate']) / 86400);
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
-	
-	if ($tlayout == 1 || $tlayout == 6) {
-		// Without numgfx (standard)
-		$level		= "Level: $lvl";
-		$poststext	= "Posts: ";
-		$postnum	= $post['num'] ? "{$post['num']}/" : "";
-		$posttotal	= $post['posts'];
-		$experience	= "EXP: $exp<br>For next: $expleft";
-		$barwidth   = 96;
-	} else {
-		// With numgfx ("old")
-		if ($numdir === NULL) $numdir = get_complete_numdir();
-		
-		// Left "column" span
-		// Necessary after removing the padding from the generated numgfx itself (it wouldn't work well with custom sidebars)
-		$lcs = "<span style='width: 50px; display: inline-block'>";
-		$lcse = "</span>";
-		
-		//$numdir     = 'num1/';
-		$level		= "{$lcs}<img src='numgfx/{$numdir}level.png' width=36 height=8>{$lcse}<img src='numgfx.php?n=$lvl&f=$numfil' height=8>"; // &l=3
-		$experience	= "{$lcs}<img src='numgfx/{$numdir}exp.png' width=20 height=8>{$lcse}<img src='numgfx.php?n=$exp&f=$numfil' height=8><br>{$lcs}<img src='numgfx/{$numdir}fornext.png' width=44 height=8>{$lcse}<img src='numgfx.php?n=$expleft&f=$numfil' height=8>"; // &l=5 - &l=2
-		$poststext	= "<div style='height: 2px'></div>{$lcs}<img src='numgfx/{$numdir}posts.png' width=28 height=8>{$lcse}";
-		$postnum	= $post['num'] ? "<img src='numgfx.php?n={$post['num']}/&f=$numfil' height=8>" : ""; // &l=5
-		$posttotal	= "<img src='numgfx.php?n={$post['posts']}&f=$numfil'".($post['num']?'':'&l=4')." height=8>";
-		$barwidth   = 56;
-		
-		unset($lcs, $lcse);
-	}
-	
-	// RPG Level bar
-	$bar = "<br>".drawprogressbar($barwidth, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
-	
+	$postdate	= printdate($post['date']);
 	// Post syndrome text
-	$syndrome = syndrome($post['act']);
-	
-	// Other stats
-	if ($post['lastposttime']) {
-		$sincelastpost	= 'Since last post: '.timeunits(time()-$post['lastposttime']);
-	} else {
-		$sincelastpost = "";
-	}
-	$lastactivity	= 'Last activity: '.timeunits(time()-$post['lastactivity']);
-	$since			= 'Since: '.printdate($post['regdate'], true);
-	$postdate		= printdate($post['date']);
-	
+	$syndrome 	= syndrome($post['act']);
 	
 	// Thread link support in the top bar (for modes like "threads by user")
 	$threadlink		= "";
@@ -138,7 +96,47 @@ function postcode($post,$set){
 			// If a post is deleted, blank out the sidebar regardless of options.
 			$sidebar = "&nbsp;";
 		} else if ($sidebartype != 2 && (!$post['sidebar'] || !$loguser['viewsig'])) {
-			// Default sidebar
+			// Default sidebarm with all of the default vars that come with it
+			if ($tlayout == 1 || $tlayout == 6) {
+				// Without numgfx (standard)
+				$level		= "Level: $lvl";
+				$poststext	= "Posts: ";
+				$postnum	= $post['num'] ? "{$post['num']}/" : "";
+				$posttotal	= $post['posts'];
+				$experience	= "EXP: $exp<br>For next: $expleft";
+				$barwidth   = 96;
+			} else {
+				// With numgfx ("old")
+				if ($numdir === NULL) $numdir = get_complete_numdir();
+				
+				// Left "column" span
+				// Necessary after removing the padding from the generated numgfx itself (it wouldn't work well with custom sidebars)
+				$lcs = "<span style='width: 50px; display: inline-block'>";
+				$lcse = "</span>";
+				
+				//$numdir     = 'num1/';
+				$level		= "{$lcs}<img src='numgfx/{$numdir}level.png' width=36 height=8>{$lcse}<img src='numgfx.php?n=$lvl&f=$numfil' height=8>"; // &l=3
+				$experience	= "{$lcs}<img src='numgfx/{$numdir}exp.png' width=20 height=8>{$lcse}<img src='numgfx.php?n=$exp&f=$numfil' height=8><br>{$lcs}<img src='numgfx/{$numdir}fornext.png' width=44 height=8>{$lcse}<img src='numgfx.php?n=$expleft&f=$numfil' height=8>"; // &l=5 - &l=2
+				$poststext	= "<div style='height: 2px'></div>{$lcs}<img src='numgfx/{$numdir}posts.png' width=28 height=8>{$lcse}";
+				$postnum	= $post['num'] ? "<img src='numgfx.php?n={$post['num']}/&f=$numfil' height=8>" : ""; // &l=5
+				$posttotal	= "<img src='numgfx.php?n={$post['posts']}&f=$numfil'".($post['num']?'':'&l=4')." height=8>";
+				$barwidth   = 56;
+				
+				unset($lcs, $lcse);
+			}
+			
+			// RPG Level bar
+			$bar = "<br>".drawprogressbar($barwidth, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
+			
+			// Other stats
+			if ($post['lastposttime']) {
+				$sincelastpost= 'Since last post: '.timeunits(time()-$post['lastposttime']);
+			} else {
+				$sincelastpost = "";
+			}
+			$lastactivity	= 'Last activity: '.timeunits(time()-$post['lastactivity']);
+			$since			= 'Since: '.printdate($post['regdate'], true);
+			
 			$sidebar = "<span class='fonts'>
 				{$set['userrank']}
 				$syndrome<br>
@@ -176,7 +174,7 @@ function postcode($post,$set){
 					'&posts&'         => $post['posts'],
 					'&numpost&'       => $post['num'] ? $post['num'] : "",
 					'&comppost&'      => ($post['num'] ? "{$post['num']}/" : "").$post['posts'],
-					'&comppostprep&'  => $postnum.$posttotal,
+					//'&comppostprep&'  => $postnum.$posttotal,
 					
 					// Images and whatever
 					'&avatar&'        => $set['userpic'],
@@ -223,8 +221,8 @@ function postcode($post,$set){
 					
 				// EXP Bar generator
 				if ($expbar_apply === NULL)
-					$expbar_apply = function ($m) use ($replace, $barimg, $barwidth) {
-						$width = isset($m[2]) ? $m[2] : $barwidth;
+					$expbar_apply = function ($m) use ($replace, $barimg) {
+						$width = isset($m[2]) ? $m[2] : 96;
 						return drawprogressbar($width, 8, $replace['&exp&'] - $replace['&levelexp&'], $replace['&totallevelexp&'], $barimg);
 					};
 				$sidebar = preg_replace_callback("'&(expbar)(?:_(\d*))?&'", $expbar_apply, $sidebar);

@@ -631,7 +631,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		- <a href='calendar.php'>Calendar</a>
 		"/*.<a href='http://tcrf.net'>Wiki</a>*/."
 		- <a href='chat.php'>Chat</a>
-		".($loguser['powerlevel'] >= $config['view-online-minpower'] ? " - <a href='online.php'>Online users</a>" : "")."
+		".(($loguser['id'] || !$config['view-online-logged']) && $loguser['powerlevel'] >= $config['view-online-minpower'] ? " - <a href='online.php'>Online users</a>" : "")."
 		".hook_print('header-links-2')."
 		<br>
 		<a href='ranks.php'>Ranks</a>
@@ -639,9 +639,10 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		- <a href='acs.php'>JCS</a>
 		- <a href='stats.php'>Stats</a>
 		- <a href='latestposts.php'>Latest Posts</a>
-		- <a href='thread.php?hi=".PHILI_SUPER."'>Featured Posts</a>
+		- <a href='thread.php?mode=hi&hi=".PHILI_SUPER."'>Featured Posts</a>
 		- <a href='hex.php' title='Color Chart' class='popout' target='_blank'>Color Chart</a>
 		- <a href='smilies.php' title='Smilies' class='popout' target='_blank'>Smilies</a>
+		- <a href='search.php'>Search</a>
 		";
 	}
 	

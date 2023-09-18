@@ -301,7 +301,7 @@
 ?>
 			<br/>
 			<table class='table'>
-				<tr><td class='tdbgh center'><a href='thread.php?hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
+				<tr><td class='tdbgh center'><a href='thread.php?mode=hi&hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
 			</table>
 <?php
 		} else {
@@ -320,7 +320,7 @@
 ?>
 				<br/>
 				<table class='table'>
-					<tr><td class='tdbgh center'><a href='thread.php?hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
+					<tr><td class='tdbgh center'><a href='thread.php?mode=hi&hi=<?=PHILI_SUPER?>'>Recent featured posts</a><?= _collapse_toggle(_WND_PFEAT, $hidden) ?></tr>
 					<tr><td class='tdbg2'><ul class='m-0'>
 <?php				foreach ($highlights as $x) { ?>
 					<li>

@@ -20,12 +20,36 @@
 	require 'lib/reporting.php';
 
 // For our convenience (read: to go directly into a query), at the cost of sacrificing the NULL return value
-function filter_int(&$v) 		{ return (int) $v; }
-function filter_float(&$v)		{ return (float) $v; }
-function filter_bool(&$v) 		{ return (bool) $v; }
-function filter_array (&$v)		{ return (array) $v; }
-function filter_string(&$v) 	{ return (string) $v; }
-function __(&$v) { return $v; }
+function filter_int(&$v, $d = null) { 
+	if ($d === null)
+		return (int)$v;
+	return $v !== null ? (int)$v : $d;
+}
+function filter_float(&$v, $d = null) { 
+	if ($d === null)
+		return (float)$v;
+	return $v !== null ? (float)$v : $d;
+}
+function filter_bool(&$v, $d = null) { 
+	if ($d === null)
+		return (bool)$v;
+	return $v !== null ? (bool)$v : $d;
+}
+function filter_array(&$v, $d = null) { 
+	if ($d === null)
+		return (array)$v;
+	return $v !== null ? (array)$v : $d;
+}
+function filter_string(&$v, $d = null) { 
+	if ($d === null)
+		return (string)$v;
+	return $v !== null ? (string)$v : $d;
+}
+function __(&$v, $d = null)  { 
+	if ($d === null)
+		return $v;
+	return $v !== null ? $v : $d;
+}
 
 function readsmilies($path = 'smilies.dat') {
 	global $x_hacks;
@@ -249,6 +273,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 			AND (f.minpower <= {$loguser['powerlevel']} OR !f.minpower)
 			AND (!f.hidden OR {$loguser['powerlevel']} >= 4 OR $showhidden)
 			AND !ISNULL(c.id)
+			AND (!f.login OR {$loguser['id']})
 			OR  f.id = $id
 			
 		ORDER BY f.catid, f.forder, f.id
@@ -1878,6 +1903,15 @@ function pick_any($array) {
 	}
 }
 
+function extract_match($array, $keymatch, $matchval, $keyret) {
+	foreach ($array as $item) {
+		if ($item[$keymatch] == $matchval) {
+			return $item[$keyret];
+		}
+	}
+	return false;
+}
+
 function numrange($n, $lo, $hi) {
 	return max(min($hi, $n), $lo);
 }
@@ -2166,7 +2200,7 @@ function ban_select($name, $time = 0) {
 		return "<select name='{$name}'>{$out}</select>";
 }
 
-function user_select($name, $sel = 0, $condition = NULL, $zlabel = NULL, $flags = 0) {
+function user_select($name, $sel = 0, $condition = NULL, $zlabel = NULL) {
 	global $sql;
 	$userlist = "";
 	$users = $sql->query("SELECT `id`, `name`, `powerlevel` FROM `users` ".($condition ? "WHERE {$condition} " : "")."ORDER BY `name`");

@@ -575,7 +575,7 @@ function upload_error($file, $allowblank = false) {
 	}
 }
 
-function load_attachments($searchon, $range, $mode = MODE_POST) {
+function load_attachments($searchon, $qvals, $range, $mode = MODE_POST) {
 	global $sql;
 	if ($mode == MODE_ANNOUNCEMENT) {
 		// In announcement mode, $range is an array of post ids rather than the min and max post id
@@ -602,13 +602,14 @@ function load_attachments($searchon, $range, $mode = MODE_POST) {
 		$match  = "post";
 	}
 	
-	return $sql->fetchq("
+	return $sql->fetchp("
 		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
 		FROM {$prefix}posts p
-		LEFT JOIN attachments a ON p.id = a.{$match}
-		WHERE {$searchon} 
-		  AND a.id IS NOT NULL
+		LEFT JOIN {$prefix}threads t ON p.thread = t.id
+		LEFT JOIN attachments      a ON p.id     = a.{$match}
+		WHERE a.id IS NOT NULL
 		  AND p.id BETWEEN '{$range[0]}' AND '{$range[1]}'
+		  ".($searchon ? " AND {$searchon}" : "")."
 		ORDER BY p.id ASC
-	", PDO::FETCH_GROUP, mysql::FETCH_ALL);
+	", $qvals, PDO::FETCH_GROUP, mysql::FETCH_ALL);
 }

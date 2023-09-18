@@ -91,7 +91,7 @@
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
-		$attachments = load_attachments($searchon, $postids, MODE_ANNOUNCEMENT);
+		$attachments = load_attachments($searchon, null, $postids, MODE_ANNOUNCEMENT);
 	}
 	hook_use('annc-extra-db', $searchon, $postids);
 	//--

@@ -117,6 +117,15 @@
 		
 		return dofilters(postcode($post,$set), $forum, $multiforum);
 	}
+	
+	function postlayout_fields() {
+		global $loguser;
+		switch ($loguser['viewsig']) {
+			case 1:  return ',p.headtext,p.signtext,p.csstext';
+			case 2:  return ',u.postheader headtext,u.signature signtext,u.css csstext';
+			default: return '';
+		}
+	}
 
 	function preplayouts($posts, $oldrev = null) {
 		global $sql, $postl;

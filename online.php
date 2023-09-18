@@ -1,6 +1,8 @@
 <?php
 	require "lib/common.php";
 	
+	if ($config['view-online-logged'] && !$loguser['id'])
+		errorpage("You must be logged in to view this page.",'login.php', 'log in (then try again)');
 	if ($loguser['powerlevel'] < $config['view-online-minpower'])
 		notAuthorizedError("page");
 

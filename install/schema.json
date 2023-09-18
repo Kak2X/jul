@@ -199,6 +199,14 @@
 					"default":20,
 					"width":"50px"
 				},
+				"view-online-logged":{
+					"title":"Login required to view Online users page",
+					"desc":"Restricts the online users page to logged in users.",
+					"input":"radio",
+					"type":"bool",
+					"default":0,
+					"special":"yesno"
+				},
 				"view-online-minpower":{
 					"title":"Powerlevel required to view Online users page",
 					"desc":"Minimum power required to view the online users page.",

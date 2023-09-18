@@ -145,16 +145,6 @@
 	
 	loadtlayout();
 	
-	switch($loguser['viewsig']) {
-		case 1:  $sfields = ',p.headtext,p.signtext,p.csstext'; break;
-		case 2:  $sfields = ',u.postheader headtext,u.signature signtext,u.css csstext'; break;
-		default: $sfields = ''; break;
-	}
-	$ufields = userfields();
-
-	// Activity in the last day (to determine syndromes)
-	$act = load_syndromes();
-	
 	$postlist = "
 		<table class='table'>
 		{$modfeats}
@@ -164,7 +154,9 @@
 	// Query elements
 	$min      = $ppp * $_GET['page'];
 	$searchon = "p.thread = {$_GET['id']}";
-	
+		
+	$sfields = postlayout_fields();
+	$ufields = userfields();
 
 	// heh
 	$posts = $sql->getarray(set_avatars_sql("
@@ -231,6 +223,8 @@
 		$newxlinks[] = "<a href='newpmreply.php?id={$_GET['id']}'>{$newreplypic}</a>";
 	}
 	
+	// Activity in the last day (to determine syndromes)
+	$act = load_syndromes();
 	preplayouts($posts);
 		
 	//--
@@ -238,7 +232,7 @@
 	
 	$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 	if ($showattachments) {
-		$attachments = load_attachments($searchon, $postrange, MODE_PM);
+		$attachments = load_attachments($searchon, [], $postrange, MODE_PM);
 	}
 	hook_use('pm-extra-db', $searchon, $postrange);
 	//--

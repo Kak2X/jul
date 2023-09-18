@@ -189,7 +189,10 @@ class schema {
 		//--
 		// Common attributes
 		$attrib .= " type=\"{$data['input']}\" name=\"{$field_name}\"";
-		
+		if (isset($data['maxlength']))
+			$attrib .= " maxlength=\"{$data['maxlength']}\"";
+		if (isset($data['class']))
+			$attrib .= " class=\"{$data['class']}\"";
 		
 		if (is_array($value)) {
 			$value = implode(";", $value);
@@ -206,9 +209,12 @@ class schema {
 				$input = "<textarea {$attrib} name=\"{$field_name}\">".htmlspecialchars($value)."</textarea>";
 				break;
 			case 'radio':
-				$input 	= "";
+				$input = "";
 				foreach ($data['options'] as $id => $label)
-					$input .= "<input {$attrib} name=\"{$field_name}\" value=\"{$id}\"".($value == $id ? " checked" : "").">&nbsp;{$label} ";
+					$input .= "<label><input {$attrib} name=\"{$field_name}\" value=\"{$id}\"".($value == $id ? " checked" : "").">&nbsp;{$label}</label>";
+				break;
+			case 'checkbox':
+				$input = "<label><input {$attrib} name=\"{$field_name}\" value=\"1\"".($value ? " checked" : "").">&nbsp;{$data['label']}</label>";
 				break;
 			case 'select':
 				$input = "<select {$attrib} name=\"{$field_name}\">";

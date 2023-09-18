@@ -1,143 +1,235 @@
 <?php
 
-	require_once "lib/common.php";
-
-
-	// Main filters that stack on top of each other
-	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
-	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
-	$_GET['hi']          = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
-	$_GET['warn']        = filter_bool($_GET['warn']); // Warn filter for Thread/User modes
-	// Additional filters (todo)...
+	require "lib/common.php";
+	require "lib/search.php";
 	
-	// Extra options
+	$_GET['id']	         = filter_int($_GET['id']); // Thread ID
+	
+	//--
+	// Skip to last post/end thread
+	$_GET['lpt'] = filter_int($_GET['lpt']);
+	$_GET['end'] = filter_bool($_GET['end']);
+	
+	$gotopost	= null;
+	if ($_GET['lpt'])
+		$gotopost = $sql->resultq("SELECT MIN(`id`) FROM `posts` WHERE `thread` = '{$_GET['id']}' AND `date` > '{$_GET['lpt']}'");
+	if ($_GET['end'] || ($_GET['lpt'] && !$gotopost))
+		$gotopost = $sql->resultq("SELECT MAX(`id`) FROM `posts` WHERE `thread` = '{$_GET['id']}'");
+	if ($gotopost)
+		return header("Location: ?pid={$gotopost}#{$gotopost}");
+	//--
+	
+	$_GET['mode']        = filter_string($_GET['mode']); // Layout Mode ("", "user", "hi", "warn", "search")
+	
+	// Main filters that stack on top of each other	
+	$_GET['hi']          = numrange(filter_int($_GET['hi']), PHILI_MIN, PHILI_MAX); // Highlight filter for Thread/User modes
+	//--
+	$_GET['user']        = filter_int($_GET['user']); // User ID (posts by user)
+	$_GET['warn']        = filter_bool($_GET['warn']); // Warn filter for Thread/User modes
+	$_GET['text']        = filter_string($_GET['text']); // Posts text
+	$_GET['title']       = filter_string($_GET['title']); // Thread title (only makes sense in non-id mode)
+	$_GET['ipmask']      = filter_string($_GET['ipmask']); // IP Mask (admin-only)
+	$_GET['forum']       = filter_int($_GET['forum']); // Forum filter (only makes sense in non-id mode)
+	
+	$_GET['date']        = filter_int($_GET['date']); // Date mode 
+	$_GET['datedays']    = filter_int($_GET['datedays']); // Search in the last X days
+	$datefrom            = fieldstotimestamp('f', '_GET'); // Date Range - From
+	$dateto              = fieldstotimestamp('t', '_GET', true); // Date Range - To
+	$_GET['order']       = filter_int($_GET['order']); // Post order
+	$_GET['dir']         = filter_int($_GET['dir']); // Post direction
+	
+	// 'id' and 'hi' are the only two fields that don't trigger search mode.
+	// In search mode, posts aren't marked as read.
+	$search_mode = $_GET['warn'] || $_GET['user'] || $_GET['text'] || $_GET['title'] || $_GET['ipmask'] || $_GET['forum'] || $_GET['date'] || $_GET['datedays'] || $datefrom || $dateto || $_GET['order'] || $_GET['dir'];
+	// Also keep track if there are any filters outside of $_GET['id'], since some optimizations can be made
+	$nonid_filters = $_GET['hi'] || $search_mode;
+	
+	// Option modifiers
 	$_GET['pid']         = filter_int($_GET['pid']); // Post ID
 	$_GET['pin']         = filter_int($_GET['pin']); // Selected post ID for peeking (when a post is soft deleted)
 	$_GET['rev']         = filter_int($_GET['rev']); // Post revision of pinned post
+	$ppp	             = get_ppp();                // Posts/page
+
+	// Immediately attempt to retrieve the thread ID from the post
+	// Unless the "no id (auto)filter" flag is set, which is the case for highlight navigation.
+	if ($_GET['pid'] && !isset($_GET['nif'])) {
+		$_GET['id'] = get_thread_from_post($_GET['pid']);
+	}
+	
+	/*
+		Prepare the additional query filters that can be applied on top of other modes
+	*/
+	$qwhere = [];
+	$qvals  = [];
+	
+	if ($_GET['id']) {
+		$qwhere[]    = "p.thread = ?";
+		$qvals[]     = $_GET['id'];
+	}
+	if ($_GET['user']) {
+		$qwhere[]    = "p.user = ?";
+		$qvals[]     = $_GET['user'];
+	}
+	if ($_GET['hi']) {
+		$qwhere[]    = "p.highlighted >= ?";
+		$qvals[]     = $_GET['hi'];
+	}
+	if ($_GET['warn']) {
+		$qwhere[]    = "p.warned != 0";
+	}
+	if ($_GET['text']) {
+		if (!parse_search($_GET['text'], "p.text", $qwhere, $qvals))
+			errorpage("Search failure: ".htmlspecialchars($_GET['text']));
+	}
+	if ($_GET['title']) {
+		if (!parse_search($_GET['title'], "t.title", $qwhere, $qvals))
+			errorpage("Search failure: ".htmlspecialchars($_GET['text']));
+	}
+	if ($_GET['forum']) {
+		$qwhere[]   = "t.forum = ?";
+		$qvals[]    = $_GET['forum'];
+	}
+	switch ($_GET['date']) {
+		case SDATE_LAST:
+			$qwhere[]   = "p.date > ?";
+			$qvals[]    = time() - $_GET['datedays'] * 86400;
+			break;
+		case SDATE_RANGE:
+			$qwhere[]   = "p.date > ? AND p.date < ?";
+			$qvals[]    = $datefrom;
+			$qvals[]    = $dateto;
+			break;
+	}
+	if ($isadmin) {
+		if ($_GET['ipmask']) {
+			$qwhere[]   = "p.ip LIKE ?";
+			$qvals[]    = str_replace('*', '%', $_GET['ipmask']);
+		}
+	}	
+	$qwhere = implode(" AND ", $qwhere);
+	
+	/*
+		ORDER BY
+	*/
+	if ($_GET['order']) {
+		if (!isset(ORDER_FIELDS[$_GET['order']]))
+			errorpage("Nice try, but no.");
+		$orderby = ORDER_FIELDS[$_GET['order']];
+	} else {
+		$orderby = "p.id";
+	}
+	
+	if ($_GET['dir']) {
+		$orderdir = ($_GET['dir'] == 2 ? "DESC" : "ASC");
+	} else {
+		$orderdir = "ASC";
+	}
+	
+	// Strip _GET variables that can set the page number
+	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
+	$query = preg_replace("'&?pid=(\d*)'si", isset($_GET['nif']) ? "" : "id={$_GET['id']}", $query);
+	$query = preg_replace("'&?nif=(\d*)'si", "", $query);
+	$query = preg_replace("'&{2,}'si", "&", $query);
+	
+	/*
+		Display mode options.
+	*/
+	
+	// The thread ID filter has its own special logic that influences everything else.
+	// So it sits here, before all of the other modifiers.
+	$multiforum = !$_GET['id']; // && !$_GET['forum'];
+	$listpre    = "";
+	if ($_GET['id']) {
+		load_thread($_GET['id'], true);
+		$totalposts = $thread['replies'] + 1;
+		// don't count bot views
+		if (!$isbot) {
+			$sql->query("UPDATE threads SET views = views + 1 WHERE id = {$_GET['id']}");
+		}
+		$windowtitle = "{$forum['title']}: {$thread['title']}";
+		$bartitle    = $thread['title'];
+		$baseurl     = "?id={$_GET['id']}";
+	} else {
+		load_layout();
+		$forum_error = "";
+		$windowtitle = $bartitle = "Custom filter";
+		$baseurl     = $query;
+		$forum       = ['id' => 0, 'title' => ""]; // No forum part in barlinks
+	}
+	// With additional filters, we can't use $thread['replies'] + 1 as the number of posts.
+	if (!$_GET['id'] || $nonid_filters) {
+		$totalposts = $sql->resultp("
+			SELECT COUNT(*) 
+			FROM posts p 
+			LEFT JOIN threads t ON p.thread = t.id 
+			".($qwhere ? "WHERE {$qwhere}" : ""), $qvals);
+	}
+	
+	// Display mode overrides
+	switch ($_GET['mode']) {
+		case "user":
+			if (!$_GET['user'])
+				errorpage("No user ID specified.","index.php",'the index page');
+			$uname = $sql->resultq("SELECT name FROM users WHERE id={$_GET['user']}");
+			if (!$uname) {
+				$meta['noindex'] = true; // prevent search engines from indexing what they can't access
+				errorpage("User ID #{$_GET['user']} doesn't exist.","index.php",'the index page');
+			}
+			$bartitle = $windowtitle = "Posts by {$uname}";
+			$baseurl  = "?mode=user&user={$_GET['user']}";
+			break;
+		case "warn":
+			if (!$_GET['warn'])
+				errorpage("No warn filter specified.","index.php",'the index page');
+			if (!$_GET['order']) {
+				$orderby = "p.warndate";
+				$orderdir = "DESC";
+			}
+			$bartitle = $windowtitle = "Warned posts";
+			$baseurl  = "?mode=warn&warn={$_GET['warn']}";
+			break;
+		case "hi":
+			if (!$_GET['hi'])
+				errorpage("No highlight filter specified.","index.php",'the index page');
+			if (!$_GET['order']) {
+				$orderby = "p.highlightdate";
+				$orderdir = "DESC";
+			}
+			$bartitle = $windowtitle = $_GET['hi'] == PHILI_LOCAL ? "Thread highlights" : "Featured posts";
+			$baseurl  = "?mode=hi&hi={$_GET['hi']}";
+			break;
+		case "search":
+			if (!$_GET['id'])
+				$bartitle = $windowtitle = "Search results";
+			$listpre .= post_search_table()."<br/>";
+			break;
+	}
 	
 	
-	// Skip to last post/end thread
-	$gotopost	= null;
-	if (filter_int($_GET['lpt'])) {
-		$gotopost = $sql->resultq("SELECT MIN(`id`) FROM `posts` WHERE `thread` = '{$_GET['id']}' AND `date` > '".intval($_GET['lpt'])."'");
-	} elseif (filter_int($_GET['end']) || (filter_int($_GET['lpt']) && !$gotopost)) {
-		$gotopost = $sql->resultq("SELECT MAX(`id`) FROM `posts` WHERE `thread` = '{$_GET['id']}'");
-	}
-	if ($gotopost) {
-		return header("Location: ?pid={$gotopost}#{$gotopost}");
-	}
-
-	$ppp	= get_ppp();
-
-	// Linking to a post ID
+	/*
+		Page number & selection (after the order by overrides kick in)
+	*/
 	if ($_GET['pid']) {
-		$_GET['id']         = get_thread_from_post($_GET['pid']);
-		$numposts 	        = $sql->resultq("SELECT COUNT(*) FROM `posts` WHERE `thread` = '{$_GET['id']}' AND `id` < '{$_GET['pid']}'");
+		$numposts 	        = $sql->resultp("
+			SELECT COUNT(*)
+			FROM posts p 
+			LEFT JOIN threads t ON p.thread = t.id
+			WHERE p.id ".($orderdir == "ASC" ? "<" : ">")." '{$_GET['pid']}' ".($qwhere ? " AND {$qwhere}" : "")."
+			ORDER BY {$orderby} {$orderdir}
+		", $qvals);
 		$_GET['page'] 		= floor($numposts / $ppp);
-		$_GET['hi'] = $_GET['warn'] = 0; // Not allowed
-		
-		
 		// Canonical page w/o ppp link (for bots)
 		$meta['canonical']	= "thread.php?id={$_GET['id']}&page={$_GET['page']}";
 	} else {
 		$_GET['page']		= filter_int($_GET['page']);
 	}
 	
-	// Prepare the additional WHERE filters that can be applied on top of other modes
-	$filterquery = "";
-	$baseparams = "";
-	if ($_GET['hi']) {
-		$filterquery = "highlighted >= {$_GET['hi']}";
-	}
-	if ($_GET['warn']) {
-		$filterquery .= ($filterquery ? " AND " : "")."warned != 0";
-	}
-	
-	$forum_error   = "";
-	$multiforum    = false;
-	$tlinks        = array();
-	if ($_GET['id']) {
-		load_thread($_GET['id'], true);
-		
-		// Description for bots
-		$text = $sql->resultq("SELECT text FROM posts WHERE ".($_GET['pid'] ? "id = {$_GET['pid']}" : "thread = {$_GET['id']}"));
-		$text = strip_tags(str_replace(array("[", "]", "\r\n"), array("<", ">", " "), $text));
-		$text = ((strlen($text) > 160) ? substr($text, 0, 157) . "..." : $text);
-		$text = str_replace("\"", "&quot;", $text);
-		$meta['description'] = $text;
-		
-		// Replacement counter with the post filter
-		if ($filterquery) {
-			$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE thread = {$_GET['id']}".($filterquery ? " AND {$filterquery}" : "")) - 1;
-		}
-
-		// don't count bot views
-		if (!$isbot) {
-			$sql->query("UPDATE threads SET views = views + 1 WHERE id = {$_GET['id']}");
-		}
-		$windowtitle = htmlspecialchars($forum['title']).": ".htmlspecialchars($thread['title']);
-		$baseparams = "id={$_GET['id']}"; // before extra filters
-		$orderby = "p.id";
-	}
-	else if ($_GET['user']) {
-		// Posts by user
-		$uname = $sql->resultq("SELECT name FROM users WHERE id={$_GET['user']}");
-		if (!$uname) {
-			$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-			errorpage("User ID #{$_GET['user']} doesn't exist.","index.php",'the index page');
-		}
-
-		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE user = {$_GET['user']}".($filterquery ? " AND {$filterquery}" : "")) - 1;
-		$thread['title'] = "Posts by {$uname}";
-		$windowtitle = "Posts by ".htmlspecialchars($uname);
-		$forum['id'] = 0;
-		$forum['title'] = "";
-		$multiforum = true; // Don't use single cache forum filter mode
-		$baseparams = "user={$_GET['user']}";
-		$orderby = "p.id";
-		load_layout();
-	}
-	else if ($_GET['hi']) {
-		// Featured posts list (global)
-		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE {$filterquery}") - 1;
-		$thread['title'] = "Featured posts";
-		$windowtitle = "Featured posts";
-		$forum['id'] = 0;
-		$forum['title'] = "";
-		$multiforum = true; // Don't use single cache forum filter mode
-		$orderby = "p.highlightdate DESC";
-		load_layout();
-	}
-	else if ($_GET['warn']) {
-		// Featured posts list (global)
-		$thread['replies'] = $sql->resultq("SELECT COUNT(*) FROM posts WHERE {$filterquery}") - 1;
-		$thread['title'] = "Warned posts";
-		$windowtitle = "Warned posts";
-		$forum['id'] = 0;
-		$forum['title'] = "";
-		$multiforum = true; // Don't use single cache forum filter mode
-		$orderby = "p.warndate DESC"; // this is the other special one
-		load_layout();
-	}
-	else {
-		$meta['noindex'] = true; // prevent search engines from indexing what they can't access
-		errorpage("No thread specified.","index.php",'the index page');
-	}
-	
-	// Strip _GET variables that can set the page number
-	$query = preg_replace("'page=(\d*)'si", '', '?'.$_SERVER["QUERY_STRING"]);
-	$query = preg_replace("'pid=(\d*)'si", "id={$_GET['id']}", $query);
-	$query = preg_replace("'&{2,}'si", "&", $query);
-	//if ($query && substr($query, -1) != "&")
-	//	$query	.= "&";
-
-	$pagelinks = pagelist($query, $thread['replies'] + 1, $ppp);
-	
+	/*
+		Moderator options
+	*/
 	if ($_GET['id'] && !$forum_error) {
 		$ismod = ismod($forum['id']);
-	}	
-	
-	// Moderator options
+	}
 	$modfeats = '';
 	if ($_GET['id']) {
 		if ($ismod) {
@@ -167,43 +259,19 @@
 		}
 	}
 
-	$polltbl = "";
+	/*
+		Extra thread option flags (for now, only the poll marker)
+	*/
 	if ($_GET['id'] && $forum['pollstyle'] != -2 && $thread['poll']) {
 		if (load_poll($thread['poll'], $forum['pollstyle'])) {
-			$polltbl = print_poll($poll, $thread, $forum['id'])."<br/>";
+			$listpre .= print_poll($poll, $thread, $forum['id'])."<br/>";
 		}
 	}
 
-	loadtlayout();
-	
-	switch ($loguser['viewsig']) {
-		case 1:  $sfields = ',p.headtext,p.signtext,p.csstext'; break;
-		case 2:  $sfields = ',u.postheader headtext,u.signature signtext,u.css csstext'; break;
-		default: $sfields = ''; break;
-	}
-	$ufields = userfields();
 
-	
-	$act = load_syndromes();
-	
-	$postlist = "
-		{$polltbl}
-		<table class='table'>
-		{$modfeats}
-		{$forum_error}
-	";
-
-	// Query elements
-	$min	= $ppp * $_GET['page'];
-	
-	$searchon = "";
-	if ($_GET['user'])
-		$searchon .= "p.user={$_GET['user']}";
-	else if ($_GET['id']) 
-		$searchon .= "p.thread={$_GET['id']}";
-	if ($filterquery)
-		$searchon .= ($searchon ? " AND " : "").$filterquery;
-	
+	/*
+		Query elements
+	*/
 	// each posts can potentially come from a different forum
 	// we must get these from the query in "Show Posts" mode
 	$trfield = $trjoin = "";
@@ -216,22 +284,27 @@
 		";
 	}
 	
+	loadtlayout();
+	$sfields = postlayout_fields();
+	$ufields = userfields();
+	$min	 = $ppp * $_GET['page'];
+	
 	// heh
-	$posts = $sql->getarray(set_avatars_sql("
+	$posts = $sql->fetchp(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
-				p.text$sfields, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
+				p.text{$sfields}, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
-				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}$trfield
+				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}{$trfield}
 		FROM posts p
 		
 		LEFT JOIN users u ON p.user = u.id
-		$trjoin
+		{$trjoin}
 		{%AVJOIN%}
 		
-		WHERE {$searchon}
-		ORDER BY {$orderby}
-		LIMIT $min,$ppp
-	"));
+		".($qwhere ? "WHERE {$qwhere}" : "")."
+		ORDER BY {$orderby} {$orderdir}
+		LIMIT {$min},{$ppp}
+	"), $qvals, PDO::FETCH_ASSOC, mysql::FETCH_ALL);
 	
 	/*
 		Handle top links, now that we fetched the posts
@@ -239,41 +312,88 @@
 	
 	// Barlinks
 	$links = [];
-	if ($forum['title']) // Doesn't always exist, so avoid a blank link
+	if ($forum['id'] || $forum['title']) // Doesn't always exist, so avoid a blank link
 		$links[] = [$forum['title'], "forum.php?id={$forum['id']}"];
-	if ($_GET['id'] || $_GET['user']) // Ignore in raw featured posts mode
-		$links[] = [$thread['title'], "thread.php?{$baseparams}"];
-	if ($_GET['hi'])
-		$links[] = [$_GET['hi'] == PHILI_LOCAL ? "Thread highlights" : "Featured posts", null];
-	if ($_GET['warn'])
-		$links[] = ["Warnings", null];
+	$links[] = [$bartitle, $baseurl];
+	if ($_GET['id'] || $_GET['user']) { // For convenience
+		if ($_GET['hi'])
+			$links[] = [$_GET['hi'] == PHILI_LOCAL ? "Thread highlights" : "Featured posts", null];
+		if ($_GET['warn'])
+			$links[] = ["Warnings", null];
+	}
 	
 	// Highlight navigation
 	$highlights = [];
 	$hprev = $hnext = null;
-	if ($_GET['id'] && !$_GET['hi'] && $posts) {
+	if (!$_GET['hi'] && $posts) {
+		
+		// Build a list of in-page highlights.
+		// These are order-independent since they go off array index.
 		foreach ($posts as $post) {
 			if ($post['highlighted']) {
 				$highlights[] = $post['id'];
 			}
 		}
-		$hprev = $sql->resultq("SELECT p.id FROM posts p WHERE {$searchon} AND p.highlighted > ".PHILI_NONE." AND p.id < {$posts[0]['id']} ORDER BY p.id DESC LIMIT 1");
-		$hnext = $sql->resultq("SELECT p.id FROM posts p WHERE {$searchon} AND p.highlighted > ".PHILI_NONE." AND p.id > ".$posts[count($posts)-1]['id']." ORDER BY p.id ASC LIMIT 1");
+		
+		// With the ones linking to other pages, it's a different story.
+		// -> The "Next Highlight" link should always increase the page number.
+		// -> The "Previous Highlight" link should always decrease the page number.
+		
+		
+		// The two queries attempt to find the highlighted post IDs immediately before and after the first and last post in the page.
+		// Where these posts are depends on the sort direction.
+		if ($orderdir == "ASC") { // default order
+			$firstpostid = $posts[0]['id'];
+			$lastpostid  = $posts[count($posts)-1]['id'];
+		} else {
+			$firstpostid = $posts[count($posts)-1]['id'];
+			$lastpostid  = $posts[0]['id'];
+		}
+		
+		// For hprev, order by the opposite of $orderdir
+		$hprev = $sql->resultp("
+			SELECT p.id
+			FROM posts p
+			LEFT JOIN threads t ON p.thread = t.id
+			LEFT JOIN users   u ON p.user   = u.id
+			WHERE ".($qwhere ? "{$qwhere} AND " : "")." 
+			  p.highlighted > ".PHILI_NONE." 
+			  AND p.id < {$firstpostid} 
+			ORDER BY {$orderby} ".($orderdir == "ASC" ? "DESC" : "ASC")."
+			LIMIT 1
+		", $qvals);
+		$hnext = $sql->resultp("
+			SELECT p.id
+			FROM posts p
+			LEFT JOIN threads t ON p.thread = t.id
+			LEFT JOIN users   u ON p.user   = u.id
+			WHERE ".($qwhere ? "{$qwhere} AND " : "")."
+			  p.highlighted > ".PHILI_NONE."
+			  AND p.id > {$lastpostid}
+			ORDER BY {$orderby} {$orderdir}
+			LIMIT 1
+		", $qvals);
+		
+		// Switch around to account for the inverted order
+		if ($orderdir == "DESC") {
+			$welp = $hprev;
+			$hprev = $hnext;
+			$hnext = $welp;
+		}
 	}
 	
 	// New Reply / Thread / Poll links
 	$newxlinks = [];
-
+	if ($_GET['mode'] != 'search')
+		$newxlinks[] = "<a href='{$baseurl}&mode=search'>Search</a>";
 	if (!$_GET['hi']) {
-		$newxlinks[] = "<a href='thread.php?{$baseparams}&hi=1'>View highlights</a>";
-		if ($_GET['id']) {
-			// Highlight navigation
-			if ($hprev) $newxlinks[] = "<a href='?pid={$hprev}#{$hprev}' class='nobr'>Previous highlight</a>";
-			if ($hnext) $newxlinks[] = "<a href='?pid={$hnext}#{$hnext}' class='nobr'>Next highlight</a>";
-		}
+		$newxlinks[] = "<a href='{$baseurl}&hi=1'>View highlights</a>";
+		// Highlight navigation
+		if ($hprev) $newxlinks[] = "<a href='{$query}&nif=1&pid={$hprev}#{$hprev}' class='nobr'>Previous highlight</a>";
+		if ($hnext) $newxlinks[] = "<a href='{$query}&nif=1&pid={$hnext}#{$hnext}' class='nobr'>Next highlight</a>";
 	}
 	if (!$_GET['warn'])
-		$newxlinks[] = "<a href='thread.php?{$baseparams}&warn=1'>View warnings</a>";
+		$newxlinks[] = "<a href='{$baseurl}&warn=1'>View warnings</a>";
 	
 	if ($_GET['id'] && $forum['id']) {
 		if ($forum['pollstyle'] != -2) $newxlinks[] = "<a href='newthread.php?poll=1&id={$forum['id']}'>{$newpollpic}</a>";
@@ -284,6 +404,7 @@
 	}
 	
 	// Thread links
+	$tlinks = [];
 	if ($_GET['id']) {
 		if ($loguser['id']) {
 			// Unread posts count (base value, for forum)
@@ -303,9 +424,16 @@
 		if ($tprev) $tlinks[] = "<a href='?id={$tprev}' class='nobr'>Next older thread</a>";
 	}
 	$tlinks = implode(' | ', $tlinks);
+	$pagelinks = pagelist($query, $totalposts, $ppp);
 	
 	//--
-	if (!count($posts)) {
+	$postlist = "
+		{$listpre}
+		<table class='table'>
+		{$modfeats}
+		{$forum_error}
+	";
+	if (!$posts || !count($posts)) {
 		$postlist .= "<table class='table'><tr><td class='tdbg1 center'>";
 		if ($pagelinks)
 			$postlist .= "There are no posts in this page. Please select a valid thread page:<br>$pagelinks";
@@ -315,12 +443,30 @@
 			$postlist .= "No posts found.";
 		$postlist .= "</td></tr></table>";
 	} else {
+		
+		// Old post revision info, replacing whatever it has
 		if ($_GET['pin'] && $_GET['rev']) {
 			$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
 		} else {
 			$oldrev = null;
 		}
 		
+		// Description for bots, without having to execute another query
+		$text = null;
+		if ($_GET['pid']) {
+			$text = extract_match($posts, 'id', $_GET['pid'], 'text');
+		} else if ($_GET['id']) {
+			$text = $posts[0]['text'];
+		}
+		if ($text) {
+			$text = strip_tags(str_replace(array("[", "]", "\r\n"), array("<", ">", " "), $text));
+			$text = ((strlen($text) > 160) ? substr($text, 0, 157) . "..." : $text);
+			$text = str_replace("\"", "&quot;", $text);
+			$meta['description'] = $text;
+		}
+
+		// Layout stuff
+		$act = load_syndromes();
 		preplayouts($posts, $oldrev);
 		
 		// Prepare the forum/thread cache for multiforum mode.
@@ -336,15 +482,16 @@
 			prepare_filters(array_column($posts, 'forum'));
 		}
 			
-
+		// Load additional data
 		$postrange = get_id_range($posts, 'id');
-	
 		$showattachments = $config['allow-attachments'] || !$config['hide-attachments'];
 		if ($showattachments) {
-			$attachments = load_attachments($searchon, $postrange);
+			$attachments = load_attachments($qwhere, $qvals, $postrange);
 		}
-		hook_use('post-extra-db', $searchon, $postrange);
+		hook_use('post-extra-db', $qwhere, $qvals, $postrange);
 		
+		
+		// Render posts
 		$curpthread	= NULL;
 		$controls['ip'] = "";
 		$bg = 0;
@@ -438,14 +585,14 @@
 			}
 			
 			// Highlight arrow links
-			if ($_GET['id'] && !$_GET['hi'] && $post['highlighted']) {
+			if (!$_GET['hi'] && $post['highlighted']) {
 				$hkey = array_search($post['id'], $highlights);
-				$post['highlightprev'] = $hkey ? "#".$highlights[$hkey-1] : ($hprev ? "thread.php?pid={$hprev}#{$hprev}" : null);
-				$post['highlightnext'] = $hkey != count($highlights) - 1 ? "#".$highlights[$hkey+1] : ($hnext ? "thread.php?pid={$hnext}#{$hnext}" : null);
+				$post['highlightprev'] = $hkey ? "#".$highlights[$hkey-1] : ($hprev ? "{$query}&nif=1&pid={$hprev}#{$hprev}" : null);
+				$post['highlightnext'] = $hkey != count($highlights) - 1 ? "#".$highlights[$hkey+1] : ($hnext ? "{$query}&nif=1&pid={$hnext}#{$hnext}" : null);
 			}
 			
 			if ($multiforum) {
-				$curpthread = $pthread[$post['thread']];
+				$curpthread = filter_array($pthread[$post['thread']]); // may be invalid thread
 				if (!can_view_forum($curpthread)) {
 					$postlist .= "<table class='table'><tr><td class='tdbg$bg fonts center'><i>(post in restricted forum)</i></td></tr></table>";
 					continue;

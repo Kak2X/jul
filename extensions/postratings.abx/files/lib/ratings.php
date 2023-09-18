@@ -108,7 +108,7 @@ function rating_colors($val, $pts) {
 	if ($pts < 0)  return "<span style='color: #f00'>{$val}</span>";
 }
 
-function load_ratings($searchon, $range, $mode = MODE_POST) {
+function load_ratings($searchon, $qvals, $range, $mode = MODE_POST) {
 	global $sql, $loguser;
 	
 	if ($mode == MODE_ANNOUNCEMENT) {
@@ -135,19 +135,20 @@ function load_ratings($searchon, $range, $mode = MODE_POST) {
 			$joinpf = "posts";
 		}
 		
-		$ratings = $sql->query("
+		$ratings = $sql->queryp("
 			SELECT a.post, a.rating, a.user
 			FROM {$prefix}posts p
-			INNER JOIN {$joinpf}_ratings a ON p.id = a.post
-			WHERE {$searchon} 
-			  AND a.post BETWEEN '{$range[0]}' AND '{$range[1]}'
+			LEFT  JOIN {$prefix}threads  t ON p.thread = t.id
+			INNER JOIN {$joinpf}_ratings a ON p.id     = a.post
+			WHERE a.post BETWEEN '{$range[0]}' AND '{$range[1]}'
+			".($searchon ? " AND {$searchon}" : "")."
 			ORDER BY p.id
-		");
+		", $qvals);
 	}
 	
 	$out = [];
 	$my  = [];
-	while ($x = $sql->fetch($ratings)) {
+	foreach ($ratings as $x) {
 		// Keep a count of total ratings
 		if (!isset($out[$x['post']][$x['rating']]))
 			$out[$x['post']][$x['rating']]['total'] = 1;

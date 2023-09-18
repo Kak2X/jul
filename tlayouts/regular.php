@@ -127,7 +127,7 @@ function postcode($post,$set){
 					<a href='newpmthread.php?userid={$post['uid']}'>Send PM</a> - 
 					<a href='blocklayout.php?action=block&id={$post['uid']}{$tokenstr}'>{$un_b}lock layout</a> - 
 					<a href='forum.php?user={$post['uid']}'>Threads by user</a> - 
-					<a href='thread.php?user={$post['uid']}'>Posts by user</a>
+					<a href='thread.php?mode=user&user={$post['uid']}'>Posts by user</a>
 				</td>
 			</tr>";
 		}

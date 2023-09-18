@@ -56,15 +56,15 @@ hook_add('profile-table-mini', function($_, $__, $user) use ($extName) {
 // Post rating fetch query
 hook_add('annc-extra-db', function($_, $searchon, $postids) {
 	global $_pr_ratings, $_pr_mine;
-	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_ANNOUNCEMENT);
+	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, null, $postids, MODE_ANNOUNCEMENT);
 });
 hook_add('pm-extra-db', function($_, $searchon, $postids) {
 	global $_pr_ratings, $_pr_mine;
-	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_PM);
+	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, [], $postids, MODE_PM);
 });
-hook_add('post-extra-db', function($_, $searchon, $postids) {
+hook_add('post-extra-db', function($_, $searchon, $qvals, $postids) {
 	global $_pr_ratings, $_pr_mine;
-	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $postids, MODE_POST);
+	list($_pr_ratings, $_pr_mine) = load_ratings($searchon, $qvals, $postids, MODE_POST);
 });
 // threadpost call setup
 $postfieldset = function($_, &$post) {

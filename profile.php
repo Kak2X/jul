@@ -82,7 +82,7 @@
 	");
 	$warnings = "";
 	if ($warncount['post'])
-		$warnings .= "<a href='thread.php?user={$_GET['id']}&warn=1'>{$warncount['post']}</a> post".($warncount['post'] == 1 ? "" : "s");
+		$warnings .= "<a href='thread.php?mode=user&user={$_GET['id']}&warn=1'>{$warncount['post']}</a> post".($warncount['post'] == 1 ? "" : "s");
 	if ($isadmin || $loguser['id'] == $_GET['id']) {
 		if ($warncount['pm'])
 			$warnings .= ($warnings ? ", " : "" )."{$warncount['pm']}</a> PM".($warncount['pm'] == 1 ? "" : "s");
@@ -98,9 +98,9 @@
 	if (filter_int($hilicount[PHILI_LOCAL]))
 		$highlights .= "{$hilicount[PHILI_LOCAL]} threadmarked</a>";
 	if (filter_int($hilicount[PHILI_SUPER]))
-		$highlights .= ($highlights ? ", " : "" )."<a href='thread.php?user={$_GET['id']}&hi=2'>{$hilicount[PHILI_SUPER]}</a> featured";
+		$highlights .= ($highlights ? ", " : "" )."<a href='thread.php?mode=user&user={$_GET['id']}&hi=2'>{$hilicount[PHILI_SUPER]}</a> featured";
 	if ($highlights)
-		$highlights = "<a href='thread.php?user={$_GET['id']}&hi=1'>".array_sum($hilicount)."</a> ({$highlights})";
+		$highlights = "<a href='thread.php?mode=user&user={$_GET['id']}&hi=1'>".array_sum($hilicount)."</a> ({$highlights})";
 	else
 		$highlights = "None";
 	
@@ -313,7 +313,7 @@
 	// Base
 	$options = [
 		0 => [
-			"Show posts"                 => ["thread.php?user={$_GET['id']}"],
+			"Show posts"                 => ["thread.php?mode=user&user={$_GET['id']}"],
 			"View threads by this user"  => ["forum.php?user={$_GET['id']}"],
 			"View comments by this user" => ["usercomment.php?id={$_GET['id']}"],
 			"View layout code"           => ["postlayouts.php?id={$_GET['id']}"],

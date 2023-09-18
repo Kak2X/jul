@@ -57,7 +57,7 @@ function postcode($post,$set){
 							{$set['new']}Posted on $postdate$threadlink{$post['edited']}
 						</td>
 						<td style='float: right;'>
-							{$controls['quote']}{$controls['edit']}{$controls['ip']}
+							".implode(" | ", $controls)."
 						</td>
 					</tr>
 				</table>

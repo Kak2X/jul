@@ -364,11 +364,10 @@
 			$data['ip'] = $_SERVER['REMOTE_ADDR'];
 		}
 		
-		$controls = array();
-		$controls['ip'] = $controls['quote'] = $controls['edit'] = "";
+		$controls = [];
 		if ($isadmin) {
 			$ip = htmlspecialchars($data['ip']);
-			$controls['ip'] = " | IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
+			$controls[] = "IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
 		}
 		
 	// TODO: The hardcoded MODE_POST may need to be replaced if extra modes are added

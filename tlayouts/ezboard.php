@@ -5,9 +5,9 @@ function postcode($post,$set) {
 	global $tzoff, $smallfont, $controls; //ip,$quote,$edit;
 
 	// Shorten the control labels
-	$controls['quote'] = str_replace(  'Quote', 'Reply', $controls['quote']);
-	$controls['edit']  = str_replace('>Delete',  '>Del', $controls['edit']);
-	$controls['ip']    = str_replace( '| IP: ',      '', $controls['ip']);
+	//$controls['quote'] = str_replace( 'Quote', 'Reply', $controls['quote']);
+	//$controls['del']   = str_replace('Delete',   'Del', $controls['edit']);
+	//$controls['ip']    = str_replace(  'IP: ',      '', $controls['ip']);
 	
 	$threadlink = "";
 	if (filter_string($set['threadlink'])) {
@@ -43,8 +43,7 @@ function postcode($post,$set) {
 				Posts: {$postnum}<br>
 				{$set['new']}({$set['date']}){$threadlink}<br>
 				{$post['edited']}
-				{$controls['ip']}<br>
-				{$controls['quote']}{$controls['edit']}<br>
+				".implode(" | ", $controls)."
 				{$set['userpic']}
 			</span>
 		</td>

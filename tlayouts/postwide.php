@@ -43,7 +43,7 @@
 				<table cellspacing=0 cellpadding=2 class='w fonts'>
 					<tr>
 						<td>{$set['userspan']}{$set['userlink']}</span><span class='fonts'><br> {$level}{$bar}</span></td>
-						<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
+						<td class='nobr right' style='width: 255px'>".implode(" | ", $controls)."</td>
 					</tr>
 				</table>
 			</td>

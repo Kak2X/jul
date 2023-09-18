@@ -97,7 +97,6 @@
 	//--
 	
 	$pagelinks = pagelist("?".($forumannc ? "f={$_GET['f']}&" : "")."ppp={$ppp}", $annctotal, $ppp);
-	$controls['quote'] = $controls['ip'] = $controls['edit'] = "";
 
 	$annclist = "
 	{$forum_error}
@@ -116,16 +115,22 @@
 			$annc['attach'] = $attachments[$annc['id']];
 		}
 		
-		$controls['edit'] = "<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']}) | <a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>";
+		$controls = [
+			"<a href='thread.php?pid={$annc['id']}'>View replies</a> ({$annc['replies']})", 
+			"<a href='newreply.php?id={$annc['thread']}&postid={$annc['id']}'>Quote</a>"
+		];
 		if ($canthread) {
 			$tokenstr = "&auth=".generate_token(TOKEN_MGET);
-			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}'>Edit</a> | <a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a> | <a href='editpost.php?id={$annc['id']}&action=noob{$tokenstr}'>".($annc['noob'] ? "Un" : "")."n00b</a>";
+			$controls[] = "<a href='editpost.php?id={$annc['id']}'>Edit</a>";
+			$controls[] = "<a href='editpost.php?id={$annc['id']}&action=delete'>Delete</a>";
+			$controls[] = "<a href='editpost.php?id={$annc['id']}&action=noob{$tokenstr}'>".($annc['noob'] ? "Un" : "")."n00b</a>";
 			//--
-			if (can_edit_highlight($post))
-				$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}&action=highlight&type=1{$tokenstr}'>".($annc['highlighted'] ? "Unh" : "H")."ighlight</a>";
-			$controls['edit'] .= " | <a href='editpost.php?id={$annc['id']}&action=warn{$tokenstr}'>".($annc['warned'] ? "Unw" : "W")."arn</a>";			
+			if (can_edit_highlight($annc))
+				$controls[] = "<a href='editpost.php?id={$annc['id']}&action=highlight&type=1{$tokenstr}'>".($annc['highlighted'] ? "Unh" : "H")."ighlight</a>";
+			$controls[] = "<a href='editpost.php?id={$annc['id']}&action=warn{$tokenstr}'>".($annc['warned'] ? "Unw" : "W")."arn</a>";			
 			//--
-			if ($isadmin) $controls['ip'] = " | IP: ".htmlspecialchars($annc['ip']);
+			if ($isadmin) 
+				$controls[] = "IP: ".htmlspecialchars($annc['ip']);
 		}
 		hook_use_ref('annc-extra-fields', $annc);
 		

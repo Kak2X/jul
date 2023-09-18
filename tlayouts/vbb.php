@@ -5,13 +5,6 @@ function userfields() {return 'posts,sex,powerlevel,picture,useranks,location,ho
 function postcode($post, $set){
     global $controls, $loguser;
 	
-	// Convert controls to VBB-like format
-    if ($controls['quote']) $controls['quote'] = "[{$controls['quote']}]";
-    $controls['edit'] = str_replace(' | ','',$controls['edit']);
-    $controls['edit'] = str_replace('a>','a>]',$controls['edit']);
-    $controls['edit'] = str_replace('<a','[<a',$controls['edit']);
-    $controls['ip']   = str_replace('| ','&nbsp; &nbsp;',$controls['ip']);
-	
     $homepage = filter_string($post['homepageurl']) ? " [<a href='{$post['homepageurl']}'>www</a>]" : "";
     $postdate = printdate($post['date']);
 	if ($post['edited']) $postdate .= "<br>";
@@ -71,7 +64,7 @@ function postcode($post, $set){
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
 				<table class='w fonts'><tr>
 					<td>[<a href='profile.php?id={$u}'>Profile</a>] [<a href='newpmthread?userid={$u}'>Send PM</a>]{$homepage} [<a href='thread.php?mode=user&user={$u}'>Search</a>]{$threadlink}</td>
-					<td class='nobr right'>{$post['edited']} {$controls['quote']} {$controls['edit']} {$controls['ip']}</td>
+					<td class='nobr right'>{$post['edited']} ".($controls ? "[".implode("] [", $controls)."]" : "")."</td>
 				</tr></table>
 			</td>
 		</tr>

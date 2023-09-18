@@ -287,7 +287,7 @@
 	// we must get these from the query in "Show Posts" mode
 	$trfield = $trjoin = "";
 	if (!$_GET['id']) {
-		$trfield = ", r.read tread, r.time treadtime, f.readdate freadtime";
+		$trfield = ", r.read tread, r.time treadtime, t.closed tclosed, f.readdate freadtime";
 		$trjoin = "
 		LEFT JOIN threads     t ON p.thread = t.id
 		LEFT JOIN threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
@@ -504,7 +504,6 @@
 		
 		// Render posts
 		$curpthread	= NULL;
-		$controls['ip'] = "";
 		$bg = 0;
 		$warnings_read = [];
 		foreach ($posts as $post) {
@@ -515,23 +514,22 @@
 				$warnings_read[] = $post['id'];
 			
 			$bg = $bg % 2 + 1;
+			$threadclosed = $_GET['id'] ? $thread['closed'] : $post['tclosed'];
+			
 			
 			// link & quote
-			$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
-			if (!$post['deleted']) {
-				if ($_GET['id'] && ! $thread['closed']) {
-					$controls['quote'] .= " | <a href='newreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
-				}
-			}
+			$controls = ["<a href='?pid={$post['id']}#{$post['id']}'>Link</a>"];
+			if ($ismod || (!$post['deleted'] && !$threadclosed))
+				$controls[] = "<a href='newreply.php?id={$post['thread']}&postid={$post['id']}'>Quote</a>";
 			
 			// Edit actions can only be done by a mod or the post author
-			$controls['edit'] = '';
-			if ($ismod || (!$banned && !$post['deleted'] && $post['user'] == $loguser['id'])) {
+			// can_edit_post($post)
+			if ($ismod || (!$banned && $loguser['editing_locked'] != 1 && !$post['deleted'] && !$post['warned'] && $post['user'] == $loguser['id'])) {
 				$tokenstr = "&auth=".generate_token(TOKEN_MGET);
 				
 				// Non-mods can edit the post as long as the thread isn't closed.
-				if ($ismod || ($_GET['id'] && !$thread['closed'])) {
-					$controls['edit'] = " | <a href='editpost.php?id={$post['id']}'>Edit</a>";
+				if ($ismod || $threadclosed) {
+					$controls[] = "<a href='editpost.php?id={$post['id']}'>Edit</a>";
 				}
 				
 				// If a post is deleted, the author can undelete it (and a mod can silently peek it)
@@ -540,22 +538,22 @@
 						// Post peeking feature
 						if ($post['id'] == $_GET['pin']) {
 							$post['deleted'] = false;
-							$controls['edit'] .= " | <a href='thread.php?pid={$post['id']}'>Unpeek</a>";
+							$controls[] = "<a href='thread.php?pid={$post['id']}'>Unpeek</a>";
 						} else {
-							$controls['edit'] .= " | <a href='thread.php?pid={$post['id']}&pin={$post['id']}#{$post['id']}'>Peek</a>";
+							$controls[] = "<a href='thread.php?pid={$post['id']}&pin={$post['id']}#{$post['id']}'>Peek</a>";
 						}
 					}
-					$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Undelete</a>";
+					$controls[] = "<a href='editpost.php?id={$post['id']}&action=delete'>Undelete</a>";
 				} else {
 					if ($ismod) {
-						$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
+						$controls[] = "<a href='editpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
 						//--
 						if (can_edit_highlight($post))
-							$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=highlight&type=1{$tokenstr}'>".($post['highlighted'] ? "Unh" : "H")."ighlight</a>";
-						$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=warn{$tokenstr}'>".($post['warned'] ? "Unw" : "W")."arn</a>";
+							$controls[] = "<a href='editpost.php?id={$post['id']}&action=highlight&type=1{$tokenstr}'>".($post['highlighted'] ? "Unh" : "H")."ighlight</a>";
+						$controls[] = "<a href='editpost.php?id={$post['id']}&action=warn{$tokenstr}'>".($post['warned'] ? "Unw" : "W")."arn</a>";
 						//--
 					}
-					$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
+					$controls[] = "<a href='editpost.php?id={$post['id']}&action=delete'>Delete</a>";
 				}
 				// Fetch the selected post revision
 				if ($ismod && $post['id'] == $_GET['pin'] && $_GET['rev']) {
@@ -570,14 +568,14 @@
 				
 				// Danger zone
 				if ($sysadmin && $config['allow-post-deletion']) {
-					$controls['edit'] .= " | <a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";
+					$controls[] = "<a href='editpost.php?id={$post['id']}&action=erase'>Erase</a>";
 				}
 				
 			}
 
 			if ($isadmin) {
 				$ip = htmlspecialchars($post['ip']);
-				$controls['ip'] = " | IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
+				$controls[] = "IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
 			}
 			
 			if ($showattachments && isset($attachments[$post['id']])) {

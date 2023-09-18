@@ -267,7 +267,7 @@ function postcode($post,$set){
 									{$set['new']}{$set['highlightctrl']}Posted on $postdate$threadlink{$post['edited']}
 								</td>
 								<td class='right'>
-									{$controls['quote']}{$controls['edit']}{$controls['ip']}
+									".implode(" | ", $controls)."
 								</td>
 								{$opt->top_right}
 							</tr>

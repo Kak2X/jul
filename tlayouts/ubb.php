@@ -45,7 +45,7 @@
 				<table class='w fonts' cellspacing=0 cellpadding=2>
 						<tr>
 							<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
-							<td class='nobr' style='width: 255px'>{$controls['quote']}{$controls['edit']}{$controls['ip']}</td>
+							<td class='nobr' style='width: 255px'>".implode(" | ", $controls)."</td>
 						</tr>
 				</table>
 				<hr>

@@ -16,14 +16,6 @@ function postcode($post,$set){
 	$posttotal  = $post['posts'];
 	$experience = "EXP {$exp} ($expleft for next)";
 
-	// Control format
-    if ($controls['quote']) $controls['quote']='['.$controls['quote'].']';
-    $controls['edit'] = str_replace(' | ','',$controls['edit']);
-    $controls['edit'] = str_replace('><','> | <',$controls['edit']);
-    if ($controls['edit']) $controls['edit']='['. $controls['edit'] .']';
-	$controls['ip'] = str_replace('| I','I',$controls['ip']);
-
-
 	// RPG Level bar
 	$bar = "<br>".drawprogressbar(96, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);
 	
@@ -45,7 +37,7 @@ function postcode($post,$set){
 	if ($post['deleted']) {
 		$height = 0;
 		$sideleft = "{$set['userspan']}{$set['userlink']}</span>";
-		$sideright = "{$set['new']}Posted: {$postdate} {$post['edited']}<br>{$threadlink} {$controls['edit']} | {$controls['ip']}";
+		$sideright = "{$set['new']}Posted: {$postdate} {$post['edited']}<br>{$threadlink} ".($controls ? "[".implode("] [", $controls)."]" : "")."";
 	} else {
 		$height = 50;
 		$sideleft = "
@@ -66,9 +58,8 @@ function postcode($post,$set){
 		$sideright = "
 			{$set['new']}
 			Posted: {$postdate}
-			<br>{$threadlink} {$controls['quote']}
-			<br>{$controls['edit']}
-			<br>{$controls['ip']}
+			<br>{$threadlink}
+			".($controls ? "[".implode("] [", $controls)."]" : "")."
 			{$opt->option_rows_top}";
 	}
 	

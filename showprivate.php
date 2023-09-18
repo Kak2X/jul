@@ -249,16 +249,16 @@
 			
 		$bg = $bg % 2 + 1;
 		
-		$controls['quote'] = "<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>";
+		
+		$controls = ["<a href=\"?pid={$post['id']}#{$post['id']}\">Link</a>"];
 		if (!$post['deleted'] && !$thread['closed']) {
-			$controls['quote'] .= " | <a href='newpmreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
+			$controls[] = "<a href='newpmreply.php?id={$_GET['id']}&postid={$post['id']}'>Quote</a>";
 		}
 		
-		$controls['edit'] = '';
-		if ($isadmin || (!$banned && $config['allow-pmthread-edit'] && !$post['deleted'] && $post['user'] == $loguser['id'])) {
+		if ($isadmin || (!$banned && $config['allow-pmthread-edit'] && !$loguser['editing_locked'] && !$post['deleted'] && $post['user'] == $loguser['id'])) {
 			
         	if ($isadmin || !$thread['closed']) {
-				$controls['edit'] = " | <a href='editpmpost.php?id={$post['id']}'>Edit</a>";
+				$controls[] = "<a href='editpmpost.php?id={$post['id']}'>Edit</a>";
 			}
 			
 			if ($post['deleted']) {
@@ -266,32 +266,32 @@
 					// Post peeking feature
 					if ($post['id'] == $_GET['pin']) {
 						$post['deleted'] = false;
-						$controls['edit'] .= " | <a href='?pid={$post['id']}{$navparam}'>Unpeek</a>";
+						$controls[] = "<a href='?pid={$post['id']}{$navparam}'>Unpeek</a>";
 					} else {
-						$controls['edit'] .= " | <a href='?pid={$post['id']}&pin={$post['id']}#{$post['id']}{$navparam}'>Peek</a>";
+						$controls[] = "<a href='?pid={$post['id']}&pin={$post['id']}#{$post['id']}{$navparam}'>Peek</a>";
 					}
 				}
-				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Undelete</a>";
+				$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=delete'>Undelete</a>";
 			} else {
 				if ($ismod) {
-					$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
+					$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=noob{$tokenstr}'>".($post['noob'] ? "Un" : "")."n00b</a>";
 					//--
 					if (can_edit_highlight($post))
-						$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=highlight&type=1{$tokenstr}'>".($post['highlighted'] ? "Unh" : "H")."ighlight</a>";
-					$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=warn{$tokenstr}'>".($post['warned'] ? "Unw" : "W")."arn</a>";
+						$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=highlight&type=1{$tokenstr}'>".($post['highlighted'] ? "Unh" : "H")."ighlight</a>";
+					$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=warn{$tokenstr}'>".($post['warned'] ? "Unw" : "W")."arn</a>";
 					//--
 				}
-				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=delete'>Delete</a>";
+				$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=delete'>Delete</a>";
 			}
 			if ($sysadmin && $config['allow-post-deletion']) {
-				$controls['edit'] .= " | <a href='editpmpost.php?id={$post['id']}&action=erase'>Erase</a>";
+				$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=erase'>Erase</a>";
 			}
 			
 		}
 
 		if ($isadmin) {
 			$ip = htmlspecialchars($post['ip']);
-			$controls['ip'] = " | IP: <a href='admin-ipsearch.php?ip={$ip}'>{$ip}</a>";
+			$controls[] = "IP: <a href='admin-ipsearch.php?ip={$ip}'>{$ip}</a>";
 		}
 		
 		if ($showattachments && isset($attachments[$post['id']])) {

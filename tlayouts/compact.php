@@ -31,8 +31,8 @@ function postcode($post,$set){
 			</td>
 			<td class='tdbg{$set['bg']} vatop' style='width: 50%'>
 				<div class='fonts right'>{$set['new']} Posted on {$set['date']}$threadlink</div>
-				<div class='right'>{$controls['quote']}{$controls['edit']}</div>
-				<span style='float: right'>&nbsp;{$controls['ip']}</span>{$opt->top_right}
+				<div class='fonts right'>".implode(" | ", $controls)."</div>
+				{$opt->top_right}
 			</td>
 		</tr>
 		<tr>

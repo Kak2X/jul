@@ -151,6 +151,7 @@
 
 	function setlayout($post) {
 		global $sql,$loguser,$postl,$blockedlayouts;
+		static $keys;
 		
 		if ($loguser['viewsig'] != 1) { // Autoupdate or disabled
 			$post['headid']   = $post['signid']   = $post['cssid']    = 0; 		// disable post layout assignment
@@ -192,14 +193,20 @@
 		$post['csstext']  = replace_tags($post['csstext'], $tags);
 		
 		$post['headtext'] = "<span id='body{$post['id']}'>".domarkup($post['headtext']);
-		$post['signtext'] = domarkup($post['signtext'])."</span>";
-		if ($post['csstext']) {
-			$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".domarkup($post['csstext'], null, true)."</style>{$post['headtext']}";
+		$post['signtext'] = domarkup($post['signtext'])."</span>";	
+		
+		// Only insert the unique CSS once, to save up on processing/sent bytes.
+		$csskey = $post['uid'].getcsskey($post);
+		if (!isset($keys[$csskey])) {
+			$keys[$csskey] = true;
+			if ($post['csstext']) {
+				$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".domarkup($post['csstext'], null, true)."</style>{$post['headtext']}";
+			}
 		}
 		
 		// Prevent topbar CSS overlap for non-autoupdating layouts
-		if ($post['headtext']) $post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['headtext']);
-		if ($post['sidebar'])  $post['sidebar']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$post['uid']}".getcsskey($post), $post['sidebar']);
+		if ($post['headtext']) $post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['headtext']);
+		if ($post['sidebar'])  $post['sidebar']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['sidebar']);
 		return $post;
 	}
 	
@@ -589,9 +596,9 @@ class tlayout_ext_option {
 	public $top_left = "";
 	public $top_right = "";
 	
-    function __construct($inpt) { // tlayout_ext_input
-        $this->rowspan = $inpt->rowspan;
-    }
+	function __construct($inpt) { // tlayout_ext_input
+		$this->rowspan = $inpt->rowspan;
+	}
 }
 
 class tlayout_ext_input {

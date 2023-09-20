@@ -7,7 +7,7 @@ function postcode($post, $set){
 	
     $homepage = filter_string($post['homepageurl']) ? " [<a href='{$post['homepageurl']}'>www</a>]" : "";
     $postdate = printdate($post['date']);
-	if ($post['edited']) $postdate .= "<br>";
+	if ($set['edited']) $postdate .= "<br>";
 	
 	$threadlink		= "";
 	if (filter_string($set['threadlink'])) {
@@ -64,7 +64,7 @@ function postcode($post, $set){
 			<td class='tdbg{$set['bg']} vatop mainbar{$post['uid']}{$csskey}_opt'>
 				<table class='w fonts'><tr>
 					<td>[<a href='profile.php?id={$u}'>Profile</a>] [<a href='newpmthread?userid={$u}'>Send PM</a>]{$homepage} [<a href='thread.php?mode=user&user={$u}'>Search</a>]{$threadlink}</td>
-					<td class='nobr right'>{$post['edited']} ".($controls ? "[".implode("] [", $controls)."]" : "")."</td>
+					<td class='nobr right'>{$set['edited']} ".($controls ? "[".implode("] [", $controls)."]" : "")."</td>
 				</tr></table>
 			</td>
 		</tr>

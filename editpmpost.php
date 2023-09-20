@@ -103,7 +103,6 @@
 						'mood' => $moodid,
 					);
 					$message 	= replace_tags($message, get_tags($loguser, $gtopt));
-					$edited 	= getuserlink($loguser);
 					
 
 					if ($headid = getpostlayoutid($head, false)) $head = "";
@@ -136,7 +135,7 @@
 					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
 					if ($flag_as_edited) {
 						// This now only gets updated when a revision is added
-						$pdata['edited']	    = $edited;
+						$pdata['editedby']	= $loguser['id'];
 						$pdata['editdate'] 	= time();
 					}
 					
@@ -355,7 +354,18 @@
 	}
 	else if ($_GET['action'] == 'delete') {
 		if (confirmed($msgkey = 'delete')) {
-			$sql->query("UPDATE pm_posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+				$data = [];
+				if ($post['deleted']) {
+					$data['deleted'] = 0;
+					$data['deletedby'] = null;
+					$data['deletereason'] = null;
+				} else {
+					$data['deleted'] = 1;
+					$data['deletedby'] = $loguser['id'];
+					$data['deletereason'] = filter_string($_POST['reason']);
+				}
+				$sql->queryp("UPDATE pm_posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
+
 			if ($post['deleted']) {
 				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for undeleting the post.","showprivate.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
 			} else {
@@ -370,7 +380,11 @@
 			$message = "Do you want to undelete this post?";
 			$btntext = "Yes";
 		} else {
-			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$message = "
+			Are you sure you want to <b>DELETE</b> this post?
+			<br/>If you want to, you can specify the reason (will be publicly visible):
+			<br/>
+			<br/><input type='text' name='reason' maxlength='255' style='width: 400px'/>";
 			$btntext = "Delete post";
 		}
 		$title     = "Warning";

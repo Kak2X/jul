@@ -303,12 +303,16 @@
 	// heh
 	$posts = $sql->fetchp(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
-				p.text{$sfields}, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
+				p.text{$sfields}, p.editedby, p.editdate, p.deletedby, p.deletereason,
+				p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
-				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}{$trfield}
+				u.id uid, u.name, u.displayname, $ufields,
+				".set_userfields('ue').", ".set_userfields('ud').", u.regdate{%AVFIELD%}{$trfield}
 		FROM posts p
 		
-		LEFT JOIN users u ON p.user = u.id
+		LEFT JOIN users  u ON p.user      = u.id
+		LEFT JOIN users ue ON p.editedby  = ue.id
+		LEFT JOIN users ud ON p.deletedby = ud.id
 		{$trjoin}
 		{%AVJOIN%}
 		
@@ -538,7 +542,7 @@
 						// Post peeking feature
 						if ($post['id'] == $_GET['pin']) {
 							$post['deleted'] = false;
-							$controls[] = "<a href='thread.php?pid={$post['id']}'>Unpeek</a>";
+							$controls[] = "<a href='thread.php?pid={$post['id']}#{$post['id']}'>Unpeek</a>";
 						} else {
 							$controls[] = "<a href='thread.php?pid={$post['id']}&pin={$post['id']}#{$post['id']}'>Peek</a>";
 						}

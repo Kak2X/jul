@@ -21,7 +21,9 @@
 		$post = setlayout($post);	
 		
 		if ($post['deleted']) { // Note: if a post is pinned we don't count it as deleted
-			$post['text'] = "(Post deleted)";
+			$by = $post['ud_id'] ? " by ".getuserlink(get_userfields($post, 'ud')) : "";
+			$reason = $post['deletereason'] ? " for reason: ".htmlspecialchars($post['deletereason']) : "";
+			$post['text'] = "<span class='fonts i'>(Post deleted{$by}{$reason})</span>";
 			$set['userrank'] = $set['location'] = "";
 			$set['picture']  = $set['userpic']  = "";
 			$set['attach']   = "";
@@ -64,28 +66,28 @@
 
 		// Edit date and revision selector
 		if (filter_int($post['editdate'])) {
-			$post['edited'] = " (last edited by {$post['edited']} at ".printdate($post['editdate']);
+			$set['edited'] = " (last edited by ".getuserlink(get_userfields($post, 'ue'))." at ".printdate($post['editdate']);
 			if (!$ismod || $post['revision'] < 2) { // Hide selector
-				$post['edited'] .= ")";
-			} else {
+				$set['edited'] .= ")";
+			} else if ($mode == MODE_POST) {
 				// Display revision info if one is selected
 				if (__($_GET['rev']) && $_GET['pin'] == $post['id']) {
-					$post['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
+					$set['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
 					$sel = $_GET['rev'];
 				} else { // Select max revision if none is specified
 					$sel = $post['revision'];
 				}
-				$post['edited'] .= ") | Revisions:";
+				$set['edited'] .= ") | Revisions:";
 				// Revision selector
 				for ($i = 1; $i < $post['revision']; ++$i) {
 					$w = ($i == $sel) ? "z" : "a";
-					$post['edited'] .= " <{$w} href='?pid={$post['id']}&pin={$post['id']}&rev={$i}#{$post['id']}'>{$i}</{$w}>";
+					$set['edited'] .= " <{$w} href='?pid={$post['id']}&pin={$post['id']}&rev={$i}#{$post['id']}'>{$i}</{$w}>";
 				}
 				$w = ($i == $sel) ? "z" : "a"; // Last revision
-				$post['edited'] .= " <{$w} href='?pid={$post['id']}#{$post['id']}'>{$i}</{$w}>";
+				$set['edited'] .= " <{$w} href='?pid={$post['id']}#{$post['id']}'>{$i}</{$w}>";
 			}
 		} else {
-			$post['edited'] = "";
+			$set['edited'] = "";
 		}
 		
 		$set['new'] = __($post['new']) ? "{$statusicons['new']} | " : "";
@@ -257,7 +259,7 @@
 	const PREVIEW_PM      = 3;
 	const PREVIEW_GENERIC = 4;
 	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
-		global $sql, $controls, $loguser, $config, $isadmin;
+		global $sql, $controls, $loguser, $config, $isadmin, $userfields_array;
 		
 		// $user should be an array with user data
 		if (is_int($user)) {
@@ -346,7 +348,8 @@
 			}
 			// Edit marker
 			$editedby           = isset($data['editedby']) ? $data['editedby'] : $loguser;
-			$ppost['edited']	= getuserlink($editedby);
+			foreach ($userfields_array as $x)
+				$ppost["ue_{$x}"] = $loguser[$x];
 			$ppost['editdate'] 	= $currenttime;
 		} else if ($flags == PREVIEW_PROFILE) {
 			$data['ip'] = $user['lastip'];

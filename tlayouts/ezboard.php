@@ -18,7 +18,7 @@ function postcode($post,$set) {
 	
 
 	// remove paranthesis and uppercase the first letter
-	if ($post['edited']) $post['edited'] = ucfirst(str_replace(array("(",")"), "", trim($post['edited'])))."<br>";
+	if ($set['edited']) $set['edited'] = ucfirst(str_replace(array("(",")"), "", trim($set['edited'])))."<br>";
 	
 	$csskey = getcsskey($post);
 	
@@ -42,7 +42,7 @@ function postcode($post,$set) {
 				<b>{$set['userrank']}</b><br>
 				Posts: {$postnum}<br>
 				{$set['new']}({$set['date']}){$threadlink}<br>
-				{$post['edited']}
+				{$set['edited']}
 				".implode(" | ", $controls)."
 				{$set['userpic']}
 			</span>

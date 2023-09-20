@@ -20,13 +20,6 @@ function postcode($post,$set){
 	if (filter_string($set['threadlink'])) {
 		$threadlink	= ", in {$set['threadlink']}";
 	}
-
-	$post['edited']	= filter_string($post['edited']);
-	//if ($post['edited']) {
-		// Old post edited marker
-		// $post['text'] .= "<hr><font class='fonts'>{$post['edited']}";
-	//}
-	
 	
 	// Default layout
 	$csskey = getcsskey($post);
@@ -264,7 +257,7 @@ function postcode($post,$set){
 						<table cellspacing=0 cellpadding=2 class='w fonts'>
 							<tr>
 								<td>
-									{$set['new']}{$set['highlightctrl']}Posted on $postdate$threadlink{$post['edited']}
+									{$set['new']}{$set['highlightctrl']}Posted on $postdate$threadlink{$set['edited']}
 								</td>
 								<td class='right'>
 									".implode(" | ", $controls)."

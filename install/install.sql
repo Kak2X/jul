@@ -65,45 +65,6 @@ LOCK TABLES `announcementread` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `announcements`
---
-
-DROP TABLE IF EXISTS `announcements`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `announcements` (
-  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `user` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `date` int(10) NOT NULL DEFAULT '0',
-  `ip` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `title` varchar(250) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `text` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `forum` tinyint(3) NOT NULL DEFAULT '0',
-  `headtext` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `signtext` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `edited` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `editdate` int(11) unsigned DEFAULT NULL,
-  `headid` mediumint(6) NOT NULL DEFAULT '0',
-  `signid` mediumint(6) NOT NULL DEFAULT '0',
-  `tagval` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `options` char(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0|0',
-  `moodid` tinyint(3) NOT NULL DEFAULT '0',
-  `noob` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  KEY `forum` (`forum`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `announcements`
---
-
-LOCK TABLES `announcements` WRITE;
-/*!40000 ALTER TABLE `announcements` DISABLE KEYS */;
-/*!40000 ALTER TABLE `announcements` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `archive_cat`
 --
 
@@ -176,7 +137,7 @@ CREATE TABLE `attachments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `post` int(11) NOT NULL,
   `pm` int(10) unsigned NOT NULL DEFAULT '0',
-  `user` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `mime` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
   `filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `size` int(11) NOT NULL,
@@ -362,10 +323,10 @@ DROP TABLE IF EXISTS `delusers`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `delusers` (
   `id` smallint(5) unsigned NOT NULL,
-  `posts` mediumint(9) NOT NULL DEFAULT '0',
-  `regdate` int(11) NOT NULL DEFAULT '0',
-  `name` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `loginname` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `posts` int(11) NOT NULL DEFAULT '0',
+  `regdate` int(11) unsigned NOT NULL DEFAULT '0',
+  `name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `displayname` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `password` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `minipic` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `picture` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -379,7 +340,6 @@ CREATE TABLE `delusers` (
   `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
   `powerlevel_prev` tinyint(2) NOT NULL DEFAULT '0',
   `sex` tinyint(1) unsigned NOT NULL DEFAULT '2',
-  `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `namecolor_bak` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -423,7 +383,7 @@ CREATE TABLE `delusers` (
   `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `dateshort` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `aka` varchar(25) COLLATE utf8mb4_unicode_ci DEFAULT '',
+  `aka` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT '',
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -485,7 +445,7 @@ CREATE TABLE `events` (
   `d` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `m` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `y` smallint(4) unsigned NOT NULL DEFAULT '0',
-  `user` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `title` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `text` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `private` tinyint(1) NOT NULL DEFAULT '0',
@@ -589,7 +549,7 @@ DROP TABLE IF EXISTS `favorites`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `favorites` (
-  `user` bigint(6) NOT NULL DEFAULT '0',
+  `user` smallint(5) NOT NULL DEFAULT '0',
   `thread` bigint(9) NOT NULL DEFAULT '0',
   UNIQUE KEY `user` (`user`,`thread`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -617,7 +577,7 @@ CREATE TABLE `filters` (
   `method` tinyint(4) NOT NULL,
   `ord` tinyint(4) NOT NULL DEFAULT '0',
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
-  `forum` int(11) NOT NULL DEFAULT '0',
+  `forum` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `source` varchar(127) NOT NULL,
   `replacement` varchar(127) NOT NULL,
   `comment` varchar(255) DEFAULT NULL,
@@ -647,8 +607,8 @@ DROP TABLE IF EXISTS `forumbans`;
 CREATE TABLE `forumbans` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `date` int(10) unsigned NOT NULL,
-  `user` int(10) unsigned NOT NULL,
-  `forum` int(10) unsigned NOT NULL,
+  `user` smallint(5) unsigned NOT NULL,
+  `forum` tinyint(3) unsigned NOT NULL,
   `banner` int(10) unsigned NOT NULL DEFAULT '0',
   `expire` int(10) unsigned NOT NULL DEFAULT '0',
   `reason` varchar(127) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -676,8 +636,8 @@ DROP TABLE IF EXISTS `forummods`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `forummods` (
-  `forum` smallint(5) NOT NULL DEFAULT '0',
-  `user` mediumint(8) NOT NULL DEFAULT '0'
+  `forum` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `user` smallint(5) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -722,18 +682,18 @@ DROP TABLE IF EXISTS `forums`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `forums` (
-  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(250) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `olddesc` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `olddesc` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `catid` smallint(5) unsigned NOT NULL DEFAULT '0',
   `minpower` tinyint(2) NOT NULL DEFAULT '0',
   `minpowerthread` tinyint(2) NOT NULL DEFAULT '0',
   `minpowerreply` tinyint(2) NOT NULL DEFAULT '0',
   `numthreads` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `numposts` mediumint(8) unsigned NOT NULL DEFAULT '0',
-  `lastpostdate` int(11) NOT NULL DEFAULT '0',
-  `lastpostuser` int(11) unsigned NOT NULL DEFAULT '0',
+  `lastpostdate` int(11) unsigned NOT NULL DEFAULT '0',
+  `lastpostuser` smallint(5) unsigned NOT NULL DEFAULT '0',
   `lastpostid` int(11) NOT NULL DEFAULT '0',
   `forder` smallint(5) NOT NULL DEFAULT '0',
   `specialscheme` smallint(5) DEFAULT NULL,
@@ -799,7 +759,7 @@ DROP TABLE IF EXISTS `hits`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `hits` (
   `num` int(11) NOT NULL DEFAULT '0',
-  `user` mediumint(8) NOT NULL DEFAULT '0',
+  `user` smallint(5) NOT NULL DEFAULT '0',
   `ip` varchar(46) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `date` int(11) NOT NULL DEFAULT '0',
   KEY `num` (`num`)
@@ -950,7 +910,7 @@ CREATE TABLE `items` (
   `coins` mediumint(8) NOT NULL DEFAULT '100',
   `gcoins` int(11) NOT NULL,
   `desc` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `user` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `hidden` tinyint(4) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `cat` (`cat`)
@@ -1192,8 +1152,8 @@ DROP TABLE IF EXISTS `news_comments`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `news_comments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `pid` int(32) NOT NULL,
-  `user` int(32) NOT NULL,
+  `pid` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `date` int(10) unsigned NOT NULL,
   `deleted` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `text` text NOT NULL,
@@ -1302,7 +1262,7 @@ DROP TABLE IF EXISTS `pm_access`;
 CREATE TABLE `pm_access` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `thread` int(11) NOT NULL,
-  `user` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `folder` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `dual` (`thread`,`user`),
@@ -1331,7 +1291,7 @@ DROP TABLE IF EXISTS `pm_folders`;
 CREATE TABLE `pm_folders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `folder` tinyint(4) NOT NULL,
-  `user` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `ord` tinyint(4) NOT NULL DEFAULT '0',
   `title` varchar(64) NOT NULL,
   PRIMARY KEY (`id`),
@@ -1383,7 +1343,7 @@ DROP TABLE IF EXISTS `pm_posts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `pm_posts` (
-  `id` mediumint(8) NOT NULL AUTO_INCREMENT,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `thread` int(10) unsigned NOT NULL DEFAULT '0',
   `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
@@ -1400,8 +1360,10 @@ CREATE TABLE `pm_posts` (
   `text` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signtext` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tagval` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `edited` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `editedby` smallint(5) unsigned DEFAULT NULL,
   `editdate` int(11) unsigned DEFAULT NULL,
+  `deletedby` smallint(5) unsigned DEFAULT NULL,
+  `deletereason` varchar(255) DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `highlighted` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `highlightdate` int(10) unsigned DEFAULT NULL,
@@ -1515,46 +1477,6 @@ LOCK TABLES `pm_threadsread` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `pmsgs`
---
-
-DROP TABLE IF EXISTS `pmsgs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `pmsgs` (
-  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-  `userto` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `userfrom` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `date` int(10) unsigned NOT NULL DEFAULT '0',
-  `ip` char(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `moodid` tinyint(4) NOT NULL DEFAULT '0',
-  `msgread` tinyint(3) unsigned NOT NULL DEFAULT '0',
-  `headid` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `signid` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `folderto` tinyint(3) unsigned NOT NULL DEFAULT '1',
-  `folderfrom` tinyint(3) unsigned NOT NULL DEFAULT '2',
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `headtext` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `text` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `signtext` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `tagval` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `userto` (`userto`),
-  KEY `userfrom` (`userfrom`),
-  KEY `msgread` (`msgread`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `pmsgs`
---
-
-LOCK TABLES `pmsgs` WRITE;
-/*!40000 ALTER TABLE `pmsgs` DISABLE KEYS */;
-/*!40000 ALTER TABLE `pmsgs` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `poll`
 --
 
@@ -1564,7 +1486,7 @@ DROP TABLE IF EXISTS `poll`;
 CREATE TABLE `poll` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `question` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `briefing` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `briefing` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `closed` tinyint(1) NOT NULL DEFAULT '0',
   `doublevote` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
@@ -1615,7 +1537,7 @@ DROP TABLE IF EXISTS `pollvotes`;
 CREATE TABLE `pollvotes` (
   `poll` int(11) NOT NULL DEFAULT '0',
   `choice` int(11) NOT NULL DEFAULT '0',
-  `user` int(11) NOT NULL DEFAULT '0',
+  `user` smallint(5) NOT NULL DEFAULT '0',
   UNIQUE KEY `choice` (`choice`,`user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1683,7 +1605,7 @@ DROP TABLE IF EXISTS `posts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `posts` (
-  `id` mediumint(8) NOT NULL AUTO_INCREMENT,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `thread` int(10) unsigned NOT NULL DEFAULT '0',
   `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `date` int(10) unsigned NOT NULL DEFAULT '0',
@@ -1701,8 +1623,10 @@ CREATE TABLE `posts` (
   `text` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `signtext` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tagval` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `edited` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `editedby` smallint(5) unsigned DEFAULT NULL,
   `editdate` int(11) unsigned DEFAULT NULL,
+  `deletedby` smallint(5) unsigned DEFAULT NULL,
+  `deletereason` varchar(255) DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `revision` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `highlighted` tinyint(1) unsigned NOT NULL DEFAULT 0,
@@ -1738,8 +1662,8 @@ DROP TABLE IF EXISTS `posts_old`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `posts_old` (
-  `id` mediumint(8) NOT NULL AUTO_INCREMENT,
-  `pid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `pid` int(11) unsigned NOT NULL DEFAULT '0',
   `revuser` smallint(5) unsigned NOT NULL DEFAULT '0',
   `revdate` int(10) unsigned NOT NULL DEFAULT '0',
   `headid` mediumint(8) unsigned NOT NULL DEFAULT '0',
@@ -1772,7 +1696,7 @@ DROP TABLE IF EXISTS `posts_ratings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `posts_ratings` (
-  `post` int(10) unsigned NOT NULL,
+  `post` int(11) unsigned NOT NULL,
   `user` smallint(5) unsigned NOT NULL,
   `rating` tinyint(3) unsigned NOT NULL,
   `date` int(10) unsigned NOT NULL DEFAULT '0',
@@ -1824,7 +1748,7 @@ DROP TABLE IF EXISTS `powerups`;
 CREATE TABLE `powerups` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `powl_dest` smallint(6) NOT NULL,
-  `user` int(10) unsigned NOT NULL,
+  `user` smallint(5) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user` (`user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2043,7 +1967,7 @@ DROP TABLE IF EXISTS `rpg_inventory`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `rpg_inventory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user` mediumint(9) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `itemid` int(11) NOT NULL,
   `equippedto` tinyint(4) NOT NULL,
   PRIMARY KEY (`id`),
@@ -2358,11 +2282,11 @@ CREATE TABLE `uploader_cat` (
   `downloads` int(10) unsigned NOT NULL DEFAULT '0',
   `lastfile` varchar(255) DEFAULT NULL,
   `lastfiledate` int(10) unsigned NOT NULL DEFAULT '0',
-  `lastfileuser` int(10) unsigned NOT NULL DEFAULT '0',
+  `lastfileuser` smallint(5) unsigned NOT NULL DEFAULT '0',
   `minpowerread` tinyint(4) NOT NULL DEFAULT '0',
   `minpowerupload` tinyint(4) NOT NULL DEFAULT '0',
   `minpowermanage` tinyint(4) NOT NULL DEFAULT '0',
-  `user` int(10) unsigned NOT NULL DEFAULT '0',
+  `user` smallint(5) unsigned NOT NULL DEFAULT '0',
   `ord` smallint(5) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `private` (`minpowerread`),
@@ -2508,10 +2432,10 @@ DROP TABLE IF EXISTS `users`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
   `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `posts` mediumint(9) NOT NULL DEFAULT '0',
-  `regdate` int(11) NOT NULL DEFAULT '0',
-  `name` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `loginname` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `posts` int(11) NOT NULL DEFAULT '0',
+  `regdate` int(11) unsigned NOT NULL DEFAULT '0',
+  `name` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `displayname` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `password` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `minipic` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `picture` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -2525,7 +2449,6 @@ CREATE TABLE `users` (
   `powerlevel` tinyint(2) NOT NULL DEFAULT '0',
   `powerlevel_prev` tinyint(2) NOT NULL DEFAULT '0',
   `sex` tinyint(1) unsigned NOT NULL DEFAULT '2',
-  `oldsex` tinyint(4) NOT NULL DEFAULT '-1',
   `namecolor` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `namecolor_bak` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
@@ -2569,7 +2492,7 @@ CREATE TABLE `users` (
   `lastannouncement` int(11) NOT NULL DEFAULT '0',
   `dateformat` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
   `dateshort` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `aka` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `aka` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `hideactivity` tinyint(1) NOT NULL DEFAULT '0',
   `ban_expire` int(11) NOT NULL DEFAULT '0',
   `splitcat` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -2610,7 +2533,7 @@ DROP TABLE IF EXISTS `users_avatars`;
 CREATE TABLE `users_avatars` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `file` smallint(5) unsigned NOT NULL,
-  `user` int(11) NOT NULL,
+  `user` smallint(5) NOT NULL,
   `title` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT '0',
   `weblink` varchar(127) COLLATE utf8mb4_unicode_ci DEFAULT NULL,

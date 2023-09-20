@@ -72,12 +72,15 @@
 	// Get every first post for every (announcement) thread in the forum
 	$anncs = $sql->getarray(set_avatars_sql("
 		SELECT t.title atitle, t.description adesc, MIN(p.id) pid, p.*,
-		       COUNT(p.id)-1 replies, u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
+		       COUNT(p.id)-1 replies, u.id uid, u.name, u.displayname, $ufields, 
+			   ".set_userfields('ue').", u.regdate{%AVFIELD%}  
 		FROM threads t
-		LEFT JOIN posts p ON p.thread = t.id
-		LEFT JOIN users u ON p.user   = u.id
+		LEFT JOIN posts  p ON p.thread   = t.id
+		LEFT JOIN users  u ON p.user     = u.id
+		LEFT JOIN users ue ON p.editedby = ue.id
 		{%AVJOIN%}
 		WHERE {$searchon}
+		  AND p.deleted = 0
 		GROUP BY t.id
 		ORDER BY p.date DESC
 		LIMIT $min,$ppp

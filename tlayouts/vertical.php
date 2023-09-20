@@ -37,7 +37,7 @@ function postcode($post,$set){
 	if ($post['deleted']) {
 		$height = 0;
 		$sideleft = "{$set['userspan']}{$set['userlink']}</span>";
-		$sideright = "{$set['new']}Posted: {$postdate} {$post['edited']}<br>{$threadlink} ".($controls ? "[".implode("] [", $controls)."]" : "")."";
+		$sideright = "{$set['new']}Posted: {$postdate} {$set['edited']}<br>{$threadlink} ".($controls ? "[".implode("] [", $controls)."]" : "")."";
 	} else {
 		$height = 50;
 		$sideleft = "

@@ -44,7 +44,7 @@
 			<td class='tdbg{$set['bg']} vatop' style='border-bottom: none' id='post{$post['id']}'>
 				<table class='w fonts' cellspacing=0 cellpadding=2>
 						<tr>
-							<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
+							<td>{$set['new']}Posted on {$postdate}{$threadlink}{$set['edited']}</td>
 							<td class='nobr' style='width: 255px'>".implode(" | ", $controls)."</td>
 						</tr>
 				</table>

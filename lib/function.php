@@ -805,17 +805,17 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		} else {
 			$u = $sql->fetchq("SELECT $userfields FROM users u WHERE id = $id", PDO::FETCH_ASSOC, mysql::USE_CACHE);
 		}
+	} else if (!$id) {
+		$id = $u['id'];
 	}
 	
 	// When the user is null it typically means the user has been deleted.
 	// Print this so we don't just end up with a blank link.
-	if (!$u) {
+	if (!$u || !$id) {
 		return "<span style='color: #FF0000'><b>[Deleted user]</b></span>";
 	}
 	
-	if (!$id) {
-		$id = $u['id'];
-	}
+
 	
 	$username       = $u['displayname'] ? $u['displayname'] : $u['name'];
 	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $username) ? " title=\"Also known as: ".htmlspecialchars($u['aka'])."\"" : '';

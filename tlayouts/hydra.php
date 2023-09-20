@@ -19,12 +19,8 @@ function postcode($post,$set){
 	$postdate  =  printdate($post['date']);
 
 	$threadlink = "";
-	if(filter_string($set['threadlink'])) 
+	if (filter_string($set['threadlink'])) 
 		$threadlink = ", in {$set['threadlink']}";
-
-	/* if($post['edited']){
-		$set['edited'].="<hr><font class="fonts">$post['edited']";
-	}*/
 
 	$height   = $post['deleted'] ? 0 : 220;	
 	
@@ -54,7 +50,7 @@ function postcode($post,$set){
 				<table class='fonts' style='clear: both; width: 100%;'>
 					<tr>
 						<td>
-							{$set['new']}Posted on $postdate$threadlink{$post['edited']}
+							{$set['new']}Posted on $postdate$threadlink{$set['edited']}
 						</td>
 						<td style='float: right;'>
 							".implode(" | ", $controls)."

@@ -161,15 +161,19 @@
 	// heh
 	$posts = $sql->getarray(set_avatars_sql("
 		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
-				p.text$sfields, p.edited, p.editdate, p.nosmilies, p.nohtml, p.tagval, p.deleted, 0 revision,
+				p.text$sfields, p.editedby, p.editdate, p.deleted, p.deletedby, p.deletereason,
+				p.nosmilies, p.nohtml, p.tagval, 0 revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
 				r.read tread, r.time treadtime,
-				u.id uid, u.name, $ufields, u.regdate{%AVFIELD%}
+				u.id uid, u.name, u.displayname, $ufields,
+				".set_userfields('ue').", ".set_userfields('ud').", u.regdate{%AVFIELD%}
 		FROM pm_posts p
 		
 		LEFT JOIN pm_threads     t ON p.thread = t.id
 		LEFT JOIN pm_threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
-		LEFT JOIN users u ON p.user = u.id
+		LEFT JOIN users  u ON p.user      = u.id
+		LEFT JOIN users ue ON p.editedby  = ue.id
+		LEFT JOIN users ud ON p.deletedby = ud.id
 		{%AVJOIN%}
 		WHERE {$searchon}
 		ORDER BY p.id ASC
@@ -266,9 +270,9 @@
 					// Post peeking feature
 					if ($post['id'] == $_GET['pin']) {
 						$post['deleted'] = false;
-						$controls[] = "<a href='?pid={$post['id']}{$navparam}'>Unpeek</a>";
+						$controls[] = "<a href='?pid={$post['id']}{$navparam}#{$post['id']}'>Unpeek</a>";
 					} else {
-						$controls[] = "<a href='?pid={$post['id']}&pin={$post['id']}#{$post['id']}{$navparam}'>Peek</a>";
+						$controls[] = "<a href='?pid={$post['id']}&pin={$post['id']}{$navparam}#{$post['id']}'>Peek</a>";
 					}
 				}
 				$controls[] = "<a href='editpmpost.php?id={$post['id']}&action=delete'>Undelete</a>";

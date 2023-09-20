@@ -116,7 +116,6 @@
 						'mood' => $moodid,
 					);
 					$message 	= replace_tags($message, get_tags($loguser, $gtopt));
-					$edited 	= getuserlink($loguser);
 					
 					/*
 					if ($loguserid == 1162) {
@@ -167,7 +166,7 @@
 						
 					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
 					if ($flag_as_edited) {
-						$pdata['edited']   = $edited;
+						$pdata['editedby']= $loguser['id'];
 						$pdata['editdate'] = time();
 					}
 					if ($create_rev) {
@@ -409,7 +408,17 @@
 			if ($loguser['editing_locked']) {
 				report_send(IRC_STAFF, "'{$loguser['name']}' tried to ".($post['deleted'] ? "un" : "")."delete post #{$_GET['id']}");
 			} else {
-				$sql->query("UPDATE posts SET deleted = 1 - deleted WHERE id = {$_GET['id']}");
+				$data = [];
+				if ($post['deleted']) {
+					$data['deleted'] = 0;
+					$data['deletedby'] = null;
+					$data['deletereason'] = null;
+				} else {
+					$data['deleted'] = 1;
+					$data['deletedby'] = $loguser['id'];
+					$data['deletereason'] = filter_string($_POST['reason']);
+				}
+				$sql->queryp("UPDATE posts SET ".mysql::setplaceholders($data)." WHERE id = {$_GET['id']}", $data);
 			}
 			if ($post['deleted']) {
 				errorpage("Thank you, ".htmlspecialchars($loguser['name']).", for undeleting the post.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the thread",0);
@@ -427,7 +436,11 @@
 			$message = "Do you want to undelete this post?";
 			$btntext = "Yes";
 		} else {
-			$message = "Are you sure you want to <b>DELETE</b> this post?";
+			$message = "
+			Are you sure you want to <b>DELETE</b> this post?
+			<br/>If you want to, you can specify the reason (will be publicly visible):
+			<br/>
+			<br/><input type='text' name='reason' maxlength='255' style='width: 400px'/>";
 			$btntext = "Delete post";
 		}
 		$buttons = array(

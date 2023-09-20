@@ -75,7 +75,7 @@ return "{$set['highlightline']}
 		<td class='tdbg{$set['bg']} topbar{$post['uid']}{$data->csskey}_2'>
 			<table class='w fonts' cellspacing=0 cellpadding=2>
 				<tr>
-					<td>{$set['new']}Posted on {$postdate}{$threadlink}{$post['edited']}</td>
+					<td>{$set['new']}Posted on {$postdate}{$threadlink}{$set['edited']}</td>
 					<td class='nobr' style='width: 255px'>".implode(" | ", $controls)."</td>
 				</tr>
 			</table>

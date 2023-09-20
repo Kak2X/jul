@@ -401,7 +401,7 @@
 			<tr>
 				<td class='tdbg1 center b'>Briefing:</td>
 				<td class='tdbg2' id="brieftd">
-					<textarea id="brieftxt" name="briefing" rows="2"><?=htmlspecialchars($_POST['briefing'])?></textarea>
+					<textarea id="brieftxt" name="briefing" rows="2"><?=escape_html($_POST['briefing'])?></textarea>
 				</td>
 			</tr>
 			

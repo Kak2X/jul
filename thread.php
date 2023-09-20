@@ -102,11 +102,11 @@
 	}
 	switch ($_GET['date']) {
 		case SDATE_LAST:
-			$qwhere[]   = "p.date > ?";
+			$qwhere[]   = "p.date >= ?";
 			$qvals[]    = time() - $_GET['datedays'] * 86400;
 			break;
 		case SDATE_RANGE:
-			$qwhere[]   = "p.date > ? AND p.date < ?";
+			$qwhere[]   = "p.date >= ? AND p.date <= ?";
 			$qvals[]    = $datefrom;
 			$qvals[]    = $dateto;
 			break;

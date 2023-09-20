@@ -244,20 +244,18 @@
 			 // Do the double name check here
 			$users = $sql->query('SELECT name FROM users');
 			
-			$username  = substr(filter_string($_POST['name']),0,25);
-			$username2 = str_replace(' ','',$username);
-			$username2 = preg_replace("'&nbsp;?'si",'',$username2);
+			$username = substr(filter_string($_POST['name']), 0, 32);
+			$samename = $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $username))]);
 			
-			$samename = NULL;
-			while ($user = $sql->fetch($users)) {
-				$user['name'] = str_replace(' ','',$user['name']);
-				if (strcasecmp($user['name'], $username2) == 0) $samename = $user['name'];
-			}
+			
+			$displayname = substr(filter_string($_POST['displayname']), 0, 32);
+			$samedisplay = $displayname && $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $displayname))]);
 			
 			// Extra edituser fields
 			$adminval = array(
 				
 				'name'				=> ($samename || !$username) ? $userdata['name'] : $username,
+				'displayname'       => $samedisplay ? $userdata['displayname'] : $displayname,
 				// No "Imma become a root admin" bullshit
 				'powerlevel' 		=> $sysadmin ? filter_int($_POST['powerlevel']) : min(3, filter_int($_POST['powerlevel'])),
 				'regdate'			=> fieldstotimestamp('reg', '_POST'),
@@ -316,13 +314,15 @@
 		*/
 
 		_table_format("Login information", array(
-			"User name" 	=> [4, "name", "If you want to change this, ask an admin.", 25, 25], // static
+			"User name" 	=> [4, "name", "", 32, 32], // static
+			"Display name" 	=> [4, "displayname", "If you want to change this, ask an admin.", 32, 32], // static
 			"Password"		=> [4, "password", "You can change your password by entering a new one here."], // password field
 		));
 		
 		if ($edituser) {
 			// Set type from static to input, as an admin should be able to do that.
 			$fields["Login information"]["User name"][0] = 0;
+			$fields["Login information"]["Display name"][0] = 0;
 			
 			// ... and also gets the extra "Administrative bells and whistles"
 			_table_format("Administrative bells and whistles", array(
@@ -432,6 +432,8 @@
 		
 		// Static text for the username (shown when editing your own profile)
 		$name = $userdata['name'];
+		$displayname = getuserlink($userdata);
+		
 		
 		// Password field + confirmation (unless you're editing another user)
 		$password = "<input type='password' name='pass1'>";

@@ -256,14 +256,15 @@
 		");
 	} else if ($_GET['user']) {
 		$vals = [
-			'u1_name'       => $userdata['name'],		
-			'u1_sex'        => $userdata['sex'],
-			'u1_powerlevel' => $userdata['powerlevel'],
-			'u1_aka'        => $userdata['aka'],
-			'u1_birthday'   => $userdata['birthday'],
-			'u1_minipic'    => $userdata['minipic'],
-			'u1_namecolor'  => $userdata['namecolor'],
-			'u1_id'         => $userdata['id'],
+			'u1_name'        => $userdata['name'],
+			'u1_displayname' => $userdata['displayname'],
+			'u1_sex'         => $userdata['sex'],
+			'u1_powerlevel'  => $userdata['powerlevel'],
+			'u1_aka'         => $userdata['aka'],
+			'u1_birthday'    => $userdata['birthday'],
+			'u1_minipic'     => $userdata['minipic'],
+			'u1_namecolor'   => $userdata['namecolor'],
+			'u1_id'          => $userdata['id'],
 		];
 		$threads = $sql->queryp("
 			SELECT 	t.*, f.minpower, f.pollstyle, f.id forumid, f.login,

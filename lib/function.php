@@ -817,9 +817,10 @@ function getuserlink($u = NULL, $id = 0, $urlclass = '', $useicon = false) {
 		$id = $u['id'];
 	}
 	
-	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $u['name']) ? " title=\"Also known as: ".htmlspecialchars($u['aka'])."\"" : '';
+	$username       = $u['displayname'] ? $u['displayname'] : $u['name'];
+	$alsoKnownAs	= ($u['aka'] && $u['aka'] != $username) ? " title=\"Also known as: ".htmlspecialchars($u['aka'])."\"" : '';
 	
-	$username       = htmlspecialchars($u['name'], ENT_NOQUOTES);
+	$username       = htmlspecialchars($username, ENT_NOQUOTES);
 	
 	if ($u['namecolor']) {
 		if ($u['namecolor'] != 'rnbow' && is_birthday($u['birthday'])) { // Don't calculate birthday effect again

@@ -165,8 +165,8 @@
 			}
 		}
 
-		// Restrict username to 25 chars (only now so previous logging logs it in full)
-		$_POST['name'] = substr(trim($_POST['name']), 0, 25);
+		// Restrict username to 32 chars (only now so previous logging logs it in full)
+		$_POST['name'] = substr(trim($_POST['name']), 0, 32);
 		
 		if (!$_POST['name']) {
 			$regerrors['name'] .= "<li>No username specified.</li>";
@@ -189,7 +189,7 @@
 		}
 		
 		if (!$error) {
-			if ($userid = $sql->resultp("SELECT id FROM users WHERE LOWER(REPLACE(name, ' ', '')) = ?", [strtolower(str_replace(' ', '', $_POST['name']))])) {
+			if ($userid = $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $_POST['name']))])) {
 				$regerrors['main'] .= "<li>The username '". htmlspecialchars($_POST['name']) ."' is already <a href='profile.php?id={$userid}'>in use</a></li>";
 				$regerrors['name'] .= "<li>In use</li>";
 				$error = true;

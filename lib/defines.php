@@ -1,8 +1,8 @@
 <?php
 
 	// Fields necessary to generate userlinks
-	$userfields = "u.name, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
-	$userfields_array = ['name', 'aka', 'sex', 'powerlevel', 'birthday', 'namecolor', 'minipic', 'id'];
+	$userfields = "u.name, u.displayname, u.aka, u.sex, u.powerlevel, u.birthday, u.namecolor, u.minipic, u.id";
+	$userfields_array = ['name', 'displayname', 'aka', 'sex', 'powerlevel', 'birthday', 'namecolor', 'minipic', 'id'];
 	
 	// Line separators
 	const SIGNSEP_DESC 	= array('Dashes','Line','Full horizontal line','None');

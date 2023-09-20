@@ -30,6 +30,11 @@
 	$numdays = (time() - $user['regdate']) / 86400;
 	$userlink = getuserlink($user, 0, '', true);	// With minipic
 
+	$displayname = null;
+	if ($user['displayname']) {
+		$displayname = getuserlink($user);
+	}
+
 	// Also known as
 	if ($user['aka'] && $user['aka'] != $user['name']) {
 		$aka = htmlspecialchars($user['aka']);
@@ -227,7 +232,8 @@
 	
 	$profile = [
 		'General information' => [
-			#'Username'      => htmlspecialchars($user['name']),
+			'Username'      => htmlspecialchars($user['name']),
+			'Display name'  => $displayname,
 			'Also known as'	=> $aka,
 			'Banned until'  => $bantime,
 			'Total posts'   => "{$user['posts']} ({$postsfound} found, {$postavg} per day) {$projtext}<br>{$bar}",

@@ -17,13 +17,14 @@ print "
 ".  ($_GET['bio'] ? "<td class='tdbgh center'>Bio</td>" : 
 		"<td class='tdbgh center'>Header</td>
 		<td class='tdbgh center'>Signature</td>
+		<td class='tdbgh center'>CSS</td>
 		<td class='tdbgh center'>Total</td>");
 	
 	$users = $sql->query("
 		SELECT $userfields, ".
 		($_GET['bio'] ? 
 			"LENGTH(bio) AS tsize, bio as postheader" : 
-			"LENGTH(postheader) AS hsize,LENGTH(signature) AS ssize,LENGTH(postheader)+LENGTH(signature) AS tsize, postheader")."
+			"LENGTH(postheader) AS hsize, LENGTH(signature) AS ssize,LENGTH(css) AS csize,LENGTH(postheader)+LENGTH(signature)+LENGTH(css) AS tsize, postheader")."
 		FROM users u ORDER BY tsize DESC");
 
 	$last = $max = NULL;
@@ -43,7 +44,8 @@ print "
 		<td class='tdbg2 center' style='width: {$config['max-minipic-size-x']}px'>". get_minipic($u['id'], $u['minipic']) ."</td>
 		<td class='tdbg1 center'>".getuserlink($u)."</td>
 		". (!$_GET['bio'] ? "<td class='tdbg2 center' width=100>". number_format($u['hsize']) ."</td>
-							 <td class='tdbg2 center' width=100>". number_format($u['ssize']) ."</td>" : "") ."
+							 <td class='tdbg2 center' width=100>". number_format($u['ssize']) ."</td>
+							 <td class='tdbg2 center' width=100>". number_format($u['csize']) ."</td>" : "") ."
 		<td class='tdbg1 center' width=100><b>". number_format($u['tsize']) ."</b><br><img src=images/minibar.png width=\"". number_format($u['tsize'] / $max * 200) ."\" align=left height=3></td>
 	</tr>";
 	}

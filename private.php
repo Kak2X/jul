@@ -173,7 +173,7 @@
 				$threadtitle .= " <span class='pagelinks fonts'>({$threadlinks})</span>";
 			}
 		}
-		if ($threaddesc = trim($thread['description'])) {
+		if ($thread['description'] && ($threaddesc = trim($thread['description']))) {
 			$threadtitle .= "<br><span class='fonts'>".htmlspecialchars($threaddesc)."</span>";
 		}
 		if (!empty($belowtitle)) {

@@ -228,7 +228,7 @@
 			<tr>
 				<td class='tdbg1 center b'>Thread description:</td>
 				<td class='tdbg2'>
-					<input type='text' name=description VALUE="<?=htmlspecialchars($thread['description'])?>" SIZE=100 MAXLENGTH=120>
+					<input type='text' name=description VALUE="<?=escape_html($thread['description'])?>" SIZE=100 MAXLENGTH=120>
 				</td>
 			</tr>
 			<tr>

@@ -33,11 +33,12 @@
 		// Normal page
 		pageheader("A revolution in posting technology&trade;");		
 		
+		// Forumread entries may not exist
 		if ($loguser['id']) {
 			$forumread = $sql->getresultsbykey("SELECT forum, readdate FROM forumread WHERE user = {$loguser['id']}");
 		}
 		while ($in = $sql->fetch($data)) {
-			if ($loguser['id'] && $in['date'] > max($forumread[$in['fid']], $in['treadtime'])) {
+			if ($loguser['id'] && $in['date'] > max(filter_int($forumread[$in['fid']]), $in['treadtime'])) {
 				$newpost = $statusicons['new']."&nbsp";
 			} else {
 				$newpost = "";

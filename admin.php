@@ -140,7 +140,7 @@
 		</tr>
 		<tr>
 			<td class='tdbg1 center'><b>Notice box contents</b></td>
-			<td class='tdbg2'><textarea name='attntext' rows='2'><?=escape_html($misc['attntext'])?></textarea></td>
+			<td class='tdbg2' id="attntd"><textarea id="attntxt" name='attntext' rows='3'><?=escape_html($misc['attntext'])?></textarea></td>
 		</tr>
 		
 		<tr><td class='tdbgc center' colspan=2>
@@ -201,8 +201,9 @@
 		enacode();
 	</script>
 	<?php
-
-
+	
+	$smilies  = readsmilies();
+	replytoolbar('attn', $smilies);
 
 	pagefooter();
 

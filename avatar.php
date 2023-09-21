@@ -57,22 +57,16 @@ while ($u = $sql->fetch($users)) {
 if ($me && $moods) {
 	
 	$_GET['start'] = filter_int($_GET['start']);
-	print include_js("avatars.js");
+	
+	register_js("js/avatars.js");
 	
 	if ($config['allow-avatar-storage']) {
 		$header_text  = count($moods)." avatars found";
-		$avtype       = "new"; // use newavatarpreview()
 	} else {
 		if ($_GET['start'] < 1) {
 			$_GET['start'] = 1;
 		}
-		
-		$moodurl  = $me['moodurl'];
-		$startimg = str_replace('$', $_GET['start'], $moodurl);
-		print set_mood_url_js($moodurl);
-		
 		$header_text = htmlspecialchars($moodurl);
-		$avtype = ""; // use avatarpreview()
 	}
 	
 	// Mood avatar selection
@@ -80,7 +74,8 @@ if ($me && $moods) {
 	$confirm = -1;
 	foreach ($moods as $num => $x) {
 		
-		$jsclick = "onclick='{$avtype}avatarpreview({$me['id']},{$num},\"".escape_attribute($x['weblink'])."\")'";
+		$url = $config['allow-avatar-storage'] ? avatar_path($me['id'], $num, $moods[$num]['weblink']) : str_replace('$', $num, $moodurl);
+		$jsclick = "onclick='set_av(\"".escape_attribute($url)."\")'";
 		if ($num == $_GET['start']) {
 			$selected = ' checked';
 			$confirm = $_GET['start']; // So no hidden or nonexisting avatars can be viewed
@@ -96,7 +91,7 @@ if ($me && $moods) {
 				&nbsp;{$num}:&nbsp;".htmlspecialchars($x['title'])."
 			</label>
 		</span>
-		<noscript>&nbsp;{$num}:&nbsp;<a href='?id={$_GET['id']}&start={$num}'>".htmlspecialchars($x['title'])."</a></noscript><br>";
+		<noscript>&nbsp;{$num}:&nbsp;<a href='?id={$_GET['id']}&start={$num}#{$num}' id='{$num}'>".htmlspecialchars($x['title'])."</a></noscript><br>";
 	}
 	
 	// Alternative header text
@@ -109,15 +104,16 @@ if ($me && $moods) {
 			".htmlspecialchars($me['name']).": <i>{$header_text}</i>
 		</td>
 	</tr>
-	<tr style='height: 400px'>
-		<td class='tdbg1' style='width: 200px'>
-			<b>Mood avatar list:</b><br>
-			{$txt}
-		</td>
-		<td class='tdbg2 center' style='width: 400px'>
+	<tr>
+		<td class='tdbg1 b center'>Mood avatar list:</td>
+		<td class='tdbg2 center' style='width: 400px' rowspan='2'>
 			<img src=\"".escape_attribute($startimg)."\" id=prev>
 		</td>
-	</tr>";
+	</tr>
+	<tr>
+		<td class='tdbg1'><div style='height: 400px; overflow-y: scroll'>{$txt}</div></td>
+	</tr>
+	";
 
 } else {
 	$ret = '';
@@ -128,6 +124,9 @@ if ($me && $moods) {
 <script type="text/javascript">
 	function change_user(id) {
 		parent.location = 'avatar.php?id='+id;
+	}
+	function set_av(path) {
+		document.getElementById('prev').src = path;
 	}
 </script>
 <center>

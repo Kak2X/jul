@@ -157,57 +157,57 @@ function mood_list($user, $sel = 0, $return = false) {
 		return "";
 	}
 	
+	static $registered = false;
+	if (!$registered) {
+		$registered = true;
+		register_js("js/avatars.js");
+	}
+	
 	$c[$sel]	= " selected";
 	$txt		= "";
 	
 	if ($config['allow-avatar-storage']) { // Self stored avatar mode
-		// If no default avatar was defined, make sure the default option blanks the avatar (true option)
+		// If no default avatar was defined, make sure the default option blanks the avatar (data-act='clear')
 		if (isset($moods[0])) {
 			$moods[0]['title'] = "-Normal avatar-";
-			$default = '"'.escape_attribute($moods[$sel]['weblink']).'"';
 		} else {
-			$txt .= "<option value='0' onclick='newavatarpreview(0,0,true)'>-Normal avatar-</option>";
-			// Selecting a non-default avatar should still set the real default
-			$default = $sel ? '"'.escape_attribute($moods[$sel]['weblink']).'"' : 'true';
+			$txt .= "<option value='0' ". filter_string($c[$file])." data-act='clear'>-Normal avatar-</option>";
 		}
 		
 		// Select box, with now auto av preview update
 		foreach ($moods as $file => $data) {
-			$jsclick = " onclick='newavatarpreview({$user},{$file},\"".escape_attribute($data['weblink'])."\")'";
+			$img = escape_attribute($data['weblink']);
 			$txt .= 
-			"<option value='{$file}'". filter_string($c[$file]) ."{$jsclick}>".
-				htmlspecialchars($data['title']).
+			"<option value='{$file}'". filter_string($c[$file]) ." data-f=\"{$img}\">"
+				.htmlspecialchars($data['title']).
 			" ({$file})</option>\r\n";
 		}
-		
-		$ret = "
-		Avatar: <select name='moodid'>
-			{$txt}
-		</select><script>newavatarpreview({$user},{$sel},{$default})</script>";
-		
 	} else { // Numeric "good luck with hosting" avatar mode
 	
 		// fetch the mood url if we're using alt credentials (or are posting while logged out)
 		if (!$user) {
-			$moodurl = "";
+			$moodurl = $avatar = "";
 		} else if ($user == $loguser['id']) {
 			$moodurl = $loguser['moodurl'];
+			$picture = $loguser['picture'];
 		} else {
-			$moodurl = $sql->resultq("SELECT moodurl FROM users WHERE id = {$user}");
+			list($picture, $moodurl) = $sql->resultq("SELECT picture, moodurl FROM users WHERE id = {$user}");
 		}
+		$picture    = escape_attribute($picture);
 		$moodurl    = escape_attribute($moodurl);
 		
 		foreach ($moods as $num => $data) {
-			$jsclick = ($user && $moodurl) ? " onclick='avatarpreview({$user},{$num})'" : "";
-			$txt .= "<option value='{$num}'". filter_string($c[$num]) ."{$jsclick}>{$data['title']} ({$num})</option>\r\n";
+			$img = $user && $num > 0 ? str_replace('$', $num, $moodurl) : $picture;
+			$txt .= "<option value='{$num}'". filter_string($c[$num]) ." data-f=\"{$img}\" data-noas='1'>{$data['title']} ({$num})</option>\r\n";
 		}
-		$ret = "Avatar: <select name='moodid'>
-			{$txt}
-		</select>".set_mood_url_js($moodurl).
-		"<script>avatarpreview({$user},{$sel})</script>";
 	}
 	
-	return include_js('avatars.js').$ret;
+	$ret = "
+	Avatar: <select id='moodid' name='moodid' data-u='{$user}'>
+		{$txt}
+	</select>";
+	
+	return $ret;
 }
 
 function set_avatars_sql($query, $a = 'p', $mfix = false) {

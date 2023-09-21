@@ -1,21 +1,18 @@
-function newavatarpreview(uid,pic,nostorage=false) {
-	if (!nostorage) {
-		document.getElementById('prev').src="userpic/"+uid+"_"+pic;
-	} else if (nostorage !== true) {
-		document.getElementById('prev').src=nostorage;
-	} else { // magic value for blank userpic
-		document.getElementById('prev').src="images/_.gif";
-	}
+// Launch immediately without waiting
+var mood = document.getElementById('moodid');
+var prev = document.getElementById('prev');
+mood.addEventListener('change', refreshMoodPrev);
+refreshMoodPrev();
+
+function refreshMoodPrev() {
+	var opt = mood.options[mood.selectedIndex];
+	if (opt.dataset.act == "clear")
+		prev.src = "images/_.gif";
+	else if (opt.dataset.f) // file url
+		prev.src = opt.dataset.f;
+	else if (!opt.dataset.noas) // no avatar storage flag
+		prev.src = "userpic/"+mood.dataset.u + "_" + mood.value;
+	else
+		prev.src = "images/_.gif";
 }
 
-var moodav = "";
-function avatarpreview(uid,pic,dummy=0) {
-	if (pic > 0) {
-		document.getElementById('prev').src=moodav.replace("$", pic);
-	} else {
-		document.getElementById('prev').src="images/_.gif";
-	}
-}
-function setmoodav(path) {
-	moodav = path;
-}

@@ -222,9 +222,9 @@ function map_pms() {
 		if ($fp['user'] != $t['userto'])
 			$sqldest->execute($q_pmacl, [$fp['thread'], $t['userto']]);
 		
-		$sqldest->execute($q_pmread, [$user1, $fp['thread'], $lastread1, (int)($lastread1 == $lastpost1)]);
+		$sqldest->execute($q_pmread, [$user1, $fp['thread'], $lastread1+1, (int)($lastread1 >= $lastpost1)]);
 		if ($lastread2)
-			$sqldest->execute($q_pmread, [$user2, $fp['thread'], $lastread2, (int)($lastread2 == $lastpost2)]);
+			$sqldest->execute($q_pmread, [$user2, $fp['thread'], $lastread2+1, (int)($lastread2 >= $lastpost2)]);
 	}
 	
 

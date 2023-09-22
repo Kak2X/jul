@@ -23,7 +23,7 @@
 	$sqlsrc->connection->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 	
 	$sqldest = new mysql;
-	$sqldest->connect("localhost", "root", "", "julbuild") or die("Failed to connect to output server.");
+	$sqldest->connect($sqlhost, $sqluser, $sqlpass, $dbname) or die("Failed to connect to output server.");
 	
 	print "Connection OK.\r\n";
 	map_smilies();
@@ -127,6 +127,7 @@ function map_pms() {
 			if ($pm_drafts === null) {
 				$tid = count($threadinfo);
 				$threadinfo[$tid] = ['key' => ['### DRAFTS ###'], 'userto' => $pm['userfrom'], 'posts' => []];
+				$pm_drafts = true;
 			}
 			
 		// Group by title and userfrom/userto combo

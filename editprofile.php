@@ -245,11 +245,11 @@
 			$users = $sql->query('SELECT name FROM users');
 			
 			$username = substr(filter_string($_POST['name']), 0, 32);
-			$samename = $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $username))]);
+			$samename = $sql->resultp("SELECT id FROM users WHERE id != {$id} AND ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $username))]);
 			
 			
 			$displayname = substr(filter_string($_POST['displayname']), 0, 32);
-			$samedisplay = $displayname && $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $displayname))]);
+			$samedisplay = $displayname && $sql->resultp("SELECT id FROM users WHERE id != {$id} AND ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $displayname))]);
 			
 			// Extra edituser fields
 			$adminval = array(

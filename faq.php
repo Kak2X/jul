@@ -16,7 +16,7 @@
 			</table>";
 			
 	} else {
-
+	
 	
 	$faq	.= _faqformat("darules", "The Rules", "
 		Our rules are really <i>really simple</i>, if you take the time to learn them. And you <i>should!</i>
@@ -184,7 +184,7 @@
 		  </tr>
 		</table>
 	");
-
+	
 	$faq	.= _faqformat("bbcode", "What is BBcode?", domarkup("
 		BBcode is a simple syntax which you can use on your posts to format the text or add images and videos. Below is a list of the supported tags:
 		<br>
@@ -278,9 +278,79 @@
 		    <td class='tdbg2'>[spoileri<z>]Inline spoiler text.[/spoileri<z>]</td>
 		    <td class='tdbg1'>[spoileri]Inline spoiler text.[/spoileri]</td>
 		  </tr>
+		  <tr><td class='tdbgh center' colspan='2'>Embeds</td></tr>
 		  <tr>
-		    <td class='tdbg2'>[youtube<z>]BrQn-O_zFRc[/youtube<z>] (video ID)</td>
-		    <td class='tdbg1'>A YouTube embed.</td>
+		    <td class='tdbg2'>[youtube<z>]BrQn-O_zFRc[/youtube] (video ID)</td>
+		    <td class='tdbg1' rowspan='4'>Various YouTube embeds.</td>
+		  </tr>
+		  <tr>
+			<td class='tdbg2'>[youtube<z>]https://www.youtube.com/watch?v=vnAoTQEvrik[/youtube]</td></td>
+		  </tr>
+		  <tr>
+			<td class='tdbg2'>[youtube<z>]https://youtu.be/xoTwj42szX0[/youtube]</td>
+		  </tr>
+		  <tr>
+			<td class='tdbg2'>[youtube<z>]https://youtu.be/JCBB1zJQt2o?t=16[/youtube]</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[twitter<z>]614487585767993344[/twitter] (tweet number)</td>
+		    <td class='tdbg1'>Twitter embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[vine<z>]MLZdle0OdmX[/vine] (video ID)</td>
+		    <td class='tdbg1'>Vine embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[dailymotion<z>]xx1h83[/dailymotion] (video ID)</td>
+		    <td class='tdbg1'>Dailymotion embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[bc<z>]3056541004[/bc] (track ID)</td>
+		    <td class='tdbg1'>Bandcamp track embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[bca<z>]1889307725[/bca] (album ID)</td>
+		    <td class='tdbg1'>Bandcamp album embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[facebook<z>]https://www.facebook.com/realwhatguyslike/videos/1120635061403078/[/facebook]</td>
+		    <td class='tdbg1'>Facebook embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[sc<z>]283288473[/sc] (track ID)</td>
+		    <td class='tdbg1'>SoundCloud track embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[sca<z>]257385526[/sca] (album ID)</td>
+		    <td class='tdbg1'>SoundCloud album embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[twitch<z>]260289216[/twitch] (video ID)</td>
+		    <td class='tdbg1'>Twitch video embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[clip<z>]ArtsyFuriousClipsmomEleGiggle[/clip] (clip ID)</td>
+		    <td class='tdbg1'>Twitch clip embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[nnd<z>]sm31335196[/nnd] (video ID)</td>
+		    <td class='tdbg1'>Nico Nico embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[streamable<z>]bkbav8[/streamable] (video ID)</td>
+		    <td class='tdbg1'>Streamable embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[vimeo<z>]452926602[/vimeo] (video ID)</td>
+		    <td class='tdbg1'>Vimeo embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[odysee<z>]https://odysee.com/@XyliboxFranceVXCVE:3/dendroid:7[/odysee]</td>
+		    <td class='tdbg1'>Odysee embed</td>
+		  </tr>
+		  <tr>
+		    <td class='tdbg2'>[rumble<z>]https://rumble.com/embed/v2lgdmv/?pub=4[/rumble] (Embed IFRAME URL)</td>
+		    <td class='tdbg1'>Rumble embed</td>
 		  </tr>
 		</table>
 	"));

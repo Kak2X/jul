@@ -56,7 +56,7 @@
 			
 			//hook_use_ref('threadpost', $set, $post, $mode);
 			
-			$post['text'] = domarkup($post['text'], $post);
+			$post['text'] = domarkup($post['text'], $post, false, $mode);
 		}
 
 		// Thread marker for posts by thread / favourites view
@@ -194,8 +194,10 @@
 		$post['signtext'] = replace_tags($post['signtext'],$tags);
 		$post['csstext']  = replace_tags($post['csstext'], $tags);
 		
-		$post['headtext'] = "<span id='body{$post['id']}'>".domarkup($post['headtext']);
-		$post['signtext'] = domarkup($post['signtext'])."</span>";	
+		// Post header and signature filters are always handled in MODE_POST.
+		// This guarantees that signature containing pid quotes will contain a link to the thread.
+		$post['headtext'] = "<span id='body{$post['id']}'>".domarkup($post['headtext'], null, false, MODE_POST);
+		$post['signtext'] = domarkup($post['signtext'], null, false, MODE_POST)."</span>";	
 		
 		// Only insert the unique CSS once, to save up on processing/sent bytes.
 		$csskey = $post['uid'].getcsskey($post);
@@ -372,8 +374,7 @@
 			$ip = htmlspecialchars($data['ip']);
 			$controls[] = "IP: <a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>";
 		}
-		
-	// TODO: The hardcoded MODE_POST may need to be replaced if extra modes are added
+	
 	return ($title ? "
 	<table class='table'>
 		<tr>
@@ -382,7 +383,7 @@
 			</td>
 		</tr>
 	</table>" : "")."
-	".threadpost($ppost, 1, MODE_POST, $data['forum'])."
+	".threadpost($ppost, 1, $flags == PREVIEW_PM ? MODE_PM : MODE_POST, $data['forum'])."
 	<br>";
 	}
 	
@@ -428,7 +429,7 @@ function thread_history($thread, $num, $forum = 0) {
 			if ($num-- > 0){
 				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
 				$userlink = getuserlink($post);
-				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(domarkup($post['text'], $post), $forum);
+				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(domarkup($post['text'], $post, false, $forum ? MODE_POST : MODE_PM), $forum);
 				$postlist .=
 					"<tr>
 						<td class='tdbg$bg' valign=top>

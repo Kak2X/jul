@@ -203,7 +203,7 @@
 		if ($post) {
 			$post['text'] = str_replace('<br>','\n',$post['text']);
 			$quoteuser = $sql->resultq("SELECT name FROM users WHERE id = {$post['user']}");
-			$_POST['message'] = "[quote={$quoteuser}]{$post['text']}[/quote]\r\n";
+			$_POST['message'] = "[quote=\"{$quoteuser}\" id=\"{$_GET['postid']}\"]{$post['text']}[/quote]\r\n";
 			unset($post, $quoteuser);
 		}
 	}

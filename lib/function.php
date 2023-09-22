@@ -138,12 +138,13 @@ function get_tags($data, $repl = null) {
 }
 
 function escape_codeblock($text) {
-	return "<blockquote class='code'><hr>". str_replace("[", "&#91;", htmlspecialchars($text[1])) ."<hr></blockquote>";
+	// Also prevent bbcode from being rendered
+	return "<blockquote class='code'><hr>". str_replace("[", "[<z>", htmlspecialchars($text[1])) ."<hr></blockquote>";
 }
 
 
-function domarkup($msg, $stdpost = null, $nosbr = false) {
-	global $hacks;
+function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
+	global $hacks, $scriptname;
 	
 	if (!$msg) return "";
 	
@@ -183,7 +184,22 @@ function domarkup($msg, $stdpost = null, $nosbr = false) {
 		$msg = str_replace('[black]',  '<span style="color:black">', $msg);
 		$msg = preg_replace("'\[/(color|red|green|blue|orange|yellow|pink|white|black)\]'s",'</span>', $msg);
 		//$msg = str_replace('[/color]','</span>', $msg);
-		$msg = preg_replace("'\[quote=(.*?)\]'si", '<blockquote><font class=fonts><i>Originally posted by \\1</i></font><hr>', $msg);
+		
+		//--
+		// Post quotes with clickable link and quoted fields
+		if ($mode == MODE_POST || $mode == MODE_ANNOUNCEMENT)
+			$pidpage = "thread";
+		else if ($mode == MODE_PM)
+			$pidpage = "showprivate";
+		else
+			$pidpage = null;
+		$msg = preg_replace("'\[quote=\"(.*?)\" id=\"(\d+)\"\]'si", $pidpage
+		? '<blockquote><a class="fonts i" href="'.$pidpage.'.php?pid=\\2#\\2">Originally posted by \\1</a><hr>'
+		: '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
+		//--
+		// Generic post quotes
+		$msg = preg_replace("'\[quote=(.*?)\]'si", '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
+		
 		$msg = str_replace('[quote]','<blockquote><hr>', $msg);
 		$msg = str_replace('[/quote]','<hr></blockquote>', $msg);
 		$msg = preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
@@ -273,7 +289,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 		
 		WHERE 	(c.minpower <= {$loguser['powerlevel']} OR !c.minpower)
 			AND (f.minpower <= {$loguser['powerlevel']} OR !f.minpower)
-			AND (!f.hidden OR {$loguser['powerlevel']} >= 4 OR $showhidden OR $showhidden OR f.id = $id))
+			AND (!f.hidden OR {$loguser['powerlevel']} >= 4 OR $showhidden OR f.id = $id)
 			AND !ISNULL(c.id)
 			AND (!f.login OR {$loguser['id']})
 			
@@ -1860,7 +1876,9 @@ function dofilters($p, $f = 0, $multiforum = false){
 		$p = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<iframe allowfullscreen="allowfullscreen" allow="autoplay" frameborder="0" width="640" height="360" src="https://embed.nicovideo.jp/watch/\1" style="max-width: 100%;"></iframe>', $p);
 		
 		$p = preg_replace("'\[streamable\](\w+)\[/streamable\]'si", '<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%"><iframe src="https://streamable.com/s/\1" frameborder="0" width="100%" height="100%" allowfullscreen style="width:100%;height:100%;position:absolute"></iframe></div>', $p);
-		
+		$p = preg_replace("'\[vimeo\](\d+)\[/vimeo\]'si", '<iframe src="https://player.vimeo.com/video/\1" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>', $p);
+		$p = preg_replace("'\[odysee\]https://odysee\.com/(@\w+:\d+/\w+:\d+)\[/odysee\]'si", '<iframe id="odysee-iframe" width="560" height="315" src="https://odysee.com/\$/embed/\1" allowfullscreen></iframe>', $p);
+		$p = preg_replace("'\[rumble\]https://rumble\.com/embed/(\w+)([/\w\-\?=\.]+)?\[/rumble\]'si", '<iframe class="rumble" width="640" height="360" src="https://rumble.com/embed/\1/?pub=4" frameborder="0" allowfullscreen></iframe>', $p);
 	}
 	return $p;
 }

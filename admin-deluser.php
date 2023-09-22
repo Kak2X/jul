@@ -11,14 +11,22 @@
 	const _SHOW_BANNED = -10;
 
 	if (!in_array($_SERVER['REMOTE_ADDR'], $allowedusers) && !$sysadmin && $loguser['id'] != 1) errorpage("Nein.");
+	
+
   
 	pageheader();
 	
 	print adminlinkbar();
 	
+	if (!$config['deleted-user-id'])
+		boardmessage("The deleted user ID doesn't exist, you won't be able to delete users.", "Warning", false);
+	else if (!$sql->resultq("SELECT COUNT(*) FROM users WHERE id = {$config['deleted-user-id']} AND powerlevel <= -2")) {
+		boardmessage("The <a href=\"profile.php?id={$config['deleted-user-id']}\">deleted user ID</a> has the wrong powerlevel set (likely pointing to an unintended user), you won't be able to delete users.", "Warning", false);
+		$config['deleted-user-id'] = 0;
+	}
 	// Explicitly check if the 'dodelete' button was pressed
 	// Since the forms have been merged to preserve sort options between deletions
-	if (isset($_POST['dodelete']) && filter_array($_POST['deluser'])) {
+	else if (isset($_POST['dodelete']) && filter_array($_POST['deluser'])) {
 		
 		check_token($_POST['auth'], TOKEN_USERDEL);
 		
@@ -262,14 +270,15 @@
 	</tr>
 		<?php
 	}
-
-  ?>
+	if ($config['deleted-user-id']) {
+?>
 	<tr>
-		<td class="tdbg1" colspan=9>
+		<td class="tdbg1" colspan="9">
 			<input type="submit" name="dodelete" value="Submit">
 			<?= auth_tag(TOKEN_USERDEL) ?>
 		</td>
 	</tr>
+<?php } ?>
 </table>
 </form>
 <?php

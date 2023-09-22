@@ -164,13 +164,9 @@
 				p.text$sfields, p.editedby, p.editdate, p.deleted, p.deletedby, p.deletereason,
 				p.nosmilies, p.nohtml, p.tagval, 0 revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
-				r.read tread, r.time treadtime,
 				u.id uid, u.name, u.displayname, $ufields,
 				".set_userfields('ue').", ".set_userfields('ud').", u.regdate{%AVFIELD%}
 		FROM pm_posts p
-		
-		LEFT JOIN pm_threads     t ON p.thread = t.id
-		LEFT JOIN pm_threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
 		LEFT JOIN users  u ON p.user      = u.id
 		LEFT JOIN users ue ON p.editedby  = ue.id
 		LEFT JOIN users ud ON p.deletedby = ud.id
@@ -303,7 +299,7 @@
 		}
 		hook_use_ref('pm-extra-fields', $post);
 		// "new" indicator for individual posts
-		$post['new'] = $post['date'] > $post['treadtime'];
+		$post['new'] = $post['date'] > ($thread['treadtime'] ? $thread['treadtime'] : $thread['freadtime']);
 		
 		// Highlight arrow links
 		if ($_GET['id'] && !$_GET['hi'] && $post['highlighted']) {

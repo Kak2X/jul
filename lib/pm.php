@@ -235,7 +235,14 @@ function load_pm_thread($id) {
 	$error        = 0;
 	$forum_error = "";
 	
-	$thread = $sql->fetchq("SELECT * FROM pm_threads WHERE id = {$id}");
+	$thread = $sql->fetchq("
+		SELECT t.*, r.read tread, r.time treadtime, a.id aid, a.folder, f.readdate freadtime
+		FROM pm_threads t
+		LEFT JOIN pm_threadsread r ON t.id = r.tid AND r.uid = {$loguser['id']}
+		LEFT JOIN pm_access      a ON t.id = a.thread  AND a.user = {$loguser['id']}
+		LEFT JOIN pm_foldersread f ON a.folder = f.folder AND f.user = {$loguser['id']}
+		WHERE t.id = {$id}
+	");
 	if (!$thread) {
 		if (!$isadmin) {
 			trigger_error("Accessed nonexistant PM thread number #{$id}", E_USER_NOTICE);
@@ -260,10 +267,15 @@ function load_pm_thread($id) {
 		$access = false;
 
 	} else {
-		$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$id} AND user = {$loguser['id']}");
-		if (!$access && !$isadmin) { // && $config['pmthread-admin-sneak']) {
-			trigger_error("Attempted to access PM thread {$id} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
-			notAuthorizedError('conversation');
+		//$access = $sql->fetchq("SELECT * FROM pm_access WHERE thread = {$id} AND user = {$loguser['id']}");
+		if (!$thread['aid']) {
+			if (!$isadmin) {
+				trigger_error("Attempted to access PM thread {$id} in a restricted conversation (user's name: {$loguser['name']})", E_USER_NOTICE);
+				notAuthorizedError('conversation');
+			}
+			$access = null;
+		} else {
+			$access = ['id' => $thread['aid'], 'thread' => $thread['id'], 'user' => $loguser['id'], 'folder' => $thread['folder']];
 		}
 	}
 	if ($error) {

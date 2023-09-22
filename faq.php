@@ -15,8 +15,13 @@
 				</td></tr>
 			</table>";
 			
+	} else if (file_exists("faq.dat")) {
+		print "<table class='table'>
+				<tr><td class='tdbgh center'>FAQ and Rules</td></tr>
+				<tr><td class='tdbg1'>";
+		require "faq.dat";
+		print "</td></tr></table>";
 	} else {
-	
 	
 	$faq	.= _faqformat("darules", "The Rules", "
 		Our rules are really <i>really simple</i>, if you take the time to learn them. And you <i>should!</i>

@@ -2,9 +2,13 @@
 	if (substr(php_sapi_name(), 0, 3) != 'cli') {
 		die("Command-line only.");
 	}
-	
 	chdir("..");
+	if (!file_exists("lib/config.php"))
+		die("The board must be installed first.");
+	
 	require "lib/function.php";
+	require "install/setup_schema.php";
+	require "lib/config.php";
 	
 	set_error_handler('error_reporter');
 	register_shutdown_function(function() {
@@ -22,12 +26,14 @@
 	$sqldest->connect("localhost", "root", "", "julbuild") or die("Failed to connect to output server.");
 	
 	print "Connection OK.\r\n";
+	map_smilies();
 	map_1to1("blockedlayouts", "blockedlayouts", ['user','blockee'=>'blocked']);
 	map_1to1("categories", "categories", ['id','name','corder']);
 	map_1to1("forummods", "forummods", ['forum','user']);
 	map_1to1("forums", "forums", ['id','title','description','catid','minpower','minpowerthread','minpowerreply','numthreads','numposts','lastpostdate','lastpostuser','lastpostid','hidden','forder']);
 	map_1to1("ipbans", "ipbans", ['ip','reason','date']);
 	map_1to1("misc", "misc", ['views','hotcount','maxusers','maxusersdate','maxuserstext','maxpostsday','maxpostsdaydate','maxpostshour','maxpostshourdate']);
+	map_settings();
 	map_1to1("moodavatars", "users_avatars", ['id','uid'=>'user','mid' => 'file','name'=>'title']);
 	map_1to1("poll", "poll", ['id','question','briefing','closed','doublevote']);
 	map_1to1("pollvotes", "pollvotes", ['user','choiceid'=>'choice','poll']);
@@ -36,10 +42,16 @@
 	$layouts_user = map_postlayouts();
 	map_pms();
 	map_posts();
+	
 	map_1to1("threads", "threads", ['id','forum','user','views','title','description','COALESCE(icon,"")' => 'icon','replies','lastpostdate','lastposter','closed','sticky','poll']);
 	map_threadsread();
 	map_1to1("usercomments", "users_comments", ['id','uid'=>'userto','cid'=>'userfrom','text','date'],",`read`=1");
 	map_users();
+
+	// Last round
+	$sqldest->query("UPDATE threads SET icon = REPLACE(icon, 'img/icons/', 'images/icons_custom/') WHERE icon IS NOT NULL");
+	$sqldest->query("UPDATE pm_threads SET icon = REPLACE(icon, 'img/icons/', 'images/icons_custom/') WHERE icon IS NOT NULL");
+
 	
 // 1 to 1 mapping
 function map_1to1($src_table, $dest_table, $field_map, $heh = "") {
@@ -141,7 +153,11 @@ function map_pms() {
 				$threadinfo[$tid] = ['key' => $last_key, 'userto' => $pm['userto'], 'posts' => []];
 			}
 		}
-
+		
+		// Convert [reply=""] tag to [quote=]
+		$pm['text'] = preg_replace("'\[reply=\"(.*?)\"]'si", '[quote=\\1]', $pm['text']);
+		$pm['text'] = str_replace('[/reply]', '[/quote]', $pm['text']);
+		
 		// Add the reply...
 		$threadinfo[$tid]['posts'][] = [
 			'id' => $pm['id'],
@@ -325,7 +341,7 @@ function map_users() {
 			$x['powerlevel'],$x['tempbanpl'],$x['sex'],$x['color'],$x['color'],
 			$x['title'],$x['realname'],$x['location'],$x['birthday'],$x['email'],$x['showemail'] ? 0 : 2,$x['homepageurl'],$x['homepagename'],
 			$x['lastposttime'],$x['lastactivity'],$x['lastip'],$x['lastknownbrowser'],$x['lasturl'],$x['lastforum'],
-			$x['postsperpage'],$x['threadsperpage'],$x['timezone'],$x['blocklayouts'],$x['signsep'] ? 3 : 1,
+			$x['postsperpage'],$x['threadsperpage'],floor($x['timezone']/3600),$x['blocklayouts'],$x['signsep'] ? 3 : 1,
 			in_array("editProfile", $forbidden),in_array("editPost", $forbidden),in_array("useUploader", $forbidden),in_array("useUploader", $forbidden),in_array("editProfile", $forbidden),
 			$x['dateformat']." ".$x['timeformat'],$x['dateformat'],$x['tempbantime']
 		]);
@@ -335,11 +351,81 @@ function map_users() {
 }
 
 function rand_str($len) {
-	$set = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890";
+	static $set = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890";
 	$r   = "";
 	for ($i = 0, $m = strlen($set) - 1; $i < $len; ++$i) {
 		$c = mt_rand(0, $m);
 		$r .= $set[$c];
 	}
 	return $r;
+}
+
+function map_smilies() {
+	global $sqlsrc, $prefix;
+	print "Mapping smilies to smilies.dat\r\n";
+	
+	$res = $sqlsrc->getarray("
+		SELECT code, CONCAT('images/smilies/', image) 
+		FROM `{$prefix}smilies`
+	");
+	if (!file_exists("smilies.bak"))
+		copy("smilies.dat", "smilies.bak");
+	writesmilies($res);
+}
+
+// from admin-editresources
+function writesmilies($res) {
+	$err = "";
+	$h = fopen('smilies.dat', 'w');
+	foreach ($res as $row) {
+		if ($row && !fputcsv($h, $row, ',')) {
+			$err .= "<br>{$row[0]}";
+		}
+	}
+	fclose($h);
+	return $err;
+}
+
+function map_settings() {
+	global $sqlsrc, $sqldest, $prefix, $config;
+	print "Mapping settings\r\n";
+	
+	$settings = $sqlsrc->getresultsbykey("SELECT CONCAT(plugin,'.',name), value FROM {$prefix}settings");
+	 
+	// misc
+	$data = [
+		'attntitle' => str_replace(["<br>","<br/>"], "", $settings['main.PoRATitle']),
+		'attntext' => str_replace(["<br>","<br/>"], "", $settings['main.PoRAText']),
+		'regmode' => $settings['main.registrationWord'] ? 3 : 0,
+		'regcode' => $settings['main.registrationWord'],
+		'irc_enable' => __($settings['ircreport.host']) && __($settings['ircreport.port']),
+	];
+	$sqldest->queryp("UPDATE misc SET ".mysql::setplaceholders($data), $data);
+	
+	// irc reporting
+	if ($data['irc_enable']) {
+		$data = [
+			'server' => $settings['ircpage.server'],
+			'port' => $settings['ircreport.port'],
+			'opnick' => $sqlsrc->resultq("SELECT name FROM {$prefix}users ORDER BY id LIMIT 1"),
+		];
+		$sqldest->queryp("UPDATE irc_settings SET ".mysql::setplaceholders($data), $data);
+		$sqldest->queryp("UPDATE irc_channels SET name=? WHERE id=".IRC_MAIN, [$settings['ircpage.channel']]);
+		
+		$config['irc-server-title'] = $settings['ircpage.server'];
+		$config['irc-servers'] = [$settings['ircpage.server']];
+		$config['irc-channels'] = [$settings['ircpage.channel']];
+	}
+
+	// faq.dat	
+	if ($settings['faq.faq']) {
+		file_put_contents("faq.dat", $settings['faq.faq']);
+	}
+	
+	// misc config
+	$config['board-name'] = $settings['main.boardname'];
+	$config['trash-forum'] = $settings['main.trashForum'];
+	$config['announcement-forum'] = 0;
+	$config['deleted-user-id'] = $sqldest->resultq("SELECT COUNT(*)+2 FROM users"); // Leave space for the next registration
+	file_put_contents("lib/config.php", setup_generate_config());
 }

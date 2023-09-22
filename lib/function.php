@@ -274,12 +274,11 @@ function doforumlist($id, $name = '', $shownone = ''){
 					<form>
 						<select onChange='parent.location=\"forum.php?id=\"+this.options[this.selectedIndex].value'>
 		";
-		$showhidden = 0;
 	}
 	else {
 		$forumlinks = "";
-		$showhidden = 1;
 	}
+	
 	// (`c.minpower` <= $power OR `c.minpower` <= 0) is not really necessary but whatever
 	$forums = $sql->query("
 		SELECT f.id, f.title, f.catid, f.hidden, c.name catname
@@ -289,7 +288,7 @@ function doforumlist($id, $name = '', $shownone = ''){
 		
 		WHERE 	(c.minpower <= {$loguser['powerlevel']} OR !c.minpower)
 			AND (f.minpower <= {$loguser['powerlevel']} OR !f.minpower)
-			AND (!f.hidden OR {$loguser['powerlevel']} >= 4 OR $showhidden OR f.id = $id)
+			AND (!f.hidden OR {$loguser['powerlevel']} >= 2 OR f.id = $id)
 			AND !ISNULL(c.id)
 			AND (!f.login OR {$loguser['id']})
 			

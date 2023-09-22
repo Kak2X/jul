@@ -52,13 +52,15 @@
 
 			
 			if ($userid != -1) {
-				// Login successful
-				$pwhash = $sql->resultq("SELECT `password` FROM `users` WHERE `id` = '$userid'");
+				// Login successful: Create a new password hash, which has the effect of invalidating previous tokens
+				$pwhash = getpwhash($password, $userid);
+				$sql->query("UPDATE users SET password = '$pwhash' WHERE id = '$userid'");
+				
 				$verify = create_verification_hash($verifyid, $pwhash);
 
 				set_board_cookie('loguserid', $userid);
 				set_board_cookie('logverify', $verify);
-
+				
 				load_layout();
 				
 				$msg = "You are now logged in as ".getuserlink(null, $userid).".";

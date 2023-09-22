@@ -95,6 +95,8 @@
 	$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : filter_string($_SERVER['HTTP_REFERER']);
 	
 	$runtime = [
+		// The host the board is running on
+		'host' => parse_url($config['board-url'], PHP_URL_HOST),
 		// determine if the current request is an ajax request,
 		// XMLHttpRequest functions helpfully set the x-http-requested-with header with the value "XMLHttpRequest".
 		//
@@ -104,14 +106,15 @@
 		//
 		// more could be done with this one day
 		'ajax-request' => isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"]) == "xmlhttprequest",
-		// for file downloads mostly
-		'same-origin' => $origin && (parse_url($origin, PHP_URL_HOST) == parse_url($config['board-url'], PHP_URL_HOST)),
 		// if 0, tells the error/query logger executed as shutdown function to not print anything.
 		// reaching the pagefooter will always re-set this to 1 before the script ends, but it can be also
 		// if it's 2, the script will die in content pages (ie: status.php) before attempting to set the content type,
 		// to prevent the binary data from being visible.
 		'show-log' => isset($_GET['eof_log']) ? (int)$_GET['eof_log'] : 0,
 	];
+	// for file downloads mostly
+	$runtime['same-origin'] = $origin && (parse_url($origin, PHP_URL_HOST) == $runtime['host']);
+
 
 	ext_init();
 

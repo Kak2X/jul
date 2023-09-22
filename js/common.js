@@ -9,3 +9,11 @@ window.addEventListener("DOMContentLoaded", (e) => {
 	
 	document.getElementById("jshidecss").remove();
 });
+// Twitter embed jsonp helper
+function twembed(data) { 
+	var parts = data.url.split("/");
+	var id = parts[parts.length-1];
+	var elems = document.getElementsByClassName("twembed-"+id);
+	for (var i = 0; i < 1; i++)
+		elems[i].outerHTML = data.html;
+}

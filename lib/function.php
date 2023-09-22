@@ -138,7 +138,7 @@ function get_tags($data, $repl = null) {
 }
 
 function escape_codeblock($text) {
-	return "<blockquote class='code'><hr>". htmlspecialchars($text[1]) ."<hr></blockquote>";
+	return "<blockquote class='code'><hr>". str_replace("[", "&#91;", htmlspecialchars($text[1])) ."<hr></blockquote>";
 }
 
 
@@ -204,6 +204,8 @@ function domarkup($msg, $stdpost = null, $nosbr = false) {
 		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 		
 		$msg = preg_replace("'\[attach=(\d*?)\]'si", 'download.php?id=\\1', $msg);
+		$msg = preg_replace("'\[video\](.*)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
+		
 	}
 
 	do {
@@ -1709,16 +1711,17 @@ function register_pagefooter_html($str) {
 		$footer_extra .= $str;
 }
 
-function register_js($fn, $link = true) {
+function register_js($fn, $async = false) {
+	// No more than 1 registration/js
+	static $db = [];
+	if (isset($db[$fn]))
+		return;
+	$db[$fn] = true;
+	
 	global $footer_extra;
 	if (!$footer_extra)
 		$footer_extra = "";
-	
-	if ($link) {
-		$footer_extra .= "<script src='$fn' type='text/javascript'></script>";
-	} else {
-		$footer_extra .= "<script type='text/javascript'>$fn</script>";
-	}
+	$footer_extra .= "<script src='$fn' type='text/javascript'".($async ? " async" : "")."></script>";
 }
 
 
@@ -1781,8 +1784,9 @@ function prepare_filters($forums = null) {
 }
 
 function dofilters($p, $f = 0, $multiforum = false){
-	if (!$p) return $p;
+	global $runtime;
 	
+	if (!$p) return $p;	
 	if (!$multiforum) { // Basically, everything except "Show posts" (of user)
 		global $sql, $hacks;
 		$filters = $sql->fetchq("
@@ -1823,9 +1827,42 @@ function dofilters($p, $f = 0, $multiforum = false){
 	
 	$p = xssfilters($p);
 
-	$p = preg_replace("'\[youtube\]([a-zA-Z0-9_-]{11})\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\1" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);
-
+	/*
+		Unsafe BBCode, must be after xssfilters.
+		Ideally this should be elsewhere...
+	*/
 	
+	// Simple check for skipping BBCode replacements, like last time
+	if (strpos($p, "[") !== false) {
+		$p = preg_replace("'\[youtube\]((https?://)?(www\.)?(youtube\.com/|youtu\.be/)?(embed/|v/|watch\?v=)?)?([\w_\-]+)(\?[t|start]=(\d+))?\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\6?start=\8" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);
+		$p = preg_replace("'\[twitter\](\d+)\[/twitter\]'si", '<blockquote class="twitter-tweet"><a href="https://twitter.com/username/status/\1">Loading tweet...</a></blockquote>', $p, -1, $count);
+		if ($count)
+			register_js("https://platform.twitter.com/widgets.js", true);
+		
+		$p = preg_replace("'\[vine\](\w+)\[/vine\]'si", '<iframe class="vine-embed" src="https://vine.co/v/\1/embed/simple" width="600" height="600" frameborder="0"></iframe><script async src=\"//platform.vine.co/static/scripts/embed.js\" charset=\"utf-8\"></script>', $p, -1, $count);
+		if ($count)
+			register_js("//platform.vine.co/static/scripts/embed.js", true);
+		
+		// Tindeck is offline
+		//$p = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1"><img src="http://tindeck.com/image/$contents/stats.png" alt="Tindeck"/></a>', $p);
+		$p = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1">Tindeck</a>', $p);
+		
+		$p = preg_replace("'\[dailymotion\](\w+)\[/dailymotion\]'si", '<iframe frameborder="0" width="640" height="360" src="https://www.dailymotion.com/embed/video/\1" allowfullscreen="" allow="autoplay"></iframe>', $p);
+		$p = preg_replace("'\[bc\](\d+)\[/bc\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/track=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $p);
+		$p = preg_replace("'\[bca\](\d+)\[/bca\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/album=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $p);
+		$p = preg_replace("'\[facebook\]https://([\w\/=\&\.\?\:]*?)\[/facebook\]'si", '<div id="fb-post" class="fb-post" style="background-color: white" data-href="https://\1" data-width="500"></div>', $p, -1, $count);
+		if ($count)
+			register_js("//connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v2.5", true);
+		$p = preg_replace("'\[sc\](\d+)\[/sc\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $p);
+		$p = preg_replace("'\[sca\](\d+)\[/sca\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $p);		
+		$p = preg_replace("'\[twitch\](\d+)\[/twitch\]'si", '<iframe src="https://player.twitch.tv/?autoplay=false&video=v\1&parent='.$runtime['host'].'" frameborder="0" allowfullscreen="true" scrolling="no" height="378" width="620"></iframe>', $p);
+		$p = preg_replace("'\[clip\](\w+)\[/clip\]'si", '<iframe src="https://clips.twitch.tv/embed?clip=\1&parent='.$runtime['host'].'&autoplay=false" frameborder="0" allowfullscreen="true" height="378" width="620"></iframe>', $p);
+		//$p = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<script type="application/javascript" src="https://embed.nicovideo.jp/watch/\1/script?w=640&h=360"></script>', $p);
+		$p = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<iframe allowfullscreen="allowfullscreen" allow="autoplay" frameborder="0" width="640" height="360" src="https://embed.nicovideo.jp/watch/\1" style="max-width: 100%;"></iframe>', $p);
+		
+		$p = preg_replace("'\[streamable\](\w+)\[/streamable\]'si", '<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%"><iframe src="https://streamable.com/s/\1" frameborder="0" width="100%" height="100%" allowfullscreen style="width:100%;height:100%;position:absolute"></iframe></div>', $p);
+		
+	}
 	return $p;
 }
 

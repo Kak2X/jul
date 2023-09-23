@@ -218,6 +218,7 @@
 			'fontsize'		=> 0,
 			'title'			=> '',
 			'hideactivity'	=> 0,
+			'editing_locked' => 1,
 			'uploads_locked'  => 0,
 			'uploader_locked' => 0,
 			'pagestyle'     => 0,

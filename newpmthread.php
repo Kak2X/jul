@@ -139,15 +139,11 @@
 		if ($posticon) {
 			$iconpreview = "<img src=\"".escape_attribute($posticon)."\" height=15 align=absmiddle>";
 		}
-		$preview_msg = $_POST['message'];
-		if ($can_attach) {
-			$preview_msg = replace_attachment_temp_tags($attach_key, $loguser['id'], $preview_msg);
-		}
 		
 		// Threadpost
 		$data = array(
 			// Text
-			'message' => $preview_msg,	
+			'message' => $_POST['message'],	
 			#'head'    => "",
 			#'sign'    => "",
 			// Post metadata

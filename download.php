@@ -10,26 +10,28 @@
 		die;
 	}
 	
+	$_GET['id']     = __($_GET['id']);
 	$_GET['t']      = filter_bool($_GET['t']);
 		
-	// Temporary file mode? 
-	if (isset($_GET['tmp'])) {
-		$_GET['tmp'] = basename(filter_string($_GET['tmp']));
+	// Temporary file mode?
+	// This needs to go off the hash because the temporary file IDs can move around when deleting temp uploads.
+	if (isset($_GET['hash'])) {
+		$_GET['id']   = basename((string)$_GET['id']);
 		$_GET['hash'] = filter_string($_GET['hash']);
 		
-		if (!file_exists("temp/attach_{$_GET['tmp']}.dat"))
+		if (!file_exists("temp/attach_{$_GET['id']}.dat"))
 			die("Preview failed.");
-		$meta = get_attachment_metadata("temp/attach_{$_GET['tmp']}");
-		
+		$meta = get_attachment_metadata("temp/attach_{$_GET['id']}");
 		if ($meta['hash'] != $_GET['hash'])
 			die("Preview failed.");
+		if ($_GET['t'] && !$meta['is_image'])
+			die("Preview failed -- not an image.");
 		
-		//$_GET['t'] = false;
-		download($meta, "temp/attach_{$_GET['tmp']}");
+		download($meta, "temp/attach_{$_GET['id']}".($_GET['t'] ? "_t": ""));
 		die;
 	}
 
-	$_GET['id']     = filter_int($_GET['id']);
+	$_GET['id']     = (int)$_GET['id'];
 	$_GET['info']   = filter_bool($_GET['info']);
 	
 	if (!$_GET['id']) {
@@ -60,7 +62,6 @@
 			|| (!$ismod && !$post['tid']) // Post in invalid thread 
 			|| (!$ismod && !$post['fid']) // Thread in invalid forum
 			|| $loguser['powerlevel'] < $post['minpower'] // Can't view forum
-			|| !file_exists(attachment_name($_GET['id'])) // File missing
 		) {
 			errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 		}
@@ -77,13 +78,15 @@
 			|| (!$isadmin && $post['deleted']) // Post deleted
 			|| (!$isadmin && !$post['tid']) // Post in invalid thread 
 			|| (!$isadmin && !$sql->resultq("SELECT COUNT(*) FROM pm_access WHERE user = {$loguser['id']} AND thread = {$post['tid']}")) // Can't view forum
-			|| !file_exists(attachment_name($_GET['id'], $_GET['t'])) // File missing
 		) {
 			errorpage("Cannot download the attachment.<br>Either it doesn't exist or you're not allowed to download it.");
 		}
 	}
-	// All OK!
 	
+	if ($_GET['t'] && !$attachment['is_image'])
+		die("Preview failed -- not an image.");
+	
+	// All OK!
 	if ($_GET['info']) {
 		echo "<pre>Attachment display:\n\n";
 		print_r($attachment);
@@ -96,6 +99,10 @@
 	die;
 	
 	function download($attachment, $path) {
+		
+		if (!file_exists($path))
+			errorpage("This file <i>should</i> exist, but for some reason it's not there.");
+		
 		// Clear out any previous state
 		if (ob_get_level()) ob_end_clean();
 		

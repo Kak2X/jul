@@ -165,15 +165,10 @@
 				} else {
 					/*
 						Edit preview
-					*/
-					$preview_msg = $message;
-					if ($can_attach) {
-						$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
-					}
-					
+					*/					
 					$data = array(
 						// Text
-						'message' => $preview_msg,	
+						'message' => $message,	
 						'head'    => $head,
 						'sign'    => $sign,
 						'css'     => $css,
@@ -399,7 +394,7 @@
 	else if ($_GET['action'] == 'erase' && $sysadmin && $config['allow-post-deletion']){
 		
 		$pcount  = $sql->resultq("SELECT COUNT(*) FROM pm_posts WHERE thread = {$post['thread']}");
-		if (confirmed($msgkey = 'erase')) {
+		if (confirmed($msgkey = 'erase', TOKEN_SLAMMER)) {
 			$sql->beginTransaction();
 			$sql->query("DELETE FROM pm_posts WHERE id = {$_GET['id']}");
 			
@@ -438,7 +433,7 @@
 			[BTN_URL   , "Cancel", "showprivate.php?pid={$_GET['id']}#{$_GET['id']}"]
 		);
 		
-		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
 		errorpage("No valid action specified.","showprivate.php?id={$post['thread']}#{$post['thread']}","return to the post",0);

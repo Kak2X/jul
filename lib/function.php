@@ -213,13 +213,38 @@ function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
 		$msg = str_replace('[spoileri]','<label class="spoiler"><span class="spoiler-label"></span><input type="checkbox"><span class="hidden"><span>', $msg);
 		$msg = str_replace('[/spoileri]','</span></span></label>', $msg);
 	
+		// New version of the tag inspired by Xen-Foro's
+		// [attach="1" type="<...>" name="<...>" hash="<...>" (props)]
+		$msg = preg_replace_callback("'\[attach=\"(\w+)\" type=\"(full|thumb|url)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", function ($text) {
+			// 1 -> file id
+			// 2 -> bbcode type
+			// 4 -> filename or alt text
+			// 6 -> temporary file hash
+			// 7 -> additional attributes, sent as-is
+			
+			$url = "download.php?id={$text[1]}";
+			if ($text[6])
+				$url .= "&hash={$text[6]}";
+			$imgurl = $url;
+			
+			switch ($text[2]) {
+				case 'thumb':
+					$imgurl .= "&t=1";
+				case 'full':
+					return "<a href='{$url}' target='_blank'><img alt=\"{$text[4]}\" src='{$imgurl}' class='imgtag'{$text[7]}/></a>";
+				case 'url':
+					return "<a href='{$url}' target='_blank'{$text[7]}>{$text[4]}</a>";
+			}
+		}, $msg);
+	
 		$msg = preg_replace("'\[(b|i|u|s)\]'si",'<\\1>', $msg);
 		$msg = preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>', $msg);
-		$msg = preg_replace("'\[img\](.*?)\[/img\]'si", '<img class="imgtag" src=\\1>', $msg);
+		$msg = preg_replace("'\[img(.*?)\](.*?)\[/img\]'si", '<img class="imgtag" \\1 src="\\2">', $msg);
 		$msg = preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
 		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
 		
-		$msg = preg_replace("'\[attach=(\d*?)\]'si", 'download.php?id=\\1', $msg);
+
+		
 		$msg = preg_replace("'\[video\](.*)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
 		
 	}
@@ -1928,7 +1953,7 @@ function get_image_type($path) {
 	switch ($type) {
 		case 'image/png':
 		case 'image/gif':
-		case 'image/jpg':
+		case 'image/jpeg':
 		case 'image/webp':
 			return IMAGETYPE_BITMAP;
 		case 'image/svg+xml':

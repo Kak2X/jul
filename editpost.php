@@ -216,14 +216,9 @@
 					/*
 						Edit preview
 					*/
-					$preview_msg = $message;
-					if ($can_attach) {
-						$preview_msg = replace_attachment_temp_tags($attach_key, $post['user'], $preview_msg);
-					}
-					
 					$data = array(
 						// Text
-						'message' => $preview_msg,	
+						'message' => $message,	
 						'head'    => $head,
 						'sign'    => $sign,
 						'css'     => $css,
@@ -492,7 +487,7 @@
 			[BTN_URL   , "Cancel", "thread.php?pid={$_GET['id']}#{$_GET['id']}"]
 		);
 		
-		confirm_message($msgkey, $message, $title, $form_link, $buttons);
+		confirm_message($msgkey, $message, $title, $form_link, $buttons, TOKEN_SLAMMER);
 	}
 	else {
 		errorpage("No valid action specified.","thread.php?pid={$_GET['id']}#{$_GET['id']}","return to the post",0);

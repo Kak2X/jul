@@ -118,39 +118,41 @@ function attachfield($list) {
 	
 	$out = "";
 	foreach ($list as $k => $x) {
-		if (!isset($x['imgprev'])) $x['imgprev'] = NULL; // and this, which is only passed on post previews
 		
+		$filename = htmlspecialchars($x['filename']);
+		$temp     = isset($x['hash']);
+		$url      = "download.php?id={$x['id']}".($temp ? "&hash={$x['hash']}" : "");
+		
+		// Determine if a thumbnail should be generated, as well as the type of BBCode.
 		if ($x['is_image']) { // An image
-			$thumb = isset($x['imgprev']) ? $x['imgprev'] : "download.php?id={$x['id']}&t=1";
+			$bbcode_type = "thumb";
+			$thumb       = "{$url}&t=1"; 
 		} else { // Not an image
-			$thumb = "images/defaultthumb.png";
+			$bbcode_type = "url";
+			$thumb       = "images/defaultthumb.png";
 		}
-		
-		// id 0 is a magic value used for post previews
-		$w = $x['id'] ? 'a' : 'b';
-		
-		$key = ($x['id'] ? $x['id'] : $x['hash']);
+		$bbcode = "[attach=\"{$x['id']}\" type=\"{$bbcode_type}\" name=\"{$filename}\"".($temp ? " hash=\"{$x['hash']}\"" : "")."]";
 		
 		$out .= "
 		<table class='attachment-box'>
 			<tr>
 				<td class='attachment-box-thumb' rowspan='2'>
-					<$w href='download.php?id={$x['id']}'><img src='{$thumb}'></$w>
+					<a href='{$url}' target='_blank'><img src='{$thumb}'></a>
 				</td>
 				<td class='attachment-box-text fonts'>
-					<div><$w href='download.php?id={$x['id']}'>".htmlspecialchars($x['filename'])."</$w></div>
+					<div><a href='{$url}' target='_blank'>{$filename}</a></div>
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>
 			</tr>
 			<tr>
 				<td class='attachment-box-controls fonts right'>
-				".($isadmin && $x['id'] ? "
+				".($isadmin && !$temp ? "
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=edit'>Edit</a> - 
 					<a href='admin-attachments.php?id={$x['id']}&r=1&action=delete'>Delete</a><span class='js'> - </span>
 				" : "")."
-					<a href='#' class='js acp-js-link' data-key='{$key}'>Copy BBcode</a>
-					<div class='nojs-jshide'><input type='text' id='acp-input-{$key}' class='w right' readonly value='[attach={$key}]'></div>
+					<a href='#' class='js acp-js-link' data-key='{$x['id']}'>Copy BBcode</a>
+					<div class='nojs-jshide'><input type='text' id='acp-input-{$x['id']}' class='w right' readonly value='{$bbcode}'></div>
 				</td>
 			</tr>
 		</table>";
@@ -256,19 +258,6 @@ function process_attachments(&$key, $user, $post = 0, $flags = 0) {
 	return [$attachsel, $total];
 }
 
-// Replaces the temporary [attach=<hash>] fields for the threadpost preview
-function replace_attachment_temp_tags($key, $user, $msg) {
-	for ($i = 0;; ++$i) {
-		// This is why temp attachments IDs need to be contiguous
-		$path = attachment_tempname($key, $user, $i);
-		if (!file_exists($path)) return $msg;
-		
-		$metadata = get_attachment_metadata($path);
-		
-		$msg = str_replace("[attach={$metadata['hash']}]", "download.php?tmp={$key}_{$user}_{$i}&hash={$metadata['hash']}", $msg);
-	}
-}
-
 // After submitting a post/thread/edit/whatever
 function confirm_attachments($key, $user, $post, $flags = 0, $remove = array()) {
 	global $sql;
@@ -301,7 +290,7 @@ function confirm_attachments($key, $user, $post, $flags = 0, $remove = array()) 
 		$sql->queryp("INSERT INTO attachments SET ".mysql::setplaceholders($sqldata), $sqldata);
 		
 		$rowid = $sql->insert_id();
-		$ids[$metadata['hash']] = $rowid;
+		$ids[$metadata['id']] = $rowid;
 		// Move the thumbnail we previously generated off the temp folder
 		if ($metadata['is_image']) {
 			rename("{$path}_t", attachment_name($rowid, true));
@@ -311,13 +300,13 @@ function confirm_attachments($key, $user, $post, $flags = 0, $remove = array()) 
 	}
 	//--
 	
-	// Convert temporary [attach=<tags>] replacements to the finalized [attach=<id>] tags
+	// Convert temporary [attach="<key>"] to the finalized [attach="<id>"] tags, removing the hash variable.
 	if ($ids) {
 		$table = ($flags & ATTACH_PM) ? 'pm_posts' : 'posts';
 		$message = $sql->resultq("SELECT text FROM {$table} WHERE id = {$post}");
 		if ($message) {
-			foreach ($ids as $hash => $id) {
-				$message = str_replace("[attach=$hash]", "[attach=$id]", $message);
+			foreach ($ids as $tempid => $id) {
+				$message = preg_replace("'\[attach=\"{$tempid}\" type=\"(\w+)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", "[attach=\"{$id}\" type=\"\\1\"\\2\\6]", $message);
 			}
 			$sql->queryp("UPDATE {$table} SET text = ? WHERE id = {$post}", [$message]);
 		}
@@ -372,6 +361,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	
 	// but first, get the metadata out of the way
 	$metadata = array(
+		'id'       => "{$thread}_{$user}_{$file_id}",
 		'filename' => str_replace(array("\r", "\n"), '', $file['name']),
 		'mime'     => mime_content_type($path),
 		'size'     => $file['size'],
@@ -385,7 +375,7 @@ function upload_attachment($file, $thread, $user, $file_id, $extra = 0) {
 	
 	// Generate a thumbnail
 	if ($is_image) {
-		save_thumbnail($path, "{$path}_t", 80, 80);
+		save_thumbnail($path, "{$path}_t", 250, 1024);
 	}
 	
 	return $res;
@@ -400,12 +390,13 @@ function get_temp_attachments($thread, $user) {
 		$metadata = get_attachment_metadata($path);
 		$is_image = (int) $metadata['is_image']; //file_exists("{$path}_t"); // Can cheat this one
 		$res[] = [
-			'id'       => 0,
+			// Fields shared with 'attachments' table
+			'id'       => $metadata['id'],
 			'filename' => $metadata['filename'],
 			'size'     => (int) $metadata['size'], // File size
 			'views'    => 0,
 			'is_image' => $is_image,
-			'imgprev'  => $is_image ? "data:".mime_content_type("{$path}_t").";base64,".base64_encode(file_get_contents("{$path}_t")) : NULL, // Image preview hack
+			// Specific to temp attachments
 			'hash'     => $metadata['hash'],
 		];
 	}

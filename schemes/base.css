@@ -200,6 +200,10 @@ input[type=radio] {
 	height: 80px; 
 	text-align: center;
 }
+.attachment-box-thumb img {
+	max-width: 80px; 
+	max-height: 80px;
+}
 .attachment-box-text {
 	vertical-align: top;
 	height: 50px;

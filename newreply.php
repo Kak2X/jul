@@ -148,15 +148,9 @@
 	
 	// Post preview
 	if (!$error && isset($_POST['preview'])) {
-		
-		$preview_msg = $_POST['message'];
-		if ($can_attach) {
-			$preview_msg = replace_attachment_temp_tags($attach_key, $userid, $preview_msg);
-		}
-		
 		$data = array(
 			// Text
-			'message' => $preview_msg,	
+			'message' => $_POST['message'],	
 			#'head'    => "",
 			#'sign'    => "",
 			// Post metadata

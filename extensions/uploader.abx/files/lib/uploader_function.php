@@ -290,6 +290,7 @@ function upload_file($file, $user, $opt) {
 		'size'         => $file['size'],
 		'date'         => time(),
 		'downloads'    => 0,
+		'hash'         => "", // Temporary value
 		
 		'width'        => (int) $width,
 		'height'       => (int) $height,

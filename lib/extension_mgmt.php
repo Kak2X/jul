@@ -84,10 +84,15 @@ function ext_get_all_metadata($enabledOnly = false, &$enabled = null) {
 			
 			// Add fake metadata for completion
 			$x['file'] = $file;
-			if ($x['enabled'] = $ena)
+			if (($x['enabled'] = $ena) && isset($xtra['enableTime']))
 				$x['enableDate'] = printdate($xtra['enableTime']);
-			if ($x['installed'] = isset($xtra['installTime']))
+			else
+				$x['enableDate'] = null;
+			
+			if (($x['installed'] = isset($xtra['installTime'])) && isset($xtra['installTime']))
 				$x['installDate'] = date("j/n/Y", $xtra['installTime']);
+			else
+				$x['installDate'] = null;
 			
 			if (!isset($x['require']))
 				$x['require'] = [];

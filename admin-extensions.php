@@ -131,7 +131,7 @@
 					<?= $ext['description'] ?><br>
 					<br>
 					<span class="fonts">
-						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: {$ext['enableDate']}" : "") . ($ext['installed'] ? "<br/>Installed on: {$ext['installDate']}" : "") ?><br/>
+						By: <?= $ext['author'] . ($ext['enabled'] ? "<br/>Enabled on: ".(isset($ext['enableTime']) ? $ext['enableDate'] : "<i>Start of the board</i>") : "") . ($ext['installed'] ? "<br/>Installed on: {$ext['installDate']}" : "") ?><br/>
 						Version: <?=$ext['version']?> (<?=$ext['date']?>)
 					</span>
 				</td>

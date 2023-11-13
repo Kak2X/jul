@@ -29,9 +29,9 @@ attachments/f/*
 !attachments/f/note.txt
 
 # Uploads
-extensions/uploader.abx/uploads/*
-!extensions/uploader.abx/uploads/index.html
+extensions/uploader.abx/uploads/t/*
 !extensions/uploader.abx/uploads/t/.htaccess
+extensions/uploader.abx/uploads/f/*
 !extensions/uploader.abx/uploads/f/.htaccess
 
 # Uploaded post ratings

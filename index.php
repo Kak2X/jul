@@ -219,7 +219,7 @@
 		// Get number of PM threads, and a count of unread posts
 		$data = $sql->fetchq("
 			SELECT COUNT(*) total,
-			       SUM((!tr.read OR tr.read IS NULL) AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)) tunread,
+			       COALESCE(SUM((!tr.read OR tr.read IS NULL) AND (fr.readdate IS NULL OR t.lastpostdate > fr.readdate)), 0) tunread,
 				   MAX(t.lastpostdate) lastpostdate
 			FROM pm_threads t
 			INNER JOIN pm_access       a ON t.id     = a.thread

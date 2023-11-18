@@ -2512,7 +2512,7 @@ function toggle_board_cookie_man(&$signal, $key, &$value, $expire = 2147483647) 
 	return true;
 }
 
-function header_content_type() {
+function header_content_type($type) {
 	global $runtime;
 	
 	if (!$runtime['show-log']) {

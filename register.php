@@ -189,7 +189,8 @@
 		}
 		
 		if (!$error) {
-			if ($userid = $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [strtolower(str_replace(' ', '', $_POST['name']))])) {
+			$usermatch = strtolower(str_replace(' ', '', $_POST['name']));
+			if ($userid = $sql->resultp("SELECT id FROM users WHERE ? IN (LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(displayname, ' ', '')))", [$usermatch])) {
 				$regerrors['main'] .= "<li>The username '". htmlspecialchars($_POST['name']) ."' is already <a href='profile.php?id={$userid}'>in use</a></li>";
 				$regerrors['name'] .= "<li>In use</li>";
 				$error = true;
@@ -197,6 +198,17 @@
 			if (!$isadmin && !$config['allow-rereggie'] && ($nomultis = $sql->fetchq("SELECT $userfields FROM users u WHERE lastip = '{$_SERVER['REMOTE_ADDR']}'"))) {
 				$regerrors['main'] .= "<li>You may have an account already as ".getuserlink($nomultis)."<br>If this is incorrect, please contact an administrator.</li>";
 				$error = true;
+			}
+			// Check the same things, but in the pending users table
+			if ($regmode == 2) {
+				if ($sql->resultp("SELECT id FROM pendingusers WHERE ? = LOWER(REPLACE(name, ' ', ''))", [$usermatch])) {
+					$regerrors['main'] .= "<li>The username '". htmlspecialchars($_POST['name']) ."' is already in the pending approval queue.</li>";
+					$error = true;
+				}
+				else if (!$isadmin && !$config['allow-rereggie'] && ($nomultis = $sql->resultq("SELECT name FROM pendingusers WHERE ip = '{$_SERVER['REMOTE_ADDR']}'"))) {
+					$regerrors['main'] .= "<li>You may have an account already as '".htmlspecialchars($nomultis)."' that is pending approval.<br>If this is incorrect, please contact an administrator.</li>";
+					$error = true;
+				}
 			}
 		}
 		
@@ -236,7 +248,7 @@
 				);
 			//		$sql->query("INSERT INTO `ipbans` SET `ip` = '$ipaddr', `reason` = 'Automagic ban', `banner` = 'Acmlmboard'");
 
-				errorpage("Thank you, ".htmlspecialchars($_POST['name']).", for registering your account.",'index.php','the board', 0);
+				errorpage("Thank you, ".htmlspecialchars($_POST['name']).", for registering your account.<br/>Please wait for an administrator to approve it.",'index.php','the board', 0);
 			} else {
 				$sql->beginTransaction();
 				
@@ -314,9 +326,21 @@
 		<tr><td class='tdbgh center'>Error registering account</td></tr>
 		<tr><td class='tdbg1 center'><ul style='list-style: none'><?= $regerrors['main'] ?> </ul></td></tr>
 	</table>
+	<br>
+<?php }
+	if ($regmode == 2) { ?> 
+	<table class='table'>
+		<tr><td class='tdbgh center'>Notice</td></tr>
+		<tr>
+			<td class='tdbg1 center'>
+				User registrations go into a queue for pending approval.
+				<br/>Your account won't be created immediately, as an administrator will have to approve it first.
+			</td>
+		</tr>
+	</table>
+	<br>
 <?php } ?>
 <form method="POST" action="register.php">
-	<br>
 	<table class='table'>
 		<tr><td class='tdbgh center' colspan="2">Login information</td></tr>
 		

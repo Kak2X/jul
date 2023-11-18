@@ -175,9 +175,8 @@ function rate_post($post, $rating, $mode = MODE_POST) {
 	$data = $sql->fetchq("
 		SELECT r.id, SUM(a.rating) voted
 		FROM ratings r
-		LEFT JOIN {$joinpf}_ratings a ON r.id = a.rating
+		LEFT JOIN {$joinpf}_ratings a ON r.id = a.rating AND a.user = {$loguser['id']} AND a.post = {$post}
 		WHERE r.id = {$rating} AND r.enabled = 1 AND r.minpower <= {$loguser['powerlevel']}
-		  AND a.user = {$loguser['id']} AND a.post = {$post}
 	");
 	if (!$data['id']) { // whoop de whoop the rating doesn't exist
 		return false;

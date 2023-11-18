@@ -239,7 +239,7 @@ function bars(){
 	}
 
 	$e2	= 16 * 8;	// width of bar
-	$e1	= $e2 * $pct;
+	$e1	= (int)($e2 * $pct);
 	$y	= 168+1+24;
 	ImageFilledRectangle($img,9,$y + 1, 8 + $e2, $y + 4, $c['bxb0']);
 	ImageFilledRectangle($img,8,$y    , 7 + $e2, $y + 3, $c['barE2']);

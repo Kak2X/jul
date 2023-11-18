@@ -34,10 +34,19 @@ function error_reporter($type, $msg, $file, $line) {
 	} else if (in_array($type, [E_USER_NOTICE,E_USER_WARNING,E_USER_ERROR,E_USER_DEPRECATED], true)) {
 		// And do the same for custom thrown errors
 		$backtrace = debug_backtrace();
-		$file = "[Parent] ".filter_string($backtrace[2]['file']);
-		$line = filter_int($backtrace[2]['line']);
-		$func = filter_string($backtrace[2]['function']);
-		$args = filter_array($backtrace[2]['args']);
+		if (isset($backtrace[2])) {
+			// For functions that trigger the notice, we want the location of the code that called said function
+			$loctype = "[Parent] ";
+			$loc     = $backtrace[2];
+		} else {
+			// We only get here if the notice was triggered from the parent file directly (ie: the trigger_error calls directly inside admin-editforums.php)
+			$loctype = "";
+			$loc     = $backtrace[1];
+		}
+		$file = $loctype.filter_string($loc['file']);
+		$line = filter_int($loc['line']);
+		$func = filter_string($loc['function']);
+		$args = filter_array($loc['args']);
 	} else {
 		$backtrace = debug_backtrace();
 		$func = filter_string($backtrace[1]['function']);

@@ -188,7 +188,7 @@
 			<?= ($sidetype == 2 && file_exists("sidebars/{$_GET['id']}.php")
 			? "<div style='background: #fff; overflow: scroll; width: 50vw; height: 400px; resize: vertical'>".highlight_file("sidebars/{$_GET['id']}.php", true)."</div><div style='display: none'>"
 			: "<div>") ?>
-				<textarea id="signature" name="sidebar" rows="8"><?= htmlspecialchars($user['sidebar']) ?></textarea>
+				<textarea id="signature" name="sidebar" rows="8"><?= escape_html($user['sidebar']) ?></textarea>
 			</div>
 		</td>
 		<td class="tdbg1 vatop">

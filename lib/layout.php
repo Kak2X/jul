@@ -65,6 +65,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	$schemetype  = 0;
 	$formcss     = 0;
 	$usebtn      = 0;
+	$hashpfx     = true; // TEMPORARY WORKAROUND for crystalcycle.php. In the future, all schemes should be converted to define colors with explicit # symbols.
 	$schemepre   = isset($_GET['scheme']);
 	$isChristmas = (date('n') == 12);
 	$css_extra = $body_extra = "";
@@ -136,6 +137,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 	/*
 		Build the CSS using the scheme variables
 	*/
+	$colpfx     = $hashpfx ? '#' : ''; // Almost every scheme doesn't prefix colors by #...
 	$css_layout = "<link rel='stylesheet' href='schemes/base.css' type='text/css'>";
 	if ($nullscheme) {
 		//  Special "null" scheme.
@@ -157,34 +159,34 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		
 		$css_layout .= hook_print('header-css')."
 		<style type='text/css'>
-			a,.buttonlink                   { color: #$linkcolor; }
-			a:visited,.buttonlink:visited   { color: #$linkcolor2; }
-			a:active,.buttonlink:active     { color: #$linkcolor3; }
-			a:hover,.buttonlink:hover 	    { color: #$linkcolor4; }
+			a,.buttonlink                   { color: $colpfx$linkcolor; }
+			a:visited,.buttonlink:visited   { color: $colpfx$linkcolor2; }
+			a:active,.buttonlink:active     { color: $colpfx$linkcolor3; }
+			a:hover,.buttonlink:hover 	    { color: $colpfx$linkcolor4; }
 			body {
-				color: #$textcolor;
+				color: $colpfx$textcolor;
 				font-family: $font;
-				background: #$bgcolor$bgimage;
+				background: $colpfx$bgcolor$bgimage;
 			}
 			div.lastpost { font-family: $font2 !important; }
 			div.lastpost:first-line { font-family: $font !important; }
 			.font 	{font-family: $font}
-			.fonth	{color:#$tableheadtext; font-family: $font}
+			.fonth	{color:$colpfx$tableheadtext; font-family: $font}
 			.fonts	{font-family: $font2}
 			.fontt	{font-family: $font3}
-			.tdbg1	{background:#$tablebg1}
-			.tdbg2	{background:#$tablebg2}
-			.tdbgc	{background:#$categorybg}
-			.tdbgh	{background:#$tableheadbg; /* color:#$tableheadtext */}
-			.table	{border: #$tableborder 1px solid;
+			.tdbg1	{background:$colpfx$tablebg1}
+			.tdbg2	{background:$colpfx$tablebg2}
+			.tdbgc	{background:$colpfx$categorybg}
+			.tdbgh	{background:$colpfx$tableheadbg; /* color:$colpfx$tableheadtext */}
+			.table	{border: $colpfx$tableborder 1px solid;
 					 font-family: $font}
-			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{border: #$tableborder 1px solid}
+			.tdbg1,.tdbg2,.tdbgc,.tdbgh	{border: $colpfx$tableborder 1px solid}
 			.attachment-box,.attachment-box-addnew {
-				border: #$tableborder 1px solid;
-				background: #$tablebg2;
+				border: $colpfx$tableborder 1px solid;
+				background: $colpfx$tablebg2;
 			}
 			.attachment-box:hover,.attachment-box-addnew:hover {
-				background: #$categorybg !important;
+				background: $colpfx$categorybg !important;
 			}
 		";
 	}
@@ -201,34 +203,34 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		$css_layout	.= "
 		/* IE/Webkit/Chrome/etc. custom scrollbars. Remember these? */
 		body {
-			scrollbar-face-color:		#$scr3;
-			scrollbar-track-color:		#$scr7;
-			scrollbar-arrow-color:		#$scr6;
-			scrollbar-highlight-color:	#$scr2;
-			scrollbar-3dlight-color:	#$scr1;
-			scrollbar-shadow-color:		#$scr4;
-			scrollbar-darkshadow-color:	#$scr5;
+			scrollbar-face-color:		$colpfx$scr3;
+			scrollbar-track-color:		$colpfx$scr7;
+			scrollbar-arrow-color:		$colpfx$scr6;
+			scrollbar-highlight-color:	$colpfx$scr2;
+			scrollbar-3dlight-color:	$colpfx$scr1;
+			scrollbar-shadow-color:		$colpfx$scr4;
+			scrollbar-darkshadow-color:	$colpfx$scr5;
 		}
 		::-webkit-scrollbar, ::-webkit-scrollbar-button {
 			width:	1.25em;
 			height:	1.25em;
 		}
 		::-webkit-scrollbar-track	{
-			background-color: #$scr7;
+			background-color: $colpfx$scr7;
 		}
 		::-webkit-scrollbar-track-piece	{}
 		::-webkit-scrollbar-thumb, ::-webkit-scrollbar-button	{
-			background-color:		#$scr3;
+			background-color:		$colpfx$scr3;
 			background-size:		contain;
 			background-repeat:		no-repeat;
 			background-position:	center;
 			border:					2px solid;
-			color:					#$scr6;
-			border-color: 			#$scr1 #$scr4 #$scr5 #$scr2;
+			color:					$colpfx$scr6;
+			border-color: 			$colpfx$scr1 $colpfx$scr4 $colpfx$scr5 $colpfx$scr2;
 		}
 		::-webkit-scrollbar-thumb:active, ::-webkit-scrollbar-button:active	{
-			background-color:	#$scr4;
-			border-color: 		#$scr5 #$scr2 #$scr1 #$scr5;
+			background-color:	$colpfx$scr4;
+			border-color: 		$colpfx$scr5 $colpfx$scr2 $colpfx$scr1 $colpfx$scr5;
 		}
 		::-webkit-scrollbar-button:vertical:decrement {
 			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='12 75, 50 25, 88 75'/></svg>\");
@@ -243,7 +245,7 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 			background-image: url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23$scr6'><polygon points='25 12, 75 50, 25 88'/></svg>\");
 		}
 		::-webkit-scrollbar-corner	{
-			background:	#$scr7;
+			background:	$colpfx$scr7;
 		}
 		";
 	}
@@ -262,24 +264,24 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		
 		$css_layout.="
 		textarea,input,select,button,.button{
-		  border:	#$inputborder solid 1px;
-		  background:#$formcolor;
-		  color:	#$formtextcolor;
+		  border:	$colpfx$inputborder solid 1px;
+		  background:$colpfx$formcolor;
+		  color:	$colpfx$formtextcolor;
 		  font-family:	$font}
 		textarea:focus {
-		  border:	#$inputborder solid 1px;
-		  background:#$formcolor;
-		  color:	#$formtextcolor;
+		  border:	$colpfx$inputborder solid 1px;
+		  background:$colpfx$formcolor;
+		  color:	$colpfx$formtextcolor;
 		  font-family:	$font}
 		input[type=radio]{
 		  border:	none;
 		  background:none;
-		  color:	#$formtextcolor;
+		  color:	$colpfx$formtextcolor;
 		  font-family:	$font}
 		input[type=submit],input[type=button],button,.button{
-		  border:	#$inputborder solid 2px;
+		  border:	$colpfx$inputborder solid 2px;
 		  font-family:	$font}
-		.button{color: #$formtextcolor !important;}
+		.button{color: $colpfx$formtextcolor !important;}
 		";
 	} else if (!$usebtn) {
 		$css_layout.="
@@ -292,16 +294,16 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 
 	if (isset($errorcolor)) {
 		$css_layout .= ".alert-error {
-			background: #$errorcolor;
-			color: #$errortextcolor;
-			border-color: #$errortextcolor;
+			background: $colpfx$errorcolor;
+			color: $colpfx$errortextcolor;
+			border-color: $colpfx$errortextcolor;
 		}";
 	}
 	if (isset($infocolor)) {
 		$css_layout .= ".alert-info {
-			background: #$infocolor;
-			color: #$infotextcolor;
-			border-color: #$infotextcolor;
+			background: $colpfx$infocolor;
+			color: $colpfx$infotextcolor;
+			border-color: $colpfx$infotextcolor;
 		}";
 	}
 

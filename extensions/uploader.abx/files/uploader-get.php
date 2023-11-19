@@ -16,7 +16,7 @@
 	
 	$file = $sql->fetchp("
 		SELECT f.id, f.filename, f.size, f.mime, f.user user, f.private, f.id fileid, f.is_image,
-		       c.user cuser, c.id catid, c.minpowerread
+		       c.user cuser, c.id catid, c.minpowerread, c.minpowermanage
 		FROM uploader_files f
 		INNER JOIN uploader_cat c ON f.cat = c.id
 		WHERE f.hash = ?
@@ -25,7 +25,7 @@
 	
 	if (!$file // File not in DB
 		|| !can_read_category(['user' => $file['cuser'], 'minpowerread' => $file['minpowerread']]) // can't read category
-		|| (!can_manage_category(['user' => $file['cuser']]) && !can_read_file($file)) // can't read the file (bypassed if you can manage the category)
+		|| (!can_manage_category(['user' => $file['cuser'], 'minpowermanage' => $file['minpowermanage']]) && !can_read_file($file)) // can't read the file (bypassed if you can manage the category)
 	) {
 		header("HTTP/1.1 404 Not Found");
 		die("File not found.");

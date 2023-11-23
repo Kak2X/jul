@@ -215,7 +215,7 @@ function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
 	
 		// New version of the tag inspired by Xen-Foro's
 		// [attach="1" type="<...>" name="<...>" hash="<...>" (props)]
-		$msg = preg_replace_callback("'\[attach=\"(\w+)\" type=\"(full|thumb|url)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", function ($text) {
+		$msg = preg_replace_callback("'\[attach=\"(\w+)\" type=\"(full|embed|thumb|url)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", function ($text) {
 			// 1 -> file id
 			// 2 -> bbcode type
 			// 4 -> filename or alt text
@@ -234,6 +234,8 @@ function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
 					return "<a href='{$url}' target='_blank'><img alt=\"{$text[4]}\" src='{$imgurl}' class='imgtag'{$text[7]}/></a>";
 				case 'url':
 					return "<a href='{$url}' target='_blank'{$text[7]}>{$text[4]}</a>";
+				case 'embed':
+					return "[video]{$url}[/video]"; // will be handled later
 			}
 		}, $msg);
 	

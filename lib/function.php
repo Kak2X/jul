@@ -247,7 +247,7 @@ function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
 		
 
 		
-		$msg = preg_replace("'\[video\](.*)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
+		$msg = preg_replace("'\[video\](.*?)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
 		
 	}
 

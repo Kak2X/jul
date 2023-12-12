@@ -351,7 +351,7 @@
 			// Edit marker
 			$editedby           = isset($data['editedby']) ? $data['editedby'] : $loguser;
 			foreach ($userfields_array as $x)
-				$ppost["ue_{$x}"] = $loguser[$x];
+				$ppost["ue_{$x}"] = $editedby[$x];
 			$ppost['editdate'] 	= $currenttime;
 		} else if ($flags == PREVIEW_PROFILE) {
 			$data['ip'] = $user['lastip'];

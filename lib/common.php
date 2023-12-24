@@ -209,6 +209,7 @@
 			'layout'        => 1, // Regular
 			'powerlevel' 	=> 0,
 			'postsperpage'  => 20,
+			'posts'         => 0,
 			'signsep'		=> 3, // Hide separator for guests, since post layouts are enabled
 			'dateformat'	=> $config['default-dateformat'],
 			'dateshort'		=> $config['default-dateshort'],

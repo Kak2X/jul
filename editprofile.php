@@ -1,7 +1,7 @@
 <?php
 
 	require "lib/common.php";
-	pageheader();
+	load_layout();
 	
 	$id = filter_int($_GET['id']);
 	$noeffect = "";
@@ -92,7 +92,7 @@
 			$passwordenc = getpwhash($password, $id);
 			if ($loguser['id'] == $id) {
 				$verifyid = intval(substr($_COOKIE['logverify'], 0, 1));
-				$verify = create_verification_hash($verifyid, $hash);
+				$verify = create_verification_hash($verifyid, $passwordenc);
 				set_board_cookie('logverify', $verify);
 			}
 		} else { // Sneaky!  But no.
@@ -584,6 +584,7 @@
 		}
 	}
 	
+	pageheader();
 	
 	// Hack around autocomplete, fake inputs (don't use these in the file) 
 	// Web browsers think they're smarter than the web designer, so they ignore demands to not use autocomplete.

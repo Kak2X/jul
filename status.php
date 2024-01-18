@@ -213,19 +213,21 @@ function bars(){
 	if(!$sc[$s]) $sc[$s]=1;
 
 	if ($st['HP'] > 0) {
-		ImageFilledRectangle($img,137,41+24,136+$st['HP']/$sc[$s],47+24,$c['bxb0']);
-		ImageFilledRectangle($img,136,40+24,135+$st['HP']/$sc[$s],46+24,$c['bar1'][$s]);
+		$hp = (int)($st['HP']/$sc[$s]);
+		ImageFilledRectangle($img,137,41+24,136+$hp,47+24,$c['bxb0']);
+		ImageFilledRectangle($img,136,40+24,135+$hp,46+24,$c['bar1'][$s]);
 		if ($user['damage'] > 0) {
-			$dmg	= max($st['HP'] - $user['damage'], 0) / $sc[$s];
+			$dmg	= (int)(max($st['HP'] - $user['damage'], 0) / $sc[$s]);
 			$ctemp	= imagecolorsforindex($img, $c['bar1'][$s]);
 			$df		= 0.6;
-			ImageFilledRectangle($img,135 + $st['HP']/$sc[$s],40+24,135+$dmg,46+24,imagecolorallocate($img, $ctemp['red'] * $df, $ctemp['green'] * $df, $ctemp['blue'] * $df));
+			ImageFilledRectangle($img,135 + $hp,40+24,135+$dmg,46+24,imagecolorallocate($img, $ctemp['red'] * $df, $ctemp['green'] * $df, $ctemp['blue'] * $df));
 		}
 	}
 
 	if ($st['MP'] > 0) {
-		ImageFilledRectangle($img,137,49+24,136+(int)($st['MP']/$sc[$s]),55+24,$c['bxb0']);
-		ImageFilledRectangle($img,136,48+24,135+(int)($st['MP']/$sc[$s]),54+24,$c['bar1'][$s]);
+		$mp = (int)($st['MP']/$sc[$s]);
+		ImageFilledRectangle($img,137,49+24,136+$mp,55+24,$c['bxb0']);
+		ImageFilledRectangle($img,136,48+24,135+$mp,54+24,$c['bar1'][$s]);
 	}
 
 	for($i=2;$i<9;$i++) $st2[$i]=$st[$stat[$i]];

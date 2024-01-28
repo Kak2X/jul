@@ -8,19 +8,21 @@ function error_reporter($type, $msg, $file, $line) {
 	if (!error_reporting())
 		return true;
 	
-
-	switch($type) {
-		case E_USER_ERROR:			$typetext = "User Error";   $irccol = 4; $irctypetext = "- Error";   break;
-		case E_USER_WARNING:		$typetext = "User Warning"; $irccol = 7; $irctypetext = "- Warning"; break;
-		case E_USER_NOTICE:			$typetext = "User Notice";  $irccol = 8; $irctypetext = "- Notice";  break;
-		case E_ERROR:			 	$typetext = "Error"; 				break;
-		case E_WARNING: 			$typetext = "Warning"; 				break;
-		case E_NOTICE:				$typetext = "Notice"; 				break;
-		case E_STRICT: 				$typetext = "Strict Notice";	 	break;
-		case E_RECOVERABLE_ERROR:	$typetext = "Recoverable Error"; 	break;
-		case E_DEPRECATED: 			$typetext = "Deprecated"; 			break;
-		case E_USER_DEPRECATED: 	$typetext = "User Deprecated"; 		break;		
-		default: $typetext = "Unknown type";
+	if (is_string($type)) { // Received an exception?
+		$typetext = $type;
+		$irccol = 4; 
+	} else switch ($type) {
+		case E_USER_ERROR:			$typetext = "User Error";   		$irccol = 4; break;
+		case E_USER_WARNING:		$typetext = "User Warning"; 		$irccol = 7; break;
+		case E_USER_NOTICE:			$typetext = "User Notice";  		$irccol = 8; break;
+		case E_ERROR:			 	$typetext = "Error"; 				$irccol = 4; break;
+		case E_WARNING: 			$typetext = "Warning"; 				$irccol = 7; break;
+		case E_NOTICE:				$typetext = "Notice"; 				$irccol = 8; break;
+		case E_STRICT: 				$typetext = "Strict Notice";	 	$irccol = 8; break;
+		case E_RECOVERABLE_ERROR:	$typetext = "Recoverable Error"; 	$irccol = 7; break;
+		case E_DEPRECATED: 			$typetext = "Deprecated"; 			$irccol = 8; break;
+		case E_USER_DEPRECATED: 	$typetext = "User Deprecated"; 		$irccol = 8; break;		
+		default: 					$typetext = "Unknown type"; 		$irccol = 4;
 	}
 
 	// Get the ACTUAL location of error for mysql queries
@@ -56,14 +58,11 @@ function error_reporter($type, $msg, $file, $line) {
 	
 	$file = strip_doc_root($file);
 	
-	// Without $irctypetext the error is marked as "local reporting only"
 	// If the message fails to get sent, shrug and ignore any errors that may come out.
-	if (isset($irctypetext)) {
-		@report_send(
-			IRC_ADMIN, ($loguser['id'] ? xk(11)."{$loguser['name']} (".xk(10)."{$_SERVER['REMOTE_ADDR']}".xk(11).")" : xk(10)."{$_SERVER['REMOTE_ADDR']}")." ".xk($irccol)."{$irctypetext}: ".xk()."({$file} #{$line}) {$msg}",
-			IRC_ADMIN, ($loguser['id'] ? "**{$loguser['name']}** (**{$_SERVER['REMOTE_ADDR']}**)" : "**{$_SERVER['REMOTE_ADDR']}**")." **{$irctypetext}**: ({$file} #{$line}) {$msg}"
-		);
-	}
+	@report_send(
+		IRC_ADMIN, ($loguser['id'] ? xk(11)."{$loguser['name']} (".xk(10)."{$_SERVER['REMOTE_ADDR']}".xk(11).")" : xk(10)."{$_SERVER['REMOTE_ADDR']}")." ".xk($irccol)."- {$typetext}: ".xk()."({$file} #{$line}) {$msg}",
+		IRC_ADMIN, ($loguser['id'] ? "**{$loguser['name']}** (**{$_SERVER['REMOTE_ADDR']}**)" : "**{$_SERVER['REMOTE_ADDR']}**")." **- {$typetext}**: ({$file} #{$line}) {$msg}"
+	);
 
 	// Local reporting
 	$errors[] = array($typetext, $msg, $func, $args, $file, $line);
@@ -76,11 +75,10 @@ function exception_reporter($err) {
 	global $config, $sysadmin;
 	
 	// Convert the exception to an error so the reporter can digest it
-	$type = E_ERROR;
-	$msg  = $err->getMessage() . "\n\n<span style='color: #FFF'>Stack trace:</span>\n\n". highlight_trace($err->getTrace());
+	$type = "Exception";
+	$msg  = $err->getMessage() . "\nStack trace:\n". $err->getTraceAsString();
 	$file = $err->getFile();
 	$line = $err->getLine();
-	unset($err);
 	error_reporter($type, $msg, $file, $line, NULL);
 	
 	// Should we display the debugging screen?
@@ -92,7 +90,7 @@ function exception_reporter($err) {
 			"Technical difficulties II", 
 			"{$config['board-name']} -- Technical difficulties");
 	} else {
-		fatal_error("Exception", $msg, $file, $line);
+		fatal_error("Exception", $err->getMessage() . "\n\n<span style='color: #FFF'>Stack trace:</span>\n\n". highlight_trace($err->getTrace()), $file, $line);
 	}
 }
 
@@ -101,7 +99,7 @@ function highlight_trace($arr) {
 	foreach ($arr as $k => $v) {
 		$out .= "<span style='color: #FFF'>{$k}</span><span style='color: #F44'>#</span> ".
 		        "<span style='color: #0f0'>{$v['file']}</span>#<span style='color: #6cf'>{$v['line']}</span> ".
-		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".htmlspecialchars(print_r($v['args'], true))."\n)</span></span>\n";
+		        "<span style='color: #F44'>{$v['function']}<span style='color:#FFF'>(\n".(isset($v['args']) ? htmlspecialchars(print_r($v['args'], true)) : "")."\n)</span></span>\n";
 	}
 	//implode("<span style='color: #0F0'>,</span>", $v['args'])
 	return $out;

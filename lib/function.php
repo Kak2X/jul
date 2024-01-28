@@ -2386,7 +2386,7 @@ function drawprogressbar($width, $height, $done, $total, $images) {
 
 // Single image progress bar (for comparisions like in activeusers.php)
 function drawminibar($width, $height, $progress, $image = 'images/minibar.png') {
-	$on = round($progress * 100 / $width);
+	$on = round($progress * 100 / max(1, $width));
 	return "<img src='{$image}' class='pixel' style='float: left; width: {$on}%; height: {$height}px'>";
 }
 

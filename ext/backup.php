@@ -21,7 +21,7 @@
 	$tables = array(
 		'actionlog',
 		'announcementread',
-		'announcements',
+		//'announcements',
 		'archive_cat',
 		'archive_items',
 		'attachments',

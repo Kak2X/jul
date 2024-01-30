@@ -38,14 +38,14 @@ if (isset($_POST['edit']) || isset($_POST['edit2'])) {
 	if ($_GET['id'] <= -1) {
 		$sql->queryp("INSERT INTO `forums` SET $qadd, `lastpostid` = '0'", $values);
 		$id	= $sql->insert_id();
-		trigger_error("Created new forum \"".$values['forumtitle']."\" with ID $id", E_USER_NOTICE);
+		trigger_error("Created new forum \"{$values['title']}\" with ID $id", E_USER_NOTICE);
 	} else {
-		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '". $_GET['id'] ."'", $values);
+		$sql->queryp("UPDATE `forums` SET $qadd WHERE `id` = '{$_GET['id']}'", $values);
 		$id	= $_GET['id'];
 		trigger_error("Edited forum ID $id", E_USER_NOTICE);
 	}
 
-	if ($_POST['edit']) {
+	if (isset($_POST['edit'])) {
 		return header("Location: ?id=". $id . $prevtext);
 	} else {
 		return header("Location: ?".substr($prevtext, 1));
@@ -68,7 +68,6 @@ elseif (isset($_POST['delete'])) {
 	$sql->beginTransaction();
 	$counts = $sql->fetchq("SELECT `numthreads`, `numposts` FROM `forums` WHERE `id`='$id'");
 	$sql->query("UPDATE `threads` SET `forum`='$mergeid' WHERE `forum`='$id'");
-	$sql->query("UPDATE `announcements` SET `forum`='$mergeid' WHERE `forum`='$id'");
 	$sql->query("DELETE FROM `forummods` WHERE `forum`='$id'");
 	$sql->query("DELETE FROM `forums` WHERE `id`='$id'");
 
@@ -106,7 +105,7 @@ elseif (isset($_POST['catedit']) || isset($_POST['catedit2'])) {
 		trigger_error("Edited category ID $id", E_USER_NOTICE);
 	}
 
-	if ($_POST['catedit']) {
+	if (isset($_POST['catedit'])) {
 		return header("Location: ?catid=". $id . $prevtext);
 	} else {
 		return header("Location: ?".substr($prevtext, 1));

@@ -337,6 +337,12 @@ else if ($_GET['catid']) {
 	$category = $sql->fetchq("SELECT * FROM `categories` WHERE `id` = '". $_GET['catid'] . "'");
 	if (!$category) {
 		$_GET['catid'] = -1;
+		$category = [
+			'name' => "",
+			'corder' => 0,
+			'minpower' => PWL_NORMAL,
+			'side' => 0,
+		];
 	}
 
 ?>

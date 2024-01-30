@@ -236,7 +236,7 @@
 		if ($edituser) {
 			
 			if ($id == 1 && $loguser['id'] != 1) {
-				report_send(IRC_STAFF, xk(7)."Someone (*cough* '{$loguser['name']}' *cough*) is trying to be funny...");
+				report_send(IRC_STAFF, xk(7)."Someone (*cough* {$loguser['id']} '{$loguser['name']}' *cough*) is trying to be funny...");
 			}
 		
 			 //$sql->query("INSERT logs SET useraction ='Edit User ".$user[nick]."(".$user[id]."'");

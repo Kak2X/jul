@@ -117,21 +117,9 @@
 <?php	if ($isadmin) { 
 			$user['lastip']  = htmlspecialchars($user['lastip'], ENT_QUOTES);
 			$user['lastua']  = escape_html($user['lastua']);
-			
-			if ($banorama && !$user['banned'])
-				$ipban	= "<a href='?banip={$user['lastip']}&uid={$user['id']}&auth=" . generate_token(TOKEN_BANNER, $user['lastip']) ."'>Ban</a> - ";
-			elseif ($user['banned'])
-				$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
-			else
-				$ipban	= "";
 ?>
 			<td class="tdbg2 center fonts"><?= $user['lastua'] ?></td>
-			<td class="tdbg1 center">
-				<a href="admin-ipsearch.php?ip=<?=$user['lastip']?>"><?=$user['lastip']?></a>
-				<div class="fonts">
-					[<?=$ipban?><a href="http://google.com/search?q=<?=$user['lastip']?>">G</a> - <a href="http://en.wikipedia.org/wiki/User:<?=$user['lastip']?>">W</a>]
-				</div>
-			</td>
+			<td class="tdbg1 center"><?= _ipcol($user['lastip'], $user['banned']) ?></td>
 <?php	} ?>
 		</tr>
 <?php }	?>
@@ -198,26 +186,9 @@
 			<td class="tdbg2 fonts center"<?=$marker?>><?=htmlspecialchars($guest['useragent'])?></td>
 			<td class="tdbg1 center"<?=$marker?>><?=date('h:i:s A',$guest['date']+$loguser['tzoff'])?></td>
 			<td class="tdbg2"<?=$marker?>><a rel="nofollow" href="<?=_urlformat($realurl)?>"><?=$guest['lasturl']?></td>
-		<?php
-
-		if ($isadmin) {
-			
-			if ($banorama && !$guest['banned'])
-				$ipban	= "<a href='?banip={$guest['ip']}&auth=" . generate_token(TOKEN_BANNER, $guest['ip']) ."'>Ban</a> - ";
-			elseif ($guest['banned'])
-				$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
-			else
-				$ipban	= "";
-			
-?>		</td>
-		<td class="tdbg1 center" <?=$marker?>>
-			<a href="admin-ipsearch.php?ip=<?=$guest['ip']?>"><?=$guest['ip']?></a>
-			<span class="fonts">
-				<br>
-				[<?=$ipban?><a href="http://google.com/search?q=<?=$guest['ip']?>">G</a> - <a href="http://en.wikipedia.org/wiki/User:<?=$guest['ip']?>">W</a> - <a href="http://<?=$guest['ip']?>/">H</a>]</a></span>
-<?php
-		}
-
+<?php 	if ($isadmin) {	?>
+			<td class="tdbg1 center" <?=$marker?>><?= _ipcol($guest['ip'], $guest['banned']) ?></td>
+<?php 	}
 	}
 		?>
 		</tr>
@@ -229,4 +200,24 @@
 
 	function _urlformat($url) {
 		return preg_replace("/^\/thread\.php\?pid=([0-9]+)$/", "/thread.php?pid=\\1#\\1", $url);
+	}
+	
+	// For the ip addr column
+	function _ipcol($ip, $isbanned) {
+		global $banorama;
+		
+		if ($banorama && !$isbanned)
+			$ipban	= "<a href='?banip={$ip}&auth=" . generate_token(TOKEN_BANNER, $ip) ."'>Ban</a> - ";
+		else if ($isbanned)
+			$ipban	= "<span style='color: #f88; font-weight: bold;'>Banned</span> - ";
+		else
+			$ipban	= "";
+			
+		// GSC links (*not* Gold, Silver & Crystal)
+		return "
+<div class='fonts'>
+	[{$ipban}<a href=\"https://google.com/search?q={$ip}\" target=\"_blank\">G</a>
+	- <a href=\"https://www.stopforumspam.com/search?q={$ip}\" target=\"_blank\">S</a>
+	- <a href=\"https://cleantalk.org/blacklists/{$ip}\" target=\"_blank\">C</a>]
+</div>";
 	}

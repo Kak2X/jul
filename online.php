@@ -215,6 +215,7 @@
 			
 		// GSC links (*not* Gold, Silver & Crystal)
 		return "
+<a href=\"admin-ipsearch.php?ip={$ip}\">{$ip}</a>
 <div class='fonts'>
 	[{$ipban}<a href=\"https://google.com/search?q={$ip}\" target=\"_blank\">G</a>
 	- <a href=\"https://www.stopforumspam.com/search?q={$ip}\" target=\"_blank\">S</a>

@@ -575,9 +575,10 @@
 		
 		// Leftover days from the previous month
 		// These are selectable too, because why not
+		$i = 0;
 		if ($start > 0) {
 			$out .= "</tr><tr>";
-			for ($i = 0, $ld = $lastdays - $start, $lm = $last['mon'], $ly = $last['year']; $i < $start; ++$i, ++$ld)
+			for ($ld = $lastdays - $start, $lm = $last['mon'], $ly = $last['year']; $i < $start; ++$i, ++$ld)
 				$out .= "<td class='tdbg2 center fonts'><a href='".actionlink(null,"?cday={$ld}&cmonth={$lm}&cyear={$ly}{$extraparams}")."'>{$ld}</a></td>";
 		}
 		

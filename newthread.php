@@ -78,7 +78,7 @@
 		// Trying to post as someone else?
 		if (!$loguser['id'] || $_POST['password']) {
 			$userid = checkuser($_POST['username'], $_POST['password']);
-			if ($userid == -1) {
+			if ($userid < 0) {
 				$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
 			} else {
 				$user 	= load_user($userid, true);

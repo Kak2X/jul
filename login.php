@@ -1,10 +1,14 @@
 <?php
 	require "lib/common.php";
 	
+	const WARN_THRESHOLD = 5;
+	const BAN_THRESHOLD = 10;
+	
 	// Bots don't need to be on this page
 	$meta['noindex'] = true;
-
-	$username = filter_string($_POST['username'], true);
+	
+	$username = filter_string($_POST['username']);
+	if ($username) $username = trim($username);
 	$password = filter_string($_POST['userpass']);
 	
 	if (!$config['force-lastip-match']) {
@@ -13,10 +17,10 @@
 		$verifyid = 4;
 	}
 	
+	// For the alternate way to log out, without requiring JS
 	$_GET['action'] = filter_string($_GET['action']);
-	
 	if ($_GET['action'] == "logout") {
-		if (!confirmed($msgkey = 'logout')) {
+		if (!confirmed($msgkey = 'logout', TOKEN_LOGIN)) {
 			$title   = "Board Message";
 			$message = "Are you sure you want to log out?";
 			$form_link = "?action=logout";
@@ -31,159 +35,166 @@
 	}
 	
 	
-	$action   = filter_string($_POST['action']);
-	
-	$txt = "";
+	$action		= filter_string($_POST['action']);
+	$txt 		= "";
+	$form_msg	= "";
 	
 	if ($action) {
 		check_token($_POST['auth'], TOKEN_LOGIN);
-	}
-	
-	if ($action == 'login') {
-		
-		if (!$username)
-			$msg = "Couldn't login.  You didn't input a username.";
-		else {
-			
-			$username 	= trim($username);
-			
-			
-			$userid 	= checkuser($username, $password);
+		if ($action == 'logout') {
+			remove_board_cookie('loguserid');
+			remove_board_cookie('logverify');
 
+			// May as well unset this as well
+			remove_board_cookie('logpassword');
 			
-			if ($userid != -1) {
-				// Login successful: Create a new password hash, which has the effect of invalidating previous tokens
-				$pwhash = getpwhash($password, $userid);
-				$sql->query("UPDATE users SET password = '$pwhash' WHERE id = '$userid'");
-				
-				$verify = create_verification_hash($verifyid, $pwhash);
-
-				set_board_cookie('loguserid', $userid);
-				set_board_cookie('logverify', $verify);
-				
-				load_layout();
-				
-				$msg = "You are now logged in as ".getuserlink(null, $userid).".";
-			//} else if (/*$username == "Blaster" || */$username === "tictOrnaria") {
+			errorpage("You are now logged out.", "index.php", "the board", 0); 
+		}
+		else if ($action == 'login') {
+			//if (/*$username == "Blaster" || */$username === "tictOrnaria") {
 			//	$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Abusive / malicious behavior'");
 			//	report_send(IRC_STAFF, xk(7) ."Auto banned tictOrnaria (malicious bot) with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
-			} else {
-				
-				$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
-				[
-					'time'	=> time(),
-					'user' 	=> $username,
-					'pass' 	=> $password,
-					'ip'	=> $_SERVER['REMOTE_ADDR'],
-				]);
-				$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
-				
-				// Keep in mind, it's now not possible to trigger this if you're IP banned
-				// when you could previously, making extra checks to stop botspam not matter
-
-				//if ($fails > 1)
-				report_send(
-					IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to log in as ".xk(8)."{$username}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
-					IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
-				);
-
-				if ($fails >= 5) {
-					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail for password recovery'");
-					report_send(
-						IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
-						IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
-					);
-					report_send(
-						IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
-						IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
-					);
-				}
-
-				$msg = "Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.";
-			}
-		}
-		$txt .= "<tr><td class='tdbg1 center'>$msg<br>".redirect('index.php','the board',0)."</td></tr>";
-	}
-	elseif ($action == 'logout') {
-		remove_board_cookie('loguserid');
-		remove_board_cookie('logverify');
-
-		// May as well unset this as well
-		remove_board_cookie('logpassword');
-		$txt .= "<tr><td class='tdbg1 center'> You are now logged out.<br>".redirect('index.php','the board',0)."</td></tr>";
-	}
-	elseif (!$action) {
-		if (!$config['force-lastip-match']) {
-			$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
-			for ($i = 4; $i > 0; --$i) {
-				$verifyoptext[$i] = "(".implode('.', $ipaddr).")";
-				$ipaddr[$i-1]       = 'xxx';
-			}
+			//  die;
+			//}
+			$userid = checkuser($username, $password);
 			
-			$verifytxt = "
-				<td class='tdbg1 center' rowspan=2><b>IP Verification:</b></td>
-				<td class='tdbg2' rowspan=2>
-					<select name=verify>
-						<option selected value=0>Don't use</option>
-						<option value=1> /8 $verifyoptext[1]</option>
-						<option value=2>/16 $verifyoptext[2]</option>
-						<option value=3>/24 $verifyoptext[3]</option>
-						<option value=4>/32 $verifyoptext[4]</option>
-					</select>
-					<br>
-					<small>
-						You can require your IP address to match your current IP, to an extent, to remain logged in.
-					</small>
-				</td>";
-			
-		} else {
-			// We can hide the selection if we force the matching anyway
-			$verifytxt = "<td class='tdbg2' rowspan=2 colspan=2></td>";
-		}
-		$txt .= "
-		<body onload='window.document.REPLIER.username.focus()'>
-		
-		<FORM ACTION=login.php NAME=REPLIER METHOD=POST>
-			<tr>
-				<td class='tdbgh center' width=150>&nbsp;</td>
-				<td class='tdbgh center' width=40%>&nbsp</td>
-				<td class='tdbgh center' width=150>&nbsp;</td>
-				<td class='tdbgh center' width=40%>&nbsp;</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center'><b>User name:</b></td>
-				<td class='tdbg2'>
-					<input type='text' name=username MAXLENGTH=25 style='width:280px;'>
-				</td>
-				{$verifytxt}
-			</tr>
-			<tr>
-				<td class='tdbg1 center'><b>Password:</b></td> 
-				<td class='tdbg2'>
-					<input type='password' name=userpass MAXLENGTH=64 style='width:180px;'>
-				</td>
-			</tr>
-			<tr>
-				<td class='tdbg1 center'>&nbsp;</td>
-				<td class='tdbg2' colspan=3>
-					<input type='hidden' name=action VALUE=login>
-					<input type='submit' name=submit VALUE=Login>
-					".auth_tag(TOKEN_LOGIN)."
-				</td>
-			</tr>
-		</FORM>";
-	}
-	else { // Just what do you think you're doing
-		$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Generic internet exploit searcher'");
-		report_send(
-			IRC_STAFF, xk(7)."Auto-banned asshole trying to be clever with the login form (action: ".xk(8)."{$action}".xk(7).") with IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7).".",
-			IRC_STAFF, "Auto-banned asshole trying to be clever with the login form (action: **{$action}**) with IP **{$_SERVER['REMOTE_ADDR']}**."
-		);
-		errorpage("Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.");
-	}	
+			switch ($userid) {
+				case -1:
+					$form_msg = "You didn't input a username.";
+					break;
+				case -2:
+					$form_msg = "No user with that username exists.<br/><br/>If you aren't sure if you have an account, check the <a href='memberlist.php'>memberlist</a> or <a href='register.php'>register a new account</a>.";
+					$username = "";
+					break;
+				case -3:
+				case -4:
+					$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
+					[
+						'time'	=> time(),
+						'user' 	=> $username,
+						'pass' 	=> $password,
+						'ip'	=> $_SERVER['REMOTE_ADDR'],
+					]);
+					$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
+					
+					// Keep in mind, it's now not possible to trigger this if you're IP banned
+					// when you could previously, making extra checks to stop botspam not matter
 
+					//if ($fails > 1)
+					report_send(
+						IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to log in as ".xk(8)."{$username}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
+						IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
+					);
+
+					if ($fails >= BAN_THRESHOLD) {
+						
+						$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
+						report_send(
+							IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+							IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
+						);
+						report_send(
+							IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
+							IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
+						);
+						die(header("Location: ?"));			
+					} else {
+						$invites = discord_get_invites();
+						$form_msg = "The password you entered doesn't match.<br/><br/>
+						If you've forgotten your password, ".($invites ? "<a href='{$invites[0]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
+						
+						if ($fails >= WARN_THRESHOLD)
+							$form_msg .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";
+					}
+					break;
+				default:
+					// Login successful: Create a new password hash, which has the effect of invalidating previous tokens
+					$pwhash = getpwhash($password, $userid);
+					$sql->query("UPDATE users SET password = '{$pwhash}' WHERE id = '{$userid}'");
+					
+					$verify = create_verification_hash($verifyid, $pwhash);
+
+					set_board_cookie('loguserid', $userid);
+					set_board_cookie('logverify', $verify);
+					
+					load_layout();
+					
+					errorpage("You are now logged in as ".getuserlink(null, $userid).".", "index.php", "the board", 0);
+					break;
+			}
+		} else { // Just what do you think you're doing
+			errorpage("Just what do you think you're doing anyway?");
+			/*
+			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Generic internet exploit searcher'");
+			report_send(
+				IRC_STAFF, xk(7)."Auto-banned asshole trying to be clever with the login form (action: ".xk(8)."{$action}".xk(7).") with IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7).".",
+				IRC_STAFF, "Auto-banned asshole trying to be clever with the login form (action: **{$action}**) with IP **{$_SERVER['REMOTE_ADDR']}**."
+			);
+			errorpage("Couldn't login.  Either you didn't enter an existing username, or you haven't entered the right password for the username.");
+			*/
+		}
+	
+	}
+	
+	// Main Form	
 	pageheader();
 	
-	print "<table class='table'>{$txt}</table>";
+	if ($form_msg) {
+		boardmessage("Couldn't login. {$form_msg}", "Message", false);
+		print "<br/>";
+	}
+	
+	?>
+	<form method="POST" action="?">
+	<table class="table">
+		<tr>
+			<td class="tdbgh center" width="150">&nbsp;</td>
+			<td class="tdbgh center" width="40%">&nbsp</td>
+			<td class="tdbgh center" width="150">&nbsp;</td>
+			<td class="tdbgh center" width="40%">&nbsp;</td>
+		</tr>
+		<tr>
+			<td class="tdbg1 center b">User name:</td>
+			<td class="tdbg2">
+				<input type="text" name="username" maxlength="25" style="width:280px" tabindex="1" value="<?= htmlspecialchars($username) ?>" <?= (!$username ? " autofocus='1'" : "") ?>>
+			</td>
+			<td class="tdbg1 center b" rowspan="2">IP Verification:</td>
+			<td class="tdbg2" rowspan="2">
+				<?php
+				if ($config['force-lastip-match']) {
+					print "<i>Enforced</i>";
+				} else {
+					$ipaddr = explode('.', $_SERVER['REMOTE_ADDR']);
+					$verify_list = array_fill(0, 4, '');
+					$verify_list[0] = "Don't use";
+					for ($i = 4; $i > 0; --$i) {
+						$verify_list[$i]	= "/".($i*8)." (".implode('.', $ipaddr).")";
+						$ipaddr[$i-1]		= 'xxx';
+					}
+					
+					print input_html("verify", $verifyid, ['input' => 'select', 'options' => $verify_list, 'tabindex' => 4])."
+					<div class='fonts'>
+						You can require your IP address to match your current IP, to an extent, to remain logged in.
+					</div>";
+				}
+				?>
+			</td>
+		</tr>
+		<tr>
+			<td class="tdbg1 center b">Password:</td> 
+			<td class="tdbg2">
+				<input type="password" name="userpass" maxlength="64" style="width:180px" tabindex="2"<?= ($username ? " autofocus='1'" : "") ?>>
+			</td>
+		</tr>
+		<tr>
+			<td class="tdbg1 center">&nbsp;</td>
+			<td class="tdbg2" colspan="3">
+				<button type="submit" name="action" value="login" tabindex="3">Login</button>
+				<?= auth_tag(TOKEN_LOGIN) ?>
+			</td>
+		</tr>
+	</table>
+	</form>
+	<?php
 	
 	pagefooter();

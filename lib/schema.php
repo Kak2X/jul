@@ -193,6 +193,8 @@ class schema {
 			$attrib .= " maxlength=\"{$data['maxlength']}\"";
 		if (isset($data['class']))
 			$attrib .= " class=\"{$data['class']}\"";
+		if (isset($data['tabindex']))
+			$attrib .= " tabindex=\"{$data['tabindex']}\"";
 		
 		if (is_array($value)) {
 			$value = implode(";", $value);

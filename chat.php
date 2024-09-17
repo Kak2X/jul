@@ -2,17 +2,7 @@
 
 require "lib/common.php";
 
-// Discord - Main
-$disc_chans     = [];
-foreach (explode("\n", $config['discord-invites']) as $row) {
-	if (!trim($row))
-		continue;
-	$chan = explode(";", $row, 2);
-	if (count($chan) < 2)
-		continue;
-	$disc_chans[] = array_map('trim', $chan);
-}
-
+$disc_chans = discord_get_invites();
 define("HAS_IRC", $config['irc-servers'] && $config['irc-channels']);
 define("HAS_DISCORD", $disc_chans);
 

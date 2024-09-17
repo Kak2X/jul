@@ -741,27 +741,27 @@ function valid_user($user) {
 	}
 }
 
-function checkuser($name, $pass){
+function checkuser($name, $pass) {
 	global $hacks, $sql;
 
 	if (!$name) return -1;
 	//$sql->query("UPDATE users SET password = '".getpwhash($pass, 1)."' WHERE id = 1");
 	$user = $sql->fetchp("SELECT id, password FROM users WHERE name = ?", [$name]);
 
-	if (!$user) return -1;
+	if (!$user) return -2;
 	
 	//if ($user['password'] !== getpwhash($pass, $user['id'])) {
 	if (!password_verify(sha1($user['id']).$pass, $user['password'])) {
 		// Also check for the old md5 hash, allow a login and update it if successful
 		// This shouldn't impact security (in fact it should improve it)
 		if (!$hacks['password_compatibility'])
-			return -1;
+			return -3;
 		else {
 			if ($user['password'] === md5($pass)) { // Uncomment the lines below to update password hashes
 				$sql->query("UPDATE users SET `password` = '".getpwhash($pass, $user['id'])."' WHERE `id` = '$user[id]'");
 				report_send(IRC_ADMIN, xk(3)."Password hash for ".xk(9)."{$name}".xk(3)." (uid ".xk(9).$user['id'].xk(3).") has been automatically updated.");
 			}
-			else return -1;
+			else return -4;
 		}
 	}
 	
@@ -2535,6 +2535,20 @@ function header_content_type($type) {
 <?php
 		die;
 	}
+}
+
+function discord_get_invites() {
+	global $config;
+	$disc_chans     = [];
+	foreach (explode("\n", $config['discord-invites']) as $row) {
+		if (!trim($row))
+			continue;
+		$chan = explode(";", $row, 2);
+		if (count($chan) < 2)
+			continue;
+		$disc_chans[] = array_map('trim', $chan);
+	}
+	return $disc_chans;
 }
 
 function drawfilledpolygon($img, $points, $color, $fill_color = null) {

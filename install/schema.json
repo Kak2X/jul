@@ -104,6 +104,13 @@
 					"type":"string",
 					"default":"herp@derp.welp"
 				},
+				"admin-discord":{
+					"title":"Support Discord",
+					"desc":"Discord account for support, shown to IP banned users.",
+					"input":"text",
+					"type":"string",
+					"default":"@Chitose"
+				},
 				"show-ikachan":{
 					"title":"Show Ikachan",
 					"desc":"Ika-chaaaannn~",

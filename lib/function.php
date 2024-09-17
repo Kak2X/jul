@@ -434,14 +434,14 @@ function dothreadiconlist($iconid = NULL, $customicon = '') {
 		
 		$posticons[$i] = trim($posticons[$i]);
 		// Does the icon match?
-		if($selected == $posticons[$i]){
-			$checked    = 'checked=1';
-			$customicon	= '';					// If so, blank out the custom icon
+		if ($selected == $posticons[$i]){
+			$checked    = "checked='1'";
+			$customicon	= "";	// If so, blank out the custom icon
 		} else {
-			$checked    = '';
+			$checked    = "";
 		}
 
-		$posticonlist .= "<input type=radio name=iconid value=$i $checked>&nbsp;<img src=\"".escape_attribute($posticons[$i])."\" HEIGHT=15 WIDTH=15>&nbsp; &nbsp;";
+		$posticonlist .= "<label class='thread-icon-sel'><input type='radio' name='iconid' value='$i' $checked><img src=\"".escape_attribute($posticons[$i])."\"></label>";
 
 		$i++;
 		if($i % 10 == 0) $posticonlist .= '<br>';

@@ -178,7 +178,25 @@ input[type=radio] {
 	max-height:		30px; 
 	overflow:		hidden;
 }
+.thread-icon img {
+	vertical-align: middle;
+}
 .icon-16 img { width:16px }
+
+/* Thread icon selector (checkboxes) */
+.thread-icon-sel { 
+	margin-right: 20px
+}
+.thread-icon-sel input[type='radio'] {
+	margin: 0;
+	vertical-align: middle;
+}
+.thread-icon-sel img {
+	max-width: 16px;
+	max-height: 16px;
+	vertical-align: middle;
+	margin-left: 5px;
+}
 
 /* Attachments */
 .attachment-box, .attachment-box-addnew{

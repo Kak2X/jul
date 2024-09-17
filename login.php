@@ -101,7 +101,7 @@
 					} else {
 						$invites = discord_get_invites();
 						$form_msg = "The password you entered doesn't match.<br/><br/>
-						If you've forgotten your password, ".($invites ? "<a href='{$invites[0]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
+						If you've forgotten your password, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
 						
 						if ($fails >= WARN_THRESHOLD)
 							$form_msg .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";

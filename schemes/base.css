@@ -192,8 +192,8 @@ input[type=radio] {
 	vertical-align: middle;
 }
 .thread-icon-sel img {
-	max-width: 16px;
-	max-height: 16px;
+	width: 15px;
+	height: 15px;
 	vertical-align: middle;
 	margin-left: 5px;
 }

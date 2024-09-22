@@ -532,7 +532,7 @@
 				$tokenstr = "&auth=".generate_token(TOKEN_MGET);
 				
 				// Non-mods can edit the post as long as the thread isn't closed.
-				if ($ismod || $threadclosed) {
+				if ($ismod || !$threadclosed) {
 					$controls[] = "<a href='editpost.php?id={$post['id']}'>Edit</a>";
 				}
 				

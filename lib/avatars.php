@@ -171,7 +171,7 @@ function mood_list($user, $sel = 0, $return = false) {
 		if (isset($moods[0])) {
 			$moods[0]['title'] = "-Normal avatar-";
 		} else {
-			$txt .= "<option value='0' ". filter_string($c[$file])." data-act='clear'>-Normal avatar-</option>";
+			$txt .= "<option value='0' ". filter_string($c[0])." data-act='clear'>-Normal avatar-</option>";
 		}
 		
 		// Select box, with now auto av preview update

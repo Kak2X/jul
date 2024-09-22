@@ -232,7 +232,7 @@
 		    <td class='tdbg1'>[url=http://example.com/]Link text here.[/url]</td>
 		  </tr>
 		  <tr>
-		    <td class='tdbg2'>[img<z>]https://tcrf.net/images/c/c4/SMB2-smiley.png[/img<z>]</td>
+		    <td class='tdbg2'>[im<z>g]https://tcrf.net/images/c/c4/SMB2-smiley.png[/img<z>]</td>
 		    <td class='tdbg1'>[img]https://tcrf.net/images/c/c4/SMB2-smiley.png[/img]</td>
 		  </tr>
 		  <tr>

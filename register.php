@@ -308,7 +308,7 @@
 						INSERT INTO users (id, name, password, powerlevel, regdate, sidebartype, sidebar, css) 
 						VALUES ({$config['deleted-user-id']}, 'Deleted user', 'X', -2, {$currenttime}, 3, '{$delsidebar}', '{$delcss}')
 					");
-					$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$config['deleted-user-id']}')");
+					$sql->query("INSERT INTO `users_rpg` (`uid`, `damage`) VALUES ('{$config['deleted-user-id']}', 99999)");
 				}
 				
 				$sql->commit();

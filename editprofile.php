@@ -100,15 +100,12 @@
 		}
 		
 		if ($issuper) {
-			// Always process the backup entry, so it can be updated even when it isn't selected
-			$_POST['namecolor'] = filter_string($_POST['namecolor']); // Color input type
-			if ($_POST['namecolor']) {
-				if (!($namecolor_bak = parse_color_input($_POST['namecolor']))) {
-					errorpage("What are you trying to accomplish?");
-				}
-			} else { // This is a failsafe in case a color was never selected previously (causing the ctype check to fail)
-				$namecolor_bak = $userdata['namecolor_bak'];
-			}
+			
+			// The form fields for the namecolor are different than what's saved on the DB, so that we only need to fetch one outside of editprofile.
+			// The selected color (hex color or a special string) goes to 'namecolor'.
+			// To keep track of the selected *hex* color even when it's not used, a copy of that goes to 'namecolor_bak'.
+			if (!($namecolor_bak = parse_color_input(filter_string($_POST['namecolor'])))) // Color input type
+				$namecolor_bak = $userdata['namecolor_bak']; // Failsafe in case an hex color was never selected previously
 					
 			switch (filter_int($_POST['colorspec'])) { // Selection box
 				case 0: $namecolor = ""; break;
@@ -122,7 +119,8 @@
 			$_POST['sidebar'] = filter_string($_POST['sidebar']);
 			$_POST['sidebartype'] = numrange((filter_int($_POST['sidebartype']) << 1) + filter_int($_POST['sidebarcell']), 0, 5);
 		} else {
-			$namecolor = $namecolor_bak = $userdata['namecolor'];
+			$namecolor = $userdata['namecolor'];
+			$namecolor_bak = $userdata['namecolor_bak'];
 			$_POST['sidebar'] = $userdata['sidebar'];
 			$_POST['sidebartype'] = $userdata['sidebartype'];
 		}

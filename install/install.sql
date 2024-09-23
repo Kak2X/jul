@@ -1962,7 +1962,7 @@ CREATE TABLE `rpg_classes` (
 
 LOCK TABLES `rpg_classes` WRITE;
 /*!40000 ALTER TABLE `rpg_classes` DISABLE KEYS */;
-INSERT INTO `rpg_classes` VALUES (1,'Tyrant',NULL,NULL,1,1,1,1,1,1,1,1,1),(2,'Demoness Overlord',NULL,NULL,1,1,1,1,1,1,1,1,1);
+INSERT INTO `rpg_classes` VALUES (1,'Tyrant',NULL,3,1,1,1,1,1,1,1,1,1),(2,'Demoness Overlord',1,1,1,1,1,1,1,1,1,1,1),(3,'Technomancer',NULL,NULL,1,1,1,1,1,1,1,1,1),(4,'Magician',0,NULL,1,1,1,1,1,1,1,1,1),(5,'Cheater',NULL,NULL,1,1,1,1,1,1,1,1,1),(6,'God Buster',NULL,NULL,1,1,1,1,1,1,1,1,1);
 /*!40000 ALTER TABLE `rpg_classes` ENABLE KEYS */;
 UNLOCK TABLES;
 

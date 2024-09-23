@@ -221,9 +221,6 @@ class irc {
 	private $name_id = -1;
 	private $nickname;
 	
-	// Userlist by channel, required to keep track of powers
-	private $userlist = [];
-	
 	public function __construct($host, $port, $name, $password, $autojoin = []) {
 		// Save these to allow automatically reconnecting without having to pass them again
 		$this->host = $host;
@@ -244,12 +241,8 @@ class irc {
 			return;
 		}
 		
-		// Doesn't really matter, it's the connection identifier...
-		if (function_exists('random_bytes')) {
-			$cnpass = bin2hex(random_bytes(16));
-		} else {
-			$cnpass = sha1(dechex(mt_rand(0, PHP_INT_MAX)));
-		}
+		// Connection identifier...
+		$cnpass = "KB2".sha1(dechex(mt_rand(0, PHP_INT_MAX)));
 		
 		// Init channel list
 		$this->channels = [];
@@ -278,7 +271,7 @@ class irc {
 	
 	public function join($channel, $key = "") {
 		$this->rawSendMessage("JOIN $channel".($key ? " $key" : "").PHP_EOL);
-		$this->channels[$channel] = [$channel, $key, false]; // >_>
+		$this->channels[$channel] = new chandef($channel, $key); // >_>
 		//print "[XXX] Names unlocked for $channel (Join)".PHP_EOL;
 	}
 	
@@ -356,16 +349,16 @@ class irc {
 
 					case 353: // NAMES
 						// <username> <=> <channel> :<user list with power>
-						if ($args[0] == $this->nickname) {
-							$chan = $args[2];
+						if ($args[0] == $this->nickname && isset($this->channels[$args[2]])) {
+							$chan = $this->channels[$args[2]];
 							
 							//--
 							// Clear the userlist if it isn't locked.
 							// This lock will be reset by the END OF NAMES command.
-							if (!$this->channels[$chan][2]) { // lock == false?
-								$this->userlist[$chan] = [];
-								$this->channels[$chan][2] = true;
-								//print "[XXX] Names locked for $chan".PHP_EOL;
+							if (!$chan->names_in_progress) { // lock == false?
+								$chan->users = [];
+								$chan->names_in_progress = true;
+								//print "[XXX] Names locked for {$chan->name}".PHP_EOL;
 							}
 							//--
 							
@@ -379,23 +372,23 @@ class irc {
 									$n_name = $nuser;
 									$n_power = "";
 								}
-								$this->userlist[$chan][$n_name] = new chanuser($n_name, $n_power);
+								$chan->users[$n_name] = new chanuser($n_name, $n_power);
 							}
 						}
 						break;
 						
 					case 366: // END OF NAMES
 						// <username> <channel> :<msg>.
-						if ($args[0] == $this->nickname) {
+						if ($args[0] == $this->nickname && isset($this->channels[$args[1]])) {
 							//print "[XXX] Names unlocked for {$args[1]}".PHP_EOL;
-							$this->channels[$args[1]][2] = true;
+							$this->channels[$args[1]]->names_in_progress = false;
 						}						
 						break;
 						
 					case 'JOIN':
 						// :<channel name>
-						if (isset($this->userlist[$msg])) {
-							$this->userlist[$msg][$user] = new chanuser($user);
+						if (isset($this->channels[$msg])) {
+							$this->channels[$msg]->users[$user] = new chanuser($user);
 						}
 						break;
 						
@@ -403,8 +396,8 @@ class irc {
 						// <channel name> <[+/-]flags> <target user>
 						
 						// If the user exists on that channel list, update the power (if applicable)
-						if (isset($args[2]) && isset($this->userlist[$args[0]][$args[2]])) {
-							$nuser = $this->userlist[$args[0]][$args[2]];
+						if (isset($args[2]) && isset($this->channels[$args[0]]->users[$args[2]])) {
+							$nuser = $this->channels[$args[0]]->users[$args[2]];
 							$npow  = $args[1];
 							
 							if ($npow[0] == "+") {
@@ -420,20 +413,21 @@ class irc {
 					case 'KICK':
 						// <channel> <kicked nick> :<msg>
 						if ($args[1] == $this->nickname && isset($this->channels[$args[0]])) {
+							// We got kicked, reset the channel info and autorejoin
 							$chan = $this->channels[$args[0]];
-							// Remove from list of opened channels, and channel user list
-							unset($this->channels[$args[0]], $this->userlist[$args[0]]);
+							unset($this->channels[$args[0]]);
 							$this->join($chan[0], $chan[1]);
 						} else {
-							// Remove user from channel user list
-							unset($this->userlist[$args[0]][$args[1]]);
+							// Remove other user from channel user list
+							unset($this->channels[$args[0]]->users[$args[1]]);
 						}
 						break;
 					case 'PRIVMSG':
 						// <channel> :<msg>
+						// <channel> could be also an user, in which case the isset will return false
 						$out = new privmsg();
-						$out->user = isset($this->userlist[$args[0]][$user]) ? $this->userlist[$args[0]][$user] : new chanuser($user);
-						$out->chan = $args[0];
+						$out->user = isset($this->channels[$args[0]]->users[$user]) ? $this->channels[$args[0]]->users[$user] : new chanuser($user);
+						$out->chan = $args[0]; // "source" would be a more accurate term
 						$out->msg  = $msg;
 						
 						$msgs[] = $out;
@@ -493,6 +487,24 @@ class irc {
 		}
 		return array_map('trim', $all_lines);
 	}
+}
+
+class chandef {
+	// Channel name
+	public $name;
+	// Channel key
+	public $key;
+	// User list (chanuser[])
+	public $users = [];
+	// Status for NAMES command.
+	// Needed because with enough users, the server will return multiple NAMES commands before the END OF NAMES,
+	// but only the first one should wipe the existing names list.
+	public $names_in_progress = false;
+	
+	public function __construct($name, $key = "") {
+        $this->name = $name;
+		$this->key = $key;
+    }
 }
 
 class chanuser {

@@ -24,4 +24,4 @@
 	//header("Content-Length: 0");
 	header("Content-Type: application/octet-stream");
 
-	system("/xampp82/mysql/bin/mysqldump -u {$sqluser} ".($sqlpass ? "-p{$sqlpass} " : "")."{$dbname}");
+	system("mysqldump -u {$sqluser} ".($sqlpass ? "-p{$sqlpass} " : "")."{$dbname}");

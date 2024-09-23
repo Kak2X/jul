@@ -13,7 +13,7 @@
 			die("No file specified.");
 		} else {
 			set_time_limit(0);
-			system("/xampp/mysql/bin/mysql -u {$sqluser} ".($sqlpass ? "-p{$sqlpass} " : "")."{$dbname} < \"{$filepath}\"");
+			system("mysql -u {$sqluser} ".($sqlpass ? "-p{$sqlpass} " : "")."{$dbname} < \"{$filepath}\"");
 			print "Dump imported.<br/>";
 		}
 	}

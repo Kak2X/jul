@@ -601,7 +601,7 @@
 				},
 				"allow-debug-dump":{
 					"title":"Allow mysqldump",
-					"desc":"If enabled, allows usage of the dbdump tool to quickly download the SQL dump of the entire database. Note the \"ext/dbdump.php\" script needs to point to the mysqldump program to work.",
+					"desc":"If enabled, allows usage of the dbdump tool to quickly download the SQL dump of the entire database. Note that the mysql and mysqldump programs must be in the PATH for this to work.",
 					"input":"radio",
 					"type":"bool",
 					"default":0,

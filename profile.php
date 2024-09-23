@@ -111,9 +111,9 @@
 	
 	// EXP
 	$exp 		= calcexp($user['posts'], $numdays);
-	$lvl 		= calclvl($exp);
-	$expleft 	= calcexpleft($exp);
-	$expstatus 	= "Level: {$lvl}<br>EXP: {$exp} (for next level: {$expleft})";
+	$lvl 		= pretty_nan(calclvl($exp));
+	$expleft 	= pretty_nan(calcexpleft($exp));
+	$expstatus 	= "Level: {$lvl}<br>EXP: ".pretty_nan($exp)." (for next level: {$expleft})";
 	if ($user['posts'] > 0) {
 		$expstatus .= "<br>Gain: ".calcexpgainpost($user['posts'], $numdays)." EXP per post, ".calcexpgaintime($user['posts'],$numdays)." seconds to gain 1 EXP when idle";
 	}

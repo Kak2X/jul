@@ -84,6 +84,7 @@
 		 $c[$i] = ImageColorAllocate($img, (int)(15+$i/1.5),  8, 20+$i);
 	 
 	$st['CHP'] = max($st['HP'] - $user['damage'], 0);
+	
 	if ($st['CHP'] <= 0)
 		$classtext = 'K.O.\'d';
 	else
@@ -124,11 +125,11 @@
 	}
 
 	twrite($fontB, 1,23, 0,'Level');
-	twrite($fontY, 1,23,16,$st['lvl']);
+	twrite($fontY, 1,23,16,pretty_nan($st['lvl']));
 	twrite($fontB, 1,25, 0,'EXP:');
-	twrite($fontY, 1,25,16,$st['exp']);
+	twrite($fontY, 1,25,16,pretty_nan($st['exp']));
 	twrite($fontB, 1,26, 0,'Next:');
-	twrite($fontY, 1,26,16,calcexpleft($st['exp']));
+	twrite($fontY, 1,26,16,pretty_nan(calcexpleft($st['exp'])));
 
 	twrite($fontB,20,23, 0,'Coins:');
 	twrite($fontY,20,25, 0,chr(0));
@@ -220,7 +221,7 @@ function bars(){
 			$dmg	= (int)(max($st['HP'] - $user['damage'], 0) / $sc[$s]);
 			$ctemp	= imagecolorsforindex($img, $c['bar1'][$s]);
 			$df		= 0.6;
-			ImageFilledRectangle($img,135 + $hp,40+24,135+$dmg,46+24,imagecolorallocate($img, $ctemp['red'] * $df, $ctemp['green'] * $df, $ctemp['blue'] * $df));
+			ImageFilledRectangle($img,135 + $hp,40+24,135+$dmg,46+24,imagecolorallocate($img, (int)($ctemp['red'] * $df), (int)($ctemp['green'] * $df), (int)($ctemp['blue'] * $df)));
 		}
 	}
 

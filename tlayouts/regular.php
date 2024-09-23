@@ -175,9 +175,10 @@ function postcode($post,$set){
 					'&syndrome&'      => $syndrome,
 					
 					// RPG
-					'&exp&'           => $exp,
-					'&levelexp&'      => calclvlexp($lvl),
-					'&totallevelexp&' => totallvlexp($lvl),
+					'&level&'         => pretty_nan($lvl),
+					'&exp&'           => pretty_nan($exp),
+					'&levelexp&'      => pretty_nan(calclvlexp($lvl)),
+					'&totallevelexp&' => pretty_nan(totallvlexp($lvl)),
 
 					// Dates
 					'&lastactivity&'  => timeunits(time()-$post['lastactivity']),

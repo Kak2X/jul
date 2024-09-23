@@ -109,24 +109,24 @@ function get_tags($data, $repl = null) {
 			'&20000&'       => 20000 - $tagdata['posts'],
 			'&30000&'       => 30000 - $tagdata['posts'],
 
-			'&exp&'         => $tagdata['exp'],
+			'&exp&'         => pretty_nan($tagdata['exp']),
 			'&expgain&'     => calcexpgainpost($tagdata['posts'], $tagdata['days']),
 			'&expgaintime&' => calcexpgaintime($tagdata['posts'], $tagdata['days']),
 
-			'&expdone&'     => $tagdata['expdone'],
-			'&expdone1k&'   => floor($tagdata['expdone'] /  1000),
-			'&expdone10k&'  => floor($tagdata['expdone'] / 10000),
+			'&expdone&'     => pretty_nan($tagdata['expdone']),
+			'&expdone1k&'   => pretty_nan(floor($tagdata['expdone'] /  1000)),
+			'&expdone10k&'  => pretty_nan(floor($tagdata['expdone'] / 10000)),
 
-			'&expnext&'     => $tagdata['expnext'],
-			'&expnext1k&'   => floor($tagdata['expnext'] /  1000),
-			'&expnext10k&'  => floor($tagdata['expnext'] / 10000),
+			'&expnext&'     => pretty_nan($tagdata['expnext']),
+			'&expnext1k&'   => pretty_nan(floor($tagdata['expnext'] /  1000)),
+			'&expnext10k&'  => pretty_nan(floor($tagdata['expnext'] / 10000)),
 
 			'&exppct&'      => sprintf('%01.1f', ($tagdata['lvllen'] ? (1 - $tagdata['expnext'] / $tagdata['lvllen']) : 0) * 100),
 			'&exppct2&'     => sprintf('%01.1f', ($tagdata['lvllen'] ? (    $tagdata['expnext'] / $tagdata['lvllen']) : 0) * 100),
 
-			'&level&'       => $tagdata['level'],
-			'&lvlexp&'      => calclvlexp($tagdata['level'] + 1),
-			'&lvllen&'      => $tagdata['lvllen'],
+			'&level&'       => pretty_nan($tagdata['level']),
+			'&lvlexp&'      => pretty_nan(calclvlexp($tagdata['level'] + 1)),
+			'&lvllen&'      => pretty_nan($tagdata['lvllen']),
 		);
 	} else {
 		// we were sent here and we have nothing to go off of.
@@ -1999,6 +1999,10 @@ function numrange($n, $lo, $hi) {
 
 function marqueeshit($str) {
 	return "<marquee scrollamount='". mt_rand(1, 50) ."' scrolldelay='". mt_rand(1, 50) ."' direction='". pick_any(array("left", "right")) ."'>$str</marquee>";
+}
+
+function pretty_nan($val) {
+	return is_nan($val) ? 'NaN' : $val;
 }
 
 // For some dumb reason a simple str_replace isn't enough under Windows

@@ -5,10 +5,6 @@ function basestat($posts, $days, $stat) {
 	$exp   = calcexp($posts, $days);
 	$level = calclvl($exp);
 	
-	if($level === 'NaN'){
-		return 1;
-	}
-	
 	if ($basedefs === NULL) {
 		$basedefs = array(
 	//   stat => [posts pow, days pow, lvl pow, multiplier, base val] 
@@ -93,20 +89,19 @@ function calclvlexp($lvl) {
 function calcexp($posts, $days) {
 	if (!$posts || !$days) return 0;
 	else if ($posts > 0)   return floor($posts * sqrt($posts * $days));
-	else                   return 'NaN'; // Negative posts (likely a banned user)
+	else                   return NAN; // Negative posts (likely a banned user)
 }
 function calclvl($exp){
-	if ($exp === 'NaN') {
-		$lvl = $exp;
-	} else if ($exp >= 0) {
+	if ($exp >= 0) {
 		$lvl = floor(pow($exp, 2 / 7));
 		// If we have enough exp for the next level, increase it
 		if (calclvlexp($lvl + 1) == $exp) ++$lvl;
 		else if (!$lvl)                   $lvl = 1;
 	} else {
+		$lvl = NAN;
 		// just in case, handle negative experience
 		// even though normally it should be impossible to have it
-		$lvl = -floor(pow(-$exp, 2 / 7));
+		//$lvl = -floor(pow(-$exp, 2 / 7));
 	}
 	return $lvl;
 }

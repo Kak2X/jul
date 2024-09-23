@@ -6,8 +6,8 @@
 	require "lib/common.php";
 	
 	function _sortbyexp($a,$b) {
-		$cmpa = (($a['exp'] === 'NaN') ? -1 : (int) $a['exp']);
-		$cmpb = (($b['exp'] === 'NaN') ? -1 : (int) $b['exp']);
+		$cmpa = is_nan($a['exp']) ? -1 : (int) $a['exp'];
+		$cmpb = is_nan($b['exp']) ? -1 : (int) $b['exp'];
 		if (!$_GET['ord']) { // DESC
 			if ($cmpa == $cmpb) return $a['id']-$b['id'];
 			return $cmpb - $cmpa;
@@ -353,8 +353,8 @@ print "
 				<td class='tdbg2 center'><span title='". timeunits2(time() - $user['regdate'], true) ." ago'>".printdate($user['regdate'])."</span></td>
 				<td class='tdbg2 center'><span title='". timeunits2(time() - $user['lastactivity'], true) ." ago'>".printdate($user['lastactivity'])."</span></td>
 				<td class='tdbg1 center'>{$user['posts']}</td>
-				<td class='tdbg1 center'>{$user['lvl']}</td>
-				<td class='tdbg1 center'>{$user['exp']}</td>
+				<td class='tdbg1 center'>".pretty_nan($user['lvl'])."</td>
+				<td class='tdbg1 center'>".pretty_nan($user['exp'])."</td>
 			";
 			if ($_GET['sort'] == 'rating') {
 				if ($user['rating'] === null) {
@@ -377,11 +377,11 @@ print "
 				$class = $classes[$user['class']];
 			$stats = getstats($user,$items,$class);
 
-			$ulist.="<td class='tdbg1 center'>$user[lvl]</td>";
-			$ulist.="<td class='tdbg1 center'>$class[name]</td>";
-			for($k=0;$k<9;++$k) $ulist.="<td class='tdbg1 fonts center'>".$stats[$stat[$k]].'</td>';
-			$ulist.="<td class='tdbg1 fonts center'>$stats[GP]</td>";
-			$ulist.="<td class='tdbg1 fonts center'>$user[gcoins]</td>";
+			$ulist .= "<td class='tdbg1 center'>{$user['lvl']}</td>";
+			$ulist .= "<td class='tdbg1 center'>{$class['name']}</td>";
+			for ($k=0; $k<9; ++$k) $ulist.="<td class='tdbg1 fonts center'>".$stats[$stat[$k]].'</td>';
+			$ulist .= "<td class='tdbg1 fonts center'>{$stats['GP']}</td>";
+			$ulist .= "<td class='tdbg1 fonts center'>{$user['gcoins']}</td>";
 		}
 		$ulist.="</tr>";
 	}

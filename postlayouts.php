@@ -101,7 +101,7 @@
 		'noob'      => 0,
 		'revision'  => 0,
 		// Attachments
-		'attach_key' => NULL,
+		'attach_key' => PREVIEWOPT_DUMMYATTACH,
 		//'attach_sel' => $attachsel,
 		
 		// Override this option to avoid always printing out the current user
@@ -164,7 +164,7 @@
 	<tr><td class="tdbgh center b" colspan=3>CSS</td></tr>
 	<tr>
 		<td class="tdbg1 vatop" colspan="3">
-			<textarea id="css" name="css" rows="10"><?= htmlspecialchars($user['css']) ?></textarea>
+			<textarea id="css" name="css" rows="10"><?= escape_html($user['css']) ?></textarea>
 		</td>
 	</tr>
 	
@@ -174,10 +174,10 @@
 	</tr>
 	<tr>
 		<td class="tdbg1 vatop">
-			<textarea id="postheader" name="postheader" rows="4"><?= htmlspecialchars($user['postheader']) ?></textarea>
+			<textarea id="postheader" name="postheader" rows="4"><?= escape_html($user['postheader']) ?></textarea>
 		</td>
 		<td class="tdbg1 vatop" colspan="2">
-			<textarea id="signature" name="signature" rows="4"><?= htmlspecialchars($user['signature']) ?></textarea>
+			<textarea id="signature" name="signature" rows="4"><?= escape_html($user['signature']) ?></textarea>
 		</td>
 	</tr>
 	

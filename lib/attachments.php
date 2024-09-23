@@ -121,10 +121,18 @@ function attachfield($list) {
 		
 		$filename = htmlspecialchars($x['filename']);
 		$temp     = isset($x['hash']);
-		$url      = "download.php?id={$x['id']}".($temp ? "&hash={$x['hash']}" : "");
+		
+		if ($x['disabled']) {
+			$urlopen  = "<b>";
+			$urlclose = "</b>";
+		} else {
+			$url      = "download.php?id={$x['id']}".($temp ? "&hash={$x['hash']}" : "");
+			$urlopen  = "<a href='{$url}' target='_blank'>";
+			$urlclose = "</a>";
+		}
 		
 		// Determine if a thumbnail should be generated, as well as the type of BBCode.
-		if ($x['is_image']) { // An image
+		if ($x['is_image'] && !$x['disabled']) { // An image
 			$bbcode_type = "thumb";
 			$thumb       = "{$url}&t=1"; 
 		} else { // Not an image
@@ -137,10 +145,10 @@ function attachfield($list) {
 		<table class='attachment-box'>
 			<tr>
 				<td class='attachment-box-thumb' rowspan='2'>
-					<a href='{$url}' target='_blank'><img src='{$thumb}'></a>
+					{$urlopen}<img src='{$thumb}'>{$urlclose}
 				</td>
 				<td class='attachment-box-text fonts'>
-					<div><a href='{$url}' target='_blank'>{$filename}</a></div>
+					<div>{$urlopen}{$filename}{$urlclose}</div>
 					<div>Size:<span style='float: right'>".sizeunits($x['size'])."</span></div>
 					<div>Views:<span style='float: right'>{$x['views']}</span></div>
 				</td>
@@ -324,7 +332,7 @@ function get_saved_attachments($post, $pm = false, $remove = array()) {
 		$idfilter = "";
 	}
 	return $sql->getarray("
-		SELECT a.post, a.pm, a.id, a.filename, a.size, a.views, a.is_image
+		SELECT a.post, a.pm, a.id, a.filename, a.size, a.views, a.is_image, 0 disabled
 		FROM attachments a
 		WHERE a.".($pm ? "pm" : "post")." = {$post}{$idfilter}"
 	, mysql::USE_CACHE);
@@ -398,6 +406,23 @@ function get_temp_attachments($thread, $user) {
 			'is_image' => $is_image,
 			// Specific to temp attachments
 			'hash'     => $metadata['hash'],
+			'disabled' => false,
+		];
+	}
+	return $res;
+}
+
+function get_fake_attachments($cnt) {
+	$res = array();
+	for ($i = 0; $i < $cnt; ++$i) {
+		$res[] = [
+			'id'       => -$i,
+			'filename' => "Dummy File {$i}.txt",
+			'size'     => pow(1024, $i+1),
+			'views'    => $i * 1000,
+			'is_image' => false,
+			'hash'     => "x",
+			'disabled' => true,
 		];
 	}
 	return $res;
@@ -576,7 +601,7 @@ function load_attachments($searchon, $qvals, $range, $mode = MODE_POST) {
 			return array();
 		
 		return $sql->fetchq("
-			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, p.id pid
+			SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, 0 disabled, p.id pid
 			FROM posts p
 			INNER JOIN attachments a ON p.id = a.post
 			WHERE a.id IS NOT NULL
@@ -594,7 +619,7 @@ function load_attachments($searchon, $qvals, $range, $mode = MODE_POST) {
 	}
 	
 	return $sql->fetchp("
-		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image
+		SELECT p.id post, a.id, a.filename, a.size, a.views, a.is_image, 0 disabled
 		FROM {$prefix}posts p
 		LEFT JOIN {$prefix}threads t ON p.thread = t.id
 		LEFT JOIN attachments      a ON p.id     = a.{$match}

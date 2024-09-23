@@ -259,6 +259,7 @@
 	const PREVIEW_PROFILE = 2;
 	const PREVIEW_PM      = 3;
 	const PREVIEW_GENERIC = 4;
+	const PREVIEWOPT_DUMMYATTACH = -1;
 	function preview_post($user, $data, $flags = PREVIEW_NEW, $title = "Post preview") {
 		global $sql, $controls, $loguser, $config, $isadmin, $userfields_array;
 		
@@ -349,9 +350,14 @@
 			// the attachment list should contain the temp attachments and the already uploaded attachments
 			// (and hide those marked as deleted)
 			if ($config['allow-attachments'] && isset($data['attach_key'])) {
-				$real = get_saved_attachments($data['id'], isset($data['attach_pm']), $data['attach_sel']);
-				$temp = get_temp_attachments($data['attach_key'], $user['id']);
-				$ppost['attach'] = array_merge($real, $temp);
+				if ($data['attach_key'] == PREVIEWOPT_DUMMYATTACH) {
+					// Fake attachments only needed in postlayouts.php, which uses PREVIEW_EDITED
+					$ppost['attach'] = get_fake_attachments(3);
+				} else {
+					$real = get_saved_attachments($data['id'], isset($data['attach_pm']), $data['attach_sel']);
+					$temp = get_temp_attachments($data['attach_key'], $user['id']);
+					$ppost['attach'] = array_merge($real, $temp);
+				}
 			}
 			// Edit marker
 			$editedby           = isset($data['editedby']) ? $data['editedby'] : $loguser;

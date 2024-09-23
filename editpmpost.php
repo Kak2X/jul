@@ -55,6 +55,13 @@
 			$nohtml		= filter_int($_POST['nohtml']);
 			$moodid		= filter_int($_POST['moodid']);
 			
+			if ($issuper) {
+				$sidebar		= filter_string($_POST['sidebar']);
+				$sidebartype    = $post['sidebartype']; // TODO: make editable in the future. this must share logic with editprofile
+			} else {
+				$sidebar		= $post['sidebartext'];
+				$sidebartype	= $post['sidebartype'];
+			}
 			//--
 			if ($ismod) {			
 				$warned			= numrange(filter_int($_POST['warned']), PWARN_MIN, PWARN_MAX);
@@ -105,32 +112,37 @@
 					$message 	= replace_tags($message, get_tags($loguser, $gtopt));
 					
 
-					if ($headid = getpostlayoutid($head, false)) $head = "";
-					if ($signid = getpostlayoutid($sign, false)) $sign = "";
-					if ($cssid  = getpostlayoutid($css,  false)) $css  = "";
+					if ($headid    = getpostlayoutid($head,    false)) $head    = "";
+					if ($signid    = getpostlayoutid($sign,    false)) $sign    = "";
+					if ($cssid     = getpostlayoutid($css,     false)) $css     = "";
+					if ($sidebarid = getpostlayoutid($sidebar, false)) $sidebar = "";
 
 					
 					$pdata = [
-						'text'		=> $message,
-						'headtext'	=> $head,
-						'signtext'	=> $sign,
-						'csstext'	=> $css,
+						'text'			=> $message,
+						'headtext'		=> $head,
+						'signtext'		=> $sign,
+						'csstext'		=> $css,
+						'sidebartext'	=> $sidebar,
+						'sidebartype'   => $sidebartype,
 						
-						'nosmilies' => $nosmilies,
-						'nohtml'	=> $nohtml,
+						'nosmilies' 	=> $nosmilies,
+						'nohtml'		=> $nohtml,
 						
-						'headid'	=> $headid,
-						'signid'	=> $signid,
-						'cssid'		=> $cssid,
-						'moodid'	=> $moodid,		
+						'headid'		=> $headid,
+						'signid'		=> $signid,
+						'cssid'			=> $cssid,
+						'sidebarid'		=> $sidebarid,
+						'moodid'		=> $moodid,		
 					];
 					
 					// Copied from editpost, which actually used post revisions
 					$create_rev = 
-						   $post['text']     != $message 
-						|| $post['headtext'] != $head || $post['headid'] != $headid 
-						|| $post['signtext'] != $sign || $post['signid'] != $signid  
-						|| $post['csstext']  != $css  || $post['cssid']  != $cssid;
+						   $post['text']        != $message 
+						|| $post['headtext']    != $head    || $post['headid']    != $headid 
+						|| $post['signtext']    != $sign    || $post['signid']    != $signid  
+						|| $post['csstext']     != $css     || $post['cssid']     != $cssid
+						|| $post['sidebartext'] != $sidebar || $post['sidebarid'] != $sidebarid;
 						
 					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
 					if ($flag_as_edited) {
@@ -168,10 +180,12 @@
 					*/					
 					$data = array(
 						// Text
-						'message' => $message,	
-						'head'    => $head,
-						'sign'    => $sign,
-						'css'     => $css,
+						'message'     => $message,	
+						'head'        => $head,
+						'sign'        => $sign,
+						'css'         => $css,
+						'sidebar'     => $sidebar,
+						'sidebartype' => $sidebartype,
 						// Post metadata
 						'id'      => $post['id'],
 						'forum'   => -1,
@@ -200,10 +214,11 @@
 		} else {
 			// Replace the default variables with the original ones from the thread
 			$message = $post['text'];
-			list($head, $sign, $css) = getpostlayoutforedit($post);
-			$nosmilies 	= $post['nosmilies'];
-			$nohtml		= $post['nohtml'];
-			$moodid		= $post['moodid'];
+			list($head, $sign, $css, $sidebar) = getpostlayoutforedit($post);
+			$sidebartype = $post['sidebartype'];
+			$nosmilies 	 = $post['nosmilies'];
+			$nohtml		 = $post['nohtml'];
+			$moodid		 = $post['moodid'];
 			
 			$warned			= $post['warned'];
 			$warntext		= $post['warntext'];
@@ -302,6 +317,14 @@
 					<textarea id="signtxt" name="sign" rows="8"><?=escape_html($sign)?></textarea>
 				</td>
 			</tr>
+<?php if ($issuper) { ?>
+			<tr>
+				<td class='tdbg1 center b'>Sidebar:</td>
+				<td class='tdbg2 vatop' id="sidebartd">
+					<textarea id="sidebartxt" name="sidebar" rows="8"><?=escape_html($sidebar)?></textarea>
+				</td>
+			</tr>
+<?php } ?>
 		</table>
 		</form>
 		<?=$barlinks?>
@@ -310,6 +333,9 @@
 		replytoolbar('msg', $smilies);
 		replytoolbar('head', $smilies);
 		replytoolbar('sign', $smilies);
+		if ($issuper) {
+			replytoolbar('sidebar', $smilies);
+		}
 		if ($ismod) {
 			replytoolbar('warn', $smilies);
 			if (!$hreadonly)

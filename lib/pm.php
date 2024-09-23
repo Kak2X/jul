@@ -399,13 +399,17 @@ function create_pm_post($preq) {
 	
 	// Post layout options
 	if ($preq->nolayout) {
-		$preq->vals['headid'] = 0;
-		$preq->vals['signid'] = 0;
-		$preq->vals['cssid']  = 0;
+		$preq->vals['headid']      = 0;
+		$preq->vals['signid']      = 0;
+		$preq->vals['cssid']       = 0;
+		$preq->vals['sidebarid']   = 0;
+		$preq->vals['sidebartype'] = 0;
 	} else {
-		$preq->vals['headid'] = getpostlayoutid($user['postheader']);
-		$preq->vals['signid'] = getpostlayoutid($user['signature']);
-		$preq->vals['cssid']  = getpostlayoutid($user['css']);
+		$preq->vals['headid']      = getpostlayoutid($user['postheader']);
+		$preq->vals['signid']      = getpostlayoutid($user['signature']);
+		$preq->vals['cssid']       = getpostlayoutid($user['css']);
+		$preq->vals['sidebarid']   = getpostlayoutid($user['sidebar']);
+		$preq->vals['sidebartype'] = $user['sidebartype'];
 	}
 	
 	// Misc

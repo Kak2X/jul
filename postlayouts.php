@@ -79,10 +79,13 @@
 	
 	$data = array(
 		// Text
-		'message' => "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.",
-		'head'    => $user['postheader'],
-		'sign'    => $user['signature'],
-		'css'     => $user['css'],
+		'message'     => "Sample text. [quote=fhqwhgads]A sample quote, with a <a href=about:blank>link</a>, for testing your layout.[/quote]This is how your post will appear.",
+		'head'        => $user['postheader'],
+		'sign'        => $user['signature'],
+		'css'         => $user['css'],
+		'sidebar'     => $user['sidebar'],
+		'sidebartype' => $user['sidebartype'],
+
 		// Post metadata
 		'id'      => 0,
 		'forum'   => 0,

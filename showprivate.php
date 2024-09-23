@@ -160,7 +160,7 @@
 
 	// heh
 	$posts = $sql->getarray(set_avatars_sql("
-		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid,
+		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.noob, p.moodid, p.headid, p.signid, p.cssid, p.sidebarid,
 				p.text$sfields, p.editedby, p.editdate, p.deleted, p.deletedby, p.deletereason,
 				p.nosmilies, p.nohtml, p.tagval, 0 revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,

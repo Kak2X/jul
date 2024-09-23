@@ -1,7 +1,7 @@
 <?php
 
 function userfields(){
-	return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire,u.sidebartype,u.sidebar';
+	return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire';
 }
 
 function postcode($post,$set){
@@ -88,7 +88,7 @@ function postcode($post,$set){
 		if ($post['deleted']) {
 			// If a post is deleted, blank out the sidebar regardless of options.
 			$sidebar = "&nbsp;";
-		} else if ($sidebartype != 2 && (!$post['sidebar'] || !$loguser['viewsig'])) {
+		} else if ($sidebartype != 2 && (!$post['sidebartext'] || !$loguser['viewsig'])) {
 			// Default sidebarm with all of the default vars that come with it
 			if ($tlayout == 1 || $tlayout == 6) {
 				// Without numgfx (standard)
@@ -149,8 +149,8 @@ function postcode($post,$set){
 			// Custom sidebar using PHP code (a mistake)
 			include "sidebars/{$post['uid']}.php";
 		} else {
-			// Custom sidebar using the 'sidebar' field (an even bigger mistake)
-			$sidebar = $post['sidebar'];
+			// Custom sidebar using the 'sidebartext' field (an even bigger mistake)
+			$sidebar = $post['sidebartext'];
 			
 			if (filter_bool($hacks['noposts'])) {
 				$post['num'] = $post['posts'] = $postnum = $posttotal = "";

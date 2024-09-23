@@ -122,29 +122,30 @@
 	
 	function postlayout_fields() {
 		global $loguser;
+		
 		switch ($loguser['viewsig']) {
-			case 1:  return ',p.headtext,p.signtext,p.csstext';
-			case 2:  return ',u.postheader headtext,u.signature signtext,u.css csstext';
+			case 1:  return ',p.headid,p.signid,p.cssid,p.sidebarid,p.headtext,p.signtext,p.csstext,p.sidebartext,p.sidebartype';
+			case 2:  return ',0 headid,0 signid,0 cssid,0 sidebarid,u.postheader headtext,u.signature signtext,u.css csstext,u.sidebar sidebartext,u.sidebartype';
 			default: return '';
 		}
 	}
 
 	function preplayouts($posts, $oldrev = null) {
 		global $sql, $postl;
-
-		$ids = array();
-
-		// Just fetch everything now instead of hitting the DB for each new header/signature encountered
-		foreach ($posts as $ps) {
-			if ($ps['headid']) $ids[] = $ps['headid'];
-			if ($ps['signid']) $ids[] = $ps['signid'];
-			if ($ps['cssid'])  $ids[] = $ps['cssid'];
-		}
 		
+		// Just fetch everything now instead of hitting the DB for each new header/signature encountered
+		$ids = [];
+		foreach ($posts as $ps) {
+			if ($ps['headid'])    $ids[] = $ps['headid'];
+			if ($ps['signid'])    $ids[] = $ps['signid'];
+			if ($ps['cssid'])     $ids[] = $ps['cssid'];
+			if ($ps['sidebarid']) $ids[] = $ps['sidebarid'];
+		}
 		if ($oldrev) {
-			if ($oldrev['headid']) $ids[] = $oldrev['headid'];
-			if ($oldrev['signid']) $ids[] = $oldrev['signid'];
-			if ($oldrev['cssid'])  $ids[] = $oldrev['cssid'];
+			if ($oldrev['headid'])    $ids[] = $oldrev['headid'];
+			if ($oldrev['signid'])    $ids[] = $oldrev['signid'];
+			if ($oldrev['cssid'])     $ids[] = $oldrev['cssid'];
+			if ($oldrev['sidebarid']) $ids[] = $oldrev['sidebarid'];
 		}
 
 		if (!count($ids)) return;
@@ -152,36 +153,27 @@
 	}
 
 	function setlayout($post) {
-		global $sql,$loguser,$postl,$blockedlayouts;
+		global $loguser, $postl, $blockedlayouts;
 		static $keys;
 		
-		if ($loguser['viewsig'] != 1) { // Autoupdate or disabled
-			$post['headid']   = $post['signid']   = $post['cssid']    = 0; 		// disable post layout assignment
-		}
-
 		$post['blockedlayout'] = isset($blockedlayouts[$post['uid']]);
-		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout']) { // Disabled
-			$post['headtext'] = $post['signtext'] = $post['csstext'] = '';
-			$post['headid']   = $post['signid']   = $post['cssid']   = 0;
+		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout'] || isset($post['nolayout'])) { // Disabled
+			$post['headtext'] = $post['signtext'] = $post['csstext'] = $post['sidebartext'] = "";
+			$post['headid']   = $post['signid']   = $post['cssid']   = $post['sidebarid']   = $post['sidebartype'] = 0;
 			return $post;
 		}
-
-		if ($loguser['viewsig']!=2) { // Not Autoupdate
-			if ($headid=filter_int($post['headid'])) {
-				// just in case
-				if($postl[$headid] === NULL) $postl[$headid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$headid");
-				$post['headtext']=$postl[$headid];
+		
+		if ($loguser['viewsig'] == 2) { // Autoupdate
+			$post['headid']   = $post['signid']   = $post['cssid']   = $post['sidebarid'] = 0; // disable post layout assignment
+		} else { // Not Autoupdate
+			if (!isset($post['headid'])) {
+				throw new Exception("The 'headid' field is missing, this shouldn't happen.");
 			}
-			if ($signid=filter_int($post['signid'])) {
-				// just in case
-				if($postl[$signid] === NULL) $postl[$signid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$signid");
-				$post['signtext']=$postl[$signid];
-			}
-			if ($cssid=filter_int($post['cssid'])) {
-				// just in case
-				if($postl[$cssid] === NULL) $postl[$cssid]=$sql->resultq("SELECT text FROM postlayouts WHERE id=$cssid");
-				$post['csstext']=$postl[$cssid];
-			}
+			if ($post['headid'])    $post['headtext']    = filter_string($postl[$post['headid']], "");
+			if ($post['signid'])    $post['signtext']    = filter_string($postl[$post['signid']], "");
+			if ($post['cssid'])     $post['csstext']     = filter_string($postl[$post['cssid']], "");
+			if ($post['sidebarid']) $post['sidebartext'] = filter_string($postl[$post['sidebarid']], "");
+			// sidebartype already in $post
 		}
 		
 		// process tags 
@@ -208,18 +200,19 @@
 			}
 		}
 		
-		// Prevent topbar CSS overlap for non-autoupdating layouts
-		if ($post['headtext']) $post['headtext'] = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['headtext']);
-		if ($post['sidebar'])  $post['sidebar']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['sidebar']);
+		// Legacy CSS - Prevent topbar CSS overlap for non-autoupdating layouts
+		if ($post['headtext'])    $post['headtext']     = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['headtext']);
+		// The sidebar shouldn't include CSS stylesheets
+		//if ($post['sidebartext']) $post['sidebartext']  = preg_replace("'\.(top|side|main|cont)bar{$post['uid']}'si", ".$1bar{$csskey}", $post['sidebartext']);
 		return $post;
 	}
 	
 	// Determines the extra text appended to .mainbar/.topbar/... to prevent overlaps.
 	function getcsskey($post) {
 		$csskey = "";
-		if ($post['headid']) $csskey .= "_h{$post['headid']}";
-		if ($post['cssid'])  $csskey .= "_c{$post['cssid']}";
-		if (!$csskey)        $csskey .= "_p{$post['id']}"; // Failsafe: use current post id
+		if ($post['headid'])    $csskey .= "_h{$post['headid']}";
+		if ($post['cssid'])     $csskey .= "_c{$post['cssid']}";
+		if (!$csskey)           $csskey .= "_p{$post['id']}"; // Failsafe: use current post id
 		return $csskey;
 	}
 	
@@ -241,18 +234,24 @@
 	// Gets the post layout fields for a specific (pm) post
 	function getpostlayoutforedit($post) {
 		global $sql;
-					
-		if (!$post['headid']) $head = $post['headtext'];
-		else $head = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['headid']}");
-		if (!$post['signid']) $sign = $post['signtext'];
-		else $sign = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['signid']}");
-		if (!$post['cssid'])  $css = $post['csstext'];
-		else $css  = $sql->resultq("SELECT text FROM postlayouts WHERE id = {$post['cssid']}");
+		
+		$to_search = [];
+		if ($post['headid'])    $to_search[] = $post['headid'];
+		if ($post['signid'])    $to_search[] = $post['signid'];
+		if ($post['cssid'])     $to_search[] = $post['cssid'];
+		if ($post['sidebarid']) $to_search[] = $post['sidebarid'];
+		
+		$data    = $to_search ? $sql->getresultsbykey("SELECT id, text FROM postlayouts WHERE id IN (".implode(",", $to_search).")") : [];
+		
+		$head    = filter_string($data[$post['headid']], $post['headtext']);
+		$sign    = filter_string($data[$post['signid']], $post['signtext']);
+		$css     = filter_string($data[$post['cssid']], $post['csstext']);
+		$sidebar = filter_string($data[$post['sidebarid']], $post['sidebartext']);
 		
 		sbr(1, $head);
 		sbr(1, $sign);
 		
-		return [$head, $sign, $css];
+		return [$head, $sign, $css, $sidebar];
 	}
 	
 	const PREVIEW_NEW     = 0;
@@ -283,11 +282,14 @@
 			} else {
 				$posts	  = $user['posts'];
 			}
-			$data['date'] = $currenttime;
-			$data['num']  = $posts;
-			$data['head'] = $user['postheader'];
-			$data['sign'] = $user['signature'];
-			$data['css']  = $user['css'];
+			$data['date']        = $currenttime;
+			$data['num']         = $posts;
+			// A new post lacks most of the postlayout data
+			$data['head']        = $user['postheader'];
+			$data['sign']        = $user['signature'];
+			$data['css']         = $user['css'];
+			$data['sidebar']     = $user['sidebar'];
+			$data['sidebartype'] = $user['sidebartype'];
 		}
 		
 		loadtlayout();
@@ -321,14 +323,17 @@
 
 		// tags for the post layout handled separately
 		if ($data['nolayout']) {
-			$ppost['headtext'] = "";
-			$ppost['signtext'] = "";
-			$ppost['csstext']  = "";
+			$ppost['headtext']    = "";
+			$ppost['signtext']    = "";
+			$ppost['csstext']     = "";
+			$ppost['sidebartext'] = "";
 		} else {
-			$ppost['headtext'] = $data['head'];	
-			$ppost['signtext'] = $data['sign'];
-			$ppost['csstext']  = $data['css'];
+			$ppost['headtext']    = $data['head'];	
+			$ppost['signtext']    = $data['sign'];
+			$ppost['csstext']     = $data['css'];
+			$ppost['sidebartext'] = $data['sidebar'];
 		}
+		$ppost['headid'] = $ppost['signid'] = $ppost['cssid'] = $ppost['sidebarid'] = 0;
 
 		$ppost['deleted']       = 0;
 		$ppost['revision']      = 0;

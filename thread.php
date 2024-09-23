@@ -302,7 +302,7 @@
 	
 	// heh
 	$posts = $sql->fetchp(set_avatars_sql("
-		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid, p.headid, p.signid, p.cssid,
+		SELECT 	p.id, p.thread, p.user, p.date, p.ip, p.num, p.noob, p.moodid,
 				p.text{$sfields}, p.editedby, p.editdate, p.deletedby, p.deletereason,
 				p.nosmilies, p.nohtml, p.tagval, p.deleted, p.revision,
 				p.highlighted, p.highlighttext, p.warned, p.warntext,
@@ -461,7 +461,7 @@
 		
 		// Old post revision info, replacing whatever it has
 		if ($_GET['pin'] && $_GET['rev']) {
-			$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, headid, signid, cssid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
+			$oldrev = $sql->fetchq("SELECT revdate, revuser, text, headtext, signtext, csstext, sidebartext, headid, signid, cssid, sidebarid FROM posts_old WHERE pid = {$_GET['pin']} AND revision = {$_GET['rev']}");
 		} else {
 			$oldrev = null;
 		}
@@ -562,9 +562,8 @@
 				// Fetch the selected post revision
 				if ($ismod && $post['id'] == $_GET['pin'] && $_GET['rev']) {
 					if (!$oldrev) {
-						$post['text'] = "(Post revision #{$_GET['rev']} not found)";
-						$post['headtext'] = $post['signtext'] = $post['csstext'] = "";
-						$post['headid']   = $post['signid']   = $posr['cssid']   = 0;
+						$post['text']     = "(Post revision #{$_GET['rev']} not found)";
+						$post['nolayout'] = true;
 					} else {
 						$post  = array_merge($post, $oldrev);
 					}

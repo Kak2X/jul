@@ -55,13 +55,16 @@
 			// Backup the user's data just in case
 			$sql->query("INSERT INTO `delusers` ( SELECT * FROM `users` WHERE `id` = '$id' )");
 			
-			// Since we're moving all posts to the deleted user account, include the user's name as a "signature"
-			$namecolor = getnamecolor($user['sex'],$user['powerlevel'],$user['namecolor']);
-			$line = addslashes("<br><br>===================<br>[Posted by <span style='color:#$namecolor'><b>$name</b></span>]<br>");
+			// Separate from the other query since the user might have edited other user's posts
 			$sql->query("UPDATE posts_old SET revuser = {$config['deleted-user-id']} WHERE revuser = $id");
-			$sql->query("UPDATE posts_old SET cssid = 0, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE pid IN (SELECT id FROM posts WHERE user = {$id})");
-			$sql->query("UPDATE posts     SET user = {$config['deleted-user-id']}, cssid = 0, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
-			$sql->query("UPDATE pm_posts  SET user = {$config['deleted-user-id']}, cssid = 0, headid = 0, signid = 0, signtext = CONCAT_WS('','$line',signtext) WHERE user = $id");
+			
+			// Since we're moving all posts to the deleted user account, include the user's name as a "signature"
+			$userlink	= "<span class='b' style='color:#".getnamecolor($user['sex'], $user['powerlevel'], $user['namecolor'])."'>{$name}</span>";
+			$line		= "<br><br>===================<br>[Posted by {$userlink}]<br>";
+			$postargs	= "cssid = 0, headid = 0, signid = 0, sidebarid = 0, csstext = NULL, headtext = NULL, signtext = ?, sidebartext = NULL";
+			$sql->queryp("UPDATE posts_old SET {$postargs} WHERE pid IN (SELECT id FROM posts WHERE user = ?)", [$line, $id]);
+			$sql->queryp("UPDATE posts     SET {$postargs}, user = {$config['deleted-user-id']} WHERE user = ?", [$line, $id]);
+			$sql->queryp("UPDATE pm_posts  SET {$postargs}, user = {$config['deleted-user-id']} WHERE user = ?", [$line, $id]);
 			
 			$sql->query("UPDATE threads     SET user         = {$config['deleted-user-id']} WHERE user=$id");
 			$sql->query("UPDATE threads     SET lastposter   = {$config['deleted-user-id']} WHERE lastposter=$id");
@@ -82,7 +85,6 @@
 			$sql->query("DELETE FROM posts_ratings WHERE user=$id");
 			$sql->query("DELETE FROM pm_ratings WHERE user=$id");
 			$sql->query("DELETE FROM pollvotes WHERE user=$id");
-			$sql->query("DELETE FROM users WHERE id=$id");
 			$sql->query("DELETE FROM users_avatars WHERE id=$id");
 			$sql->query("DELETE FROM users_rpg WHERE uid=$id");
 			$sql->query("DELETE FROM announcementread WHERE user = $id");
@@ -91,9 +93,9 @@
 			$sql->query("DELETE FROM pm_threadsread WHERE uid = $id");
 			$sql->query("DELETE FROM pm_foldersread WHERE user = $id");
 			$sql->query("DELETE FROM pm_folders WHERE user = $id");
+			$sql->query("DELETE FROM users WHERE id=$id");		
 			
-			
-			$delusertext .= "\r\n<tr><td class='tdbg1 center' style='width: 120px'>$id</td><td class='tdbg2'><span style='color:#$namecolor'><b>{$user['name']}</b></span></td></tr>";
+			$delusertext .= "\r\n<tr><td class='tdbg1 center' style='width: 120px'>{$id}</td><td class='tdbg2'>{$userlink}</td></tr>";
 			$delusercnt++;
 			
 		}

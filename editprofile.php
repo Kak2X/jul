@@ -11,7 +11,7 @@
 		$edituser 	= true;
 		$titleopt	= 1;
 		$id_q		= "?id=$id";
-		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+		$userdata	= $sql->fetchq("SELECT u.*,r.gcoins,r.damage,r.class FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
 		if (!$userdata) {
 			errorpage("This user doesn't exist.");
 		}
@@ -270,9 +270,15 @@
 	
 			$adminset = mysql::setplaceholders($adminval).",";
 			
-			// Green coins support
-			$gcoins = filter_int($_POST['gcoins']);
-			$sql->query("UPDATE users_rpg SET gcoins = $gcoins WHERE uid = $id");
+			// RPG editing
+			$rpgval = [
+				'gcoins' => filter_int($_POST['gcoins']),
+				'damage' => filter_int($_POST['damage']),
+			];
+			$class = filter_int($_POST['class']);
+			if (!$class || $sql->resultq("SELECT COUNT(*) FROM rpg_classes WHERE id = {$class}"))
+				$rpgval['class'] = $class;
+			$sql->queryp("UPDATE users_rpg SET ".mysql::setplaceholders($rpgval)." WHERE uid = $id", $rpgval);
 		} else {
 			$adminval = array();
 			$adminset = "";
@@ -415,8 +421,10 @@
 			"Enable AJAX"			 		=> [2, "ajax", "Enables experimental AJAX features.", "No|Yes"],
 		));
 		if ($edituser){
-			_table_format("Options", array(
-				"Green coins" 	=> [0, "gcoins", "", 10, 10],
+			_table_format("Special RPG Extra Bonus Category", array(
+				"Green coins"		=> [0, "gcoins", "", 10, 10],
+				"Damage Received"	=> [0, "damage", "", 10, 10],
+				"Class"				=> [4, "class", ""],
 			));
 		}
 		
@@ -513,6 +521,9 @@
 			
 			// Hours left before the user is unbanned
 			$ban_hours = ban_select('ban_hours', $userdata['ban_expire'])." (has effect only for Banned users)";
+			
+			// RPG Class
+			$class  = rpgclass_select('class', $userdata['class']);
 		}
 		
 		$schflags = (!$edituser && !$isadmin) ? SL_SHOWUSAGE : SL_SHOWUSAGE | SL_SHOWSPECIAL;

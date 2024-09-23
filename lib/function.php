@@ -2347,6 +2347,29 @@ function int_select($name, $arr, $sel = 0, $def = "") {
 	return "<select name='{$name}'>{$txt}</select>";
 }
 
+function rpgclass_select($name, $sel = 0, $lowlimit = PWL_MIN) {
+	global $sql;
+	$res = "";
+	$classes = $sql->query("
+		SELECT id, name, sex, minpowerselect
+		FROM rpg_classes
+		WHERE minpowerselect IS NULL OR minpowerselect > {$lowlimit}
+		ORDER BY name
+	");
+	$sexdsp = ['M', 'F', 'N/A'];
+	foreach ($classes as $x) {
+		$selected = ($x['id'] == $sel) ? " selected" : "";
+		$sex      = $x['sex'] !== null ? " [".(isset($sexdsp[$x['sex']]) ? $sexdsp[$x['sex']] : "S#{$x['sex']}")."]" : "";
+		$minpow   = $x['minpowerselect'] !== null ? " [{$x['minpowerselect']}]" : "";
+		$res .= "<option value='{$x['id']}'{$selected}>".htmlspecialchars($x['name'])."{$sex}{$minpow}</option>\r\n";
+	}
+	return "
+	<select name='{$name}'>
+		<option value='0'>None</option>
+		{$res}
+	</select>";
+}
+
 function generatenumbergfx($num, $minlen = 0, $size = 1) {
 	global $numdir;
 

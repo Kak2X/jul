@@ -1,5 +1,5 @@
 <?php
-  function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire,\'\' sidebar';}
+  function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.ban_expire';}
 
   function postcode($post,$set){
     global $controls,$tableborder,$tablebg2,$tableheadtext,$numdir,$barimg;
@@ -43,7 +43,7 @@
 					<table class='w fontt' cellpadding=0 cellspacing=0>
 						<tr>
 							<td class='b' style='color: {$tableheadtext}'>LV<br><br>HP<br>MP</td>
-							<td class='b right'>{$lvl}<br><br>{$post['posts']}<br>{$mp}</td>
+							<td class='b right'>".pretty_nan($lvl)."<br><br>{$post['posts']}<br>".pretty_nan($mp)."</td>
 						</tr>
 					</table>
 				</td>
@@ -53,7 +53,7 @@
 					<table class='w fontt' cellpadding=0 cellspacing=0>
 						<tr>
 							<td class='b' style='color: {$tableheadtext}'>EXP points<br>For next LV</td>
-							<td class='b right'>{$exp}<br>{$expleft}</td>
+							<td class='b right'>".pretty_nan($exp)."<br>".pretty_nan($expleft)."</td>
 						</tr>
 						<tr><td colspan=2>{$bar}</td></tr>
 					</table>

@@ -92,11 +92,11 @@ function postcode($post,$set){
 			// Default sidebarm with all of the default vars that come with it
 			if ($tlayout == 1 || $tlayout == 6) {
 				// Without numgfx (standard)
-				$level		= "Level: $lvl";
+				$level		= "Level: ".pretty_nan($lvl);
 				$poststext	= "Posts: ";
 				$postnum	= $post['num'] ? "{$post['num']}/" : "";
 				$posttotal	= $post['posts'];
-				$experience	= "EXP: $exp<br>For next: $expleft";
+				$experience	= "EXP: ".pretty_nan($exp)."<br>For next: ".pretty_nan($expleft);
 				$barwidth   = 96;
 			} else {
 				// With numgfx ("old")
@@ -123,7 +123,7 @@ function postcode($post,$set){
 			
 			// Other stats
 			if ($post['lastposttime']) {
-				$sincelastpost= 'Since last post: '.timeunits(time()-$post['lastposttime']);
+				$sincelastpost = 'Since last post: '.timeunits(time()-$post['lastposttime']);
 			} else {
 				$sincelastpost = "";
 			}

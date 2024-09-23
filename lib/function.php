@@ -2404,6 +2404,7 @@ function generatenumbergfx($num, $minlen = 0, $size = 1) {
 // Progress bar (for RPG levels, syndromes)
 function drawprogressbar($width, $height, $done, $total, $images) {
 	$on  = min(round($done / $total * $width), $width);
+	if (is_nan($on)) $on = 0;
 	$off = $width - $on;
 	return  "<img src='{$images[0]}' class='pixel' style='height:{$height}px'>".
 			"<img src='{$images[1]}' class='pixel' style='height:{$height}px;width:{$on}px'>".

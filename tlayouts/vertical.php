@@ -1,6 +1,6 @@
 <?php
 	
-function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire,\'\' sidebar';}
+function userfields(){return 'u.posts,u.sex,u.powerlevel,u.birthday,u.aka,u.namecolor,u.picture,u.moodurl,u.title,u.useranks,u.location,u.lastposttime,u.lastactivity,u.imood,u.ban_expire';}
 
 function postcode($post,$set){
     global $loguser,$controls,$tlayout,$textcolor,$numdir,$numfil,$barimg;
@@ -10,11 +10,11 @@ function postcode($post,$set){
 	$lvl		= calclvl($exp);
 	$expleft	= calcexpleft($exp);
 	
-	$level      = "Level {$lvl}";
+	$level      = "Level ".pretty_nan($lvl);
 	$poststext  = "Post ";
 	$postnum    = $post['num'] ? $post['num'] : "";
 	$posttotal  = $post['posts'];
-	$experience = "EXP {$exp} ($expleft for next)";
+	$experience = "EXP ".pretty_nan($exp)." (".pretty_nan($expleft)." for next)";
 
 	// RPG Level bar
 	$bar = "<br>".drawprogressbar(96, 8, $exp - calclvlexp($lvl), totallvlexp($lvl), $barimg);

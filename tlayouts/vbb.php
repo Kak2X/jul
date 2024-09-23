@@ -1,6 +1,6 @@
 <?php
   
-function userfields() {return 'posts,sex,powerlevel,picture,useranks,location,homepageurl,homepagename,u.ban_expire,\'\' sidebar';}
+function userfields() {return 'posts,sex,powerlevel,picture,useranks,location,homepageurl,homepagename,u.ban_expire';}
 
 function postcode($post, $set){
     global $controls, $loguser;

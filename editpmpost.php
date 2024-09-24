@@ -57,7 +57,7 @@
 			
 			if ($issuper) {
 				$sidebar		= filter_string($_POST['sidebar']);
-				$sidebartype    = $post['sidebartype']; // TODO: make editable in the future. this must share logic with editprofile
+				$sidebartype	= sidebartype_db($_POST['sidebartype'], $_POST['sidebarcell']); 
 			} else {
 				$sidebar		= $post['sidebartext'];
 				$sidebartype	= $post['sidebartype'];
@@ -319,9 +319,14 @@
 			</tr>
 <?php if ($issuper) { ?>
 			<tr>
-				<td class='tdbg1 center b'>Sidebar:</td>
+				<td class='tdbg1 center b' rowspan="2">Sidebar:</td>
 				<td class='tdbg2 vatop' id="sidebartd">
 					<textarea id="sidebartxt" name="sidebar" rows="8"><?=escape_html($sidebar)?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2'>
+					<?= sidebartype_html($post['user'], $sidebartype) ?>
 				</td>
 			</tr>
 <?php } ?>

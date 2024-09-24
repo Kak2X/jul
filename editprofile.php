@@ -39,7 +39,7 @@
 			$userdata 	= $loguser;
 		} else {
 			//die("what are you doing. just stop");
-			$userdata = $sql->fetchq("SELECT u.*,r.gcoins FROM users u LEFT JOIN users_rpg r ON u.id = r.uid WHERE u.id = $id");
+			$userdata = $sql->fetchq("SELECT * FROM users WHERE id = $id");
 			$noeffect = "<br><b>This option will currently have no effect as you're using a mobile browser.</b>";
 		}
 		$edituser 	= false;
@@ -117,7 +117,7 @@
 			}
 			// Custom sidebar HTML
 			$_POST['sidebar'] = filter_string($_POST['sidebar']);
-			$_POST['sidebartype'] = numrange((filter_int($_POST['sidebartype']) << 1) + filter_int($_POST['sidebarcell']), 0, 5);
+			$_POST['sidebartype'] = sidebartype_db($_POST['sidebartype'], $_POST['sidebarcell']);
 		} else {
 			$namecolor = $userdata['namecolor'];
 			$namecolor_bak = $userdata['namecolor_bak'];
@@ -451,16 +451,7 @@
 		
 		if ($issuper) {
 			// Sidebar options.
-			$sidecell = $userdata['sidebartype'] & 1;
-			$sidetype = $userdata['sidebartype'] >> 1;		
-			$sidebartype = "<span style='white-space: nowrap'>
-			<input name='sidebartype' type='radio' value=0".($sidetype == 0 ? " checked" : "").">Normal
-			<input name='sidebartype' type='radio' value=1".($sidetype == 1 ? " checked" : "").">Without options
-			".(file_exists("sidebars/{$id}.php") ? "<input name='sidebartype' type='radio' value=2".($sidetype == 2 ? " checked" : "").">PHP Code" : "")."
-			</span>&nbsp; - &nbsp; <span style='white-space: nowrap'>
-			<input name='sidebarcell' type='radio' value=0".($sidecell == 0 ? " checked" : "").">Two cell (default)
-			<input name='sidebarcell' type='radio' value=1".($sidecell == 1 ? " checked" : "").">Single cell
-			</span>";
+			$sidebartype = sidebartype_html($id, $userdata['sidebartype']);
 			
 			// The namecolor field is special
 			// Usually it contains an hexadecimal number, but it can take extra text values for special effects

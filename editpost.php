@@ -72,7 +72,7 @@
 
 			if ($issuper) {
 				$sidebar		= filter_string($_POST['sidebar']);
-				$sidebartype    = $post['sidebartype']; // TODO: make editable in the future. this must share logic with editprofile
+				$sidebartype    = sidebartype_db($_POST['sidebartype'], $_POST['sidebarcell']); 
 			} else {
 				$sidebar		= $post['sidebartext'];
 				$sidebartype	= $post['sidebartype'];
@@ -145,9 +145,10 @@
 					
 					// Post update data which does not trigger a new revision
 					$pdata = array(
-						'nosmilies' => $nosmilies,
-						'nohtml'    => $nohtml,
-						'moodid'	=> $moodid,
+						'nosmilies'   => $nosmilies,
+						'nohtml'      => $nohtml,
+						'moodid'	  => $moodid,
+						'sidebartype' => $sidebartype,
 					);
 
 					//--
@@ -175,7 +176,7 @@
 						
 					$flag_as_edited = $create_rev || ($can_attach && ($attachsel || $total));
 					if ($flag_as_edited) {
-						$pdata['editedby']= $loguser['id'];
+						$pdata['editedby'] = $loguser['id'];
 						$pdata['editdate'] = time();
 					}
 					if ($create_rev) {
@@ -206,7 +207,6 @@
 						$pdata['signid']      = $signid;
 						$pdata['cssid']       = $cssid;
 						$pdata['sidebarid']   = $sidebarid;
-						$pdata['sidebartype'] = $sidebartype;
 						$pdata['revision']    = $post['revision'] + 1;
 					}
 					
@@ -296,7 +296,7 @@
 		}
 		print "<br>".$postpreview;
 		?>
-		<form method="POST" ACTION="editpost.php?id=<?=$_GET['id']?>" enctype="multipart/form-data">
+		<form method="POST" action="editpost.php?id=<?=$_GET['id']?>" enctype="multipart/form-data">
 		<table class='table'>
 			<tr><td class='tdbgh center' colspan='3'>Edit post</td></tr>
 			<tr>
@@ -371,9 +371,14 @@
 			</tr>
 <?php if ($issuper) { ?>
 			<tr>
-				<td class='tdbg1 center b'>Sidebar:</td>
+				<td class='tdbg1 center b' rowspan="2">Sidebar:</td>
 				<td class='tdbg2 vatop' id="sidebartd">
 					<textarea id="sidebartxt" name="sidebar" rows="8"><?=escape_html($sidebar)?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class='tdbg2'>
+					<?= sidebartype_html($post['user'], $sidebartype) ?>
 				</td>
 			</tr>
 <?php } ?>

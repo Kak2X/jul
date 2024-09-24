@@ -328,11 +328,13 @@
 			$ppost['signtext']    = "";
 			$ppost['csstext']     = "";
 			$ppost['sidebartext'] = "";
+			$ppost['sidebartype'] = 0;
 		} else {
 			$ppost['headtext']    = $data['head'];	
 			$ppost['signtext']    = $data['sign'];
 			$ppost['csstext']     = $data['css'];
 			$ppost['sidebartext'] = $data['sidebar'];
+			$ppost['sidebartype'] = $data['sidebartype'];
 		}
 		$ppost['headid'] = $ppost['signid'] = $ppost['cssid'] = $ppost['sidebarid'] = 0;
 
@@ -546,6 +548,29 @@ function syndrome($num, $double=false, $bar=true) {
 	}
 
 	return $syn;
+}
+
+//--
+// Shared sidebartype functions
+
+function sidebartype_db(&$type, &$cell) {
+	return numrange(((int)$type << 1) + (int)$cell, 0, 5);
+}
+
+function sidebartype_split($rawtype) {
+	$sidecell = $rawtype & 1;
+	$sidetype = $rawtype >> 1;
+	return [$sidecell, $sidetype];
+}
+
+function sidebartype_html($uid, $rawtype) {
+	$types = ['Normal', 'Without options'];
+	if (file_exists("sidebars/{$uid}.php")) $types[] = "PHP Code"; 
+	
+	return 
+	"<span class='nobr'>".input_html('sidebartype', $rawtype >> 1, ['input' => 'radio', 'options' => $types])."</span>".
+	" &nbsp; - &nbsp; ".
+	"<span class='nobr'>".input_html('sidebarcell', $rawtype & 1, ['input' => 'radio', 'options' => ['Two cell (default)', 'Single cell']])."</span>";
 }
 
 //--

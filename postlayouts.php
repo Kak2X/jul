@@ -24,16 +24,11 @@
 	// Fake out the $user values when submitting the form, including when saving the changes.
 	// The latter is convenient so we don't have to recalculate shit like sidebartype twice.
 	if (isset($_POST['submit']) || isset($_POST['save'])) {
-		
-		// For consistency
-		if ($_POST['sidebartype'] == 2 && !file_exists("sidebars/{$_GET['id']}.php"))
-			$_POST['sidebartype'] = 1;
-		
 		$user['postheader']  = filter_string($_POST['postheader']);
 		$user['signature']   = filter_string($_POST['signature']);
 		$user['css']         = filter_string($_POST['css']);
 		$user['sidebar']     = filter_string($_POST['sidebar']);
-		$user['sidebartype'] = numrange((filter_int($_POST['sidebartype']) << 1) + filter_int($_POST['sidebarcell']), 0, 5);
+		$user['sidebartype'] = sidebartype_db($_POST['sidebartype'], $_POST['sidebarcell']);
 		$loguser['layout']   = filter_int($_POST['tlayout']);
 	} else {
 		// Force extended layout by default
@@ -112,6 +107,7 @@
 	
 	// Sidebar options.
 	// Copied from the edit profile page.
+	
 	$sidecell = $user['sidebartype'] & 1;
 	$sidetype = $user['sidebartype'] >> 1;		
 	$sidebartype = "
@@ -182,24 +178,25 @@
 	</tr>
 	
 	<tr>
-		<td class="tdbgh center b">Sidebar code (regular/extended only)</td>
-		<td class="tdbgh center b">Sidebar options (regular/extended only)</td>
+		<td class="tdbgh center b" colspan="2">Sidebar code &amp; options (regular/extended only)</td>
 		<td class="tdbgh center b">Avatar preview</td>
 	</tr>
 	<tr>
-		<td class="tdbg1 vatop">
+		<td class="tdbg1 vatop" colspan="2">
 			<?= ($sidetype == 2 && file_exists("sidebars/{$_GET['id']}.php")
 			? "<div style='background: #fff; overflow: scroll; width: 50vw; height: 400px; resize: vertical'>".highlight_file("sidebars/{$_GET['id']}.php", true)."</div><div style='display: none'>"
 			: "<div>") ?>
 				<textarea id="signature" name="sidebar" rows="8"><?= escape_html($user['sidebar']) ?></textarea>
 			</div>
 		</td>
-		<td class="tdbg1 vatop">
-			<?= $sidebartype ?>
-		</td>
-		<td class="tdbg1 vamid">
-			<?=mood_preview()?>
+		<td class="tdbg1 vamid" rowspan="2">
+			<?= mood_preview() ?>
 		</td>		
+	</tr>
+	<tr>
+		<td class="tdbg1 right" colspan="2">
+			<?= sidebartype_html($_GET['id'], $user['sidebartype']) ?>
+		</td>
 	</tr>
 	<tr>
 		<td class="tdbg1" colspan="3">
@@ -217,7 +214,7 @@
 <?php if (CAN_SAVE_LAYOUT) { ?>
 	<tr>
 		<td class="tdbg1 right" colspan="3">
-			<div class="fonts">To save the changes to the <?= ($issuper ? "sidebar, " : "") ?>CSS, header and footer. The <?= ($issuper ? "" : "sidebar, ") ?>thread layout and mood options are for local preview only and won't get saved.</div> <input type="submit" name="save" value="Save changes"/>
+			<div class="fonts">To save the changes to the <?= ($issuper ? "sidebar, " : "") ?>CSS, header and footer. The <?= ($issuper ? "" : "sidebar, ") ?>thread layout and avatar options are for local preview only and won't get saved.</div> <input type="submit" name="save" value="Save changes"/>
 		</td>
 	</tr>
 <?php } ?>

@@ -130,15 +130,15 @@
 			if ($_POST['regcode'] != $realcode) {
 
 				// No infinite retries allowed in a short time span
-				$sql->queryp("INSERT INTO `failedregs` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip, `regcode` = :code",
-				[
-					'time'	=> time(),
-					'user' 	=> $_POST['name'],
-					'pass' 	=> $_POST['pass'],
-					'email' => $_POST['email'],
-					'ip'	=> $_SERVER['REMOTE_ADDR'],
-					'code'	=> $_POST['regcode'],
-				]);
+				$thisfail = [
+					'time'      => time(),
+					'username' 	=> $_POST['name'],
+					'password'  => $_POST['pass'],
+					'email'     => $_POST['email'],
+					'ip'        => $_SERVER['REMOTE_ADDR'],
+					'regcode'   => $_POST['regcode'],
+				];
+				$sql->queryp("INSERT INTO `failedregs` SET ".mysql::setplaceholders($thisfail), $thisfail);
 				
 				$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedregs` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
 				report_send(
@@ -146,8 +146,8 @@
 					IRC_ADMIN, "Failed attempt **#{$fails}** to register using the wrong code **{$_POST['regcode']}** by IP **{$_SERVER['REMOTE_ADDR']}**."
 				);
 
-				if ($fails >= 5) {
-					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Send e-mail to re-request the registration code'");
+				if ($fails >= 10) {
+					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed registration attempts. Send e-mail to re-request the registration code'");
 					report_send(
 						IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
 						IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
@@ -159,7 +159,8 @@
 					die(header("Location: ?"));
 				}
 				
-				$regerrors['main'] .= "<li>You have entered a bad registration code.</li>";
+				$warning = $fails >= 5 ? "<br/><b>Warning: Continued failed attempts will result in a ban.</b>" : "";
+				$regerrors['main'] .= "<li>You have entered a bad registration code.{$warning}</li>";
 				$regerrors['code'] .= "<li>Bad code</li>";
 				$error = true;
 			}

@@ -100,3 +100,7 @@
 	const PHILI_NONE = 0; // None
 	const PHILI_LOCAL = 1; // Local to the thread
 	const PHILI_SUPER = 2; // Hall of fame
+	
+	const LOGFAIL_IGNORE = 0;
+	const LOGFAIL_TEMPBLOCK = 1;
+	const LOGFAIL_IPBAN = 2;

@@ -19,7 +19,7 @@
 	// Registration throttling
 	// It's only possible to login here
 	$regmode = $sql->resultq("SELECT regmode FROM misc");
-	if ($regmode == 3 && !$config['login-ipban']) {
+	if ($regmode == 3 && $config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
 		$count = $sql->resultq("SELECT COUNT(*) FROM failedregs WHERE ip = '{$_SERVER['REMOTE_ADDR']}' AND `time` > '". (time() - $config['login-fail-timeframe'] * 60) ."'");
 		if ($count >= $config['login-ban-threshold']) {
 			errorpage("Too many registration attempts in a short time! Try again later.", 'index.php', 'the board', 0);
@@ -201,7 +201,7 @@
 				);
 
 				if ($fails >= $config['login-ban-threshold']) {
-					if ($config['login-ipban']) {
+					if ($config['login-fail-mode'] == LOGFAIL_IPBAN) {
 						$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed registration attempts. Send e-mail to re-request the registration code'");
 						report_send(
 							IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
@@ -211,7 +211,7 @@
 							IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed registration attempts.",
 							IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed registration attempts."
 						);
-					} else {
+					} else if ($config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
 						report_send(
 							IRC_ADMIN, xk(7)."Temp-blocked ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
 							IRC_ADMIN, "Temp-blocked **{$_SERVER['REMOTE_ADDR']}** for this."
@@ -221,7 +221,7 @@
 				}
 				
 						
-				$warning = $fails >= $config['login-warn-threshold'] ? "<br/><b>Warning: Continued failed attempts will result in a ban.</b>" : "";
+				$warning = $config['login-fail-mode'] && $fails >= $config['login-warn-threshold'] ? "<br/><b>Warning: Continued failed attempts will result in a ban.</b>" : "";
 				$invites = discord_get_invites();
 				$regerrors['main'] .= "<div>You have entered a bad registration code. If you've forgotten your code, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "")."{$warning}</div>";
 				$regerrors['code'] .= "<li>Bad code</li>";

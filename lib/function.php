@@ -2524,7 +2524,7 @@ function do404() {
 
 function login_throttle() {
 	global $sql, $config;
-	if ($config['login-ipban'])
+	if ($config['login-fail-mode'] != LOGFAIL_TEMPBLOCK)
 		return; // Not needed
 	
 	$count = $sql->resultq("SELECT COUNT(*) FROM failedlogins WHERE ip = '{$_SERVER['REMOTE_ADDR']}' AND `time` > '". (time() - $config['login-fail-timeframe'] * 60) ."'");

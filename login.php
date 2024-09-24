@@ -82,7 +82,7 @@
 
 					if ($fails >= $config['login-ban-threshold']) {
 						
-						if ($config['login-ipban']) {
+						if ($config['login-fail-mode'] == LOGFAIL_IPBAN) {
 							$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
 							report_send(
 								IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
@@ -92,7 +92,7 @@
 								IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
 								IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
 							);
-						} else {
+						} else if ($config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
 							report_send(
 								IRC_ADMIN, xk(7)."Temp-blocked ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
 								IRC_ADMIN, "Temp-blocked **{$_SERVER['REMOTE_ADDR']}** for this."
@@ -104,7 +104,7 @@
 						$form_msg = "The password you entered doesn't match.<br/><br/>
 						If you've forgotten your password, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
 						
-						if ($fails >= $config['login-warn-threshold'])
+						if ($config['login-fail-mode'] && $fails >= $config['login-warn-threshold'])
 							$form_msg .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";
 					}
 					break;

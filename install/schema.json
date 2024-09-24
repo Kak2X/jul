@@ -455,13 +455,14 @@
 					"default":0,
 					"special":"yesno"
 				},
-				"login-ipban":{
+				"login-fail-mode":{
 					"title":"Failed login behaviour",
 					"desc":"The behaviour when an user repeatedly fails to enter a valid password during login. <br/>This and the options below also apply to the registration page if a key is needed to register an account.",
-					"input":"radio",
-					"type":"bool",
-					"default":1,
+					"input":"select",
+					"type":"int",
+					"default":2,
 					"options":[
+						"Ignore (not recommended)",
 						"Temp Block",
 						"IP Ban"
 					]

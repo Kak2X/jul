@@ -17,7 +17,7 @@
 	load_layout();
 	
 	// Registration throttling
-	// It's only possible to login here
+	// It's only possible to do this here
 	$regmode = $sql->resultq("SELECT regmode FROM misc");
 	if ($regmode == 3 && $config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
 		$count = $sql->resultq("SELECT COUNT(*) FROM failedregs WHERE ip = '{$_SERVER['REMOTE_ADDR']}' AND `time` > '". (time() - $config['login-fail-timeframe'] * 60) ."'");
@@ -200,7 +200,7 @@
 					IRC_ADMIN, "Failed attempt **#{$fails}** to register using the wrong code **{$_POST['regcode']}** by IP **{$_SERVER['REMOTE_ADDR']}**."
 				);
 
-				if ($fails >= $config['login-ban-threshold']) {
+				if ($config['login-fail-mode'] && $fails >= $config['login-ban-threshold']) {
 					if ($config['login-fail-mode'] == LOGFAIL_IPBAN) {
 						$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed registration attempts. Send e-mail to re-request the registration code'");
 						report_send(

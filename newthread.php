@@ -77,11 +77,17 @@
 	if ($submitted) {
 		// Trying to post as someone else?
 		if (!$loguser['id'] || $_POST['password']) {
-			$userid = checkuser($_POST['username'], $_POST['password']);
-			if ($userid < 0) {
-				$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
+			if (login_throttled()) {
+				$reply_error .= 'You have made too many login attempts in a short time! Try again later.<br>';
 			} else {
-				$user 	= load_user($userid, true);
+				$res = validatelogin($_POST['username'], $_POST['password']);
+				if ($res->id < 0) {
+					$reply_error .= $res->error;
+					$login_error = " <strong style='color: red;'>* Invalid username or password.</strong>";
+				} else {
+					$userid = $res->id;
+					$user 	= load_user($userid, true);
+				}
 			}
 		}
 		

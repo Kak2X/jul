@@ -745,23 +745,23 @@ function checkuser($name, $pass) {
 	global $hacks, $sql;
 
 	if (!$name) return -1;
+	if (!$pass) return -2;
 	//$sql->query("UPDATE users SET password = '".getpwhash($pass, 1)."' WHERE id = 1");
 	$user = $sql->fetchp("SELECT id, password FROM users WHERE name = ?", [$name]);
-
-	if (!$user) return -2;
+	if (!$user) return -3;
 	
 	//if ($user['password'] !== getpwhash($pass, $user['id'])) {
 	if (!password_verify(sha1($user['id']).$pass, $user['password'])) {
 		// Also check for the old md5 hash, allow a login and update it if successful
 		// This shouldn't impact security (in fact it should improve it)
 		if (!$hacks['password_compatibility'])
-			return -3;
+			return -4;
 		else {
 			if ($user['password'] === md5($pass)) { // Uncomment the lines below to update password hashes
 				$sql->query("UPDATE users SET `password` = '".getpwhash($pass, $user['id'])."' WHERE `id` = '$user[id]'");
 				report_send(IRC_ADMIN, xk(3)."Password hash for ".xk(9)."{$name}".xk(3)." (uid ".xk(9).$user['id'].xk(3).") has been automatically updated.");
 			}
-			else return -4;
+			else return -5;
 		}
 	}
 	
@@ -2522,15 +2522,95 @@ function do404() {
 	die;
 }
 
-function login_throttle() {
+class validatelogin_res {
+	// User ID returned by checkuser
+	public $id;
+	// String error
+	public $error;
+	// You are blocked
+	public $die = false;
+}
+
+function validatelogin(&$username, &$password) { // will modify $username % $password
+	global $sql, $config;
+	
+	$res = new validatelogin_res();
+	$res->id = checkuser($username, $password);
+	switch ($res->id) {
+		case -1:
+			$res->error = "You didn't input a username.";
+			break;
+		case -2:
+			$res->error = "You didn't input a password.";
+			break;
+		case -3:
+			$res->error = "No user with that username exists.<br/><br/>If you aren't sure if you have an account, check the <a href='memberlist.php'>memberlist</a> or <a href='register.php'>register a new account</a>.";
+			$username = "";
+			break;
+		case -4:
+		case -5:
+			$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
+			[
+				'time'	=> time(),
+				'user' 	=> $username,
+				'pass' 	=> $password,
+				'ip'	=> $_SERVER['REMOTE_ADDR'],
+			]);
+			$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
+			
+			// Keep in mind, it's now not possible to trigger this if you're IP banned
+			// when you could previously, making extra checks to stop botspam not matter
+
+			//if ($fails > 1)
+			report_send(
+				IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to log in as ".xk(8)."{$username}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
+				IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
+			);
+
+			if ($config['login-fail-mode'] && $fails >= $config['login-ban-threshold']) {
+				if ($config['login-fail-mode'] == LOGFAIL_IPBAN) {
+					$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
+					report_send(
+						IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+						IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
+					);
+					report_send(
+						IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
+						IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
+					);
+					// If you get IP banned, it's over. Cut it short.
+					die(header("Location: ?"));
+				} else if ($config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
+					report_send(
+						IRC_ADMIN, xk(7)."Temp-blocked ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+						IRC_ADMIN, "Temp-blocked **{$_SERVER['REMOTE_ADDR']}** for this."
+					);
+					$res->die = true;
+				}
+			}
+			$invites = discord_get_invites();
+			$res->error = "The password you entered doesn't match.<br/><br/>
+			If you've forgotten your password, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
+			
+			if ($config['login-fail-mode']) {
+				if ($res->die)
+					$res->error .= "<br/><br/><b class='danger'>WARNING: You are now temporarily blocked from logging in.</b>";
+				else if ($fails >= $config['login-warn-threshold'])
+					$res->error .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";
+			}
+			$password = "";
+			break;
+	}
+	return $res;
+}
+	
+function login_throttled() {
 	global $sql, $config;
 	if ($config['login-fail-mode'] != LOGFAIL_TEMPBLOCK)
 		return; // Not needed
 	
 	$count = $sql->resultq("SELECT COUNT(*) FROM failedlogins WHERE ip = '{$_SERVER['REMOTE_ADDR']}' AND `time` > '". (time() - $config['login-fail-timeframe'] * 60) ."'");
-	if ($count >= $config['login-ban-threshold']) {
-		errorpage("Too many login attempts in a short time! Try again later.", 'index.php', 'the board', 0);
-	}
+	return $count >= $config['login-ban-threshold'];
 }
 
 function set_board_cookie($name, $value, $expire = 2147483647) {

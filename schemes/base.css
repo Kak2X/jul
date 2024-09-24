@@ -67,6 +67,7 @@ img { border:none; }
 .h		   { height: 100vh }
 .p-0	   { padding: 0 !important }
 .m-0	   { margin: 0 !important }
+.danger	  { color: red; }
 
 /* Make sure the last post text only stays in two lines*/
 .nobr,div.lastpost {white-space:nowrap}

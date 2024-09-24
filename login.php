@@ -4,7 +4,8 @@
 	
 	require "lib/common.php";
 	
-	login_throttle();
+	if (login_throttled())
+		errorpage("Too many login attempts in a short time! Try again later.", 'index.php', 'the board', 0);
 	
 	$username = filter_string($_POST['username']);
 	if ($username) $username = trim($username);
@@ -50,78 +51,24 @@
 			//	report_send(IRC_STAFF, xk(7) ."Auto banned tictOrnaria (malicious bot) with IP ". xk(8) . $_SERVER['REMOTE_ADDR'] . xk(7) .".");
 			//  die;
 			//}
-			$userid = checkuser($username, $password);
-			
-			switch ($userid) {
-				case -1:
-					$form_msg = "You didn't input a username.";
-					break;
-				case -2:
-					$form_msg = "No user with that username exists.<br/><br/>If you aren't sure if you have an account, check the <a href='memberlist.php'>memberlist</a> or <a href='register.php'>register a new account</a>.";
-					$username = "";
-					break;
-				case -3:
-				case -4:
-					$sql->queryp("INSERT INTO `failedlogins` SET `time` = :time, `username` = :user, `password` = :pass, `ip` = :ip",
-					[
-						'time'	=> time(),
-						'user' 	=> $username,
-						'pass' 	=> $password,
-						'ip'	=> $_SERVER['REMOTE_ADDR'],
-					]);
-					$fails = $sql->resultq("SELECT COUNT(`id`) FROM `failedlogins` WHERE `ip` = '". $_SERVER['REMOTE_ADDR'] ."' AND `time` > '". (time() - 1800) ."'");
-					
-					// Keep in mind, it's now not possible to trigger this if you're IP banned
-					// when you could previously, making extra checks to stop botspam not matter
+			$res = validatelogin($username, $password); // will modify $username
+			if ($res->die) {
+				die(header("Location: ?"));
+			} else if ($res->id < 0) {
+				$form_msg = $res->error;
+			} else {
+				// Login successful: Create a new password hash, which has the effect of invalidating previous tokens
+				$pwhash = getpwhash($password, $res->id);
+				$sql->query("UPDATE users SET password = '{$pwhash}' WHERE id = '{$res->id}'");
+				
+				$verify = create_verification_hash($verifyid, $pwhash);
 
-					//if ($fails > 1)
-					report_send(
-						IRC_ADMIN, xk(14)."Failed attempt".xk(8)." #{$fails} ".xk(14)."to log in as ".xk(8)."{$username}".xk(14)." by IP ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(14).".",
-						IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
-					);
-
-					if ($fails >= $config['login-ban-threshold']) {
-						
-						if ($config['login-fail-mode'] == LOGFAIL_IPBAN) {
-							$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
-							report_send(
-								IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
-								IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
-							);
-							report_send(
-								IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
-								IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
-							);
-						} else if ($config['login-fail-mode'] == LOGFAIL_TEMPBLOCK) {
-							report_send(
-								IRC_ADMIN, xk(7)."Temp-blocked ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
-								IRC_ADMIN, "Temp-blocked **{$_SERVER['REMOTE_ADDR']}** for this."
-							);
-						}
-						die(header("Location: ?"));			
-					} else {
-						$invites = discord_get_invites();
-						$form_msg = "The password you entered doesn't match.<br/><br/>
-						If you've forgotten your password, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
-						
-						if ($config['login-fail-mode'] && $fails >= $config['login-warn-threshold'])
-							$form_msg .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";
-					}
-					break;
-				default:
-					// Login successful: Create a new password hash, which has the effect of invalidating previous tokens
-					$pwhash = getpwhash($password, $userid);
-					$sql->query("UPDATE users SET password = '{$pwhash}' WHERE id = '{$userid}'");
-					
-					$verify = create_verification_hash($verifyid, $pwhash);
-
-					set_board_cookie('loguserid', $userid);
-					set_board_cookie('logverify', $verify);
-					
-					load_layout();
-					
-					errorpage("You are now logged in as ".getuserlink(null, $userid).".", "index.php", "the board", 0);
-					break;
+				set_board_cookie('loguserid', $res->id);
+				set_board_cookie('logverify', $verify);
+				
+				load_layout();
+				
+				errorpage("You are now logged in as ".getuserlink(null, $res->id).".", "index.php", "the board", 0);
 			}
 		} else { // Just what do you think you're doing
 			errorpage("Just what do you think you're doing, anyway?");

@@ -287,7 +287,7 @@
 				log_useragent($newuserid);
 				$sql->query("INSERT INTO `users_rpg` (`uid`) VALUES ('{$newuserid}')");
 				$sql->query("INSERT INTO forumread (user, forum, readdate) SELECT {$newuserid}, id, {$currenttime} FROM forums");
-				
+				hook_use('user-registering', $newuserid);
 				
 				$ircout = array (
 					'id'	=> $newuserid,

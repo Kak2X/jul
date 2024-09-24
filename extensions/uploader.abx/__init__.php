@@ -21,4 +21,18 @@ hook_add('adminlinkbar', function() use ($extName) {
 hook_add('profile-options', function($_, &$options) use ($extName) {
 	$options[0]["View personal folders"] = ["{$extName}/uploader.php?mode=u&user={$_GET['id']}"];
 });
-			
+
+hook_add('user-registering', function($_, $userid) {
+	global $sql;
+	// Automatically create a personal folder for the user upon registration
+	$values = [
+		'title'          => "My Files",
+		'description'    => "",
+		'user'           => $userid,
+		'ord'            => 0,
+		'minpowerread'   => PWL_MIN,
+		'minpowerupload' => PWL_ADMIN,
+		'minpowermanage' => PWL_ADMIN,
+	];
+	$sql->queryp("INSERT INTO uploader_cat SET ".mysql::setplaceholders($values)."", $values);
+});		

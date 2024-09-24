@@ -1,21 +1,15 @@
 <?php
-	require "lib/common.php";
-	
-	const WARN_THRESHOLD = 5;
-	const BAN_THRESHOLD = 10;
-	
 	// Bots don't need to be on this page
 	$meta['noindex'] = true;
+	
+	require "lib/common.php";
+	
+	login_throttle();
 	
 	$username = filter_string($_POST['username']);
 	if ($username) $username = trim($username);
 	$password = filter_string($_POST['userpass']);
-	
-	if (!$config['force-lastip-match']) {
-		$verifyid = filter_int($_POST['verify']);
-	} else {
-		$verifyid = 4;
-	}
+	$verifyid = $config['force-lastip-match'] ? 4 : filter_int($_POST['verify']);
 	
 	// For the alternate way to log out, without requiring JS
 	$_GET['action'] = filter_string($_GET['action']);
@@ -86,24 +80,31 @@
 						IRC_ADMIN, "Failed attempt **#{$fails}** to log in as **{$username}** by IP **{$_SERVER['REMOTE_ADDR']}**."
 					);
 
-					if ($fails >= BAN_THRESHOLD) {
+					if ($fails >= $config['login-ban-threshold']) {
 						
-						$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
-						report_send(
-							IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
-							IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
-						);
-						report_send(
-							IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
-							IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
-						);
+						if ($config['login-ipban']) {
+							$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Too many failed login attempts. Send e-mail for password recovery'");
+							report_send(
+								IRC_ADMIN, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+								IRC_ADMIN, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for this."
+							);
+							report_send(
+								IRC_STAFF, xk(7)."Auto-IP banned ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for repeated failed logins.",
+								IRC_STAFF, "Auto-IP banned **{$_SERVER['REMOTE_ADDR']}** for repeated failed logins."
+							);
+						} else {
+							report_send(
+								IRC_ADMIN, xk(7)."Temp-blocked ".xk(8)."{$_SERVER['REMOTE_ADDR']}".xk(7)." for this.",
+								IRC_ADMIN, "Temp-blocked **{$_SERVER['REMOTE_ADDR']}** for this."
+							);
+						}
 						die(header("Location: ?"));			
 					} else {
 						$invites = discord_get_invites();
 						$form_msg = "The password you entered doesn't match.<br/><br/>
 						If you've forgotten your password, ".($invites ? "<a href='{$invites[0][1]}'>join Discord</a> (sorry) or " : "")."email me at <tt>{$config['admin-email']}</tt> ".($config['admin-discord'] ? "/ Discord <tt>{$config['admin-discord']}</tt>" : "");
 						
-						if ($fails >= WARN_THRESHOLD)
+						if ($fails >= $config['login-warn-threshold'])
 							$form_msg .= "<br/><br/><b>Warning: Continued failed attempts will result in a ban.</b>";
 					}
 					break;
@@ -123,7 +124,7 @@
 					break;
 			}
 		} else { // Just what do you think you're doing
-			errorpage("Just what do you think you're doing anyway?");
+			errorpage("Just what do you think you're doing, anyway?");
 			/*
 			$sql->query("INSERT INTO `ipbans` SET `ip` = '". $_SERVER['REMOTE_ADDR'] ."', `date` = '". time() ."', `reason` = 'Generic internet exploit searcher'");
 			report_send(

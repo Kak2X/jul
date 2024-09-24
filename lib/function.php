@@ -2522,6 +2522,17 @@ function do404() {
 	die;
 }
 
+function login_throttle() {
+	global $sql, $config;
+	if ($config['login-ipban'])
+		return; // Not needed
+	
+	$count = $sql->resultq("SELECT COUNT(*) FROM failedlogins WHERE ip = '{$_SERVER['REMOTE_ADDR']}' AND `time` > '". (time() - $config['login-fail-timeframe'] * 60) ."'");
+	if ($count >= $config['login-ban-threshold']) {
+		errorpage("Too many login attempts in a short time! Try again later.", 'index.php', 'the board', 0);
+	}
+}
+
 function set_board_cookie($name, $value, $expire = 2147483647) {
 	global $boardurl;
 	setcookie($name, $value, $expire, $boardurl, $_SERVER['SERVER_NAME'], false, true);

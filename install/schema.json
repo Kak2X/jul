@@ -454,6 +454,44 @@
 					"type":"bool",
 					"default":0,
 					"special":"yesno"
+				},
+				"login-ipban":{
+					"title":"Failed login behaviour",
+					"desc":"The behaviour when an user repeatedly fails to enter a valid password during login. <br/>This and the options below also apply to the registration page if a key is needed to register an account.",
+					"input":"radio",
+					"type":"bool",
+					"default":1,
+					"options":[
+						"Temp Block",
+						"IP Ban"
+					]
+				},
+				"login-fail-timeframe":{
+					"title":"Login failure timeframe",
+					"desc":"If too many login attempts are performed within this timeframe, the user is either IP banned or blocked from logging in, depending on the option above.",
+					"input":"text",
+					"type":"int",
+					"default":30,
+					"desc_sfx":"minutes",
+					"width":"50px"
+				},
+				"login-warn-threshold":{
+					"title":"Login warning threshold",
+					"desc":"When this number of failed login attempts is reached within the above timeframe, the user is warned that continuing will lead to a ban.",
+					"input":"text",
+					"type":"int",
+					"default":5,
+					"desc_sfx":"attempts",
+					"width":"30px"
+				},
+				"login-ban-threshold":{
+					"title":"Login ban threshold",
+					"desc":"When this number of failed login attempts is reached within the above timeframe, the user is IP banned or temporarily blocked.",
+					"input":"text",
+					"type":"int",
+					"default":10,
+					"desc_sfx":"attempts",
+					"width":"30px"
 				}
 			}
 		},

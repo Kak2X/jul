@@ -243,9 +243,6 @@
 		$css     = filter_string($data[$post['cssid']], $post['csstext']);
 		$sidebar = filter_string($data[$post['sidebarid']], $post['sidebartext']);
 		
-		sbr(1, $head);
-		sbr(1, $sign);
-		
 		return [$head, $sign, $css, $sidebar];
 	}
 	

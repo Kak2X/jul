@@ -76,9 +76,6 @@
 		$_POST['postheader'] = filter_string($_POST['postheader']);
 		$_POST['signature'] 	= filter_string($_POST['signature']);
 		$bio 		= filter_string($_POST['bio']);
-		sbr(0,$_POST['postheader']);
-		sbr(0,$_POST['signature']);
-		sbr(0,$bio);
 		
 		// Make sure the thread layout does exist to prevent "funny" shit
 		$tlayout = filter_int($_POST['layout']);
@@ -299,18 +296,6 @@
 	else {
 		
 		$splitcount = $sql->resultq("SELECT COUNT(*) FROM `users` WHERE `splitcat` = '1'");
-		//squot(0,$userdata['title']);
-		//squot(0,$userdata['realname']);
-		//squot(0,$userdata['aka']);
-		//squot(0,$userdata['location']);
-		//    squot(1,$userdata['aim']);
-		//    squot(1,$userdata['imood']);
-		//squot(0,$userdata['email']);
-		//    squot(1,$userdata['homepageurl']);
-		//squot(0,$userdata['homepagename']);
-		sbr(1,$userdata['postheader']);
-		sbr(1,$userdata['signature']);
-		sbr(1,$userdata['bio']);
 		
 		/*
 			A ""slightly updated"" version of the table system from boardc

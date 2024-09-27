@@ -38,10 +38,6 @@
 	if (isset($_POST['save'])) {
 		if (!CAN_SAVE_LAYOUT)
 			errorpage("You aren't allowed to do this!");
-		
-		// Preprocessed <br>, fun
-		sbr(0, $user['postheader']);
-		sbr(0, $user['signature']);
 	
 		$set = [
 			'postheader'  => $user['postheader'],
@@ -141,10 +137,6 @@
 		$savebtn = "";
 		$nosavemark = " (these won't get saved)";
 	}
-	
-	// Preprocessed <br>, fun
-	sbr(1, $user['postheader']);
-	sbr(1, $user['signature']);
 
 ?>
 <form method="POST" action="?id=<?= $_GET['id'] ?>">

@@ -1256,52 +1256,6 @@ function get_id_range($data, $key = null) {
 	$single = $key !== null ? array_column($data, $key) : $data;
 	return [min($single), max($single)];
 }
-/*
-function squot($t, &$src){
-	switch($t){
-		case 0: $src=htmlspecialchars($src); break;
-		case 1: $src=urlencode($src); break;
-		case 2: $src=str_replace('&quot;','"',$src); break;
-		case 3: $src=urldecode('%22','"',$src); break;
-	}
-  switch($t){
-    case 0: $src=str_replace('"','&#34;',$src); break;
-    case 1: $src=str_replace('"','%22',$src); break;
-    case 2: $src=str_replace('&#34;','"',$src); break;
-    case 3: $src=str_replace('%22','"',$src); break;
-  }
-}*/
-function sbr($t, &$src) {
-	if (!$src)
-		return;
-	$src = $t 
-		? str_replace('<br>', "\n", $src) // 1
-		: str_replace("\n", '<br>', $src); // 0
-}
-/*
-function mysql_get($query){
-  global $sql;
-  return $sql->fetchq($query);
-}
-*/
-/*
-function sizelimitjs(){
-	// where the fuck is this used?!
-	return "";
-  return '
-	<script>
-	  function sizelimit(n,x,y){
-		rx=n.width/x;
-		ry=n.height/y;
-		if(rx>1 && ry>1){
-		if(rx>=ry) n.width=x;
-		else n.height=y;
-		}else if(rx>1) n.width=x;
-		else if(ry>1) n.height=y;
-	  }
-	</script>
-  '; 
-}*/
 
 function loadtlayout(){
 	global $loguser, $tlayout, $sql;

@@ -123,4 +123,43 @@
 		irc_send($str[0], $str[1]);
 	}
 	
+	function squot($t, &$src){
+		switch($t){
+			case 0: $src=htmlspecialchars($src); break;
+			case 1: $src=urlencode($src); break;
+			case 2: $src=str_replace('&quot;','"',$src); break;
+			case 3: $src=urldecode('%22','"',$src); break;
+		}
+	}
+	
+	function sbr($t, &$src) {
+		if (!$src)
+			return;
+		$src = $t 
+			? str_replace('<br>', "\n", $src) // 1
+			: str_replace("\n", '<br>', $src); // 0
+	}
+
+	function mysql_get($query){
+	  global $sql;
+	  return $sql->fetchq($query);
+	}
+	function sizelimitjs(){
+		// where the fuck is this used?!
+		return "";
+	  return '
+		<script>
+		  function sizelimit(n,x,y){
+			rx=n.width/x;
+			ry=n.height/y;
+			if(rx>1 && ry>1){
+			if(rx>=ry) n.width=x;
+			else n.height=y;
+			}else if(rx>1) n.width=x;
+			else if(ry>1) n.height=y;
+		  }
+		</script>
+	  '; 
+	}
+	
 	pageheader();

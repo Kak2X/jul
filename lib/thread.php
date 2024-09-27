@@ -388,7 +388,7 @@
 		return " 
 			<table class='table'>
 				<tr><td class='tdbgc center b' colspan=3>".htmlspecialchars($poll['question'])."</td></tr>
-				<tr><td class='tdbg2 fonts' colspan=3>".nl2br(dofilters($poll['briefing']), $forum)."</td></tr>
+				<tr><td class='tdbg2 fonts' colspan=3>".postfilter($poll['briefing'], null, null, $forum)."</td></tr>
 				{$choices}
 				<tr><td class='tdbg2 fonts' colspan=3>&nbsp;{$polltext} {$poll['usertotal']} user{$s_have} voted. {$polledit}</td></tr>
 			</table>";

@@ -309,7 +309,7 @@
 		}
 			
 		$post['act']     = filter_int($act[$post['user']]);	
-		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM, -1)."</tr>";
+		$postlist .= "<tr>".threadpost($post, $bg, MODE_PM)."</tr>";
 	}
 	// Automark unread warnings
 	if (count($warnings_read)) {

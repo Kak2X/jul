@@ -109,7 +109,7 @@ if ($xconf['index-window'] || $xconf['index-force-thread']) {
 					<td class="tdbg1"></td>
 					<td class="tdbg2">
 						<div style="max-height: 100px; overflow-y: scroll">
-							<?= dofilters(domarkup($fthread['text'], $fthread), $fthread['forum']) ?>
+							<?= postfilter($fthread['text'], $fthread, null, $fthread['forum']) ?>
 						</div>
 					</td>
 				</tr>

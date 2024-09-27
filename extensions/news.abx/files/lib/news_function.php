@@ -174,14 +174,14 @@
 					{$userpic}
 				</td>
 				<td class='tdbg2 vatop' style='padding-bottom: 12px'>
-					".dofilters(domarkup($post['text'], $post))."
+					".postfilter($post['text'], $post)."
 				</td>
 			</tr>
 			*/"
 			<tr>
 				<td class='tdbg2 vatop' style='padding-bottom: 12px' colspan='2'>
 					{$avimg}
-					".dofilters(domarkup($post['text'], $post))."
+					".postfilter($post['text'], $post)."
 				</td>
 			</tr>
 			
@@ -351,7 +351,7 @@
 			//$author = "<s>{$author}</s>";
 		} else {
 			prepare_avatar($comment, $picture, $userpic);
-			$ctext = dofilters(domarkup($comment['text']));
+			$ctext = postfilter($comment['text']);
 			$cimg  = $picture ? "<img src=\"{$picture}\" style='max-width: ".COMMENT_AVATAR_SIZE."px; max-height: ".COMMENT_AVATAR_SIZE."px' />" : "";
 		}
 		

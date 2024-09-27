@@ -801,11 +801,11 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 	// Notice window / points of required attention (global version)
 	$attn = "";
 	if ($miscdata['attntitle'])
-		$attn .= "<tr><td class='tdbgh center b'>".dofilters(domarkup($miscdata['attntitle']))."</td></tr>";
+		$attn .= "<tr><td class='tdbgh center b'>{$miscdata['attntitle']}</td></tr>";
 	if ($miscdata['attntext'])
-		$attn .= "<tr><td class='tdbg2 left'>".dofilters(domarkup($miscdata['attntext']))."</td></tr>";
+		$attn .= "<tr><td class='tdbg2 left'>{$miscdata['attntext']}</td></tr>";
 	if ($attn)
-		$attn = "<table class='table attn-glob fonts'>{$attn}</table>";
+		$attn = "<table class='table attn-glob fonts'>".postfilter($attn)."</table>";
 	
 ?><!doctype html>
 <html>

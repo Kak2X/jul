@@ -52,15 +52,18 @@ function __(&$v, $d = null)  {
 }
 
 function readsmilies($path = 'smilies.dat') {
-	global $x_hacks;
-	if ($x_hacks['host']) {
-		$fpnt = fopen('smilies2.dat','r');
-	} else {
-		$fpnt = fopen($path,'r');
+	static $smil;
+	if (!isset($smil)) {
+		global $x_hacks;
+		if ($x_hacks['host']) {
+			$fpnt = fopen('smilies2.dat','r');
+		} else {
+			$fpnt = fopen($path,'r');
+		}
+		for ($i = 0; $smil[$i] = fgetcsv($fpnt, 300, ','); ++$i);
+		unset($smil[$i]);
+		fclose($fpnt);
 	}
-	for ($i = 0; $smil[$i] = fgetcsv($fpnt, 300, ','); ++$i);
-	unset($smil[$i]);
-	$r = fclose($fpnt);
 	return $smil;
 }
 
@@ -135,137 +138,6 @@ function get_tags($data, $repl = null) {
 	}
 	
 	return $tags;
-}
-
-function escape_codeblock($text) {
-	// Also prevent bbcode from being rendered
-	return "<blockquote class='code'><hr>". str_replace("[", "[<z>", htmlspecialchars($text[1])) ."<hr></blockquote>";
-}
-
-
-function domarkup($msg, $stdpost = null, $nosbr = false, $mode = -1) {
-	global $hacks, $scriptname;
-	
-	if (!$msg) return "";
-	
-	// These options use a consistent name across posts/pms/etc...
-	if ($stdpost !== null) {
-		$smiliesoff  = $stdpost['nosmilies'];
-		$htmloff     = $stdpost['nohtml'];
-	} else {
-		$smiliesoff = $htmloff = false;
-	}
-	
-	$msg = preg_replace_callback("'\[code\](.*?)\[/code\]'si", 'escape_codeblock', $msg);
-
-	if ($htmloff) {
-		$msg = str_replace("<", "&lt;", $msg);
-		$msg = str_replace(">", "&gt;", $msg);
-	}
-
-	if (!$smiliesoff) {
-		global $smilies;
-		if (!$smilies) $smilies = readsmilies();
-		for ($s = 0; isset($smilies[$s]); ++$s){
-			$smilie = $smilies[$s];
-			$msg = str_replace($smilie[0], "<img src='{$smilie[1]}' align=absmiddle>", $msg);
-		}
-	}
-	
-	// Simple check for skipping BBCode replacements
-	if (strpos($msg, "[") !== false){
-		$msg = str_replace('[red]',    '<span style="color:#FFC0C0">', $msg);
-		$msg = str_replace('[green]',  '<span style="color:#C0FFC0">', $msg);
-		$msg = str_replace('[blue]',   '<span style="color:#C0C0FF">', $msg);
-		$msg = str_replace('[orange]', '<span style="color:#FFC080">', $msg);
-		$msg = str_replace('[yellow]', '<span style="color:#FFEE20">', $msg);
-		$msg = str_replace('[pink]',   '<span style="color:#FFC0FF">', $msg);
-		$msg = str_replace('[white]',  '<span style="color:white">', $msg);
-		$msg = str_replace('[black]',  '<span style="color:black">', $msg);
-		$msg = preg_replace("'\[/(color|red|green|blue|orange|yellow|pink|white|black)\]'s",'</span>', $msg);
-		//$msg = str_replace('[/color]','</span>', $msg);
-		
-		//--
-		// Post quotes with clickable link and quoted fields
-		if ($mode == MODE_POST || $mode == MODE_ANNOUNCEMENT)
-			$pidpage = "thread";
-		else if ($mode == MODE_PM)
-			$pidpage = "showprivate";
-		else
-			$pidpage = null;
-		$msg = preg_replace("'\[quote=\"(.*?)\" id=\"(\d+)\"\]'si", $pidpage
-		? '<blockquote><a class="fonts i" href="'.$pidpage.'.php?pid=\\2#\\2">Originally posted by \\1</a><hr>'
-		: '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
-		//--
-		// Generic post quotes
-		$msg = preg_replace("'\[quote=(.*?)\]'si", '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
-		
-		$msg = str_replace('[quote]','<blockquote><hr>', $msg);
-		$msg = str_replace('[/quote]','<hr></blockquote>', $msg);
-		$msg = preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
-		$msg = preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
-		// Old spoiler tag
-		//$msg = str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">', $msg);
-		//$msg = str_replace('[/spoiler]','</div></div>', $msg);
-		// New spoiler tag
-		$msg = str_replace('[spoiler]','<label class="spoiler spoiler-b"><div class="spoiler-label"></div><input type="checkbox"><div class="hidden"><div>', $msg);
-		$msg = str_replace('[/spoiler]','</div></div></label>', $msg);
-		$msg = str_replace('[spoileri]','<label class="spoiler"><span class="spoiler-label"></span><input type="checkbox"><span class="hidden"><span>', $msg);
-		$msg = str_replace('[/spoileri]','</span></span></label>', $msg);
-	
-		// New version of the tag inspired by Xen-Foro's
-		// [attach="1" type="<...>" name="<...>" hash="<...>" (props)]
-		$msg = preg_replace_callback("'\[attach=\"(\w+)\" type=\"(full|embed|thumb|url)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", function ($text) {
-			// 1 -> file id
-			// 2 -> bbcode type
-			// 4 -> filename or alt text
-			// 6 -> temporary file hash
-			// 7 -> additional attributes, sent as-is
-			
-			$url = "download.php?id={$text[1]}";
-			if ($text[6])
-				$url .= "&hash={$text[6]}";
-			$imgurl = $url;
-			
-			switch ($text[2]) {
-				case 'thumb':
-					$imgurl .= "&t=1";
-				case 'full':
-					return "<a href='{$url}' target='_blank'><img alt=\"{$text[4]}\" src='{$imgurl}' class='imgtag'{$text[7]}/></a>";
-				case 'url':
-					return "<a href='{$url}' target='_blank'{$text[7]}>{$text[4]}</a>";
-				case 'embed':
-					return "[video]{$url}[/video]"; // will be handled later
-			}
-		}, $msg);
-	
-		$msg = preg_replace("'\[(b|i|u|s)\]'si",'<\\1>', $msg);
-		$msg = preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>', $msg);
-		$msg = preg_replace("'\[img(.*?)\](.*?)\[/img\]'si", '<img class="imgtag" \\1 src="\\2">', $msg);
-		$msg = preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
-		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
-		
-
-		
-		$msg = preg_replace("'\[video\](.*?)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
-		
-	}
-
-	do {
-		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
-				"<\\1t\\2\\3><\\5t\\6\\7>", $msg, -1, $replaced);
-	} while ($replaced >= 1);
-
-	// Comment display
-	if ($hacks['comments']) {
-		$msg = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $msg);
-		$msg = str_replace("-->", '--&gt;</span>', $msg);
-	}
-
-	// Cheap hack but convenient (it shouldn't be here)
-	if (!$nosbr) sbr(0, $msg);
-
-	return $msg;
 }
 
 /*
@@ -1811,6 +1683,66 @@ function xssfilters($data, $validate = false){
 	
 }
 
+function postfilter($msg, $stdpost = null, $mode = null, $f = 0, $multiforum = false) {
+	$msg = do_post_options($msg, $stdpost);
+	return postfilter_largehtml($msg, $mode, $f, $multiforum);
+}
+
+function postfilter_largehtml($msg, $mode = null, $f = 0, $multiforum = false) {
+	if (!$msg) return "";
+	$msg = do_custom_filters($msg, $f, $multiforum);
+	// Simple check for skipping BBCode replacements
+	$has_bbcode = strpos($msg, "[") !== false;
+	if ($has_bbcode)
+		$msg = do_bbcode($msg, $mode);
+	$msg = xssfilters($msg);
+	if ($has_bbcode)
+		$msg = do_unsafe_bbcode($msg, $mode);
+	return $msg;
+}
+
+function do_post_options($msg, $stdpost = null) {
+	global $hacks;
+	if (!$msg) return "";
+	
+	// These options use a consistent name across posts/pms/etc...
+	if ($stdpost !== null) {
+		$smiliesoff  = $stdpost['nosmilies'];
+		$htmloff     = $stdpost['nohtml'];
+	} else {
+		$smiliesoff = $htmloff = false;
+	}
+
+	if ($htmloff) {
+		$msg = htmlspecialchars($msg, ENT_NOQUOTES);
+	}
+
+	if (!$smiliesoff) {
+		$smilies = readsmilies();
+		for ($s = 0; isset($smilies[$s]); ++$s){
+			$smilie = $smilies[$s];
+			$msg = str_replace($smilie[0], "<img src='{$smilie[1]}' align=absmiddle>", $msg);
+		}
+	}
+	
+	// Comment display
+	if ($hacks['comments']) {
+		$msg = str_replace("<!--", '<span style="color:#80ff80">&lt;!--', $msg);
+		$msg = str_replace("-->", '--&gt;</span>', $msg);
+	}
+	
+	// Replace all of the whitespace before and after table tags
+	do {
+		$msg	= preg_replace("/<(\/?)t(able|h|r|d)(.*?)>(\s+?)<(\/?)t(able|h|r|d)(.*?)>/si",
+				"<\\1t\\2\\3><\\5t\\6\\7>", $msg, -1, $replaced);
+	} while ($replaced >= 1);
+	
+	// \n -> <br>
+	$msg = nl2br($msg);
+
+	return $msg;
+}
+
 // prepares dofilters for multiforum mode
 function prepare_filters($forums = null) {
 	global $sql, $forum_filters;
@@ -1824,10 +1756,7 @@ function prepare_filters($forums = null) {
 	", PDO::FETCH_GROUP, mysql::FETCH_ALL | mysql::USE_CACHE);
 }
 
-function dofilters($p, $f = 0, $multiforum = false){
-	global $runtime;
-	
-	if (!$p) return $p;	
+function do_custom_filters($msg, $f = 0, $multiforum = false) {
 	if (!$multiforum) { // Basically, everything except "Show posts" (of user)
 		global $sql, $hacks;
 		$filters = $sql->fetchq("
@@ -1841,7 +1770,7 @@ function dofilters($p, $f = 0, $multiforum = false){
 		
 		// No filters, somehow...
 		if (!isset($forum_filters[0]) && !isset($forum_filters[$f]))
-			return $p;
+			return $msg;
 		
 		if (!isset($forum_filters[$f]))
 			$filters = $forum_filters[0];
@@ -1850,63 +1779,145 @@ function dofilters($p, $f = 0, $multiforum = false){
 		else
 			$filters = array_merge($forum_filters[0], $forum_filters[$f]);
 	}
-
 	
-	foreach($filters as $x) {
+	foreach ($filters as $x) {
 		switch ($x['method']) {
 			case 0:
-				$p = str_replace($x['source'], $x['replacement'], $p);
+				$msg = str_replace($x['source'], $x['replacement'], $msg);
 				break;
 			case 1:
-				$p = str_ireplace($x['source'], $x['replacement'], $p);
+				$msg = str_ireplace($x['source'], $x['replacement'], $msg);
 				break;
 			case 2:
-				$p = preg_replace("'{$x['source']}'si", $x['replacement'], $p); // Force 'si modifiers to prevent the 'e modifier from being used
+				$msg = preg_replace("'{$x['source']}'si", $x['replacement'], $msg); // Force 'si modifiers to prevent the 'e modifier from being used
 				break;
 		}
 	}
 	
-	$p = xssfilters($p);
+	return $msg;
+}
 
-	/*
-		Unsafe BBCode, must be after xssfilters.
-		Ideally this should be elsewhere...
-	*/
+function do_bbcode($msg, $mode = null) {
+	if (!$msg) return "";
+	if (strpos($msg, "[") !== false){
+		
+		// Code block processing at the top because bbcode inside must not render
+		$msg = preg_replace_callback("'\[code\](.*?)\[/code\]'si", function ($text) {
+			return "<blockquote class='code'><hr>". str_replace("[", "[<z>", htmlspecialchars($text[1])) ."<hr></blockquote>";
+		}, $msg);
+		
+		$msg = str_replace('[red]',    '<span style="color:#FFC0C0">', $msg);
+		$msg = str_replace('[green]',  '<span style="color:#C0FFC0">', $msg);
+		$msg = str_replace('[blue]',   '<span style="color:#C0C0FF">', $msg);
+		$msg = str_replace('[orange]', '<span style="color:#FFC080">', $msg);
+		$msg = str_replace('[yellow]', '<span style="color:#FFEE20">', $msg);
+		$msg = str_replace('[pink]',   '<span style="color:#FFC0FF">', $msg);
+		$msg = str_replace('[white]',  '<span style="color:white">', $msg);
+		$msg = str_replace('[black]',  '<span style="color:black">', $msg);
+		$msg = preg_replace("'\[/(color|red|green|blue|orange|yellow|pink|white|black)\]'s",'</span>', $msg);
+		//$msg = str_replace('[/color]','</span>', $msg);
+		
+		//--
+		// Post quotes with clickable link and quoted fields
+		if ($mode === MODE_POST || $mode === MODE_ANNOUNCEMENT)
+			$pidpage = "thread";
+		else if ($mode === MODE_PM)
+			$pidpage = "showprivate";
+		else
+			$pidpage = null;
+		$msg = preg_replace("'\[quote=\"(.*?)\" id=\"(\d+)\"\]'si", $pidpage
+		? '<blockquote><a class="fonts i" href="'.$pidpage.'.php?pid=\\2#\\2">Originally posted by \\1</a><hr>'
+		: '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
+		//--
+		// Generic post quotes
+		$msg = preg_replace("'\[quote=(.*?)\]'si", '<blockquote><span class="fonts i">Originally posted by \\1</span><hr>', $msg);
+		
+		$msg = str_replace('[quote]','<blockquote><hr>', $msg);
+		$msg = str_replace('[/quote]','<hr></blockquote>', $msg);
+		$msg = preg_replace("'\[sp=(.*?)\](.*?)\[/sp\]'si", '<span style="border-bottom: 1px dotted #f00;" title="did you mean: \\1">\\2</span>', $msg);
+		$msg = preg_replace("'\[abbr=(.*?)\](.*?)\[/abbr\]'si", '<span style="border-bottom: 1px dotted;" title="\\1">\\2</span>', $msg);
+		// Old spoiler tag
+		//$msg = str_replace('[spoiler]','<div class="fonts pstspl2"><b>Spoiler:</b><div class="pstspl1">', $msg);
+		//$msg = str_replace('[/spoiler]','</div></div>', $msg);
+		// New spoiler tag
+		$msg = str_replace('[spoiler]','<label class="spoiler spoiler-b"><div class="spoiler-label"></div><input type="checkbox"><div class="hidden"><div>', $msg);
+		$msg = str_replace('[/spoiler]','</div></div></label>', $msg);
+		$msg = str_replace('[spoileri]','<label class="spoiler"><span class="spoiler-label"></span><input type="checkbox"><span class="hidden"><span>', $msg);
+		$msg = str_replace('[/spoileri]','</span></span></label>', $msg);
 	
-	// Simple check for skipping BBCode replacements, like last time
-	if (strpos($p, "[") !== false) {
-		$p = preg_replace("'\[youtube\]((https?://)?(www\.)?(youtube\.com/|youtu\.be/)?(embed/|v/|watch\?v=)?)?([\w_\-]+)(\?[t|start]=(\d+))?\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\6?start=\8" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $p);
-		$p = preg_replace("'\[twitter\](\d+)\[/twitter\]'si", '<blockquote class="twitter-tweet"><a href="https://twitter.com/username/status/\1">Loading tweet...</a></blockquote>', $p, -1, $count);
+		// New version of the tag inspired by Xen-Foro's
+		// [attach="1" type="<...>" name="<...>" hash="<...>" (props)]
+		$msg = preg_replace_callback("'\[attach=\"(\w+)\" type=\"(full|embed|thumb|url)\"( name=\"(.*?)\")?( hash=\"(\w+)\")?(.*?)]'si", function ($text) {
+			// 1 -> file id
+			// 2 -> bbcode type
+			// 4 -> filename or alt text
+			// 6 -> temporary file hash
+			// 7 -> additional attributes, sent as-is
+			
+			$url = "download.php?id={$text[1]}";
+			if ($text[6])
+				$url .= "&hash={$text[6]}";
+			$imgurl = $url;
+			
+			switch ($text[2]) {
+				case 'thumb':
+					$imgurl .= "&t=1";
+				case 'full':
+					return "<a href='{$url}' target='_blank'><img alt=\"{$text[4]}\" src='{$imgurl}' class='imgtag'{$text[7]}/></a>";
+				case 'url':
+					return "<a href='{$url}' target='_blank'{$text[7]}>{$text[4]}</a>";
+				case 'embed':
+					return "[video]{$url}[/video]"; // will be handled later
+			}
+		}, $msg);
+	
+		$msg = preg_replace("'\[(b|i|u|s)\]'si",'<\\1>', $msg);
+		$msg = preg_replace("'\[/(b|i|u|s)\]'si",'</\\1>', $msg);
+		$msg = preg_replace("'\[img(.*?)\](.*?)\[/img\]'si", '<img class="imgtag" \\1 src="\\2">', $msg);
+		$msg = preg_replace("'\[url\](.*?)\[/url\]'si", '<a href=\\1>\\1</a>', $msg);
+		$msg = preg_replace("'\[url=(.*?)\](.*?)\[/url\]'si", '<a href=\\1>\\2</a>', $msg);
+		
+		$msg = preg_replace("'\[video\](.*?)\[/video\]'si", '<video src="\\1" width="640" controls loop>Video not supported &mdash; <a href="\\1">download</a></video>', $msg);
+	}
+	return $msg;
+}
+
+// "Unsafe" markup, which has to be handled after xss filters
+function do_unsafe_bbcode($msg) {
+	global $runtime;
+	if (strpos($msg, "[") !== false) {
+		$msg = preg_replace("'\[youtube\]((https?://)?(www\.)?(youtube\.com/|youtu\.be/)?(embed/|v/|watch\?v=)?)?([\w_\-]+)(\?[t|start]=(\d+))?\[/youtube\]'si", '<iframe src="https://www.youtube.com/embed/\6?start=\8" width="560" height="315" frameborder="0" allowfullscreen="allowfullscreen"></iframe>', $msg);
+		$msg = preg_replace("'\[twitter\](\d+)\[/twitter\]'si", '<blockquote class="twitter-tweet"><a href="https://twitter.com/username/status/\1">Loading tweet...</a></blockquote>', $msg, -1, $count);
 		if ($count)
 			register_js("https://platform.twitter.com/widgets.js", true);
 		
-		$p = preg_replace("'\[vine\](\w+)\[/vine\]'si", '<iframe class="vine-embed" src="https://vine.co/v/\1/embed/simple" width="600" height="600" frameborder="0"></iframe><script async src=\"//platform.vine.co/static/scripts/embed.js\" charset=\"utf-8\"></script>', $p, -1, $count);
+		$msg = preg_replace("'\[vine\](\w+)\[/vine\]'si", '<iframe class="vine-embed" src="https://vine.co/v/\1/embed/simple" width="600" height="600" frameborder="0"></iframe><script async src=\"//platform.vine.co/static/scripts/embed.js\" charset=\"utf-8\"></script>', $msg, -1, $count);
 		if ($count)
 			register_js("//platform.vine.co/static/scripts/embed.js", true);
 		
 		// Tindeck is offline
-		//$p = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1"><img src="http://tindeck.com/image/$contents/stats.png" alt="Tindeck"/></a>', $p);
-		$p = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1">Tindeck</a>', $p);
+		//$msg = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1"><img src="http://tindeck.com/image/$contents/stats.png" alt="Tindeck"/></a>', $msg);
+		$msg = preg_replace("'\[tindeck\](\w+)\[/tindeck\]'si", '<a href="http://tindeck.com/listen/\1">Tindeck</a>', $msg);
 		
-		$p = preg_replace("'\[dailymotion\](\w+)\[/dailymotion\]'si", '<iframe frameborder="0" width="640" height="360" src="https://www.dailymotion.com/embed/video/\1" allowfullscreen="" allow="autoplay"></iframe>', $p);
-		$p = preg_replace("'\[bc\](\d+)\[/bc\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/track=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $p);
-		$p = preg_replace("'\[bca\](\d+)\[/bca\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/album=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $p);
-		$p = preg_replace("'\[facebook\]https://([\w\/=\&\.\?\:]*?)\[/facebook\]'si", '<div id="fb-post" class="fb-post" style="background-color: white" data-href="https://\1" data-width="500"></div>', $p, -1, $count);
+		$msg = preg_replace("'\[dailymotion\](\w+)\[/dailymotion\]'si", '<iframe frameborder="0" width="640" height="360" src="https://www.dailymotion.com/embed/video/\1" allowfullscreen="" allow="autoplay"></iframe>', $msg);
+		$msg = preg_replace("'\[bc\](\d+)\[/bc\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/track=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $msg);
+		$msg = preg_replace("'\[bca\](\d+)\[/bca\]'si", '<iframe style="border: 0; width: 500px; height: 120px;" src="https://bandcamp.com/EmbeddedPlayer/album=\1/size=medium/bgcol=ffffff/linkcol=0687f5/transparent=true/" seamless></iframe>', $msg);
+		$msg = preg_replace("'\[facebook\]https://([\w\/=\&\.\?\:]*?)\[/facebook\]'si", '<div id="fb-post" class="fb-post" style="background-color: white" data-href="https://\1" data-width="500"></div>', $msg, -1, $count);
 		if ($count)
 			register_js("//connect.facebook.net/en_US/sdk.js#xfbml=1&amp;version=v2.5", true);
-		$p = preg_replace("'\[sc\](\d+)\[/sc\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $p);
-		$p = preg_replace("'\[sca\](\d+)\[/sca\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $p);		
-		$p = preg_replace("'\[twitch\](\d+)\[/twitch\]'si", '<iframe src="https://player.twitch.tv/?autoplay=false&video=v\1&parent='.$runtime['host'].'" frameborder="0" allowfullscreen="true" scrolling="no" height="378" width="620"></iframe>', $p);
-		$p = preg_replace("'\[clip\]([\w\d\-]+)\[/clip\]'si", '<iframe src="https://clips.twitch.tv/embed?clip=\1&parent='.$runtime['host'].'&autoplay=false" frameborder="0" allowfullscreen="true" height="378" width="620"></iframe>', $p);
-		//$p = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<script type="application/javascript" src="https://embed.nicovideo.jp/watch/\1/script?w=640&h=360"></script>', $p);
-		$p = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<iframe allowfullscreen="allowfullscreen" allow="autoplay" frameborder="0" width="640" height="360" src="https://embed.nicovideo.jp/watch/\1" style="max-width: 100%;"></iframe>', $p);
+		$msg = preg_replace("'\[sc\](\d+)\[/sc\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $msg);
+		$msg = preg_replace("'\[sca\](\d+)\[/sca\]'si", '<iframe width="450" height="450" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/\1&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true"></iframe>', $msg);		
+		$msg = preg_replace("'\[twitch\](\d+)\[/twitch\]'si", '<iframe src="https://player.twitch.tv/?autoplay=false&video=v\1&parent='.$runtime['host'].'" frameborder="0" allowfullscreen="true" scrolling="no" height="378" width="620"></iframe>', $msg);
+		$msg = preg_replace("'\[clip\]([\w\d\-]+)\[/clip\]'si", '<iframe src="https://clips.twitch.tv/embed?clip=\1&parent='.$runtime['host'].'&autoplay=false" frameborder="0" allowfullscreen="true" height="378" width="620"></iframe>', $msg);
+		//$msg = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<script type="application/javascript" src="https://embed.nicovideo.jp/watch/\1/script?w=640&h=360"></script>', $msg);
+		$msg = preg_replace("'\[nnd\](\w+)\[/nnd\]'si", '<iframe allowfullscreen="allowfullscreen" allow="autoplay" frameborder="0" width="640" height="360" src="https://embed.nicovideo.jp/watch/\1" style="max-width: 100%;"></iframe>', $msg);
 		
-		$p = preg_replace("'\[streamable\](\w+)\[/streamable\]'si", '<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%"><iframe src="https://streamable.com/s/\1" frameborder="0" width="100%" height="100%" allowfullscreen style="width:100%;height:100%;position:absolute"></iframe></div>', $p);
-		$p = preg_replace("'\[vimeo\](\d+)\[/vimeo\]'si", '<iframe src="https://player.vimeo.com/video/\1" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>', $p);
-		$p = preg_replace("'\[odysee\]https://odysee\.com/(@\w+:\d+/\w+:\d+)\[/odysee\]'si", '<iframe id="odysee-iframe" width="560" height="315" src="https://odysee.com/\$/embed/\1" allowfullscreen></iframe>', $p);
-		$p = preg_replace("'\[rumble\]https://rumble\.com/embed/(\w+)([/\w\-\?=\.]+)?\[/rumble\]'si", '<iframe class="rumble" width="640" height="360" src="https://rumble.com/embed/\1/?pub=4" frameborder="0" allowfullscreen></iframe>', $p);
+		$msg = preg_replace("'\[streamable\](\w+)\[/streamable\]'si", '<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%"><iframe src="https://streamable.com/s/\1" frameborder="0" width="100%" height="100%" allowfullscreen style="width:100%;height:100%;position:absolute"></iframe></div>', $msg);
+		$msg = preg_replace("'\[vimeo\](\d+)\[/vimeo\]'si", '<iframe src="https://player.vimeo.com/video/\1" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>', $msg);
+		$msg = preg_replace("'\[odysee\]https://odysee\.com/(@\w+:\d+/\w+:\d+)\[/odysee\]'si", '<iframe id="odysee-iframe" width="560" height="315" src="https://odysee.com/\$/embed/\1" allowfullscreen></iframe>', $msg);
+		$msg = preg_replace("'\[rumble\]https://rumble\.com/embed/(\w+)([/\w\-\?=\.]+)?\[/rumble\]'si", '<iframe class="rumble" width="640" height="360" src="https://rumble.com/embed/\1/?pub=4" frameborder="0" allowfullscreen></iframe>', $msg);
 	}
-	return $p;
+	return $msg;
 }
 
 // New reply toolbar loader

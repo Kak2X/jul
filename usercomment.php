@@ -106,7 +106,7 @@
 				<td class='tdbg{$cell} center fonts'>{$dellink}</td>
 				<td class='tdbg{$cell} center nobr'>".getuserlink($x)."</td>
 				<td class='tdbg{$cell} center nobr'>".printdate($x['date'])."</td>
-				<td class='tdbg{$cell}'>".dofilters(domarkup($x['text']))."</td>
+				<td class='tdbg{$cell}'>".postfilter($x['text'])."</td>
 			</tr>";
 		}
 		

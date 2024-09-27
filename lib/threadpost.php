@@ -1,17 +1,7 @@
 <?php
 	
-	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0,$pthread = '', $multiforum = false) {
-		
-		global $config, $loguser, $tlayout, $blockedlayouts, $isadmin, $ismod, $statusicons, $warnpic;
-		
-		// Fetch an array containing all blocked layouts now
-		if (!isset($blockedlayouts)) {
-			global $sql;
-			$blockedlayouts = $sql->getresultsbykey("SELECT blocked, 1 FROM blockedlayouts WHERE user = {$loguser['id']}");
-			if (!$blockedlayouts)
-				$blockedlayouts = 0;
-		}
-		
+	function threadpost($post, $bg, $mode = MODE_POST, $forum = 0, $pthread = '', $multiforum = false) {
+		global $config, $loguser, $tlayout, $isadmin, $ismod, $statusicons, $warnpic;
 		
 		$set['bg']       = $bg;
 		$set['userlink'] = getuserlink($post, $post['uid'], "url".$post['uid']);;
@@ -56,7 +46,7 @@
 			
 			//hook_use_ref('threadpost', $set, $post, $mode);
 			
-			$post['text'] = domarkup($post['text'], $post, false, $mode);
+			$post['text'] = do_post_options($post['text'], $post);
 		}
 
 		// Thread marker for posts by thread / favourites view
@@ -72,7 +62,7 @@
 			} else if ($mode == MODE_POST) {
 				// Display revision info if one is selected
 				if (__($_GET['rev']) && $_GET['pin'] == $post['id']) {
-					$set['edited'] .= "; this revision edited by ".getuserlink(NULL, $post['revuser'])." at ".printdate($post['revdate']);
+					$set['edited'] .= "; this revision edited by ".getuserlink(null, $post['revuser'])." at ".printdate($post['revdate']);
 					$sel = $_GET['rev'];
 				} else { // Select max revision if none is specified
 					$sel = $post['revision'];
@@ -94,7 +84,7 @@
 		$set['mode'] = $mode;
 		
 		$set['userspan'] = $post['noob'] ? "<span class='userlink' style='display: inline; position: relative; top: 0; left: 0;'><img src='images/noob/noobsticker2-".mt_rand(1,6).".png' style='position: absolute; top: -3px; left: ".floor(strlen($post['name'])*2.5)."px;' title='n00b'>" : "<span class='userlink'>";
-		$set['warntext'] = $post['warned'] ? "<div class='alert alert-error'>{$warnpic} ".($post['warntext'] ? domarkup($post['warntext']) : "(USER WAS WARNED FOR THIS POST)")."</div>" : "";
+		$set['warntext'] = $post['warned'] ? "<div class='alert alert-error'>{$warnpic} ".($post['warntext'] ? do_post_options($post['warntext']) : "(USER WAS WARNED FOR THIS POST)")."</div>" : "";
 		
 		if ($post['highlighted']) {
 			if ($post['highlighted'] == PHILI_LOCAL) {
@@ -106,7 +96,7 @@
 			$urlnext	= isset($post['highlightnext']) ? " <a href='{$post['highlightnext']}'>&gt;&gt;</a>" : "";
 			
 			$set['highlightctrl'] = "{$urlback}{$typetxt}{$urlnext} | ";
-			$set['highlighttext'] = $post['highlighttext'] ? "<div class='alert alert-info'>".domarkup($post['highlighttext'])."</div>" : "";
+			$set['highlighttext'] = $post['highlighttext'] ? "<div class='alert alert-info'>".do_post_options($post['highlighttext'])."</div>" : "";
 			$set['highlightline'] = "<div class='td-highlight tdbgh'></div>";
 		} else {
 			$set['highlighttext'] = "";
@@ -114,10 +104,8 @@
 			$set['highlightline'] = "";
 		}
 		
-		
-		if ($forum < 0) $forum = 0; // Restore actual forum value once we're done with PM Attachments
-		
-		return dofilters(postcode($post,$set), $forum, $multiforum);
+		// Hopefully postfilter on the entire post won't cause issues
+		return postfilter_largehtml(postcode($post, $set), $mode, $forum, $multiforum);
 	}
 	
 	function postlayout_fields() {
@@ -156,6 +144,15 @@
 		global $loguser, $postl, $blockedlayouts;
 		static $keys;
 		
+		// If the blocked layouts weren't loaded previously, load them now.
+		// $blockedlayouts isn't static because pages can override this list (ie: postlayout.php always shows layouts by passing [])
+		if (!isset($blockedlayouts)) {
+			global $sql;
+			$blockedlayouts = $sql->getresultsbykey("SELECT blocked, 1 FROM blockedlayouts WHERE user = {$loguser['id']}");
+			if (!$blockedlayouts)
+				$blockedlayouts = 0;
+		}
+		
 		$post['blockedlayout'] = isset($blockedlayouts[$post['uid']]);
 		if (!$loguser['viewsig'] || $post['deleted'] || $post['blockedlayout'] || isset($post['nolayout'])) { // Disabled
 			$post['headtext'] = $post['signtext'] = $post['csstext'] = $post['sidebartext'] = "";
@@ -182,21 +179,19 @@
 			'mood' => $post['moodid'],
 		);
 		$tags = get_tags($post['tagval'], $gtopt);
-		$post['headtext'] = replace_tags($post['headtext'],$tags);
-		$post['signtext'] = replace_tags($post['signtext'],$tags);
-		$post['csstext']  = replace_tags($post['csstext'], $tags);
+		$post['headtext'] = replace_tags($post['headtext'], $tags);
+		$post['signtext'] = replace_tags($post['signtext'], $tags);
+		$post['csstext']  = replace_tags($post['csstext'],  $tags);
 		
-		// Post header and signature filters are always handled in MODE_POST.
-		// This guarantees that signature containing pid quotes will contain a link to the thread.
-		$post['headtext'] = "<span id='body{$post['id']}'>".domarkup($post['headtext'], null, false, MODE_POST);
-		$post['signtext'] = domarkup($post['signtext'], null, false, MODE_POST)."</span>";	
+		$post['headtext'] = "<span id='body{$post['id']}'>".do_post_options($post['headtext']);
+		$post['signtext'] = do_post_options($post['signtext'])."</span>";	
 		
 		// Only insert the unique CSS once, to save up on processing/sent bytes.
 		$csskey = $post['uid'].getcsskey($post);
 		if (!isset($keys[$csskey])) {
 			$keys[$csskey] = true;
 			if ($post['csstext']) {
-				$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>".domarkup($post['csstext'], null, true)."</style>{$post['headtext']}";
+				$post['headtext'] = "<style type='text/css' id='css{$post['id']}'>{$post['csstext']}</style>{$post['headtext']}";
 			}
 		}
 		
@@ -442,7 +437,7 @@ function thread_history($thread, $num, $forum = 0) {
 			if ($num-- > 0){
 				$postnum  = ($post['num'] ? "{$post['num']}/" : '');
 				$userlink = getuserlink($post);
-				$message  = $post['deleted'] ? '(Post deleted)' : dofilters(domarkup($post['text'], $post, false, $forum ? MODE_POST : MODE_PM), $forum);
+				$message  = $post['deleted'] ? '(Post deleted)' : postfilter($post['text'], $post, $forum ? MODE_POST : MODE_PM, $forum);
 				$postlist .=
 					"<tr>
 						<td class='tdbg$bg' valign=top>

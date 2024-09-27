@@ -95,7 +95,7 @@
 				</table>
 			</td>
 		</tr>
-		<tr><td class='tdbg1 center' colspan=7>".dofilters($eventdata['text'])."</td></tr>";
+		<tr><td class='tdbg1 center' colspan=7>".postfilter($eventdata['text'])."</td></tr>";
 	}
 
 	?>

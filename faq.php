@@ -190,7 +190,7 @@
 		</table>
 	");
 	
-	$faq	.= _faqformat("bbcode", "What is BBcode?", domarkup("
+	$faq	.= _faqformat("bbcode", "What is BBcode?", do_bbcode("
 		BBcode is a simple syntax which you can use on your posts to format the text or add images and videos. Below is a list of the supported tags:
 		<br>
 		<br>

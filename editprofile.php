@@ -485,8 +485,8 @@
 			External URL: <input type='text' name='picture_weblink' size=60 maxlength=127 value=\"".htmlspecialchars($weblink)."\">
 		";
 		
-		$css = "<textarea name='css' rows='16'>".htmlspecialchars($userdata['css'])."</textarea><br/>"
-		. "...or import: <input type='file' name='cssfile' accept='text/css'>&nbsp;<span class='fonts'>Max size: ".sizeunits(CSS_UPLOAD_MAX)."</span>";
+		$css = "<textarea name='css' id='css' rows='16'>".htmlspecialchars($userdata['css'])."</textarea><br/>"
+		. "...or import: ".input_html('cssfile', null, ['input' => 'file', 'maxsize' => CSS_UPLOAD_MAX, 'accept' => "text/css", 'jsmode' => 'text', 'jstarget' => 'css']);
 		
 		if ($edituser) {
 			// Powerlevel selection

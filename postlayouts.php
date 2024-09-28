@@ -155,9 +155,7 @@
 	<tr>
 		<td class="tdbg1 vatop" colspan="3">
 			<textarea id="css" name="css" rows="10"><?= escape_html($user['css']) ?></textarea><br/>
-			...or import: 
-			<noscript><input type="file" id="cssfile" name="cssfile" accept="text/css">&nbsp;<span class="fonts">Max size: <?= sizeunits(CSS_UPLOAD_MAX) ?></span></noscript>
-			<span class="js"><button type="button" id="cssfilejsbtn" class="vabase">Upload</button><input type="file" hidden id="cssfilejs" accept="text/css"></span>
+			...or import: <?= input_html('cssfile', null, ['input' => 'file', 'maxsize' => CSS_UPLOAD_MAX, 'accept' => "text/css", 'jsmode' => 'text', 'jstarget' => 'css', 'jstrigger' => 'input' /*'jscallback' => 'setCss'*/]) ?>
 		</td>
 	</tr>
 	
@@ -199,7 +197,7 @@
 		<td class="tdbg1" colspan="3">
 			<span class="js">
 				<label><input type="checkbox" id="autoupdate" value="1"<?= $_COOKIE['plp_aupd'] ? " checked" : ""?>> Auto update CSS</label> | 
-				<input type="button" onclick="quickpreview(true)" value="Preview CSS"> 
+				<input type="button" onclick="quickPreview(true)" value="Preview CSS"> 
 			</span>
 			<input type="submit" name="submit" value="Preview All"> <?= $savebtn ?> | 
 			Thread layout: <select name="tlayout">
@@ -225,9 +223,6 @@
 	// Text area and destination CSS field
 	var css  = document.getElementById('css');
 	var css_dest  = document.getElementById('css0');
-	// Clientside CSS file import
-	var cssfile    = document.getElementById('cssfilejs');
-	var cssfilebtn = document.getElementById('cssfilejsbtn');
 	
 	// For seamless scrolling
 	var postpreview  = document.getElementById('postpreview');
@@ -237,39 +232,23 @@
 	
 	autoupdate.addEventListener('change', function() {
 		if (this.checked) {
-			css.addEventListener('input', quickpreview);
+			css.addEventListener('input', quickPreview);
 			document.cookie = "plp_aupd=1"; 
 		} else {
-			css.removeEventListener('input', quickpreview);
+			css.removeEventListener('input', quickPreview);
 			document.cookie = "plp_aupd=; Max-Age=-99999999;";
 		}
 	});
 	
-	cssfilebtn.addEventListener('click', function () {
-		cssfile.click();
-	});
-	cssfile.addEventListener('input', function(e) {
-		var file = e.target.files[0];
-		var inFile = new FileReader();
-		inFile.onload = (f) => {
-			css.value = f.target.result;
-			quickpreview();
-		};
-		if (file.size < <?= CSS_UPLOAD_MAX ?>)
-			inFile.readAsText(file);
-	});
+	if (getCookie('plp_aupd')) 
+		css.addEventListener('input', quickPreview);
 	
-	if (<?= $_COOKIE['plp_aupd'] ?>) 
-		css.addEventListener('input', quickpreview);
-	
-	function quickpreview(scroll = false) {
+	function quickPreview(scroll = false) {
 		css_dest.innerHTML = css.value.replace(new RegExp("\.(top|side|main|cont)bar"+user+"", 'gi'), '.$1bar'+user+'_p0');
 		if (scroll)
 			postpreview.scrollIntoView();
 	}
 </script>
 <?php
-	
-	
 	
 	pagefooter();

@@ -3,6 +3,7 @@
 /* Set up base multiplier for global font */
 html {
 	font-size: 83%;
+	position: relative;
 }
 
 /* Limit the max page width so the page won't stretch too much */
@@ -388,13 +389,10 @@ img[src^="images/smilies/"] { vertical-align: middle; }
 	text-align: left;
 }
 
-
-/* Ikachan cursor (disabled) */
-/*			
-body {
-	cursor:	url('images/ikachanpointer.png'), default;
+/* Ikachan cursor */
+html.ikacur {
+	cursor:	url("../images/ikachanpointer.png"), default;
 }
-a:link {
-	cursor:	url('images/ikachanpointer2.png'), pointer;
+html.ikacur a:link {
+	cursor:	url('../images/ikachanpointer2.png'), pointer;
 }
-*/

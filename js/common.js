@@ -56,15 +56,26 @@ function sizeunits(bytes) {
 	return (bytes / sbar).toFixed(2).replace('.00', '')+ ' ' + sizes[i];
 }
 
+function hasCookie(name) {
+	return document.cookie.split("; ").find(row => row.startsWith(name));
+}
 function getCookie(name, defVar = "") {
-    var ret = document.cookie.split("; ").find(row => row.startsWith(name));
-    return ret ? ret.split('=')[1] : defVar;
+    var ret = hasCookie(name);
+    return entry ? ret.split('=')[1] : defVar;
 }
 
 function setCookie(name, val) {
-    document.cookie = name + '=' + val + ';';
+    document.cookie = name + '=' + val + ';max-age=31536000;';
 }
 
-function remCookie(name) {
+function toggleCookie(name, val = 1) {
+    var ret = hasCookie(name);
+	if (ret)
+		delCookie(name);
+	else
+		setCookie(name, val);
+}
+
+function delCookie(name) {
 	document.cookie = name + '=; Max-Age=-99999999;';
 }

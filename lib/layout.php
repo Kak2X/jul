@@ -793,6 +793,10 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 			$overlay .= "<img src=images/wave/seaweed.png style=\"position: fixed; left: ". mt_rand(0,100) ."%; bottom: -". mt_rand(24,72) ."px;\" title=\"weed\">";
 		}
 	}
+	
+	$htmlclass = "";
+	// Ikachan cursor, now optional
+	if ($config['show-ikachan'] && filter_int($_COOKIE['ikacur'])) $htmlclass .= "ikacur";
 
 	$dispviews = $miscdata['views'];
 	//if (($views % 1000000 >= 999000) && ($views % 1000000 < 999990))
@@ -808,7 +812,7 @@ function pageheader($windowtitle = '', $mini = false, $centered = false) {
 		$attn = "<table class='table attn-glob fonts'>".postfilter($attn)."</table>";
 	
 ?><!doctype html>
-<html>
+<html class="<?= $htmlclass ?>">
 	<head>
 		<meta http-equiv='Content-type' content='text/html; charset=utf-8'>
 		<meta name='viewport' content='width=device-width, initial-scale=1'>
@@ -923,10 +927,13 @@ function pagefooter($showfooter = true) {
 		// Enables people to disable the floating squid if they want, or re-enable it later
 		// Saved browser-side rather than being yet another silly config option
 		if (isset($_COOKIE['ikachan']) && $_COOKIE['ikachan'] === "hidden") {
-			$ikachan_text = "<a href='javascript:void();' onclick=\"document.cookie='ikachan=shown;max-age=0;path=/';alert('Floating Ikachan re-enabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style='vertical-align: middle;' title=\"$ikaquote (click to re-enable random floating position)\"></a>";
+			$ikachan_text = "<a href='javascript:void();' onclick=\"delCookie('ikachan'); alert('Floating Ikachan re-enabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style='vertical-align: middle;' title=\"$ikaquote (click to re-enable random floating position)\"></a>";
 		} else {
-			$ikachan_text = "<a href='javascript:void();' onclick=\"javascript:document.cookie='ikachan=hidden;max-age=31536000;path=/';alert('Floating Ikachan disabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style=\"z-index: 999999; position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"$ikaquote (click to hide in future page loads)\"></a>";
+			$ikachan_text = "<a href='javascript:void();' onclick=\"setCookie('ikachan', 'hidden'); alert('Floating Ikachan disabled for future pageloads...'); this.remove();\"><img id='f_ikachan' src='$ikachan' style=\"z-index: 999999; position: fixed; left: ". mt_rand(0,100) ."%; top: ". mt_rand(0,100) ."%;\" title=\"$ikaquote (click to hide in future page loads)\"></a>";
 		}
+		
+		// Same for the custom cursor, except the change is instantaneous.
+		$ikachan_text .= "<a href='javascript:void();' onclick=\"toggleCookie('ikacur'); document.documentElement.classList.toggle('ikacur');\" title='Click to toggle the Ikachan cursor...'><img src='images/ikachanpointer.png' style='position: absolute; z-index: 999999; bottom: 8px; right: 8px'></a>";
 	}
 	
 	$doomnum = ($x_hacks['mmdeath'] >= 0) ? "<div style='position: absolute; top: -100px; left: -100px;'>Hidden preloader for doom numbers:

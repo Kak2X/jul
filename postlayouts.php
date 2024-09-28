@@ -26,7 +26,8 @@
 	if (isset($_POST['submit']) || isset($_POST['save'])) {
 		$user['postheader']  = filter_string($_POST['postheader']);
 		$user['signature']   = filter_string($_POST['signature']);
-		$user['css']         = filter_string($_POST['css']);
+		if (!($user['css'] = parse_css_upload($_FILES['cssfile'])))
+			$user['css'] = filter_string($_POST['css']);
 		$user['sidebar']     = filter_string($_POST['sidebar']);
 		$user['sidebartype'] = sidebartype_db($_POST['sidebartype'], $_POST['sidebarcell']);
 		$loguser['layout']   = filter_int($_POST['tlayout']);
@@ -139,7 +140,8 @@
 	}
 
 ?>
-<form method="POST" action="?id=<?= $_GET['id'] ?>">
+<form method="POST" action="?id=<?= $_GET['id'] ?>" enctype="multipart/form-data">
+<input type="hidden" name="MAX_FILE_SIZE" value="<?= CSS_UPLOAD_MAX ?>">
 <div id="postpreview">
 <?= preview_post($user, $data, PREVIEW_EDITED, getuserlink($user)."'s post layout") ?>
 </div>
@@ -152,7 +154,10 @@
 	<tr><td class="tdbgh center b" colspan=3>CSS</td></tr>
 	<tr>
 		<td class="tdbg1 vatop" colspan="3">
-			<textarea id="css" name="css" rows="10"><?= escape_html($user['css']) ?></textarea>
+			<textarea id="css" name="css" rows="10"><?= escape_html($user['css']) ?></textarea><br/>
+			...or import: 
+			<noscript><input type="file" id="cssfile" name="cssfile" accept="text/css">&nbsp;<span class="fonts">Max size: <?= sizeunits(CSS_UPLOAD_MAX) ?></span></noscript>
+			<span class="js"><button type="button" id="cssfilejsbtn" class="vabase">Upload</button><input type="file" hidden id="cssfilejs" accept="text/css"></span>
 		</td>
 	</tr>
 	
@@ -220,6 +225,10 @@
 	// Text area and destination CSS field
 	var css  = document.getElementById('css');
 	var css_dest  = document.getElementById('css0');
+	// Clientside CSS file import
+	var cssfile    = document.getElementById('cssfilejs');
+	var cssfilebtn = document.getElementById('cssfilejsbtn');
+	
 	// For seamless scrolling
 	var postpreview  = document.getElementById('postpreview');
 	
@@ -234,6 +243,20 @@
 			css.removeEventListener('input', quickpreview);
 			document.cookie = "plp_aupd=; Max-Age=-99999999;";
 		}
+	});
+	
+	cssfilebtn.addEventListener('click', function () {
+		cssfile.click();
+	});
+	cssfile.addEventListener('input', function(e) {
+		var file = e.target.files[0];
+		var inFile = new FileReader();
+		inFile.onload = (f) => {
+			css.value = f.target.result;
+			quickpreview();
+		};
+		if (file.size < <?= CSS_UPLOAD_MAX ?>)
+			inFile.readAsText(file);
 	});
 	
 	if (<?= $_COOKIE['plp_aupd'] ?>) 

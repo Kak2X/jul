@@ -42,6 +42,7 @@ img { border:none; }
 .right	{ text-align:right !important }
 .vatop    { vertical-align:top }
 .vamid    { vertical-align:middle }
+.vabase   { vertical-align:baseline }
 
 .flexhvc  { 
 	display: flex;

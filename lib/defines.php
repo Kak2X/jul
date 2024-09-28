@@ -104,3 +104,5 @@
 	const LOGFAIL_IGNORE = 0;
 	const LOGFAIL_TEMPBLOCK = 1;
 	const LOGFAIL_IPBAN = 2;
+	
+	const CSS_UPLOAD_MAX = 16 * 1024;

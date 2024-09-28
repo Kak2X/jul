@@ -2621,6 +2621,26 @@ function header_content_type($type) {
 	}
 }
 
+function parse_css_upload(&$file) {
+	
+	// File doesn't exist, that's fine
+	if (!filter_int($file['size']))
+		return false;
+	
+	// TODO: use add_message(...) for cookie msg
+	if ($file['size'] > CSS_UPLOAD_MAX) {
+		//errorpage("The CSS file you're trying to upload is over the size limit (".sizeunits($file['size'])." vs ".sizeunits(CSS_UPLOAD_MAX).").");
+		return false;
+	}
+	$type = mime_content_type($file['tmp_name']);
+	if ($type !== "text/css" && $type !== "text/plain") { // latter included as mime_content_type doesn't detect css files correctly
+		//errorpage("The file you're trying to upload is not of a valid type.");
+		return false;
+	}
+	
+	return file_get_contents($file['tmp_name']);
+}
+
 function discord_get_invites() {
 	global $config;
 	$disc_chans     = [];

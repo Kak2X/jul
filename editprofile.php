@@ -6,6 +6,8 @@
 	$id = filter_int($_GET['id']);
 	$noeffect = "";
 	
+	$MAX_FILE_SIZE = max($config['max-avatar-size-bytes'], $config['max-minipic-size-bytes'], CSS_UPLOAD_MAX); // Just in case
+	
 	if ($id) {
 		admincheck();
 		$edituser 	= true;
@@ -59,7 +61,10 @@
 			if 		($item['effect'] == 1) $_POST['sex'] = 1;	// Force female
 			else if ($item['effect'] == 2) $_POST['sex'] = 0;	// Force male
 		}
-
+		
+		// If a file was selected, import it.
+		if (!($css = parse_css_upload($_FILES['cssfile'])))
+			$css = filter_string($_POST['css']);
 
 		// With date formats, the preset has priority
 		$eddateformat = filter_string($_POST['datepreset']);
@@ -70,12 +75,6 @@
 		// Also reset the date settings in case they match with the default
 		if ($eddateformat == $config['default-dateformat']) $eddateformat = '';
 		if ($eddateshort  == $config['default-dateshort'])  $eddateshort  = '';
-		
-		
-		// \n -> <br> conversion
-		$_POST['postheader'] = filter_string($_POST['postheader']);
-		$_POST['signature'] 	= filter_string($_POST['signature']);
-		$bio 		= filter_string($_POST['bio']);
 		
 		// Make sure the thread layout does exist to prevent "funny" shit
 		$tlayout = filter_int($_POST['layout']);
@@ -141,9 +140,9 @@
 			'namecolor'			=> $namecolor,
 			'namecolor_bak'		=> $namecolor_bak,
 			'useranks' 			=> isset($_POST['useranks']) ? filter_int($_POST['useranks']) : $userdata['useranks'],
-			'css' 				=> filter_string($_POST['css']), // NOT nl2br'd
-			'postheader' 		=> $_POST['postheader'],
-			'signature' 		=> $_POST['signature'],
+			'css' 				=> $css,
+			'postheader' 		=> filter_string($_POST['postheader']),
+			'signature' 		=> filter_string($_POST['signature']),
 			'sidebar'			=> $_POST['sidebar'],
 			'sidebartype'		=> $_POST['sidebartype'],
 			// Personal information
@@ -152,7 +151,7 @@
 			'realname' 			=> filter_string($_POST['realname']),
 			'location' 			=> filter_string($_POST['location']),
 			'birthday'			=> fieldstotimestamp('birth', '_POST'),
-			'bio' 				=> $bio,
+			'bio' 				=> filter_string($_POST['bio']),
 			// Online services
 			'email' 			=> filter_string($_POST['email']),
 			'privateemail' 		=> filter_int($_POST['privateemail']),
@@ -355,7 +354,7 @@
 			));
 		}
 		_table_format("Appareance", array(
-			"Post layout"       => [1, "css", "CSS added here will be added on its own tag.", 16],
+			"Post layout"       => [4, "css", "CSS added here will be added on its own tag.", 16],
 			"Post header"       => [1, "postheader", "HTML added here will come before your post."],
 			"Footer/Signature" 	=> [1, "signature", "HTML and text added here will be added to the end of your post."],
 		));		
@@ -466,7 +465,6 @@
 		
 		// Upload a new minipic / Remove the existing one
 		$minipic = "
-			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-minipic-size-bytes']}'>
 			<input name='minipic' type='file'>
 			<input type='checkbox' id='del_minipic' name='del_minipic' value=1><label for='del_minipic'>Remove minipic</label><br>
 			<small>
@@ -479,7 +477,6 @@
 		if (!$weblink) $weblink = "";
 		
 		$picture = "
-			<input type='hidden' name='MAX_FILE_SIZE' value='{$config['max-avatar-size-bytes']}'>
 			<input name='picture' type='file'>
 			<input type='checkbox' id='del_picture' name='del_picture' value=1><label for='del_picture'>Remove avatar</label><br>
 			<small>
@@ -487,6 +484,9 @@
 			</small><br/>
 			External URL: <input type='text' name='picture_weblink' size=60 maxlength=127 value=\"".htmlspecialchars($weblink)."\">
 		";
+		
+		$css = "<textarea name='css' rows='16'>".htmlspecialchars($userdata['css'])."</textarea><br/>"
+		. "...or import: <input type='file' name='cssfile' accept='text/css'>&nbsp;<span class='fonts'>Max size: ".sizeunits(CSS_UPLOAD_MAX)."</span>";
 		
 		if ($edituser) {
 			// Powerlevel selection
@@ -579,7 +579,8 @@
 	
 	?>
 	<br>
-	<form method="POST" action="editprofile.php<?=$id_q?>" enctype="multipart/form-data" autocomplete=off>
+	<form method="POST" action="editprofile.php<?=$id_q?>" enctype="multipart/form-data" autocomplete="off">
+	<input type="hidden" name="MAX_FILE_SIZE" value="<?= $MAX_FILE_SIZE ?>">
 	<table class='table'>
 		<tr style='display: none'><td><?=$finput?></td></tr>
 		<?=$t?>

@@ -42,7 +42,6 @@ img { border:none; }
 .right	{ text-align:right !important }
 .vatop    { vertical-align:top }
 .vamid    { vertical-align:middle }
-.vabase   { vertical-align:baseline }
 
 .flexhvc  { 
 	display: flex;
@@ -139,6 +138,12 @@ input[type=radio] {
 	color: black; 
 	background: white;
 	border: none;
+}
+
+/* File uploader component */
+.file-upload {
+	display: inline-block;
+	vertical-align: middle;
 }
 
 /* Spoiler tag code */

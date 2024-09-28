@@ -123,7 +123,7 @@ class schema {
 	// Generic input helper.
 	// Mostly intended for the schema but can be reused elsewhere.
 	function input_html($field_name, $source_val, $data, $preset_name = "", $preset_val = null) {
-		$input = $attrib = $preset = "";
+		$input = $attrib = $desc_sfx = "";
 		$datalist = false;
 		
 		//--
@@ -152,23 +152,24 @@ class schema {
 		
 		//--
 		// Special overrides
-		
+		$options = isset($data['options']) ? $data['options'] : [];
+		$presets = [];
 		if (isset($data['special'])) {
 			switch ($data['special']) {
 				case 'yesno':
-					$data['options'] = [1 => "Yes", 0 => "No"];
+					$options = [1 => "Yes", 0 => "No"];
 					break;
 				case 'powerlevel':
-					$data['options'] = $GLOBALS['pwlnames'];
+					$options = $GLOBALS['pwlnames'];
 					break;
 				case 'dateformat':
-					$data['desc_sfx'] = __($data['desc_sfx']);
-					$data['preset'] = input_date_presets();
+					$desc_sfx = __($data['desc_sfx']);
+					$presets  = input_date_presets();
 					//$datalist = true;
 					break;
 				case 'dateshort':
-					$data['desc_sfx'] = __($data['desc_sfx']);
-					$data['preset'] = input_date_short_presets();
+					$desc_sfx = __($data['desc_sfx']);
+					$presets  = input_date_short_presets();
 					//$datalist = true;
 					break;
 			}
@@ -176,25 +177,23 @@ class schema {
 		//--
 		
 		// Extra datalist if enabled
-		if ($datalist && isset($data['options'])) {
+		if ($datalist && $options) {
 			$listid = "o-{$field_name}";
 			$attrib .= " list=\"{$listid}\"";
 			
 			$input .= "<datalist id=\"{$listid}\">";
-			foreach ($data['options'] as $id => $label)
+			foreach ($options as $id => $label)
 				$input .= "<option value='{$id}'>{$label}</option>";
 			$input .= "</datalist>";
 		}
 		
 		//--
 		// Common attributes
-		$attrib .= " type=\"{$data['input']}\" name=\"{$field_name}\"";
-		if (isset($data['maxlength']))
-			$attrib .= " maxlength=\"{$data['maxlength']}\"";
-		if (isset($data['class']))
-			$attrib .= " class=\"{$data['class']}\"";
-		if (isset($data['tabindex']))
-			$attrib .= " tabindex=\"{$data['tabindex']}\"";
+		$key_attrib = " type=\"{$data['input']}\" name=\"{$field_name}\"";
+		static $extra_attrs = ['maxlength', 'class', 'tabindex'];
+		foreach ($extra_attrs as $x)
+			if (isset($data[$x]))
+				$attrib .= " {$x}=\"{$data[$x]}\"";
 		
 		if (is_array($value)) {
 			$value = implode(";", $value);
@@ -205,35 +204,59 @@ class schema {
 				$input .= "<input style='display:none' type='text'><input style='display:none' type='password'>";
 			case 'text':
 			case 'color':
-				$input .= "<input {$attrib} name=\"{$field_name}\" value=\"".htmlspecialchars($value)."\">";
+				$input .= "<input {$attrib}{$key_attrib} value=\"".htmlspecialchars($value)."\">";
 				break;
 			case 'textarea':
-				$input = "<textarea {$attrib} name=\"{$field_name}\">".htmlspecialchars($value)."</textarea>";
+				$input = "<textarea {$attrib}{$key_attrib}>".htmlspecialchars($value)."</textarea>";
 				break;
 			case 'radio':
 				$input = "";
-				foreach ($data['options'] as $id => $label)
-					$input .= "<label><input {$attrib} name=\"{$field_name}\" value=\"{$id}\"".($value == $id ? " checked" : "").">&nbsp;{$label}</label>";
+				foreach ($options as $id => $label)
+					$input .= "<label><input {$attrib}{$key_attrib} value=\"{$id}\"".($value == $id ? " checked" : "").">&nbsp;{$label}</label>";
 				break;
 			case 'checkbox':
-				$input = "<label><input {$attrib} name=\"{$field_name}\" value=\"1\"".($value ? " checked" : "").">&nbsp;{$data['label']}</label>";
+				$input = "<label><input {$attrib}{$key_attrib} value=\"1\"".($value ? " checked" : "").">&nbsp;{$data['label']}</label>";
 				break;
 			case 'select':
-				$input = "<select {$attrib} name=\"{$field_name}\">";
-				foreach ($data['options'] as $id => $label)
+				$input = "<select {$attrib}{$key_attrib}>";
+				foreach ($options as $id => $label)
 					$input .= "<option value='{$id}' ".($value == $id ? "selected" : "").">{$label}</option>";
 				$input .= "</select>";
+				break;
+			case 'file':
+				$accept = isset($data['accept']) ? $data['accept'] : "";
+				$input = "<input {$attrib}{$key_attrib} id=\"{$field_name}\" accept=\"{$accept}\">";
+				// For now, this is the only input with fancy JAVASCRIPT options.
+				// You can read an uploaded file locally and supply a callback to execute when it is ready.
+				if (isset($data['jsmode'])) {
+					$input = "<noscript>{$input}</noscript>".
+					"<span class=\"js\">".
+						"<button type=\"button\" id=\"{$field_name}jsbtn\" class=\"vabase\">Browse...</button>".
+						"<input {$attrib} type=\"file\" hidden id=\"{$field_name}js\" accept=\"{$accept}\">".
+					"</span>";
+					// Convert the accept attribute value to a quoted array, or null if it's empty
+					$jsarg_allow = $accept ? "['".str_replace(",", "','", $accept)."']" : "null";
+					// Build the callback for when the upload ends
+					if (isset($data['jstarget'])) {
+						$event_trigger = isset($data['jstrigger']) ? $data['jstrigger'] : 'change';
+						$callback = "function(f){ debugger; var x = document.getElementById('{$data['jstarget']}'); x.value = f.target.result; x.dispatchEvent(new Event('{$event_trigger}')); }";
+					} else {
+						$callback = $data['jscallback']; // must be defined
+					}
+					add_js("addJsUploadBtn(\"{$field_name}\", {$data['maxsize']}, {$jsarg_allow}, \"{$data['jsmode']}\", {$callback})");
+				}
+				$input = "<div class=\"file-upload\">{$input}<br/><span class=\"fonts\">Max size: ".sizeunits($data['maxsize'])."</span></div>";
 				break;
 		}
 		//--
 		// Suffix text
-		if (isset($data['desc_sfx']))
+		if ($desc_sfx)
 			$input .= " {$data['desc_sfx']}";
 		
 		// These work by having a separate field with the same name but "-preset" appended to the key.
-		if (isset($data['preset'])) {
+		if ($presets) {
 			$input .= " - or a preset: <select name=\"{$preset_name}\"><option></option>";
-			foreach ($data['preset'] as $id => $label)
+			foreach ($presets as $id => $label)
 				$input .= "<option value='{$id}' ".($preset_val == $id ? "selected" : "").">{$label}</option>";
 			$input .= "</select>";
 		}

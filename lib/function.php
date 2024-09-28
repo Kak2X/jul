@@ -1591,6 +1591,13 @@ function register_js($fn, $async = false) {
 	$footer_extra .= "<script src='$fn' type='text/javascript'".($async ? " async" : "")."></script>";
 }
 
+function add_js($fn) {
+	global $footer_extra;
+	if (!$footer_extra)
+		$footer_extra = "";
+	$footer_extra .= "<script>addEventListener('DOMContentLoaded',(e)=>{{$fn}})</script>";
+}
+
 
 function xssfilters($data, $validate = false){
 	

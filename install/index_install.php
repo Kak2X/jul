@@ -176,6 +176,9 @@ if (!$error) {
 				setup_generate_ext_config($xname);
 				$output .= checkres(true);
 			}
+			
+			// All extensions are disabled by default
+			ext_write_enabled([]);
 
 			
 			$output .= "\nOperation completed successfully!\n";

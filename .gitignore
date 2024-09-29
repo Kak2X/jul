@@ -50,6 +50,7 @@ sidebars/*
 # Extensions
 extensions/*.abx/config.php
 extensions/*.abx/user.json
+extensions/init.dat
 
 # Never cache the temp folder
 temp/*

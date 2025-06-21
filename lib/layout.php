@@ -351,21 +351,6 @@ function load_layout($forcescheme = NULL, $forcetitle = NULL) {
 		$x_hacks['smallbrowse']	= true;
 	}
 	
-	if ($loguser['id']) {
-		// Load inventory
-		$itemdb = getuseritems($loguser['id']);
-
-		// Items effects which only affect the user go here
-		if ($itemdb) {
-			foreach ($itemdb as $item) {
-				switch ($item['effect']) {
-					// New HTML comment display enable
-					case 5: $hacks['comments'] = true; break;
-				}
-			}
-		}
-	}
-	
 	$GLOBALS['forcetitle'] = $forcetitle;
 }
 

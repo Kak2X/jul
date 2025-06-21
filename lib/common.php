@@ -187,6 +187,17 @@
 			// Old HTML comment display enable
 			//$hacks['comments'] = $sql->resultq("SELECT COUNT(*) FROM `users_rpg` WHERE `uid` = '{$loguser['id']}' AND `eq6` IN ('43', '71', '238')");
 		//}
+		
+		// Apply user-specific item effects
+		if ($itemdb = getuseritems($loguser['id'])) {
+			foreach ($itemdb as $item) {
+				switch ($item['effect']) {
+					// New HTML comment display enable
+					case 5: $hacks['comments'] = true; break;
+				}
+			}
+		}
+
 
 		// ?
 		/*
